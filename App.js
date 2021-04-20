@@ -1,21 +1,34 @@
-import { StatusBar } from 'expo-status-bar';
-import React from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import React from "react";
+
+import store from "./src/store/store";
+import { Provider } from "react-redux";
+import MyStack from "~/navigator/stack";
+import axiosInstance from "~/plugins/axiosConfig";
+import { userSignOut } from "./src/actions/authActions";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 export default function App() {
+/** Intercept any unauthorized request.
+  * dispatch logout action accordingly
+  *  https://stackoverflow.com/questions/52946376/reactjs-axios-interceptors-how-dispatch-a-logout-action
+**/
+  const { dispatch } = store; // direct access to redux store.
+
+  axiosInstance.interceptors.response.use(
+    (response) => response,
+    async function(error)  {
+      console.log('----ERROR, INTERCEPT ---- ',error);
+      const { status } = error.response;
+      if (status === 401) {
+        dispatch(userSignOut());
+        await AsyncStorage.setItem("access_token",null);
+      }
+      return Promise.reject(error);
+    }
+  );
   return (
-    <View style={styles.container}>
-      <Text>Open up App.js to start working on your app!</Text>
-      <StatusBar style="auto" />
-    </View>
+    <Provider store={store}>
+      <MyStack />
+    </Provider>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#fff',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-});

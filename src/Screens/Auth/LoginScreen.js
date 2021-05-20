@@ -15,21 +15,21 @@ export default function LoginScreen({ navigation }) {
   const dispatch = useDispatch();
   const onSubmit = async (payload) => {
     try {
-      console.log('onSubmit1');
+
       const { data } = await login(payload);
-      console.log('onSubmit2');
+
       await AsyncStorage.setItem("access_token", data.access_token);
-      console.log('onSubmit3');
+
       const jsonValue = JSON.stringify(data.user)
       await AsyncStorage.setItem("user", jsonValue);
       dispatch(setUserAction(data.user));
       dispatch(setAuthAction(true));
-      console.log('onSubmit4');
+
       navigation.navigate('categoriesList')
     } catch (error) {
-      console.log(error, "error");
       dispatch(setUserAction(null));
       dispatch(setAuthAction(false));
+      console.log(error, "error");
     }
   };
   return (
@@ -81,7 +81,7 @@ export default function LoginScreen({ navigation }) {
         <Button
           onPress={handleSubmit(onSubmit)}
           title="iniciar sesión2"
-          color={Colors.primaryColor}
+          color={Colors.PRIMARY}
           accessibilityLabel="Learn more about this purple button"
         />
       </View>
@@ -95,8 +95,5 @@ const styles = StyleSheet.create({
     backgroundColor: "#fff",
     alignItems: "center",
     justifyContent: "center",
-  },
-  input: {
-    ...Inputs.base,
-  },
+  }
 });

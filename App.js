@@ -14,18 +14,22 @@ export default function App() {
 **/
   const { dispatch } = store; // direct access to redux store.
 
-  axiosInstance.interceptors.response.use(
-    (response) => response,
-    async function(error)  {
-      console.log('----ERROR, INTERCEPT ---- ',error);
+  axiosInstance.interceptors.response.use(function (response) {
+    return response;
+  }, async function (error) {
+
+    if(error && error.response){
+      console.log('----ERROR, INTERCEPT ---- ',error, );
+      console.log(error.response);
       const { status } = error.response;
       if (status === 401) {
-        dispatch(userSignOut());
-        await AsyncStorage.setItem("access_token",null);
+          dispatch(userSignOut());
+          await AsyncStorage.setItem("access_token",null);
       }
-      return Promise.reject(error);
+
     }
-  );
+    return Promise.reject(error);
+  });
   return (
     <Provider store={store}>
       <MyStack />

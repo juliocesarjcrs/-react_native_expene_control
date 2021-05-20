@@ -25,7 +25,7 @@ export default function Input({
         onFocus={() => setFocus(true)}
         onBlur={() => setFocus(false)}
       />
-   
+
       {props.secure && (
         <Icon
           type="material-community"
@@ -44,7 +44,7 @@ export default function Input({
 
            </View>
       )}
-   
+
     </View>
   );
 }
@@ -69,7 +69,7 @@ const styles = StyleSheet.create({
     // fontFamily: INTER_REGULAR,
     // fontSize: SMALL,
     color: Colors.HEADER_GRAY,
-    backgroundColor: Colors.secundaryColor,
+    backgroundColor: Colors.SECUNDARY,
   },
   container: {
     flexDirection: "row",

@@ -1,8 +1,15 @@
 import LoginScreen from '~/Screens/Auth/LoginScreen';
-
-import ListCategories from '~/Screens/Categories/ListCategoriesScreen';
+import ListSubCategoriesScreen from '~/Screens/Subcategories/ListSubcategoriesScreen';
+import CreateSubcategoryScreen from '~/Screens/Subcategories/CreateSubcategoryScreen';
+import CreateCategoryScreen from '~/Screens/Categories/CreateCategoryScreen';
+import EditCategoryScreen from '~/Screens/Categories/EditCategoryScreen';
+import CreateExpenseScreen from '~/Screens/Expenses/CreateExpenseScreen';
 
 export default {
   LoginScreen,
-  ListCategories
+  ListSubCategoriesScreen,
+  CreateSubcategoryScreen,
+  CreateCategoryScreen,
+  EditCategoryScreen,
+  CreateExpenseScreen
 }

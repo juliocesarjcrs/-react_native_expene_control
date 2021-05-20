@@ -20,7 +20,6 @@ function MyStack() {
     try {
       const jsonValue = await AsyncStorage.getItem('user')
       const user = jsonValue != null ? JSON.parse(jsonValue) : null;
-      console.log('user', user);
       if(user && user.id){
         const {data} = await getUser(user.id)
         dispatch(setUserAction(data.user));
@@ -33,12 +32,12 @@ function MyStack() {
 
   return (
     <NavigationContainer>
-    <Stack.Navigator>
-    {
-      auth ?  <Stack.Screen name={'MainStack'} component={MainStackNavigator} />  :
-          <Stack.Screen name={'AuthStack'} component={AuthStackNavigator} />
-    }
-    </Stack.Navigator>
+      <Stack.Navigator>
+      {
+        auth ?  <Stack.Screen name={'MainStack'} component={MainStackNavigator} />  :
+            <Stack.Screen name={'AuthStack'} component={AuthStackNavigator} />
+      }
+      </Stack.Navigator>
     </NavigationContainer>
   );
 }

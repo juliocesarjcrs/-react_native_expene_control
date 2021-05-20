@@ -118,8 +118,8 @@ export default function CreateExpenseScreen() {
       <Text>Categoria</Text>
       <Dropdown data={categories} sendDataToParent={sendDataToParent} />
       <Text>Subcategoria</Text>
-      <Dropdown data={subcategories} sendDataToParent={sendDataSubcategory} />
-      {/* { subcategories.length >0 ? <Dropdown data={subcategories} sendDataToParent={sendDataSubcategory} />: null} */}
+      {/* <Dropdown data={subcategories} sendDataToParent={sendDataSubcategory} /> */}
+      { subcategories.length >0 ? <Dropdown data={subcategories} sendDataToParent={sendDataSubcategory} />: null}
       <Controller
         name="cost"
         control={control}

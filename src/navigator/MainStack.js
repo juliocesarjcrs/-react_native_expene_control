@@ -1,7 +1,7 @@
 
 import React from "react";
 import { createStackNavigator } from "@react-navigation/stack";
-import { createDrawerNavigator } from '@react-navigation/drawer';
+// import { createDrawerNavigator } from '@react-navigation/drawer';
 
 import Routes from './stackRoutes'
 
@@ -11,6 +11,7 @@ function MainStackNavigator() {
 
   return (
     <MainStack.Navigator>
+      <MainStack.Screen name="main" component={Routes.MainScreen} />
       <MainStack.Screen name="subcategoriesList" component={Routes.ListSubCategoriesScreen} />
       <MainStack.Screen name="createExpense" component={Routes.CreateExpenseScreen} />
       <MainStack.Screen name="createSubcategory" component={Routes.CreateSubcategoryScreen} />

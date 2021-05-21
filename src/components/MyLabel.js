@@ -1,14 +1,16 @@
 import React from "react";
 import {StyleSheet, Text} from 'react-native';
 import { MEDIUM } from "~/styles/fonts";
-const Label = ({ data }) => {
+const MyLabel = ({ data }) => {
   return (
     <Text style={styles.text}>{data}</Text>
   );
 };
 const styles = StyleSheet.create({
   text: {
-    fontSize: MEDIUM
+    marginTop:20,
+    fontSize: MEDIUM,
+    // backgroundColor:"green"
   },
 });
-export default Label;
+export default MyLabel;

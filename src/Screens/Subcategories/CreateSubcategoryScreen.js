@@ -13,6 +13,7 @@ import MyButton from "~/components/MyButton";
 import { MEDIUM } from "../../styles/fonts";
 import FlatListItem from "./components/FlatListItem";
 import {Keyboard} from 'react-native';
+import Title from '../../components/Title';
 
 export default function CreateSubcategoryScreen({ route, navigation }) {
   const idCategory = route.params.idCategory;
@@ -56,15 +57,14 @@ export default function CreateSubcategoryScreen({ route, navigation }) {
 
   return (
     <View style={styles.container}>
-      <Text>Subcategorias</Text>
-      <StatusBar style="auto" />
+      <Title data="Crear subcategoria"/>
       <Controller
         name="name"
         control={control}
         rules={{
           required: {
             value: true,
-            message: "El nombre de la categoria es obligatorio",
+            message: "El nombre de la subcategoria es obligatorio",
           },
           maxLength: {
             value: 200,

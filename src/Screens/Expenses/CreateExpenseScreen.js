@@ -13,6 +13,8 @@ import MyButton from "../../components/MyButton";
 import { NumberFormat } from "../../utils/Helpers";
 import { Errors } from "../../utils/Errors";
 import FlatListData from "../../components/card/FlatListData";
+import ErrorText from '../../components/ErrorText';
+import MyLabel from '../../components/MyLabel';
 
 const DropdownIn = ({ data, sendDataToParent }) => {
   return (
@@ -45,21 +47,25 @@ export default function CreateExpenseScreen() {
     });
     setCategories(dataFormat);
   };
-  const sendDataToParent = (index) => {
+  const sendFromSelectCategory = (index) => {
     setExpenses([]);
     setSubcategoryId(null);
     setSumCost(0);
     const indexArray = categories.findIndex((e) => {
       return e.value === index;
     });
+    console.log('sendFromSelectCategory', index, indexArray);
     if (indexArray >= 0) {
       const dataFormat = formatOptionsSubcategories(
         categories[indexArray].subcategories
       );
+    console.log('dataFormat', dataFormat.length);
       setSubcategories(dataFormat);
     }
   };
   const sendDataSubcategory = (index) => {
+    console.log('sendDataSubcategory', index);
+
     if (!index || index == NaN) {
       console.log('sendDataSubcategory-3--', index);
       setExpenses([]);
@@ -116,10 +122,11 @@ export default function CreateExpenseScreen() {
   return (
     <View>
       <Text>Categoria</Text>
-      <DropdownIn data={categories} sendDataToParent={sendDataToParent} />
+      <DropdownIn data={categories} sendDataToParent={sendFromSelectCategory} />
       <Text>Subcategoria</Text>
       {/* <DropdownIn data={subcategories} sendDataToParent={sendDataSubcategory} /> */}
       { subcategories.length >0 ? <DropdownIn data={subcategories} sendDataToParent={sendDataSubcategory} />: null}
+      {!subcategoryId?<ErrorText msg="Necesita una  subcategoria"/>: null} 
       <Controller
         name="cost"
         control={control}
@@ -142,7 +149,8 @@ export default function CreateExpenseScreen() {
           />
         )}
         defaultValue=""
-      />
+        />
+        <MyLabel data="Comentario"></MyLabel>
          <Controller
         name="commentary"
         control={control}
@@ -165,7 +173,6 @@ export default function CreateExpenseScreen() {
         )}
         defaultValue=""
       />
-       {!subcategoryId?<Text>Necesita una  subcategoria</Text>: null} 
       <MyButton title="Guardar" onPress={handleSubmit(onSubmit)}></MyButton>
       <Text>Total:{NumberFormat(sumCost)}</Text>
       <FlatListData expenses={expenses} updateList={updateList}></FlatListData>

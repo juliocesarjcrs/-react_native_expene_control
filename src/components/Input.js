@@ -4,7 +4,7 @@ import { Icon } from "react-native-elements";
 import {Colors, Fonts } from "~/styles";
 
 export default function Input({
-  style = { marginTop: 35 },
+  style = { marginTop: 20 },
   focusVal = true,
   ...props
 }) {
@@ -38,7 +38,7 @@ export default function Input({
       )}
          {props.errorText && (
            <View style={{
-             paddingTop: props.secure ? 5:30
+             paddingTop: props.secure ? 5:20,
            }}>
              <Text style={styles.errorText}>{props.errorText}</Text>
 
@@ -54,8 +54,8 @@ const styles = StyleSheet.create({
     // fontFamily: INTER_SEMIBOLD,
     // fontSize: SMALL,
     color: Colors.HEADER_GRAY,
-    backgroundColor: "white",
-    borderColor: Colors.GREEN_BLUE,
+    backgroundColor: "gray",
+    borderColor: Colors.PRIMARY,
     borderWidth: 1,
   },
   textInput: {
@@ -64,12 +64,13 @@ const styles = StyleSheet.create({
     paddingLeft: 15,
     // fontFamily: INTER_REGULAR,
     width: 290,
+    backgroundColor: "white",
   },
   notFocused: {
     // fontFamily: INTER_REGULAR,
     // fontSize: SMALL,
     color: Colors.HEADER_GRAY,
-    backgroundColor: Colors.SECUNDARY,
+    backgroundColor: Colors.PRIMARY,
   },
   container: {
     flexDirection: "row",
@@ -79,20 +80,18 @@ const styles = StyleSheet.create({
     padding: 3,
     alignItems: "center",
     height: 50,
-    flexWrap: "wrap"
+    flexWrap: "wrap",
+    backgroundColor: 'red'
+
   },
   inputStyle: {
     flex: 1,
   },
   errorText:{
-    // flex: 1,
+    flex: 1,
     width: 312,
     color: Colors.RED,
     fontSize: Fonts.SMALL,
   }
 });
-// const styles = StyleSheet.create({
-//   input: {
-//     ...Inputs.base,
-//   },
-// });
+

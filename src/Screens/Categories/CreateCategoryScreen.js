@@ -10,9 +10,9 @@ import FlatListItem from "./components/FlatListItem";
 import Dropdown from "../../components/Dropdown";
 import { Icon } from "react-native-elements";
 import Title from '../../components/Title';
-import Label from '../../components/Label';
 import {Keyboard} from 'react-native';
 import {Errors} from '../../utils/Errors';
+import MyLabel from '../../components/MyLabel';
 
 export default function CreateCategoryScreen({ navigation }) {
   // iconos
@@ -97,7 +97,7 @@ export default function CreateCategoryScreen({ navigation }) {
         )}
         defaultValue=""
       />
-      <Label data="Categorias de los Iconos" />
+      <MyLabel data="Categorias de los Iconos" />
       <Dropdown data={iconCategories} sendDataToParent={changeIcons} />
       <Text>
         SubCategorias de los Iconos{" "}

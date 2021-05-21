@@ -8,7 +8,7 @@ function AuthStackNavigator() {
 
   return (
     <AuthStack.Navigator>
-      <AuthStack.Screen name="categoriesList" component={Routes.LoginScreen} />
+      <AuthStack.Screen name="login" component={Routes.LoginScreen} />
     </AuthStack.Navigator>
   );
 }

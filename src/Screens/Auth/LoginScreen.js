@@ -1,31 +1,31 @@
 import React, { useState } from "react";
-import { View, StyleSheet, TextInput, Button } from "react-native";
-import { Inputs, Colors } from "~/styles";
+import { View, StyleSheet } from "react-native";
 import Input from "../../components/Input";
 import { useForm, Controller } from "react-hook-form";
 import { login } from "~/services/auth";
 import { useDispatch } from "react-redux";
 import { setUserAction, setAuthAction } from "~/actions/authActions";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import MyButton from "~/components/MyButton";
 
 export default function LoginScreen({ navigation }) {
-  const EMAIL_REGEX = /^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
+  const EMAIL_REGEX =
+    /^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
 
   const { handleSubmit, control, errors } = useForm();
   const dispatch = useDispatch();
   const onSubmit = async (payload) => {
     try {
-
       const { data } = await login(payload);
 
       await AsyncStorage.setItem("access_token", data.access_token);
 
-      const jsonValue = JSON.stringify(data.user)
+      const jsonValue = JSON.stringify(data.user);
       await AsyncStorage.setItem("user", jsonValue);
       dispatch(setUserAction(data.user));
       dispatch(setAuthAction(true));
 
-      navigation.navigate('categoriesList')
+      // navigation.navigate("categoriesList");
     } catch (error) {
       dispatch(setUserAction(null));
       dispatch(setAuthAction(false));
@@ -78,12 +78,7 @@ export default function LoginScreen({ navigation }) {
           marginTop: 35,
         }}
       >
-        <Button
-          onPress={handleSubmit(onSubmit)}
-          title="iniciar sesión2"
-          color={Colors.PRIMARY}
-          accessibilityLabel="Learn more about this purple button"
-        />
+        <MyButton title="iniciar sesión" onPress={handleSubmit(onSubmit)} />
       </View>
     </View>
   );
@@ -95,5 +90,5 @@ const styles = StyleSheet.create({
     backgroundColor: "#fff",
     alignItems: "center",
     justifyContent: "center",
-  }
+  },
 });

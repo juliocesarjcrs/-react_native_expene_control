@@ -9,6 +9,10 @@ import IconsJson from "../../../assets/IconsJson/material-icons-list-json.json";
 import FlatListItem from "./components/FlatListItem";
 import Dropdown from "../../components/Dropdown";
 import { Icon } from "react-native-elements";
+import Title from '../../components/Title';
+import Label from '../../components/Label';
+import {Keyboard} from 'react-native';
+import {Errors} from '../../utils/Errors';
 
 export default function CreateCategoryScreen({ navigation }) {
   // iconos
@@ -20,8 +24,9 @@ export default function CreateCategoryScreen({ navigation }) {
     return { label: e.name, value: idx };
   });
   const changeIcons = (key) => {
+    console.log('key', key, typeof key);
     let tempIconSubcategories = IconsJson.categories[parseInt(key)].icons;
-    formatIconSubcategories = tempIconSubcategories.map((e, idx) => {
+    const formatIconSubcategories = tempIconSubcategories.map((e, idx) => {
       return { label: e.name, value: e.ligature };
     });
     setIconSubcategories(formatIconSubcategories);
@@ -32,7 +37,9 @@ export default function CreateCategoryScreen({ navigation }) {
   };
   // console.log('iconCategories', iconCategories);
   const [categories, setCategories] = useState([]);
-  const { handleSubmit, control, errors } = useForm();
+  const { handleSubmit, control, errors, reset } = useForm({
+    defaultValues: { name: "" }
+  });
 
   useEffect(() => {
     fetchData();
@@ -42,8 +49,8 @@ export default function CreateCategoryScreen({ navigation }) {
     try {
       const { data } = await getCategories();
       setCategories(data);
-    } catch (e) {
-      console.error(e);
+    } catch (error) {
+      Errors(error)
     }
   };
   const onSubmit = async (payload) => {
@@ -52,8 +59,10 @@ export default function CreateCategoryScreen({ navigation }) {
       const { data } = await CreateCategory(dataTransform);
       const newCategories = [...categories, data];
       setCategories(newCategories);
+      reset()
+      Keyboard.dismiss()
     } catch (error) {
-      console.error(error);
+      Errors(error)
     }
   };
   const updateList = () => {
@@ -62,7 +71,7 @@ export default function CreateCategoryScreen({ navigation }) {
 
   return (
     <View style={styles.container}>
-      <Text>Categorias</Text>
+      <Title data="Crear Categorias" />
       <StatusBar style="auto" />
       <Controller
         name="name"
@@ -88,7 +97,7 @@ export default function CreateCategoryScreen({ navigation }) {
         )}
         defaultValue=""
       />
-      <Text>CategoriasIconos</Text>
+      <Label data="Categorias de los Iconos" />
       <Dropdown data={iconCategories} sendDataToParent={changeIcons} />
       <Text>
         SubCategorias de los Iconos{" "}
@@ -109,8 +118,8 @@ export default function CreateCategoryScreen({ navigation }) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#fff",
+    backgroundColor: "white",
     alignItems: "center",
-    justifyContent: "center",
+    // justifyContent: "center",
   },
 });

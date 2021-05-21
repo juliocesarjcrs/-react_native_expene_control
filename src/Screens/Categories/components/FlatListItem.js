@@ -1,14 +1,13 @@
-import React from 'react';
-import { Alert, FlatList, StyleSheet, Text, View } from 'react-native';
+import React from "react";
+import { Alert, FlatList, StyleSheet, Text, View } from "react-native";
 import { Icon } from "react-native-elements";
-import {MEDIUM} from '~/styles/fonts';
-import {PRIMARY, ICON} from '~/styles/colors';
-import {deleteCategory} from '../../../services/categories';
-import {Errors} from '../../../utils/Errors';
+import { MEDIUM } from "~/styles/fonts";
+import { PRIMARY, ICON } from "~/styles/colors";
+import { deleteCategory } from "../../../services/categories";
+import { Errors } from "../../../utils/Errors";
 
-const FlatListItem = ({data, updateList}) =>{
-  const listItem =  ({item})=>{
-
+const FlatListItem = ({ data, updateList }) => {
+  const listItem = ({ item }) => {
     const deleteItem = async (idExpense) => {
       try {
         const { data } = await deleteCategory(idExpense);
@@ -19,34 +18,35 @@ const FlatListItem = ({data, updateList}) =>{
     };
 
     const createTwoButtonAlert = (id) =>
-    Alert.alert("Eliminar", "¿Desea eliminar esta categoria?", [
-      {
-        text: "Cancel",
-        onPress: () => console.log("Cancel Pressed"),
-        style: "cancel",
-      },
-      { text: "OK", onPress: () => deleteItem(id) },
-    ]);
-    return ( <View style={styles.header}>
-      <Icon
-      type="material-community"
-      style={{ paddingRight: 15 }}
-      name={ item.icon? item.icon: "home"}
-      size={20}
-      color={ICON}
-    />
-    <Text style={styles.title}>{item.name}</Text>
-    <Icon
-            type="material-community"
-            style={{ paddingRight: 15 }}
-            name="trash-can"
-            size={20}
-            color={ICON}
-            onPress={() => createTwoButtonAlert(item.id)}
-          />
-  </View>)
-  
-  }
+      Alert.alert("Eliminar", "¿Desea eliminar esta categoria?", [
+        {
+          text: "Cancel",
+          onPress: () => console.log("Cancel Pressed"),
+          style: "cancel",
+        },
+        { text: "OK", onPress: () => deleteItem(id) },
+      ]);
+    return (
+      <View style={styles.header}>
+        <Icon
+          type="material-community"
+          style={{ paddingRight: 15 }}
+          name={item.icon ? item.icon : "home"}
+          size={20}
+          color={ICON}
+        />
+        <Text style={styles.title}>{item.name}</Text>
+        <Icon
+          type="material-community"
+          style={{ paddingRight: 15 }}
+          name="trash-can"
+          size={20}
+          color={ICON}
+          onPress={() => createTwoButtonAlert(item.id)}
+        />
+      </View>
+    );
+  };
   const styles = StyleSheet.create({
     header: {
       display: "flex",
@@ -54,13 +54,12 @@ const FlatListItem = ({data, updateList}) =>{
       justifyContent: "space-between",
       width: 300,
       backgroundColor: PRIMARY,
-      padding: 5
+      padding: 5,
     },
     title: {
       fontSize: MEDIUM,
-      color: 'white',
-      padding: 2
-  
+      color: "white",
+      padding: 2,
     },
     item: {
       padding: 10,
@@ -68,12 +67,13 @@ const FlatListItem = ({data, updateList}) =>{
       height: 44,
     },
   });
-  
-  
-  return(   <FlatList
-    keyExtractor={item => item.id.toString()}
-    data={data}
-    renderItem={listItem}>
-  </FlatList>)
-}
+
+  return (
+    <FlatList
+      keyExtractor={(item) => item.id.toString()}
+      data={data}
+      renderItem={listItem}
+    />
+  );
+};
 export default FlatListItem;

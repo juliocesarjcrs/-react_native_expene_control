@@ -14,7 +14,7 @@ import { NumberFormat } from "../../utils/Helpers";
 import { Errors } from "../../utils/Errors";
 import FlatListData from "../../components/card/FlatListData";
 
-const Dropdown = ({ data, sendDataToParent }) => {
+const DropdownIn = ({ data, sendDataToParent }) => {
   return (
     <RNPickerSelect
       useNativeAndroidPickerStyle={false}
@@ -116,10 +116,10 @@ export default function CreateExpenseScreen() {
   return (
     <View>
       <Text>Categoria</Text>
-      <Dropdown data={categories} sendDataToParent={sendDataToParent} />
+      <DropdownIn data={categories} sendDataToParent={sendDataToParent} />
       <Text>Subcategoria</Text>
-      {/* <Dropdown data={subcategories} sendDataToParent={sendDataSubcategory} /> */}
-      { subcategories.length >0 ? <Dropdown data={subcategories} sendDataToParent={sendDataSubcategory} />: null}
+      {/* <DropdownIn data={subcategories} sendDataToParent={sendDataSubcategory} /> */}
+      { subcategories.length >0 ? <DropdownIn data={subcategories} sendDataToParent={sendDataSubcategory} />: null}
       <Controller
         name="cost"
         control={control}

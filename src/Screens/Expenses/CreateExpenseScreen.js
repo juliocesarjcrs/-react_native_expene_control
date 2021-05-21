@@ -1,10 +1,12 @@
 import React, { useEffect, useState } from "react";
-import { Keyboard, Text, ToastAndroid } from "react-native";
+import { Keyboard, StyleSheet, Text, ToastAndroid } from "react-native";
 import { useForm, Controller } from "react-hook-form";
 import RNPickerSelect from "react-native-picker-select";
 import { View } from "react-native";
 import { getCategoryWithSubcategories } from "../../services/categories";
-import Input from "../../components/Input";
+import { Input } from "react-native-elements";
+import MyLoading from '~/components/loading/MyLoading';
+
 import {
   CreateExpense,
   getExpensesFromSubcategory,
@@ -14,7 +16,7 @@ import { NumberFormat } from "../../utils/Helpers";
 import { Errors } from "../../utils/Errors";
 import FlatListData from "../../components/card/FlatListData";
 import ErrorText from '../../components/ErrorText';
-import MyLabel from '../../components/MyLabel';
+import ShowToast from '../../components/toast/ShowToast';
 
 const DropdownIn = ({ data, sendDataToParent }) => {
   return (
@@ -36,6 +38,7 @@ export default function CreateExpenseScreen() {
   const [subcategoryId, setSubcategoryId] = useState(null);
   const [sumCost, setSumCost] = useState(0);
   const [expenses, setExpenses] = useState([]);
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     fetchCategories();
@@ -101,26 +104,26 @@ export default function CreateExpenseScreen() {
         return;
       }
       const dataSend = { ...payload, subcategoryId };
+      setLoading(true)
       const { data } = await CreateExpense(dataSend);
+      setLoading(false)
       const newExpense = [data, ...expenses];
       setExpenses(newExpense);
       calculateTotal(newExpense);
-      // showToast()
+      ShowToast()
       reset();
       Keyboard.dismiss();
     } catch (error) {
+      setLoading(false)
       Errors(error);
     }
-  };
-  const showToast = () => {
-    ToastAndroid.show("A pikachu appeared nearby !", ToastAndroid.SHORT);
   };
   const updateList = () => {
     fetchExpenses(subcategoryId);
   };
 
   return (
-    <View>
+    <View style={styles.container} >
       <Text>Categoria</Text>
       <DropdownIn data={categories} sendDataToParent={sendFromSelectCategory} />
       <Text>Subcategoria</Text>
@@ -140,17 +143,17 @@ export default function CreateExpenseScreen() {
         }}
         render={({ onChange, value }) => (
           <Input
-            error={errors.cost}
-            errorText={errors?.cost?.message}
-            onChangeText={(text) => onChange(text)}
-            value={value}
-            placeholder="Ej: 20.000"
-            keyboardType="numeric"
-          />
+          label="Gasto"
+          value={value}
+          placeholder="Ej: 20000"
+          onChangeText={(text) => onChange(text)}
+          errorStyle={{ color: "red" }}
+          errorMessage={errors?.cost?.message}
+          keyboardType="numeric"
+        />
         )}
         defaultValue=""
         />
-        <MyLabel data="Comentario"></MyLabel>
          <Controller
         name="commentary"
         control={control}
@@ -162,20 +165,32 @@ export default function CreateExpenseScreen() {
         }}
         render={({ onChange, value }) => (
           <Input
-            error={errors.commentary}
-            errorText={errors?.commentary?.message}
-            onChangeText={(text) => onChange(text)}
-            value={value}
-            placeholder="Ej:  Compra de una camisa"
-            multiline
-            numberOfLines={4}
-          />
+          label="Comentario"
+          value={value}
+          placeholder="Ej: Compra de una camisa"
+          onChangeText={(text) => onChange(text)}
+          multiline
+          numberOfLines={2}
+          errorStyle={{ color: "red" }}
+          errorMessage={errors?.commentary?.message}
+        />
         )}
         defaultValue=""
       />
+      {loading ? <MyLoading />:
       <MyButton title="Guardar" onPress={handleSubmit(onSubmit)}></MyButton>
+      }
+       
       <Text>Total:{NumberFormat(sumCost)}</Text>
       <FlatListData expenses={expenses} updateList={updateList}></FlatListData>
     </View>
   );
 }
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: "#fff",
+    // alignItems: "center",
+    // justifyContent: "center",
+  },
+});

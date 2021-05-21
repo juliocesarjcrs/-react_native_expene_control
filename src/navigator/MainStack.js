@@ -11,12 +11,12 @@ function MainStackNavigator() {
 
   return (
     <MainStack.Navigator>
-      <MainStack.Screen name="main" component={Routes.MainScreen} />
+      <MainStack.Screen name="main" component={Routes.MainScreen} options={{ title: 'Resumen gastos del mes' }}/>
       <MainStack.Screen name="subcategoriesList" component={Routes.ListSubCategoriesScreen} />
-      <MainStack.Screen name="createExpense" component={Routes.CreateExpenseScreen} />
-      <MainStack.Screen name="createSubcategory" component={Routes.CreateSubcategoryScreen} />
-      <MainStack.Screen name="createCategory" component={Routes.CreateCategoryScreen} />
-      <MainStack.Screen name="editCategory" component={Routes.EditCategoryScreen} />
+      <MainStack.Screen name="createExpense" component={Routes.CreateExpenseScreen} options={{ title: 'Ingresar gasto' }}  />
+      <MainStack.Screen name="createSubcategory" component={Routes.CreateSubcategoryScreen} options={{ title: 'Crear Subcategoría' }}/>
+      <MainStack.Screen name="createCategory" component={Routes.CreateCategoryScreen} options={{ title: 'Crear Categoría' }} />
+      <MainStack.Screen name="editCategory" component={Routes.EditCategoryScreen} options={{ title: 'Editar Categoría' }}/>
 
 
     </MainStack.Navigator>

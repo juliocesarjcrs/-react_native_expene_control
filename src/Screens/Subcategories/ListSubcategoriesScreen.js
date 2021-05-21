@@ -1,4 +1,3 @@
-import { StatusBar } from "expo-status-bar";
 import React, { useEffect, useState } from "react";
 import { SectionList, StyleSheet, Text, View } from "react-native";
 import { getCategoryWithSubcategories } from "../../services/categories";
@@ -112,16 +111,6 @@ const styles = StyleSheet.create({
     backgroundColor: "#fff",
     alignItems: "center",
     justifyContent: "space-around",
-  },
-  item: {
-    backgroundColor: "#f9c2ff",
-    padding: 10,
-    marginVertical: 4,
-  },
-  containerList: {
-    flex: 1,
-    paddingTop: StatusBar.currentHeight,
-    marginHorizontal: 16,
   },
   header: {
     display: "flex",

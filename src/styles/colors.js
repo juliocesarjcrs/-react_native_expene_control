@@ -9,6 +9,8 @@ export const PRIMARY_LIST = '#a7c4f7'
 //
 export const ICON = '#dcdada'
 
+export const LOADING = '#00ff00'
+
 
 
 

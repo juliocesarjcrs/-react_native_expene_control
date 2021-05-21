@@ -34,7 +34,7 @@ function MyStack() {
     <NavigationContainer>
       <Stack.Navigator>
       {
-        auth ?  <Stack.Screen name={'MainStack'} component={MainStackNavigator} />  :
+        auth ?  <Stack.Screen name={'MainStack'} component={MainStackNavigator} options={{ title: 'App Control gastos' }} />  :
             <Stack.Screen name={'AuthStack'} component={AuthStackNavigator} />
       }
       </Stack.Navigator>

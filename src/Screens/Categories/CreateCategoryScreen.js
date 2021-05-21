@@ -2,7 +2,6 @@ import { StatusBar } from "expo-status-bar";
 import React, { useEffect, useState } from "react";
 import { StyleSheet, Text, View } from "react-native";
 import { useForm, Controller } from "react-hook-form";
-import Input from "../../components/Input";
 import { CreateCategory, getCategories } from "../../services/categories";
 import MyButton from "~/components/MyButton";
 import IconsJson from "../../../assets/IconsJson/material-icons-list-json.json";
@@ -13,6 +12,8 @@ import Title from '../../components/Title';
 import {Keyboard} from 'react-native';
 import {Errors} from '../../utils/Errors';
 import MyLabel from '../../components/MyLabel';
+import { Input } from "react-native-elements";
+import MyLoading from '~/components/loading/MyLoading';
 
 export default function CreateCategoryScreen({ navigation }) {
   // iconos
@@ -72,7 +73,6 @@ export default function CreateCategoryScreen({ navigation }) {
   return (
     <View style={styles.container}>
       <Title data="Crear Categorias" />
-      <StatusBar style="auto" />
       <Controller
         name="name"
         control={control}
@@ -88,12 +88,13 @@ export default function CreateCategoryScreen({ navigation }) {
         }}
         render={({ onChange, value }) => (
           <Input
-            error={errors.name}
-            errorText={errors?.name?.message}
-            onChangeText={(text) => onChange(text)}
-            value={value}
-            placeholder="Nombre categoria"
-          />
+          label="Categoria"
+          value={value}
+          placeholder="Ej: Vivienda"
+          onChangeText={(text) => onChange(text)}
+          errorStyle={{ color: "red" }}
+          errorMessage={errors?.name?.message}
+        />
         )}
         defaultValue=""
       />
@@ -119,7 +120,7 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: "white",
-    alignItems: "center",
+    // alignItems: "center",
     // justifyContent: "center",
   },
 });

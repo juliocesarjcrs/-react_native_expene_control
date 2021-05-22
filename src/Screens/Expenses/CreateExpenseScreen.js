@@ -31,7 +31,7 @@ const DropdownIn = ({ data, sendDataToParent }) => {
 
 export default function CreateExpenseScreen() {
   const { handleSubmit, control, errors, reset } = useForm({
-    defaultValues: { cost: "0", commentary: null },
+    defaultValues: { cost: "0", commentary: "" },
   });
   const [categories, setCategories] = useState([]);
   const [subcategories, setSubcategories] = useState([]);
@@ -103,7 +103,9 @@ export default function CreateExpenseScreen() {
       if (!subcategoryId) {
         return;
       }
+      console.log('commentary', payload);
       const dataSend = { ...payload, subcategoryId };
+      console.log('dataSend', dataSend);
       setLoading(true)
       const { data } = await CreateExpense(dataSend);
       setLoading(false)

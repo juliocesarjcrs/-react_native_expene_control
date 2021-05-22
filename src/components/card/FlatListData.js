@@ -7,6 +7,7 @@ import { ICON, PRIMARY } from "../../styles/colors";
 import { MEDIUM, SMALL } from "../../styles/fonts";
 import { Errors } from "../../utils/Errors";
 import { DateFormat, NumberFormat } from "../../utils/Helpers";
+import { Tooltip } from 'react-native-elements';
 
 const FlatListData = ({ expenses, updateList }) => {
   const ListExpense = ({ item }) => {
@@ -29,7 +30,9 @@ const FlatListData = ({ expenses, updateList }) => {
       ]);
     return (
       <View style={styles.header}>
+        <Tooltip popover={<Text>{item.commentary}</Text>}>
         <Text style={styles.title}>{NumberFormat(item.cost)}</Text>
+        </Tooltip>
         <Text style={styles.item}>{DateFormat(item.createdAt)}</Text>
         <Icon
           type="material-community"

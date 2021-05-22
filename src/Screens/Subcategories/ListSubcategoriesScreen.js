@@ -8,8 +8,8 @@ import MyButton from "~/components/MyButton";
 import ListSubcategory from "../../components/card/ListSubcategory";
 import { MEDIUM } from "../../styles/fonts";
 import { NumberFormat } from "../../utils/Helpers";
-import {Errors} from '../../utils/Errors';
-import {ICON} from '../../styles/colors';
+import { Errors } from "../../utils/Errors";
+import { ICON } from "../../styles/colors";
 
 export default function ListSubcategoriesScreen({ navigation }) {
   const [categories, setCategories] = useState([]);
@@ -17,15 +17,15 @@ export default function ListSubcategoriesScreen({ navigation }) {
 
   useEffect(() => {
     fetchData();
-    const unsubscribe = navigation.addListener('focus', () => {
-      console.log('Screen is focused');
+    const unsubscribe = navigation.addListener("focus", () => {
+      console.log("Screen is focused");
       fetchData();
     });
   }, []);
 
   const fetchData = async () => {
     try {
-      console.log('fetchData List main');
+      console.log("fetchData List main");
       const { data } = await getCategoryWithSubcategories();
       const mapping = data.data.map((element) => {
         return { ...element, data: element.subcategories };
@@ -33,7 +33,7 @@ export default function ListSubcategoriesScreen({ navigation }) {
       setCategories(mapping);
       setTotal(data.total);
     } catch (e) {
-      Errors(e)
+      Errors(e);
     }
   };
   const sendCreateCategoryScreen = (id) => {
@@ -49,23 +49,18 @@ export default function ListSubcategoriesScreen({ navigation }) {
   const sendcreateExpenseScreen = () => {
     navigation.navigate("createExpense");
   };
-  const HeaderComponent = ()=>{
-   return  (<View>
-      <Text>Total gastos: {NumberFormat(total)}</Text>
-      <MyButton onPress={sendcreateExpenseScreen} title="ingresar gasto" />
-    </View>)
-  }
 
   return (
     <View style={styles.container}>
-      <Text>Categorias</Text>
-      <MyButton onPress={sendCategoryScreen} title="Crear Categoria" />
-      <SafeAreaView>
+       <View style={styles.fixToText}>
+          <MyButton onPress={sendcreateExpenseScreen} title="ingresar gasto" />
+          <MyButton onPress={sendCategoryScreen} title="Crear Categoria" />
+      </View>
+      <Text>Total gastos: {NumberFormat(total)}</Text>
         <SectionList
           sections={categories}
           keyExtractor={(item, index) => item + index}
           renderItem={({ item }) => <ListSubcategory item={item} />}
-          ListHeaderComponent={HeaderComponent}
           renderSectionHeader={({ section: { name, id, icon, total } }) => (
             <View style={styles.header}>
               <Icon
@@ -75,12 +70,12 @@ export default function ListSubcategoriesScreen({ navigation }) {
                 size={20}
                 color={ICON}
               />
-              <View style={styles.containerRow}> 
+              <View style={styles.containerRow}>
                 <Text style={styles.title}>{name}</Text>
                 <Text style={styles.title}>{NumberFormat(total)}</Text>
               </View>
               <View>
-              <Icon
+                <Icon
                   type="material-community"
                   style={{ paddingLeft: 15 }}
                   name={"pencil-outline"}
@@ -100,7 +95,6 @@ export default function ListSubcategoriesScreen({ navigation }) {
             </View>
           )}
         />
-      </SafeAreaView>
     </View>
   );
 }
@@ -112,13 +106,17 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "space-around",
   },
+  fixToText: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+  },
   header: {
     display: "flex",
     flexDirection: "row",
     justifyContent: "space-between",
     width: 300,
     backgroundColor: Colors.PRIMARY_BLACK,
-     paddingVertical: 5
+    paddingVertical: 5,
   },
   title: {
     fontSize: MEDIUM,
@@ -128,13 +126,13 @@ const styles = StyleSheet.create({
   containerRow: {
     display: "flex",
     alignItems: "center",
-    marginRight: 5
+    marginRight: 5,
   },
   containerIcon: {
     marginTop: 10,
-    marginLeft:5,
+    marginLeft: 5,
     // backgroundColor: "white",
     display: "flex",
-    alignItems: "center"
-  }
+    alignItems: "center",
+  },
 });

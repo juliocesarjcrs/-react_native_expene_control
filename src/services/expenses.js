@@ -4,6 +4,7 @@ export const getExpenses = async () => {
   return  axios.get(PREFIX);
 }
 export const CreateExpense= async (payload) => {
+  console.log('AXIOS', payload);
   return  axios.post(PREFIX, payload);
 }
 export const getExpensesFromSubcategory = async (idSubcategory) => {

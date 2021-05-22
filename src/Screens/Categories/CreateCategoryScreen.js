@@ -8,12 +8,13 @@ import IconsJson from "../../../assets/IconsJson/material-icons-list-json.json";
 import FlatListItem from "./components/FlatListItem";
 import Dropdown from "../../components/Dropdown";
 import { Icon } from "react-native-elements";
-import Title from '../../components/Title';
-import {Keyboard} from 'react-native';
-import {Errors} from '../../utils/Errors';
-import MyLabel from '../../components/MyLabel';
+import Title from "../../components/Title";
+import { Keyboard } from "react-native";
+import { Errors } from "../../utils/Errors";
+import MyLabel from "../../components/MyLabel";
 import { Input } from "react-native-elements";
-import MyLoading from '~/components/loading/MyLoading';
+import MyLoading from "~/components/loading/MyLoading";
+import ShowToast from "../../components/toast/ShowToast";
 
 export default function CreateCategoryScreen({ navigation }) {
   // iconos
@@ -25,7 +26,7 @@ export default function CreateCategoryScreen({ navigation }) {
     return { label: e.name, value: idx };
   });
   const changeIcons = (key) => {
-    console.log('key', key, typeof key);
+    console.log("key", key, typeof key);
     let tempIconSubcategories = IconsJson.categories[parseInt(key)].icons;
     const formatIconSubcategories = tempIconSubcategories.map((e, idx) => {
       return { label: e.name, value: e.ligature };
@@ -39,8 +40,9 @@ export default function CreateCategoryScreen({ navigation }) {
   // console.log('iconCategories', iconCategories);
   const [categories, setCategories] = useState([]);
   const { handleSubmit, control, errors, reset } = useForm({
-    defaultValues: { name: "" }
+    defaultValues: { name: "" },
   });
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     fetchData();
@@ -51,19 +53,23 @@ export default function CreateCategoryScreen({ navigation }) {
       const { data } = await getCategories();
       setCategories(data);
     } catch (error) {
-      Errors(error)
+      Errors(error);
     }
   };
   const onSubmit = async (payload) => {
     try {
       const dataTransform = { ...payload, icon };
+      setLoading(true);
       const { data } = await CreateCategory(dataTransform);
+      setLoading(false);
       const newCategories = [...categories, data];
       setCategories(newCategories);
-      reset()
-      Keyboard.dismiss()
+      reset();
+      Keyboard.dismiss();
+      ShowToast();
     } catch (error) {
-      Errors(error)
+      setLoading(false);
+      Errors(error);
     }
   };
   const updateList = () => {
@@ -72,7 +78,7 @@ export default function CreateCategoryScreen({ navigation }) {
 
   return (
     <View style={styles.container}>
-      <Title data="Crear Categorias" />
+      {/* <Title data="Crear Categorias" /> */}
       <Controller
         name="name"
         control={control}
@@ -88,13 +94,13 @@ export default function CreateCategoryScreen({ navigation }) {
         }}
         render={({ onChange, value }) => (
           <Input
-          label="Categoria"
-          value={value}
-          placeholder="Ej: Vivienda"
-          onChangeText={(text) => onChange(text)}
-          errorStyle={{ color: "red" }}
-          errorMessage={errors?.name?.message}
-        />
+            label="Categoria"
+            value={value}
+            placeholder="Ej: Vivienda"
+            onChangeText={(text) => onChange(text)}
+            errorStyle={{ color: "red" }}
+            errorMessage={errors?.name?.message}
+          />
         )}
         defaultValue=""
       />
@@ -110,7 +116,11 @@ export default function CreateCategoryScreen({ navigation }) {
         />
       </Text>
       <Dropdown data={iconSubcategories} sendDataToParent={selectIcon} />
-      <MyButton onPress={handleSubmit(onSubmit)} title="Guardar" />
+      {loading ? (
+        <MyLoading />
+      ) : (
+        <MyButton onPress={handleSubmit(onSubmit)} title="Guardar" />
+      )}
       <FlatListItem data={categories} updateList={updateList} />
     </View>
   );

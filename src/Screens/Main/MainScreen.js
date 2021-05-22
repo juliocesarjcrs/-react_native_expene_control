@@ -34,7 +34,7 @@ export default function MainScreen({ navigation }) {
     navigation.navigate("createExpense");
   };
   const sendDetailsExpenseScreen = () => {
-    navigation.navigate("subcategoriesList");
+    navigation.navigate("sumary");
   };
   const LogOut = async () => {
     await AsyncStorage.removeItem("access_token");

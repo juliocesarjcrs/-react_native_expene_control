@@ -1,10 +1,8 @@
-import { StatusBar } from "expo-status-bar";
 import React, { useEffect, useState } from "react";
-import { FlatList } from "react-native";
-import { Button, StyleSheet, Text, Alert, View } from "react-native";
-import { Colors, Inputs } from "~/styles";
+import {  StyleSheet, View } from "react-native";
+import {  Inputs } from "~/styles";
 import { useForm, Controller } from "react-hook-form";
-import Input from "../../components/Input";
+import { Input } from "react-native-elements";
 import {
   CreateSubcategory,
   getSubategoriesByCategory,
@@ -14,6 +12,8 @@ import { MEDIUM } from "../../styles/fonts";
 import FlatListItem from "./components/FlatListItem";
 import {Keyboard} from 'react-native';
 import Title from '../../components/Title';
+import MyLoading from "~/components/loading/MyLoading";
+import {Errors} from '../../utils/Errors';
 
 export default function CreateSubcategoryScreen({ route, navigation }) {
   const idCategory = route.params.idCategory;
@@ -21,6 +21,7 @@ export default function CreateSubcategoryScreen({ route, navigation }) {
   const { handleSubmit, control, errors, reset } = useForm({
     defaultValues: { name: null },
   });
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     fetchData();
@@ -33,22 +34,25 @@ export default function CreateSubcategoryScreen({ route, navigation }) {
       }
       const { data } = await getSubategoriesByCategory(idCategory);
       setSubcategories(data);
-    } catch (e) {
-      console.error(e);
+    } catch (error) {
+      Errors(error)
     }
   };
   const create = async (payload) => {
     try {
+      setLoading(true)
       const { data } = await CreateSubcategory({
         ...payload,
         categoryId: idCategory,
       });
+      setLoading(false)
       const newSubcategories = [...subcategories, data];
       setSubcategories(newSubcategories);
       Keyboard.dismiss()
       reset()
     } catch (error) {
-      console.error(e);
+      setLoading(false)
+      Errors(error)
     }
   };
   const updateList = () => {
@@ -57,7 +61,6 @@ export default function CreateSubcategoryScreen({ route, navigation }) {
 
   return (
     <View style={styles.container}>
-      <Title data="Crear subcategoria"/>
       <Controller
         name="name"
         control={control}
@@ -73,16 +76,21 @@ export default function CreateSubcategoryScreen({ route, navigation }) {
         }}
         render={({ onChange, value }) => (
           <Input
-            error={errors.name}
-            errorText={errors?.name?.message}
-            onChangeText={(text) => onChange(text)}
-            value={value}
-            placeholder="Nombre subcategoria"
-          />
+          label="Subcategoria"
+          value={value}
+          placeholder="Ej: Recibo de agua"
+          onChangeText={(text) => onChange(text)}
+          errorStyle={{ color: "red" }}
+          errorMessage={errors?.name?.message}
+        />
         )}
         defaultValue=""
       />
-      <MyButton onPress={handleSubmit(create)} title="Guardar" />
+       {loading ? (
+        <MyLoading />
+      ) : (
+        <MyButton onPress={handleSubmit(create)} title="Guardar" />
+      )}
       <FlatListItem data={subcategories} updateList={updateList} />
     </View>
   );
@@ -94,9 +102,6 @@ const styles = StyleSheet.create({
     backgroundColor: "#fff",
     alignItems: "center",
     justifyContent: "center",
-  },
-  input: {
-    ...Inputs.base,
   },
   item: {
     padding: 10,

@@ -52,9 +52,10 @@ const FlatListItem = ({ data, updateList }) => {
       display: "flex",
       flexDirection: "row",
       justifyContent: "space-between",
-      width: 300,
+      width: 340,
       backgroundColor: PRIMARY,
-      padding: 5,
+      paddingHorizontal: 8,
+      padding: 4
     },
     title: {
       fontSize: MEDIUM,

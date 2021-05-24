@@ -12,8 +12,8 @@ function MainStackNavigator() {
   return (
     <MainStack.Navigator>
 
-      <MainStack.Screen name="sumary" component={Routes.SumaryExpenseScreen} options={{ title: 'Resumen' }}/>
       <MainStack.Screen name="main" component={Routes.MainScreen} options={{ title: 'Resumen gastos del mes' }}/>
+      <MainStack.Screen name="sumary" component={Routes.SumaryExpenseScreen} options={{ title: 'Resumen' }}/>
       {/* <MainStack.Screen name="subcategoriesList" component={Routes.ListSubCategoriesScreen} options={{ title: 'Detalle de  gastos' }} /> */}
       <MainStack.Screen name="createExpense" component={Routes.CreateExpenseScreen} options={{ title: 'Ingresar gasto' }}  />
       <MainStack.Screen name="createSubcategory" component={Routes.CreateSubcategoryScreen} options={{ title: 'Crear Subcategoría' }}/>

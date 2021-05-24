@@ -47,8 +47,8 @@ export default function MainScreen({ navigation }) {
         <MyButton onPress={sendcreateExpenseScreen} title="Ingresar gasto" />
         <MyButton onPress={LogOut} title="Cerrar sesión" />
       </View>
-      <MyPieChart data={categories} />
       <MyButton onPress={sendDetailsExpenseScreen} title="Detallar gastos" />
+      <MyPieChart data={categories} />
     </View>
   );
 }

@@ -41,14 +41,48 @@ export default function CreateExpenseScreen() {
   const [sumCost, setSumCost] = useState(0);
   const [expenses, setExpenses] = useState([]);
   const [loading, setLoading] = useState(false);
-  // const [date, setDate] = useState("2016-05-15");
+
+    //   DATE pIKER ---------------  ///////////////
+
+    const [date, setDate] = useState(new Date());
+    const today = DateFormat(new Date(), "DD MMM YYYY");
+    const [dateString, setDateString] = useState(today);
+    const [mode, setMode] = useState("date");
+    const [show, setShow] = useState(false);
+  
+    const onChange = (event, selectedDate) => {
+      // console.log('onChange', selectedDate, date);
+      const currentDate = selectedDate || date;
+  
+      setShow(Platform.OS === "ios");
+      let newDate = DateFormat(currentDate, "DD MMM YYYY");
+      setDateString(newDate);
+      console.log("currentDate", currentDate, newDate);
+      setDate(currentDate);
+    };
+  
+    const showMode = (currentMode) => {
+      setShow(true);
+      setMode(currentMode);
+    };
+  
+    const showDatepicker = () => {
+      showMode("date");
+    };
+  
+    const showTimepicker = () => {
+      showMode("time");
+    };
+    //////////////////////////////////////////////
 
   useEffect(() => {
     fetchCategories();
   }, []);
   const fetchCategories = async () => {
     const { data } = await getCategoryWithSubcategories();
-    const dataFormat = data.data.map((e) => {
+    const filter = data.data.filter(f => f.subcategories.length > 0)
+
+    const dataFormat = filter.map((e) => {
       return { label: e.name, value: e.id, subcategories: e.subcategories };
     });
     setCategories(dataFormat);
@@ -106,7 +140,7 @@ export default function CreateExpenseScreen() {
         return;
       }
       console.log("commentary", payload);
-      const dataSend = { ...payload, subcategoryId };
+      const dataSend = { ...payload, subcategoryId, date: DateFormat(date, 'YYYY-MM-DD') };
       console.log("dataSend", dataSend);
       setLoading(true);
       const { data } = await CreateExpense(dataSend);
@@ -125,49 +159,19 @@ export default function CreateExpenseScreen() {
   const updateList = () => {
     fetchExpenses(subcategoryId);
   };
-  //   DATE pIKER ---------------  ///////////////
 
-  const [date, setDate] = useState(new Date());
-  const today = DateFormat(new Date(), "DD MMM YYYY");
-  const [dateString, setDateString] = useState(today);
-  const [mode, setMode] = useState("date");
-  const [show, setShow] = useState(false);
-
-  const onChange = (event, selectedDate) => {
-    // console.log('onChange', selectedDate, date);
-    const currentDate = selectedDate || date;
-
-    setShow(Platform.OS === "ios");
-    let newDate = DateFormat(currentDate, "DD MMM YYYY");
-    setDateString(newDate);
-    console.log("currentDate", currentDate, newDate);
-    setDate(currentDate);
-  };
-
-  const showMode = (currentMode) => {
-    setShow(true);
-    setMode(currentMode);
-  };
-
-  const showDatepicker = () => {
-    showMode("date");
-  };
-
-  const showTimepicker = () => {
-    showMode("time");
-  };
   return (
     <View style={styles.container}>
       <Text>Categoria</Text>
       <DropdownIn data={categories} sendDataToParent={sendFromSelectCategory} />
       <Text>Subcategoria</Text>
-      {/* <DropdownIn data={subcategories} sendDataToParent={sendDataSubcategory} /> */}
-      {subcategories.length > 0 ? (
+      <DropdownIn data={subcategories} sendDataToParent={sendDataSubcategory} />
+      {/* {subcategories.length > 0 ? (
         <DropdownIn
           data={subcategories}
           sendDataToParent={sendDataSubcategory}
         />
-      ) : null}
+      ) : null} */}
       {!subcategoryId ? <ErrorText msg="Necesita una  subcategoria" /> : null}
       <View
         style={{

@@ -7,6 +7,9 @@ import { AsignColor } from "../../utils/Helpers";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useDispatch } from "react-redux";
 import { setAuthAction } from "~/actions/authActions";
+import MyMonthPicker from '../../components/datePicker/MyMonthPicker';
+
+
 
 export default function MainScreen({ navigation }) {
   const dispatch = useDispatch();
@@ -43,6 +46,7 @@ export default function MainScreen({ navigation }) {
   };
   return (
     <View>
+      <MyMonthPicker/>
       <View style={styles.fixToText}>
         <MyButton onPress={sendcreateExpenseScreen} title="Ingresar gasto" />
         <MyButton onPress={LogOut} title="Cerrar sesión" />

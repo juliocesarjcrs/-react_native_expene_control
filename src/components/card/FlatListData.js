@@ -33,7 +33,7 @@ const FlatListData = ({ expenses, updateList }) => {
         <Tooltip popover={<Text>{item.commentary}</Text>}>
         <Text style={styles.title}>{NumberFormat(item.cost)}</Text>
         </Tooltip>
-        <Text style={styles.item}>{DateFormat(item.date)}</Text>
+        <Text style={styles.item}>{DateFormat(item.date,'DD MMM')} {DateFormat(item.createdAt,'hh:mm a')}</Text>
         <Icon
           type="material-community"
           style={{ paddingRight: 15 }}

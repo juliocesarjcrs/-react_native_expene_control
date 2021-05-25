@@ -20,6 +20,7 @@ import ShowToast from "../../components/toast/ShowToast";
 import DateTimePicker from "@react-native-community/datetimepicker";
 import { Button, Icon } from "react-native-elements";
 import { useSelector } from "react-redux";
+import {SECUNDARY} from '../../styles/colors';
 const DropdownIn = ({ data, sendDataToParent }) => {
   return (
     <RNPickerSelect
@@ -34,7 +35,7 @@ const DropdownIn = ({ data, sendDataToParent }) => {
 export default function CreateExpenseScreen() {
   const month = useSelector((state) => state.date.month);
   const { handleSubmit, control, errors, reset } = useForm({
-    defaultValues: { cost: "0", commentary: "" },
+    defaultValues: { cost: "", commentary: "" },
   });
   const [categories, setCategories] = useState([]);
   const [subcategories, setSubcategories] = useState([]);
@@ -46,7 +47,7 @@ export default function CreateExpenseScreen() {
   //   DATE pIKER ---------------  ///////////////
 
   const [date, setDate] = useState(new Date());
-  const today = DateFormat(new Date(), "YYYY MM DD");
+  const today = DateFormat(new Date(), "YYYY MMM DD");
   const [dateString, setDateString] = useState(today);
   const [mode, setMode] = useState("date");
   const [show, setShow] = useState(false);
@@ -56,7 +57,7 @@ export default function CreateExpenseScreen() {
     const currentDate = selectedDate || date;
 
     setShow(Platform.OS === "ios");
-    let newDate = DateFormat(currentDate, "YYYY MM DD");
+    let newDate = DateFormat(currentDate, "YYYY MMM DD");
     setDateString(newDate);
     setDate(currentDate);
   };
@@ -99,13 +100,10 @@ export default function CreateExpenseScreen() {
       const dataFormat = formatOptionsSubcategories(
         categories[indexArray].subcategories
       );
-      console.log("dataFormat", dataFormat.length);
       setSubcategories(dataFormat);
     }
   };
   const sendDataSubcategory = (index) => {
-    console.log("sendDataSubcategory", index);
-
     if (!index || index == NaN) {
       console.log("sendDataSubcategory-3--", index);
       setExpenses([]);
@@ -139,7 +137,6 @@ export default function CreateExpenseScreen() {
       if (!subcategoryId) {
         return;
       }
-      console.log("commentary", payload);
       const dataSend = {
         ...payload,
         subcategoryId,
@@ -170,25 +167,45 @@ export default function CreateExpenseScreen() {
       <DropdownIn data={categories} sendDataToParent={sendFromSelectCategory} />
       <Text>Subcategoria</Text>
       <DropdownIn data={subcategories} sendDataToParent={sendDataSubcategory} />
-      {/* {subcategories.length > 0 ? (
-        <DropdownIn
-          data={subcategories}
-          sendDataToParent={sendDataSubcategory}
-        />
-      ) : null} */}
       {!subcategoryId ? <ErrorText msg="Necesita una  subcategoria" /> : null}
-      <View
+      <Controller
+            name="cost"
+            control={control}
+            rules={{
+              required: { value: true, message: "El costo es obligatorio" },
+              min: { value: 1, message: "El minimó valor aceptado es 1" },
+              max: {
+                value: 99999999,
+                message: "El costo no puede superar el valor de 99.999.999 ",
+              },
+            }}
+            render={({ onChange, value }) => (
+              <Input
+                label="Gasto"
+                value={value}
+                placeholder="Ej: 20000"
+                onChangeText={(text) => onChange(text)}
+                errorStyle={{ color: "red" }}
+                errorMessage={errors?.cost?.message}
+                keyboardType="numeric"
+              />
+            )}
+            defaultValue=""
+          />
+
+      {/* <View
         style={{
           flex: 1,
           flexDirection: "row",
           // flexWrap: "wrap",
-          alignItems: "flex-start", // if you want to fill rows left to right
+          // alignItems: "flex-start", // if you want to fill rows left to right
           marginBottom: 25,
         }}
       >
         <View
           style={{
             width: "60%",
+            backgroundColor:"red"
           }}
         >
           <Controller
@@ -233,7 +250,7 @@ export default function CreateExpenseScreen() {
           />
           <Text style={styles.textDate}>{dateString}</Text>
         </View>
-      </View>
+      </View> */}
       <Controller
         name="commentary"
         control={control}
@@ -257,6 +274,22 @@ export default function CreateExpenseScreen() {
         )}
         defaultValue=""
       />
+                       <View style={styles.containerDate}>
+          <Button
+            icon={
+              <Icon
+                type="material-community"
+                name="calendar"
+                size={25}
+                color="white"
+              />
+            }
+            iconLeft
+            title="  Fecha "
+            onPress={showDatepicker}
+          />
+          <Text style={styles.textDate}>{dateString}</Text>
+        </View>
 
       {show && (
         <DateTimePicker
@@ -268,10 +301,15 @@ export default function CreateExpenseScreen() {
           onChange={onChange}
         />
       )}
-      {loading ? (
+      {/* {loading ? (
         <MyLoading />
       ) : (
         <MyButton title="Guardar" onPress={handleSubmit(onSubmit)}></MyButton>
+      )} */}
+         {loading ? (
+        <MyLoading />
+      ) : (
+        <Button title="Guardar" buttonStyle={{backgroundColor: SECUNDARY}} onPress={handleSubmit(onSubmit)}/>
       )}
 
       <Text>Total:{NumberFormat(sumCost)}</Text>
@@ -287,18 +325,18 @@ const styles = StyleSheet.create({
     // justifyContent: "center",
   },
   containerDate: {
-    // display: "flex",
-    flex: 1,
-    // flexDirection: "row",
+    display: "flex",
+    // flex: 1,
+    flexDirection: "row",
     // alignItems: "center",
-    backgroundColor: "green",
-    width: "40%",
+    // backgroundColor: "green",
+    // width: "40%",
   },
   textDate: {
+    // width:"50%",
     paddingVertical: 10,
-    paddingLeft: 10,
+    paddingHorizontal:10,
     color: "white",
-    // paddingHorizontal: 10,
     backgroundColor: "#c5c5c5",
   },
 });

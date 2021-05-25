@@ -7,8 +7,10 @@ export const CreateExpense= async (payload) => {
   console.log('AXIOS', payload);
   return  axios.post(PREFIX, payload);
 }
-export const getExpensesFromSubcategory = async (idSubcategory) => {
-  return  axios.get(`${PREFIX}/subcategory/${idSubcategory}`);
+export const getExpensesFromSubcategory = async (idSubcategory, month) => {
+  return  axios.get(`${PREFIX}/subcategory/${idSubcategory}`,{params: {
+    date: month
+  }});
 }
 export const deleteExpense = async (idExpense) => {
   return  axios.delete(`${PREFIX}/${idExpense}`);

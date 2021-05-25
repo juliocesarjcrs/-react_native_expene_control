@@ -6,8 +6,10 @@ import { NumberFormat } from "../../utils/Helpers";
 import { BIG } from "../../styles/fonts";
 import MyAcordeon from "./components/MyAcordeon";
 import MyButton from "~/components/MyButton";
+import { useSelector } from "react-redux";
 
 export default function SumaryExpenseScreen({ navigation }) {
+  const month = useSelector((state) => state.date.month);
   const [categories, setCategories] = useState([]);
   const [total, setTotal] = useState(0);
 
@@ -19,7 +21,7 @@ export default function SumaryExpenseScreen({ navigation }) {
   }, []);
   const fetchData = async () => {
     try {
-      const { data } = await getCategoryWithSubcategories();
+      const { data } = await getCategoryWithSubcategories(month);
       const mapping = data.data.map((element) => {
         return { ...element, data: element.subcategories };
       });

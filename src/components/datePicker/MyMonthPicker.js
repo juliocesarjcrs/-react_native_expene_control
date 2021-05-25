@@ -3,24 +3,24 @@ import { View, SafeAreaView, Text, TouchableOpacity } from 'react-native';
 import {DateFormat} from '../../utils/Helpers';
 import { Button, Icon } from "react-native-elements";
 import DateTimePicker from "@react-native-community/datetimepicker";
-
+import { useDispatch, useSelector } from "react-redux";
+import {setMonthAction} from '../../actions/DateActions';
 
 const MyMonthPicker = () =>{
+  const dispatch = useDispatch();
+  const month = useSelector((state) => state.date.month);
   const [date, setDate] = useState(new Date());
-  const today = DateFormat(new Date(), "DD MMM YYYY");
-  const [dateString, setDateString] = useState(today);
   const [mode, setMode] = useState("date");
   const [show, setShow] = useState(false);
 
   const onChange = (event, selectedDate) => {
-    // console.log('onChange', selectedDate, date);
     const currentDate = selectedDate || date;
-
     setShow(Platform.OS === "ios");
     let newDate = DateFormat(currentDate, "DD MMM YYYY");
-    setDateString(newDate);
-    console.log("currentDate", currentDate, newDate);
+
     setDate(currentDate);
+    const newMonth = DateFormat(currentDate, 'YYYY-MM-DD')
+    dispatch(setMonthAction(newMonth));
   };
 
   const showMode = (currentMode) => {
@@ -38,7 +38,8 @@ const MyMonthPicker = () =>{
 
   return (
     <SafeAreaView>
-      <Text>{DateFormat(date, "MMMM-YYYY")}</Text>
+      <Text>{DateFormat(month, "MMMM-YYYY")}</Text>
+      {/* <Text>{month}</Text> */}
       <Button
             icon={
               <Icon

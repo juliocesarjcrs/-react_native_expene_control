@@ -19,7 +19,7 @@ import ErrorText from "../../components/ErrorText";
 import ShowToast from "../../components/toast/ShowToast";
 import DateTimePicker from "@react-native-community/datetimepicker";
 import { Button, Icon } from "react-native-elements";
-
+import { useSelector } from "react-redux";
 const DropdownIn = ({ data, sendDataToParent }) => {
   return (
     <RNPickerSelect
@@ -32,6 +32,7 @@ const DropdownIn = ({ data, sendDataToParent }) => {
 };
 
 export default function CreateExpenseScreen() {
+  const month = useSelector((state) => state.date.month);
   const { handleSubmit, control, errors, reset } = useForm({
     defaultValues: { cost: "0", commentary: "" },
   });
@@ -42,45 +43,44 @@ export default function CreateExpenseScreen() {
   const [expenses, setExpenses] = useState([]);
   const [loading, setLoading] = useState(false);
 
-    //   DATE pIKER ---------------  ///////////////
+  //   DATE pIKER ---------------  ///////////////
 
-    const [date, setDate] = useState(new Date());
-    const today = DateFormat(new Date(), "DD MMM YYYY");
-    const [dateString, setDateString] = useState(today);
-    const [mode, setMode] = useState("date");
-    const [show, setShow] = useState(false);
-  
-    const onChange = (event, selectedDate) => {
-      // console.log('onChange', selectedDate, date);
-      const currentDate = selectedDate || date;
-  
-      setShow(Platform.OS === "ios");
-      let newDate = DateFormat(currentDate, "DD MMM YYYY");
-      setDateString(newDate);
-      console.log("currentDate", currentDate, newDate);
-      setDate(currentDate);
-    };
-  
-    const showMode = (currentMode) => {
-      setShow(true);
-      setMode(currentMode);
-    };
-  
-    const showDatepicker = () => {
-      showMode("date");
-    };
-  
-    const showTimepicker = () => {
-      showMode("time");
-    };
-    //////////////////////////////////////////////
+  const [date, setDate] = useState(new Date());
+  const today = DateFormat(new Date(), "YYYY MM DD");
+  const [dateString, setDateString] = useState(today);
+  const [mode, setMode] = useState("date");
+  const [show, setShow] = useState(false);
+
+  const onChange = (event, selectedDate) => {
+    // console.log('onChange', selectedDate, date);
+    const currentDate = selectedDate || date;
+
+    setShow(Platform.OS === "ios");
+    let newDate = DateFormat(currentDate, "YYYY MM DD");
+    setDateString(newDate);
+    setDate(currentDate);
+  };
+
+  const showMode = (currentMode) => {
+    setShow(true);
+    setMode(currentMode);
+  };
+
+  const showDatepicker = () => {
+    showMode("date");
+  };
+
+  const showTimepicker = () => {
+    showMode("time");
+  };
+  //////////////////////////////////////////////
 
   useEffect(() => {
     fetchCategories();
   }, []);
   const fetchCategories = async () => {
-    const { data } = await getCategoryWithSubcategories();
-    const filter = data.data.filter(f => f.subcategories.length > 0)
+    const { data } = await getCategoryWithSubcategories(month);
+    const filter = data.data.filter((f) => f.subcategories.length > 0);
 
     const dataFormat = filter.map((e) => {
       return { label: e.name, value: e.id, subcategories: e.subcategories };
@@ -119,7 +119,7 @@ export default function CreateExpenseScreen() {
     }
   };
   const fetchExpenses = async (idSubcategory) => {
-    const { data } = await getExpensesFromSubcategory(idSubcategory);
+    const { data } = await getExpensesFromSubcategory(idSubcategory, month);
     setExpenses(data);
     calculateTotal(data);
   };
@@ -140,7 +140,11 @@ export default function CreateExpenseScreen() {
         return;
       }
       console.log("commentary", payload);
-      const dataSend = { ...payload, subcategoryId, date: DateFormat(date, 'YYYY-MM-DD') };
+      const dataSend = {
+        ...payload,
+        subcategoryId,
+        date: DateFormat(date, "YYYY-MM-DD"),
+      };
       console.log("dataSend", dataSend);
       setLoading(true);
       const { data } = await CreateExpense(dataSend);
@@ -179,7 +183,7 @@ export default function CreateExpenseScreen() {
           flexDirection: "row",
           // flexWrap: "wrap",
           alignItems: "flex-start", // if you want to fill rows left to right
-          marginBottom: 25
+          marginBottom: 25,
         }}
       >
         <View

@@ -8,10 +8,11 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useDispatch } from "react-redux";
 import { setAuthAction } from "~/actions/authActions";
 import MyMonthPicker from '../../components/datePicker/MyMonthPicker';
-
-
+import { useSelector } from "react-redux";
 
 export default function MainScreen({ navigation }) {
+  const month = useSelector((state) => state.date.month);
+
   const dispatch = useDispatch();
   const [categories, setCategories] = useState([]);
   useEffect(() => {
@@ -21,7 +22,7 @@ export default function MainScreen({ navigation }) {
     });
   }, []);
   const fetchData = async () => {
-    const { data } = await getCategoryWithSubcategories();
+    const { data } = await getCategoryWithSubcategories(month);
     const dataFormat = data.data.map((e, idx) => {
       return {
         name: e.name,

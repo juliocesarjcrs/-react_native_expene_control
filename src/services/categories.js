@@ -12,8 +12,10 @@ export const CreateCategory = async (payload) => {
 export const EditCategory = async (idCategory, payload) => {
   return axios.put(`${PREFIX}/${idCategory}`, payload);
 };
-export const getCategoryWithSubcategories = async () => {
-  return axios.get(`${PREFIX}/subcategories`);
+export const getCategoryWithSubcategories = async (month) => {
+  return axios.get(`${PREFIX}/subcategories`,{params: {
+    date: month
+  }});
 };
 export const deleteCategory = async (idCategory) => {
   return axios.delete(`${PREFIX}/${idCategory}`);

@@ -3,37 +3,51 @@ import { StyleSheet, Text, View } from "react-native";
 import MyPieChart from "../../components/charts/MyPieChart";
 import MyButton from "~/components/MyButton";
 import { getCategoryWithSubcategories } from "../../services/categories";
-import { AsignColor } from "../../utils/Helpers";
+import { AsignColor, NumberFormat } from "../../utils/Helpers";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useDispatch } from "react-redux";
 import { setAuthAction } from "~/actions/authActions";
 import MyMonthPicker from '../../components/datePicker/MyMonthPicker';
 import { useSelector } from "react-redux";
+import {SECUNDARY} from '../../styles/colors';
+import { Button } from "react-native-elements";
+import {BIG} from '../../styles/fonts';
+import {Errors} from '../../utils/Errors';
 
 export default function MainScreen({ navigation }) {
   const month = useSelector((state) => state.date.month);
 
   const dispatch = useDispatch();
   const [categories, setCategories] = useState([]);
+  const [total, setTotal] = useState(0);
+  const [open, setOpen] = useState(false);
   useEffect(() => {
     fetchData();
     const unsubscribe = navigation.addListener("focus", () => {
       fetchData();
     });
-  }, []);
+  }, [month]);
   const fetchData = async () => {
-    const { data } = await getCategoryWithSubcategories(month);
-    const dataFormat = data.data.map((e, idx) => {
-      return {
-        name: e.name,
-        population: e.total,
-        color: AsignColor(idx),
-        legendFontColor: "#7F7F7F",
-        legendFontSize: 15,
-      };
-    });
-    setCategories(dataFormat);
+    try {
+      const { data } = await getCategoryWithSubcategories(month);
+      setTotal(data.total)
+      const dataFormat = data.data.map((e, idx) => {
+        return {
+          name: cutName(e.name),
+          population: e.total,
+          color: AsignColor(idx),
+          legendFontColor: "#7F7F7F",
+          legendFontSize: 15,
+        };
+      });
+      setCategories(dataFormat);
+    } catch (e){
+      Errors(e)
+    }
   };
+  const cutName = (name) =>{
+    return name.length < 12 ? name: name.slice(0,10) + '...'
+  }
   const sendcreateExpenseScreen = () => {
     navigation.navigate("createExpense");
   };
@@ -52,7 +66,8 @@ export default function MainScreen({ navigation }) {
         <MyButton onPress={sendcreateExpenseScreen} title="Ingresar gasto" />
         <MyButton onPress={LogOut} title="Cerrar sesión" />
       </View>
-      <MyButton onPress={sendDetailsExpenseScreen} title="Detallar gastos" />
+      <Button title="Detallar gastos" buttonStyle={{backgroundColor: SECUNDARY}} onPress={sendDetailsExpenseScreen}/>
+      <Text style={ styles.text }>Total: { NumberFormat(total) }</Text>
       <MyPieChart data={categories} />
     </View>
   );
@@ -62,4 +77,10 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     justifyContent: "space-between",
   },
+  text: {
+    textAlign: "center",
+    fontWeight:"bold",
+    fontSize: BIG,
+    marginTop: 5
+  }
 });

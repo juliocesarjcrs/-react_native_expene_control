@@ -1,5 +1,5 @@
 import React, { useState, useCallback } from 'react';
-import { View, SafeAreaView, Text, TouchableOpacity } from 'react-native';
+import { SafeAreaView } from 'react-native';
 import {DateFormat} from '../../utils/Helpers';
 import { Button, Icon } from "react-native-elements";
 import DateTimePicker from "@react-native-community/datetimepicker";
@@ -16,8 +16,6 @@ const MyMonthPicker = () =>{
   const onChange = (event, selectedDate) => {
     const currentDate = selectedDate || date;
     setShow(Platform.OS === "ios");
-    let newDate = DateFormat(currentDate, "DD MMM YYYY");
-
     setDate(currentDate);
     const newMonth = DateFormat(currentDate, 'YYYY-MM-DD')
     dispatch(setMonthAction(newMonth));
@@ -38,8 +36,6 @@ const MyMonthPicker = () =>{
 
   return (
     <SafeAreaView>
-      <Text>{DateFormat(month, "MMMM-YYYY")}</Text>
-      {/* <Text>{month}</Text> */}
       <Button
             icon={
               <Icon
@@ -50,7 +46,7 @@ const MyMonthPicker = () =>{
               />
             }
             iconLeft
-            title="  Mes "
+            title={` Mes: ${DateFormat(month, "MMMM YYYY")}`}
             onPress={showMode}
           />
      {show && (

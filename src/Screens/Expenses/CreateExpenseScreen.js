@@ -11,7 +11,6 @@ import {
   CreateExpense,
   getExpensesFromSubcategory,
 } from "../../services/expenses";
-import MyButton from "../../components/MyButton";
 import { NumberFormat, DateFormat } from "../../utils/Helpers";
 import { Errors } from "../../utils/Errors";
 import FlatListData from "../../components/card/FlatListData";
@@ -21,16 +20,8 @@ import DateTimePicker from "@react-native-community/datetimepicker";
 import { Button, Icon } from "react-native-elements";
 import { useSelector } from "react-redux";
 import {SECUNDARY} from '../../styles/colors';
-const DropdownIn = ({ data, sendDataToParent }) => {
-  return (
-    <RNPickerSelect
-      useNativeAndroidPickerStyle={false}
-      placeholder={{}}
-      onValueChange={(value) => sendDataToParent(parseInt(value))}
-      items={data}
-    />
-  );
-};
+
+
 
 export default function CreateExpenseScreen() {
   const month = useSelector((state) => state.date.month);
@@ -95,11 +86,11 @@ export default function CreateExpenseScreen() {
     const indexArray = categories.findIndex((e) => {
       return e.value === index;
     });
-    console.log("sendFromSelectCategory", index, indexArray);
     if (indexArray >= 0) {
       const dataFormat = formatOptionsSubcategories(
         categories[indexArray].subcategories
-      );
+        );
+      console.log("sendFromSelectCategory", index, indexArray, dataFormat);
       setSubcategories(dataFormat);
     }
   };
@@ -142,7 +133,6 @@ export default function CreateExpenseScreen() {
         subcategoryId,
         date: DateFormat(date, "YYYY-MM-DD"),
       };
-      console.log("dataSend", dataSend);
       setLoading(true);
       const { data } = await CreateExpense(dataSend);
       setLoading(false);
@@ -160,7 +150,6 @@ export default function CreateExpenseScreen() {
   const updateList = () => {
     fetchExpenses(subcategoryId);
   };
-
   return (
     <View style={styles.container}>
       <Text>Categoria</Text>
@@ -192,65 +181,6 @@ export default function CreateExpenseScreen() {
             )}
             defaultValue=""
           />
-
-      {/* <View
-        style={{
-          flex: 1,
-          flexDirection: "row",
-          // flexWrap: "wrap",
-          // alignItems: "flex-start", // if you want to fill rows left to right
-          marginBottom: 25,
-        }}
-      >
-        <View
-          style={{
-            width: "60%",
-            backgroundColor:"red"
-          }}
-        >
-          <Controller
-            name="cost"
-            control={control}
-            rules={{
-              required: { value: true, message: "El costo es obligatorio" },
-              min: { value: 1, message: "El minimó valor aceptado es 1" },
-              max: {
-                value: 99999999,
-                message: "El costo no puede superar el valor de 99.999.999 ",
-              },
-            }}
-            render={({ onChange, value }) => (
-              <Input
-                label="Gasto"
-                value={value}
-                placeholder="Ej: 20000"
-                onChangeText={(text) => onChange(text)}
-                errorStyle={{ color: "red" }}
-                errorMessage={errors?.cost?.message}
-                keyboardType="numeric"
-              />
-            )}
-            defaultValue=""
-          />
-        </View>
-
-        <View style={styles.containerDate}>
-          <Button
-            icon={
-              <Icon
-                type="material-community"
-                name="calendar"
-                size={25}
-                color="white"
-              />
-            }
-            iconLeft
-            title="  Fecha "
-            onPress={showDatepicker}
-          />
-          <Text style={styles.textDate}>{dateString}</Text>
-        </View>
-      </View> */}
       <Controller
         name="commentary"
         control={control}
@@ -301,11 +231,6 @@ export default function CreateExpenseScreen() {
           onChange={onChange}
         />
       )}
-      {/* {loading ? (
-        <MyLoading />
-      ) : (
-        <MyButton title="Guardar" onPress={handleSubmit(onSubmit)}></MyButton>
-      )} */}
          {loading ? (
         <MyLoading />
       ) : (
@@ -340,3 +265,13 @@ const styles = StyleSheet.create({
     backgroundColor: "#c5c5c5",
   },
 });
+const DropdownIn = ({ data, sendDataToParent }) => {
+  return (
+    <RNPickerSelect
+      useNativeAndroidPickerStyle={false}
+      placeholder={{}}
+      onValueChange={(value) => sendDataToParent(parseInt(value))}
+      items={data}
+    />
+  );
+};

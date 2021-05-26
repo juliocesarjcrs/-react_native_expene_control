@@ -16,7 +16,7 @@ export const DateFormat = (date, format = 'DD MMM hh:mm a') => {
 export const AsignColor = (index) =>{
 
   const leng = colorPalette.length
-  if(index <= leng){
+  if(index < leng){
       return colorPalette[index]
   }
   return '#AEA3CD'

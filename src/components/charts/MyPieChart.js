@@ -1,12 +1,12 @@
 import React from "react";
 
-import {Dimensions, StyleSheet, Text} from 'react-native';
+import { Dimensions } from 'react-native';
 import { PieChart } from "react-native-chart-kit";
+
 const MyPieChart = ({data}) => {
 
   return (
     <>
-      <Text style={styles.header}>Categorias</Text>
       <PieChart
         data={data}
         width={Dimensions.get('window').width - 16}
@@ -33,20 +33,5 @@ const MyPieChart = ({data}) => {
     </>
   );
 };
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: 'white',
-    justifyContent: 'center',
-    alignItems: 'center',
-    textAlign: 'center',
-    padding: 10,
-  },
-  header: {
-    textAlign: 'center',
-    fontSize: 18,
-    padding: 16,
-    marginTop: 16,
-  },
-});
+
 export default MyPieChart;

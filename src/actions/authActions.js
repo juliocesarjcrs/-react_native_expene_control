@@ -16,3 +16,11 @@ export const userSignOut = () =>{
     type: "LOGOUT"
   }
 }
+
+export const setLoadingAuthAction = state =>{
+  return {
+    type: "SET_LOADING_AUTH",
+    payload: state
+  }
+}
+

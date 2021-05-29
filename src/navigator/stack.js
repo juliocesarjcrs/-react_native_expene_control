@@ -1,4 +1,5 @@
 import { createStackNavigator } from "@react-navigation/stack";
+import { createDrawerNavigator } from '@react-navigation/drawer';
 import {NavigationContainer} from '@react-navigation/native';
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { getUser } from '~/services/users';
@@ -7,10 +8,10 @@ import { useSelector, useDispatch } from 'react-redux'
 import MainStackNavigator from './MainStack';
 import AuthStackNavigator from './AuthStack';
 import { setUserAction, setAuthAction } from "~/actions/authActions";
+import {setLoadingAuthAction} from '../actions/authActions';
 
 function MyStack() {
   const dispatch = useDispatch();
-  const Stack = createStackNavigator();
   const auth = useSelector((state) => state.auth.auth);
   useEffect(()=>{
     getData()
@@ -18,7 +19,9 @@ function MyStack() {
 
   const getData = async () => {
     try {
+      dispatch(setLoadingAuthAction(true));
       const jsonValue = await AsyncStorage.getItem('user')
+      dispatch(setLoadingAuthAction(false));
       const user = jsonValue != null ? JSON.parse(jsonValue) : null;
       if(user && user.id){
         const {data} = await getUser(user.id)
@@ -26,10 +29,12 @@ function MyStack() {
         dispatch(setAuthAction(true));
       }
     } catch(e) {
+      dispatch(setLoadingAuthAction(false));
       console.log('errorss', e);
     }
   }
-
+  const Stack = createStackNavigator();
+  // const Stack =  createDrawerNavigator();
   return (
     <NavigationContainer>
       <Stack.Navigator>

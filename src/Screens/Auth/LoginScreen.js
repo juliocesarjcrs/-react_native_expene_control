@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { View, StyleSheet, TextInput } from "react-native";
+import { View, StyleSheet, Text } from "react-native";
 import { useForm, Controller } from "react-hook-form";
 import { login } from "~/services/auth";
 import { useDispatch } from "react-redux";
@@ -7,13 +7,17 @@ import { setUserAction, setAuthAction } from "~/actions/authActions";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import MyButton from "~/components/MyButton";
 import { Input } from "react-native-elements";
+import { useSelector } from "react-redux";
+import MyLoading from "~/components/loading/MyLoading";
 
 export default function LoginScreen({ navigation }) {
   const EMAIL_REGEX =
     /^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
 
   const { handleSubmit, control, errors } = useForm();
-
+  const loadingAuth = useSelector((state) => {
+    return state.auth.loadingAuth
+  });
   const dispatch = useDispatch();
   const onSubmit = async (payload) => {
     try {
@@ -31,7 +35,9 @@ export default function LoginScreen({ navigation }) {
   };
   return (
     <View style={styles.container}>
-      <Controller
+      {loadingAuth ? <MyLoading />:
+      <View style={styles.container2}>
+        <Controller
         name="email"
         control={control}
         rules={{
@@ -71,6 +77,8 @@ export default function LoginScreen({ navigation }) {
         defaultValue=""
       />
       <MyButton title="Iniciar sesión" onPress={handleSubmit(onSubmit)} />
+      </View>
+    }
     </View>
   );
 }
@@ -79,7 +87,15 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: "#fff",
-    alignItems: "center",
+    // alignItems: "center",
     justifyContent: "center",
+  },
+  container2: {
+    // flex: 1,
+    // display: "flex",
+    flexDirection: "column",
+    backgroundColor: "#fff",
+    // alignItems: "center",
+    // justifyContent: "center",
   },
 });

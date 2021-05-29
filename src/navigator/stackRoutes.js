@@ -6,6 +6,8 @@ import EditCategoryScreen from '~/Screens/Categories/EditCategoryScreen';
 import CreateExpenseScreen from '~/Screens/Expenses/CreateExpenseScreen';
 import MainScreen from '~/Screens/Main/MainScreen'
 import SumaryExpenseScreen from '~/Screens/Expenses/SumaryExpenseScreen';
+import SumaryIncomesScreen from '~/Screens/Incomes/SumaryIncomesScreen';
+import CreateIncomeScreen from '~/Screens/Incomes/CreateIncomeScreen';
 export default {
   LoginScreen,
   MainScreen,
@@ -14,5 +16,7 @@ export default {
   CreateCategoryScreen,
   EditCategoryScreen,
   CreateExpenseScreen,
-  SumaryExpenseScreen
+  SumaryExpenseScreen,
+  SumaryIncomesScreen,
+  CreateIncomeScreen
 }

@@ -71,7 +71,7 @@ export default function SumaryExpenseScreen({ navigation }) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#fff",
+    backgroundColor: "#fff"
   },
   fixToText: {
     flexDirection: "row",

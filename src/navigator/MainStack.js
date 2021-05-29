@@ -13,6 +13,8 @@ function MainStackNavigator() {
     <MainStack.Navigator>
 
       <MainStack.Screen name="main" component={Routes.MainScreen} options={{ title: 'Resumen gastos del mes' }}/>
+      <MainStack.Screen name="sumaryIncomes" component={Routes.SumaryIncomesScreen} options={{ title: 'Resumen ingresos del mes' }}/>
+      <MainStack.Screen name="createIncome" component={Routes.CreateIncomeScreen} options={{ title: 'Agregar ingreso' }}/>
       <MainStack.Screen name="sumary" component={Routes.SumaryExpenseScreen} options={{ title: 'Resumen' }}/>
       {/* <MainStack.Screen name="subcategoriesList" component={Routes.ListSubCategoriesScreen} options={{ title: 'Detalle de  gastos' }} /> */}
       <MainStack.Screen name="createExpense" component={Routes.CreateExpenseScreen} options={{ title: 'Ingresar gasto' }}  />
@@ -25,3 +27,5 @@ function MainStackNavigator() {
   );
 }
 export default MainStackNavigator;
+
+

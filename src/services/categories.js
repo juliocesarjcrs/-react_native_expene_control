@@ -1,7 +1,7 @@
 import axios from "~/plugins/axiosConfig";
 const PREFIX = "categories";
-export const getCategories = async () => {
-  return axios.get(PREFIX);
+export const getCategories = async (params) => {
+  return axios.get(PREFIX, { params });
 };
 export const getCategory = async (idCategory) => {
   return axios.get(`${PREFIX}/${idCategory}`);
@@ -19,4 +19,9 @@ export const getCategoryWithSubcategories = async (month) => {
 };
 export const deleteCategory = async (idCategory) => {
   return axios.delete(`${PREFIX}/${idCategory}`);
+};
+export const getCategoryTypeIncome = async (month) => {
+  return axios.get(`${PREFIX}/incomes`,{params: {
+    date: month
+  }});
 };

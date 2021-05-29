@@ -15,6 +15,7 @@ import MyLabel from "../../components/MyLabel";
 import { Input } from "react-native-elements";
 import MyLoading from "~/components/loading/MyLoading";
 import ShowToast from "../../components/toast/ShowToast";
+import { RadioButton } from 'react-native-paper';
 
 export default function CreateCategoryScreen({ navigation }) {
   // iconos
@@ -26,13 +27,11 @@ export default function CreateCategoryScreen({ navigation }) {
     return { label: e.name, value: idx };
   });
   const changeIcons = (key) => {
-    console.log("key", key, typeof key);
     let tempIconSubcategories = IconsJson.categories[parseInt(key)].icons;
     const formatIconSubcategories = tempIconSubcategories.map((e, idx) => {
       return { label: e.name, value: e.ligature };
     });
     setIconSubcategories(formatIconSubcategories);
-    console.log("IconSubcategories", iconSubcategories);
   };
   const selectIcon = (value) => {
     setIcon(value);
@@ -43,14 +42,18 @@ export default function CreateCategoryScreen({ navigation }) {
     defaultValues: { name: "" },
   });
   const [loading, setLoading] = useState(false);
+  const [type, setType] = React.useState(0);
 
   useEffect(() => {
     fetchData();
-  }, []);
+  }, [type]);
 
   const fetchData = async () => {
     try {
-      const { data } = await getCategories();
+      const params =  {
+        type
+      }
+      const { data } = await getCategories(params);
       setCategories(data);
     } catch (error) {
       Errors(error);
@@ -58,7 +61,7 @@ export default function CreateCategoryScreen({ navigation }) {
   };
   const onSubmit = async (payload) => {
     try {
-      const dataTransform = { ...payload, icon };
+      const dataTransform = { ...payload, icon, type };
       setLoading(true);
       const { data } = await CreateCategory(dataTransform);
       setLoading(false);
@@ -79,6 +82,16 @@ export default function CreateCategoryScreen({ navigation }) {
   return (
     <View style={styles.container}>
       {/* <Title data="Crear Categorias" /> */}
+      <RadioButton.Group onValueChange={newValue => setType(newValue)} value={type}>
+      <View>
+        <Text>Tipo Gasto</Text>
+        <RadioButton value={0} />
+      </View>
+      <View>
+        <Text>Tipo Ingreso</Text>
+        <RadioButton value={1} />
+      </View>
+    </RadioButton.Group>
       <Controller
         name="name"
         control={control}

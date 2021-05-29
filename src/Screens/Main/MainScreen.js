@@ -10,9 +10,10 @@ import { setAuthAction } from "~/actions/authActions";
 import MyMonthPicker from '../../components/datePicker/MyMonthPicker';
 import { useSelector } from "react-redux";
 import {SECUNDARY} from '../../styles/colors';
-import { Button } from "react-native-elements";
+import { Button, Tab } from "react-native-elements";
 import {BIG} from '../../styles/fonts';
 import {Errors} from '../../utils/Errors';
+import MyTabs from '../../components/tabs/MyTabs';
 
 export default function MainScreen({ navigation }) {
   const month = useSelector((state) => state.date.month);
@@ -61,6 +62,7 @@ export default function MainScreen({ navigation }) {
   };
   return (
     <View>
+     <MyTabs navigation={navigation} />
       <MyMonthPicker/>
       <View style={styles.fixToText}>
         <MyButton onPress={sendcreateExpenseScreen} title="Ingresar gasto" />

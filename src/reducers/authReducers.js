@@ -1,7 +1,8 @@
 
 const initialProps = {
   user: null,
-  auth: false
+  auth: false,
+  loadingAuth: false
 }
 export default function(state= initialProps, action){
   switch (action.type) {
@@ -21,6 +22,11 @@ export default function(state= initialProps, action){
           auth: false,
           user: null
         }
+        case 'SET_LOADING_AUTH':
+          return {
+            ...state,
+            loadingAuth: action.payload
+          }
 
     default:
      return state;

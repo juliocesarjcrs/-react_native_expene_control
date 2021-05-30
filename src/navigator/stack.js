@@ -21,16 +21,17 @@ function MyStack() {
     try {
       dispatch(setLoadingAuthAction(true));
       const jsonValue = await AsyncStorage.getItem('user')
-      dispatch(setLoadingAuthAction(false));
       const user = jsonValue != null ? JSON.parse(jsonValue) : null;
       if(user && user.id){
         const {data} = await getUser(user.id)
+        dispatch(setLoadingAuthAction(false));
         dispatch(setUserAction(data.user));
         dispatch(setAuthAction(true));
       }
+      dispatch(setLoadingAuthAction(false));
     } catch(e) {
       dispatch(setLoadingAuthAction(false));
-      console.log('errorss', e);
+      console.log('errorsA', e);
     }
   }
   const Stack = createStackNavigator();

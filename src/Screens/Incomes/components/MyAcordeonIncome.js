@@ -1,13 +1,15 @@
 import React from "react";
-import { StyleSheet, View } from "react-native";
+import { Alert, StyleSheet, View } from "react-native";
 import { Text } from "react-native";
 import { NumberFormat, DateFormat } from "~/utils/Helpers";
 import { Icon, Divider } from "react-native-elements";
 import { ICON, PRIMARY_BLACK } from "~/styles/colors";
 import {PRIMARY} from '../../../styles/colors';
 import {MEDIUM, SMALL} from '../../../styles/fonts';
+import {deleteIncome} from '../../../services/incomes';
+import {Errors} from '../../../utils/Errors';
 
-const MyAcordeonIncome = ({ data, editCategory }) => {
+const MyAcordeonIncome = ({ data, editCategory, updateList }) => {
   const { id, icon, name } = data;
   const [expanded, setExpanded] = React.useState(false);
   const sendEditCategoryScreen = (id) => {
@@ -15,6 +17,23 @@ const MyAcordeonIncome = ({ data, editCategory }) => {
   };
   const togleExpanded = () => {
     setExpanded(!expanded);
+  };
+  const createTwoButtonAlert = (id) =>
+  Alert.alert("Eliminar", "¿Desea eliminar este ingreso?", [
+    {
+      text: "Cancelar",
+      onPress: () => console.log("Cancel Pressed"),
+      style: "cancel",
+    },
+    { text: "OK", onPress: () => deleteItem(id) },
+  ]);
+  const deleteItem = async (idIncome) => {
+    try {
+      await deleteIncome(idIncome);
+      updateList();
+    } catch (e) {
+      Errors(e);
+    }
   };
 
   return (
@@ -64,6 +83,10 @@ const MyAcordeonIncome = ({ data, editCategory }) => {
             <View style={styles.header}  key={idx2}>
               <Text style={styles.titleDate}>{DateFormat(item.date,'DD MMM')} {DateFormat(item.createdAt,'hh:mm a')}</Text>
               <Text style={styles.item}>{NumberFormat(item.amount)}</Text>
+              <Icon name="trash"
+                type="font-awesome"
+                onPress={() => createTwoButtonAlert(item.id)}
+          />
           </View>
           ))}
       </View>

@@ -31,6 +31,12 @@ export default function SumaryIncomesScreen({ navigation }){
   const sendAddIncomeScrenn = ( ) =>{
     navigation.navigate("createIncome");
   };
+  const sendCreteCategoryScrenn = ( ) =>{
+    navigation.navigate("createCategory");
+  };
+  const updateList = () =>{
+    fetchData();
+  };
 
   return(
     <View style={styles.container}>
@@ -45,10 +51,11 @@ export default function SumaryIncomesScreen({ navigation }){
           key={e.id}
           data={e}
           editCategory={sendEditCategoryScreen}
+          updateList={updateList}
           />
           ))}
       </ScrollView>
-      <FAB title="Nueva caegoría" onPress={sendAddIncomeScrenn} />
+      <FAB title="Nueva caegoría" onPress={sendCreteCategoryScrenn} />
     </View>
   )
 

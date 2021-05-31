@@ -9,3 +9,7 @@ export const getIncomesByDate = async (month) => {
 export const CreateIncome = async (payload) => {
   return  axios.post(PREFIX, payload);
 }
+
+export const deleteIncome= async (idIncome) => {
+  return  axios.delete(`${PREFIX}/${idIncome}`);
+}

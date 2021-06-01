@@ -8,6 +8,7 @@ import MyButton from "~/components/MyButton";
 import { Errors } from "../../utils/Errors";
 import ShowToast from "../../components/toast/ShowToast";
 import MyLoading from "~/components/loading/MyLoading";
+import ModalIcon from '../../components/modal/ModalIcon';
 
 export default function EditCategoryScreen({ route }) {
   const idCategory = route.params.idCategory;
@@ -16,6 +17,7 @@ export default function EditCategoryScreen({ route }) {
   const { handleSubmit, control, errors, reset } = useForm({
     defaultValues: category,
   });
+  const [icon, setIcon] = useState("home");
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
@@ -25,6 +27,8 @@ export default function EditCategoryScreen({ route }) {
   const fetchData = async () => {
     try {
       const { data } = await getCategory(idCategory);
+      const editIcon = data.icon  ? data.icon : 'home';
+      setIcon(editIcon)
       setCategory(data);
       reset(data);
     } catch (e) {
@@ -35,7 +39,8 @@ export default function EditCategoryScreen({ route }) {
   const onSubmit = async (payload) => {
     try {
       setLoading(true);
-      const { data } = await EditCategory(idCategory, payload);
+      const sendPayload =  {...payload, icon}
+      const { data } = await EditCategory(idCategory, sendPayload);
       setLoading(false);
       Keyboard.dismiss();
       ShowToast();
@@ -44,6 +49,9 @@ export default function EditCategoryScreen({ route }) {
       Errors(error);
     }
   };
+  const setIconHandle = (val) =>{
+    setIcon(val)
+  }
 
   return (
     <View style={styles.container}>
@@ -73,7 +81,8 @@ export default function EditCategoryScreen({ route }) {
         )}
         defaultValue=""
       />
-      <Controller
+         <ModalIcon icon={icon} setIcon={setIconHandle} />
+      {/* <Controller
         name="icon"
         control={control}
         rules={{
@@ -93,7 +102,7 @@ export default function EditCategoryScreen({ route }) {
           />
         )}
         defaultValue=""
-      />
+      /> */}
       {loading ? (
         <MyLoading />
       ) : (

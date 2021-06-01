@@ -245,20 +245,13 @@ export default function CreateExpenseScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#fff",
-    // alignItems: "center",
-    // justifyContent: "center",
+    backgroundColor: "#fff"
   },
   containerDate: {
     display: "flex",
-    // flex: 1,
-    flexDirection: "row",
-    // alignItems: "center",
-    // backgroundColor: "green",
-    // width: "40%",
+    flexDirection: "row"
   },
   textDate: {
-    // width:"50%",
     paddingVertical: 10,
     paddingHorizontal:10,
     color: "white",

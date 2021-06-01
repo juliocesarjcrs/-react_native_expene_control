@@ -153,7 +153,7 @@ export default function CreateIncomeScreen({navigation}) {
           <Button
             icon={
               <Icon
-                type="material-community"
+                type="font-awesome"
                 name="calendar"
                 size={25}
                 color="white"
@@ -188,24 +188,17 @@ export default function CreateIncomeScreen({navigation}) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#fff",
-    // alignItems: "center",
-    // justifyContent: "center",
+    backgroundColor: "#fff"
   },
   containerDate: {
     display: "flex",
-    // flex: 1,
-    flexDirection: "row",
-    // alignItems: "center",
-    // backgroundColor: "green",
-    // width: "40%",
+    flexDirection: "row"
   },
   textDate: {
-    // width:"50%",
     paddingVertical: 10,
     paddingHorizontal:10,
     color: "white",
-    backgroundColor: "#c5c5c5",
+    backgroundColor: "#c5c5c5"
   },
 });
 const DropdownIn = ({ data, sendDataToParent }) => {

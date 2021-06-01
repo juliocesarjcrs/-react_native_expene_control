@@ -1,42 +1,21 @@
-import { StatusBar } from "expo-status-bar";
 import React, { useEffect, useState } from "react";
 import { StyleSheet, Text, View } from "react-native";
 import { useForm, Controller } from "react-hook-form";
 import { CreateCategory, getCategories } from "../../services/categories";
 import MyButton from "~/components/MyButton";
-import IconsJson from "../../../assets/IconsJson/material-icons-list-json.json";
 import FlatListItem from "./components/FlatListItem";
-import Dropdown from "../../components/Dropdown";
-import { Icon } from "react-native-elements";
-import Title from "../../components/Title";
+
 import { Keyboard } from "react-native";
 import { Errors } from "../../utils/Errors";
-import MyLabel from "../../components/MyLabel";
 import { Input } from "react-native-elements";
 import MyLoading from "~/components/loading/MyLoading";
 import ShowToast from "../../components/toast/ShowToast";
-import { RadioButton } from 'react-native-paper';
+import { RadioButton } from "react-native-paper";
+
+import ModalIcon from '../../components/modal/ModalIcon';
 
 export default function CreateCategoryScreen({ navigation }) {
-  // iconos
-  const [iconSubcategories, setIconSubcategories] = useState([
-    { label: "home", value: "home" },
-  ]);
   const [icon, setIcon] = useState("home");
-  const iconCategories = IconsJson.categories.map((e, idx) => {
-    return { label: e.name, value: idx };
-  });
-  const changeIcons = (key) => {
-    let tempIconSubcategories = IconsJson.categories[parseInt(key)].icons;
-    const formatIconSubcategories = tempIconSubcategories.map((e, idx) => {
-      return { label: e.name, value: e.ligature };
-    });
-    setIconSubcategories(formatIconSubcategories);
-  };
-  const selectIcon = (value) => {
-    setIcon(value);
-  };
-  // console.log('iconCategories', iconCategories);
   const [categories, setCategories] = useState([]);
   const { handleSubmit, control, errors, reset } = useForm({
     defaultValues: { name: "" },
@@ -50,15 +29,16 @@ export default function CreateCategoryScreen({ navigation }) {
 
   const fetchData = async () => {
     try {
-      const params =  {
-        type
-      }
+      const params = {
+        type,
+      };
       const { data } = await getCategories(params);
       setCategories(data);
     } catch (error) {
       Errors(error);
     }
   };
+
   const onSubmit = async (payload) => {
     try {
       const dataTransform = { ...payload, icon, type };
@@ -79,19 +59,26 @@ export default function CreateCategoryScreen({ navigation }) {
     fetchData();
   };
 
+
+  const setIconHandle = (val) =>{
+    setIcon(val)
+  }
+
   return (
     <View style={styles.container}>
-      {/* <Title data="Crear Categorias" /> */}
-      <RadioButton.Group onValueChange={newValue => setType(newValue)} value={type}>
-      <View>
-        <Text>Tipo Gasto</Text>
-        <RadioButton value={0} />
-      </View>
-      <View>
-        <Text>Tipo Ingreso</Text>
-        <RadioButton value={1} />
-      </View>
-    </RadioButton.Group>
+      <RadioButton.Group
+        onValueChange={(newValue) => setType(newValue)}
+        value={type}
+      >
+        <View>
+          <Text>Tipo Gasto</Text>
+          <RadioButton value={0} />
+        </View>
+        <View>
+          <Text>Tipo Ingreso</Text>
+          <RadioButton value={1} />
+        </View>
+      </RadioButton.Group>
       <Controller
         name="name"
         control={control}
@@ -117,18 +104,7 @@ export default function CreateCategoryScreen({ navigation }) {
         )}
         defaultValue=""
       />
-      <MyLabel data="Categorias de los Iconos" />
-      <Dropdown data={iconCategories} sendDataToParent={changeIcons} />
-      <Text>
-        SubCategorias de los Iconos{" "}
-        <Icon
-          type="material-community"
-          style={{ paddingLeft: 15 }}
-          name={icon}
-          size={20}
-        />
-      </Text>
-      <Dropdown data={iconSubcategories} sendDataToParent={selectIcon} />
+      <ModalIcon icon={icon} setIcon={setIconHandle} />
       {loading ? (
         <MyLoading />
       ) : (
@@ -143,7 +119,5 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: "white",
-    // alignItems: "center",
-    // justifyContent: "center",
   },
 });

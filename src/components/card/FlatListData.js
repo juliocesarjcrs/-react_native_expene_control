@@ -35,7 +35,7 @@ const FlatListData = ({ expenses, updateList }) => {
         </Tooltip>
         <Text style={styles.item}>{DateFormat(item.date,'DD MMM')} {DateFormat(item.createdAt,'hh:mm a')}</Text>
         <Icon
-          type="material-community"
+          type="font-awesome"
           style={{ paddingRight: 15 }}
           name="trash-can"
           size={20}

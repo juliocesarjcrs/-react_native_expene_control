@@ -29,7 +29,7 @@ const FlatListItem = ({ data, updateList }) => {
     return (
       <View style={styles.header}>
         <Icon
-          type="material-community"
+          type="font-awesome"
           style={{ paddingRight: 15 }}
           name={item.icon ? item.icon : "home"}
           size={20}
@@ -37,7 +37,7 @@ const FlatListItem = ({ data, updateList }) => {
         />
         <Text style={styles.title}>{item.name}</Text>
         <Icon
-          type="material-community"
+          type="font-awesome"
           style={{ paddingRight: 15 }}
           name="trash-can"
           size={20}

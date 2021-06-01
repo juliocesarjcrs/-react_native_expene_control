@@ -63,14 +63,14 @@ export default function MainScreen({ navigation }) {
   return (
     <View>
      <MyTabs navigation={navigation} />
-      <MyMonthPicker/>
+     <MyMonthPicker/>
       <View style={styles.fixToText}>
         <MyButton onPress={sendcreateExpenseScreen} title="Ingresar gasto" />
         <MyButton onPress={LogOut} title="Cerrar sesión" />
       </View>
       <Button title="Detallar gastos" buttonStyle={{backgroundColor: SECUNDARY}} onPress={sendDetailsExpenseScreen}/>
       <Text style={ styles.text }>Total: { NumberFormat(total) }</Text>
-      <MyPieChart data={categories} />
+      {total > 0 ? <MyPieChart data={categories} /> : <Text>No se registran gastos en este mes</Text>}
     </View>
   );
 }

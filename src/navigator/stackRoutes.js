@@ -8,6 +8,7 @@ import MainScreen from '~/Screens/Main/MainScreen'
 import SumaryExpenseScreen from '~/Screens/Expenses/SumaryExpenseScreen';
 import SumaryIncomesScreen from '~/Screens/Incomes/SumaryIncomesScreen';
 import CreateIncomeScreen from '~/Screens/Incomes/CreateIncomeScreen';
+import CashFlowScreen from '~/Screens/Balances/CashFlowScreen';
 export default {
   LoginScreen,
   MainScreen,
@@ -18,5 +19,6 @@ export default {
   CreateExpenseScreen,
   SumaryExpenseScreen,
   SumaryIncomesScreen,
-  CreateIncomeScreen
+  CreateIncomeScreen,
+  CashFlowScreen
 }

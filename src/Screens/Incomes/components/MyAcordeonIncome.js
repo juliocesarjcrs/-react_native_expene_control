@@ -2,12 +2,12 @@ import React from "react";
 import { Alert, StyleSheet, View } from "react-native";
 import { Text } from "react-native";
 import { NumberFormat, DateFormat } from "~/utils/Helpers";
-import { Icon, Divider } from "react-native-elements";
+import { Icon, Divider, Tooltip } from "react-native-elements";
 import { ICON, PRIMARY_BLACK } from "~/styles/colors";
-import {PRIMARY} from '../../../styles/colors';
-import {MEDIUM, SMALL} from '../../../styles/fonts';
-import {deleteIncome} from '../../../services/incomes';
-import {Errors} from '../../../utils/Errors';
+import { PRIMARY } from "../../../styles/colors";
+import { MEDIUM, SMALL } from "../../../styles/fonts";
+import { deleteIncome } from "../../../services/incomes";
+import { Errors } from "../../../utils/Errors";
 
 const MyAcordeonIncome = ({ data, editCategory, updateList }) => {
   const { id, icon, name } = data;
@@ -19,14 +19,14 @@ const MyAcordeonIncome = ({ data, editCategory, updateList }) => {
     setExpanded(!expanded);
   };
   const createTwoButtonAlert = (id) =>
-  Alert.alert("Eliminar", "¿Desea eliminar este ingreso?", [
-    {
-      text: "Cancelar",
-      onPress: () => console.log("Cancel Pressed"),
-      style: "cancel",
-    },
-    { text: "OK", onPress: () => deleteItem(id) },
-  ]);
+    Alert.alert("Eliminar", "¿Desea eliminar este ingreso?", [
+      {
+        text: "Cancelar",
+        onPress: () => console.log("Cancel Pressed"),
+        style: "cancel",
+      },
+      { text: "OK", onPress: () => deleteItem(id) },
+    ]);
   const deleteItem = async (idIncome) => {
     try {
       await deleteIncome(idIncome);
@@ -80,14 +80,20 @@ const MyAcordeonIncome = ({ data, editCategory, updateList }) => {
       <View>
         {expanded &&
           data.incomes.map((item, idx2) => (
-            <View style={styles.header}  key={idx2}>
-              <Text style={styles.titleDate}>{DateFormat(item.date,'DD MMM')} {DateFormat(item.createdAt,'hh:mm a')}</Text>
-              <Text style={styles.item}>{NumberFormat(item.amount)}</Text>
-              <Icon name="trash"
+            <View style={styles.header} key={idx2}>
+              <Text style={styles.titleDate}>
+                {DateFormat(item.date, "DD MMM")}{" "}
+                {DateFormat(item.createdAt, "hh:mm a")}
+              </Text>
+              <Tooltip popover={<Text>{item.commentary}</Text>}>
+                <Text style={styles.item}>{NumberFormat(item.amount)}</Text>
+              </Tooltip>
+              <Icon
+                name="trash"
                 type="font-awesome"
                 onPress={() => createTwoButtonAlert(item.id)}
-          />
-          </View>
+              />
+            </View>
           ))}
       </View>
     </View>
@@ -108,7 +114,7 @@ const styles = StyleSheet.create({
     display: "flex",
     flexDirection: "row",
     alignItems: "flex-start",
-    paddingRight: 10
+    paddingRight: 10,
   },
   header: {
     display: "flex",

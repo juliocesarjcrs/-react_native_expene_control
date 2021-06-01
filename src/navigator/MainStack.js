@@ -22,6 +22,8 @@ function MainStackNavigator() {
       <MainStack.Screen name="createCategory" component={Routes.CreateCategoryScreen} options={{ title: 'Crear Categoría' }} />
       <MainStack.Screen name="editCategory" component={Routes.EditCategoryScreen} options={{ title: 'Editar Categoría' }}/>
 
+      <MainStack.Screen name="cashFlow" component={Routes.CashFlowScreen} options={{ title: 'Balance' }}/>
+
 
     </MainStack.Navigator>
   );

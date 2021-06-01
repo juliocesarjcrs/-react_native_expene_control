@@ -139,7 +139,7 @@ export default function CreateIncomeScreen({navigation}) {
           <Input
             label="Comentario"
             value={value}
-            placeholder="Ej: Compra de una camisa"
+            placeholder="Ej: Nómina, quincena"
             onChangeText={(text) => onChange(text)}
             multiline
             numberOfLines={2}

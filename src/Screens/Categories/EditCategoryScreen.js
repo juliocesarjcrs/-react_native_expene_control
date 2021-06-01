@@ -82,27 +82,6 @@ export default function EditCategoryScreen({ route }) {
         defaultValue=""
       />
          <ModalIcon icon={icon} setIcon={setIconHandle} />
-      {/* <Controller
-        name="icon"
-        control={control}
-        rules={{
-          maxLength: {
-            value: 200,
-            message: "El icono no puede superar 200 caracteres",
-          },
-        }}
-        render={({ onChange, value }) => (
-          <Input
-            label="Icono"
-            value={value}
-            placeholder="Nombre del icono en inglés"
-            onChangeText={(text) => onChange(text)}
-            errorStyle={{ color: "red" }}
-            errorMessage={errors?.icon?.message}
-          />
-        )}
-        defaultValue=""
-      /> */}
       {loading ? (
         <MyLoading />
       ) : (

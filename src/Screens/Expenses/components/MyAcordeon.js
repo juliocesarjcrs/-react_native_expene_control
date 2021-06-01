@@ -25,7 +25,7 @@ const MyAcordeon = ({ data, editCategory, createSubcategory }) => {
         <View style={{ flex: 1 }}>
           <View style={styles.title}>
             <Icon
-              type="material-community"
+              type="font-awesome"
               style={{ paddingLeft: 5 }}
               name={icon ? icon : "home"}
               size={25}

@@ -40,7 +40,7 @@ export default function SumaryIncomesScreen({ navigation }){
 
   return(
     <View style={styles.container}>
-      <MyTabs navigation={navigation} />
+      {/* <MyTabs navigation={navigation} /> */}
         <FAB title="Agregar ingreso" onPress={sendAddIncomeScrenn} />
       <Text style={{ fontSize: BIG, fontWeight: "bold", textAlign: "center", marginVertical:5}}>
         Total Ingresos mes {DateFormat(month, "MMMM")}: {NumberFormat(total)}

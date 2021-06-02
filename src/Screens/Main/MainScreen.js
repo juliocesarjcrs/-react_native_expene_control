@@ -62,7 +62,7 @@ export default function MainScreen({ navigation }) {
   };
   return (
     <View>
-     <MyTabs navigation={navigation} />
+     {/* <MyTabs navigation={navigation} /> */}
      <MyMonthPicker/>
       <View style={styles.fixToText}>
         <MyButton onPress={sendcreateExpenseScreen} title="Ingresar gasto" />

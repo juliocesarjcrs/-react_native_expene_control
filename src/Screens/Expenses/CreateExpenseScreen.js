@@ -19,9 +19,7 @@ import ShowToast from "../../components/toast/ShowToast";
 import DateTimePicker from "@react-native-community/datetimepicker";
 import { Button, Icon } from "react-native-elements";
 import { useSelector } from "react-redux";
-import {SECUNDARY} from '../../styles/colors';
-
-
+import { SECUNDARY } from "../../styles/colors";
 
 export default function CreateExpenseScreen() {
   const month = useSelector((state) => state.date.month);
@@ -71,13 +69,19 @@ export default function CreateExpenseScreen() {
     fetchCategories();
   }, []);
   const fetchCategories = async () => {
-    const { data } = await getCategoryWithSubcategories(month);
-    const filter = data.data.filter((f) => f.subcategories.length > 0);
-
-    const dataFormat = filter.map((e) => {
-      return { label: e.name, value: e.id, subcategories: e.subcategories };
-    });
-    setCategories(dataFormat);
+    try {
+      setLoading(true);
+      const { data } = await getCategoryWithSubcategories(month);
+      setLoading(false);
+      const filter = data.data.filter((f) => f.subcategories.length > 0);
+      const dataFormat = filter.map((e) => {
+        return { label: e.name, value: e.id, subcategories: e.subcategories };
+      });
+      setCategories(dataFormat);
+    } catch (error){
+      setLoading(false);
+      Errors(error);
+    }
   };
   const sendFromSelectCategory = (index) => {
     setExpenses([]);
@@ -89,20 +93,16 @@ export default function CreateExpenseScreen() {
     if (indexArray >= 0) {
       const dataFormat = formatOptionsSubcategories(
         categories[indexArray].subcategories
-        );
-      console.log("sendFromSelectCategory", index, indexArray, dataFormat);
+      );
       setSubcategories(dataFormat);
     }
   };
   const sendDataSubcategory = (index) => {
     if (!index || index == NaN) {
-      console.log("sendDataSubcategory-3--", index);
       setExpenses([]);
       setSubcategoryId(null);
       setSumCost(0);
-      // return;
     } else {
-      console.log("else", index);
       setSubcategoryId(index);
       fetchExpenses(index);
     }
@@ -152,35 +152,40 @@ export default function CreateExpenseScreen() {
   };
   return (
     <View style={styles.container}>
-      <Text>Categoria</Text>
-      <DropdownIn data={categories} sendDataToParent={sendFromSelectCategory} />
-      <Text>Subcategoria</Text>
+      <Text>Categoría</Text>
+      {loading ? (
+        <MyLoading />
+      ) : (
+        <DropdownIn data={categories} sendDataToParent={sendFromSelectCategory} />
+      )
+}
+      <Text>Subcategoría</Text>
       <DropdownIn data={subcategories} sendDataToParent={sendDataSubcategory} />
       {!subcategoryId ? <ErrorText msg="Necesita una  subcategoria" /> : null}
       <Controller
-            name="cost"
-            control={control}
-            rules={{
-              required: { value: true, message: "El costo es obligatorio" },
-              min: { value: 1, message: "El minimó valor aceptado es 1" },
-              max: {
-                value: 99999999,
-                message: "El costo no puede superar el valor de 99.999.999 ",
-              },
-            }}
-            render={({ onChange, value }) => (
-              <Input
-                label="Gasto"
-                value={value}
-                placeholder="Ej: 20000"
-                onChangeText={(text) => onChange(text)}
-                errorStyle={{ color: "red" }}
-                errorMessage={errors?.cost?.message}
-                keyboardType="numeric"
-              />
-            )}
-            defaultValue=""
+        name="cost"
+        control={control}
+        rules={{
+          required: { value: true, message: "El costo es obligatorio" },
+          min: { value: 1, message: "El minimó valor aceptado es 1" },
+          max: {
+            value: 99999999,
+            message: "El costo no puede superar el valor de 99.999.999 ",
+          },
+        }}
+        render={({ onChange, value }) => (
+          <Input
+            label="Gasto"
+            value={value}
+            placeholder="Ej: 20000"
+            onChangeText={(text) => onChange(text)}
+            errorStyle={{ color: "red" }}
+            errorMessage={errors?.cost?.message}
+            keyboardType="numeric"
           />
+        )}
+        defaultValue=""
+      />
       <Controller
         name="commentary"
         control={control}
@@ -204,22 +209,22 @@ export default function CreateExpenseScreen() {
         )}
         defaultValue=""
       />
-                       <View style={styles.containerDate}>
-          <Button
-            icon={
-              <Icon
-                type="material-community"
-                name="calendar"
-                size={25}
-                color="white"
-              />
-            }
-            iconLeft
-            title="  Fecha "
-            onPress={showDatepicker}
-          />
-          <Text style={styles.textDate}>{dateString}</Text>
-        </View>
+      <View style={styles.containerDate}>
+        <Button
+          icon={
+            <Icon
+              type="material-community"
+              name="calendar"
+              size={25}
+              color="white"
+            />
+          }
+          iconLeft
+          title="  Fecha "
+          onPress={showDatepicker}
+        />
+        <Text style={styles.textDate}>{dateString}</Text>
+      </View>
 
       {show && (
         <DateTimePicker
@@ -231,10 +236,14 @@ export default function CreateExpenseScreen() {
           onChange={onChange}
         />
       )}
-         {loading ? (
+      {loading ? (
         <MyLoading />
       ) : (
-        <Button title="Guardar" buttonStyle={{backgroundColor: SECUNDARY}} onPress={handleSubmit(onSubmit)}/>
+        <Button
+          title="Guardar"
+          buttonStyle={{ backgroundColor: SECUNDARY }}
+          onPress={handleSubmit(onSubmit)}
+        />
       )}
 
       <Text>Total:{NumberFormat(sumCost)}</Text>
@@ -245,15 +254,15 @@ export default function CreateExpenseScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#fff"
+    backgroundColor: "#fff",
   },
   containerDate: {
     display: "flex",
-    flexDirection: "row"
+    flexDirection: "row",
   },
   textDate: {
     paddingVertical: 10,
-    paddingHorizontal:10,
+    paddingHorizontal: 10,
     color: "white",
     backgroundColor: "#c5c5c5",
   },

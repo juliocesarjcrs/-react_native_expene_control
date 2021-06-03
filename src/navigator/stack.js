@@ -78,6 +78,8 @@ function IncomeStackScreen() {
     <IncomeStack.Navigator>
             <IncomeStack.Screen name="sumaryIncomes" component={Routes.SumaryIncomesScreen} options={{ title: 'Resumen ingresos del mes' }}/>
             <IncomeStack.Screen name="createIncome" component={Routes.CreateIncomeScreen} options={{ title: 'Agregar ingreso' }}/>
+            <IncomeStack.Screen name="createCategory" component={Routes.CreateCategoryScreen} options={{ title: 'Crear Categoría' }} />
+
     </IncomeStack.Navigator>
   );
 }
@@ -99,12 +101,12 @@ return (
       tabBarIcon: ({ focused, color, size }) => {
         let iconName;
 
-        if (route.name === 'Gatos') {
+        if (route.name === 'Gastos') {
           iconName = focused ? 'cash' : 'cash-multiple';
         } else if (route.name === 'Ingresos') {
           iconName = focused ? 'account-cash' : 'account-cash-outline';
         }
-        else if (route.name === 'Vs') {
+        else if (route.name === 'Balance') {
           iconName = focused ? 'scale-balance' : 'scale-balance';
         }
 
@@ -124,9 +126,9 @@ return (
     }}
     
     >
-      <Tab.Screen name="Gatos" component={ExpenseStackScreen} />
+      <Tab.Screen name="Gastos" component={ExpenseStackScreen} />
       <Tab.Screen name="Ingresos" component={IncomeStackScreen} />
-      <Tab.Screen name="Vs" component={BalanceStackScreen} />
+      <Tab.Screen name="Balance" component={BalanceStackScreen} />
     </Tab.Navigator>
     :
       <Stack.Navigator>

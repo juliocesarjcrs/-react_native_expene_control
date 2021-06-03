@@ -98,6 +98,7 @@ const styles = StyleSheet.create({
     display: "flex",
     flexDirection: "row",
     alignItems: "flex-start",
+    paddingRight: 10
   },
 });
 export default MyAcordeon;

@@ -20,9 +20,10 @@ export default function CashFlowScreen({ navigation }) {
   useEffect(() => {
     fetchDataExpenses();
     fetchDataIncomes();
-    // const unsubscribe = navigation.addListener("focus", () => {
-    //   fetchDataExpenses();
-    // });
+    const unsubscribe = navigation.addListener("focus", () => {
+      fetchDataExpenses();
+      fetchDataIncomes();
+    });
   }, [month]);
 
   const fetchDataExpenses = async () => {

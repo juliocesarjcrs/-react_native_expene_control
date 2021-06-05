@@ -4,79 +4,65 @@ import { DateFormat, NumberFormat } from "../../utils/Helpers";
 import { BIG } from "~/styles/fonts";
 import { Errors } from "../../utils/Errors";
 import { useSelector } from "react-redux";
-import {
-  getCategoryTypeIncome,
-  getCategoryWithSubcategories,
-} from "../../services/categories";
 import MyLoading from "~/components/loading/MyLoading";
-import {BarChart} from 'react-native-chart-kit';
+import { LineChart} from 'react-native-chart-kit';
+import {getLastExpenses} from '../../services/expenses';
+import {getLastIncomes} from '../../services/incomes';
 
 export default function CashFlowScreen({ navigation }) {
+
   const month = useSelector((state) => state.date.month);
   const [totalExpenses, setTotalExpenses] = useState(0);
   const [totalIncomes, setTotalIncomes] = useState(0);
+  const [dataExpenses, setDatalExpenses] = useState([0]);
+  const [dataIncomes, setDataIncomes] = useState([0]);
+
+  const [labels, setLabels] = useState(['']);
+
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    fetchDataExpenses();
-    fetchDataIncomes();
+    fetchLastIncomes();
+    fetchLastExpenses();
     const unsubscribe = navigation.addListener("focus", () => {
-      fetchDataExpenses();
-      fetchDataIncomes();
+      fetchLastExpenses();
+      fetchLastIncomes();
     });
   }, [month]);
 
-  const fetchDataExpenses = async () => {
+
+  const fetchLastExpenses = async () => {
     try {
       setLoading(true);
-      const { data } = await getCategoryWithSubcategories(month);
+      const { data } = await getLastExpenses(month);
       setLoading(false);
-      setTotalExpenses(data.total);
+      setLabels(data.labels)
+      setDatalExpenses(data.graph);
+      const len = data.graph.length;
+      if (len > 0)
+        setTotalExpenses(data.graph[len -1]);
+
     } catch (e) {
       setLoading(false);
       Errors(e);
     }
   };
 
-  const fetchDataIncomes = async () => {
+  const fetchLastIncomes = async () => {
     try {
       setLoading(true);
-      const { data } = await getCategoryTypeIncome(month);
+      const { data } = await getLastIncomes();
       setLoading(false);
-      setTotalIncomes(data.total);
+      setDataIncomes(data.incomes);
+
+      const len = data.incomes.length;
+
+      if (len > 0)
+        setTotalIncomes(data.incomes[len -1]);
     } catch (e) {
       setLoading(false);
       Errors(e);
     }
-  };
-  const data = {
-    labels: ["February", "March", "April", "May"],
-    datasets: [
-      {
-        data: [1000000, 2000000, 3000000, 4000000]
-      }
-    ]
-  };
-  const chartConfig = {
-    backgroundGradientFrom: '#Ffffff',
-    backgroundGradientTo: '#ffffff',
-    barPercentage: 1.3,
-    decimalPlaces: 0, // optional, defaults to 2dp
-    color: (opacity = 1) => `rgba(1, 122, 205, 1)`,
-    labelColor: (opacity = 1) => `rgba(0, 0, 0, 1)`,
-  
-    style: {
-      borderRadius: 16,
-      fontFamily: 'Bogle-Regular',
-    },
-    propsForBackgroundLines: {
-      strokeWidth: 1,
-      stroke: '#efefef',
-      strokeDasharray: '0',
-    },
-    propsForLabels: {
-      fontFamily: 'Bogle-Regular',
-    },
   };
 
   return (
@@ -111,15 +97,49 @@ export default function CashFlowScreen({ navigation }) {
           </View>
         </View>
       )}
-      {/* <BarChart
-          style={styles.graphStyle}
-          data={data}
-          width={Dimensions.get('window').width}
-          height={220}
-          yAxisLabel="$"
-          chartConfig={chartConfig}
-          verticalLabelRotation={30}
-        /> */}
+      <Text style={styles.chartTitle}>Últimos meses</Text>
+      <LineChart
+        bezier
+        withHorizontalLabels={true}
+        withVerticalLabels={true}
+        data={{
+          labels: labels,
+          datasets: [
+            {
+              data: dataExpenses,
+              strokeWidth: 2,
+              color: (opacity = 1) => `rgba(220, 20, 60)`,
+            },
+            {
+              data: dataIncomes,
+              strokeWidth: 2,
+              color: (opacity = 1) => `rgba(0, 100, 0)`,
+            },
+          ],
+          legend: ["Gastos", "Ingresos"],
+        }}
+        width={Dimensions.get("window").width - 16}
+        height={200}
+        chartConfig={{
+          backgroundColor: "#1cc910",
+          backgroundGradientFrom: "#eff3ff",
+          backgroundGradientTo: "#efefef",
+          decimalPlaces: 0,
+          color: (opacity = 1) => `rgba(0, 0, 0, ${opacity})`,
+          style: {
+            borderRadius: 16,
+          },
+          // formatYLabel: () => {
+            //   console.log(yLabelIterator.next().value);
+            //   return yLabelIterator.next().value
+            // },
+            formatYLabel: () => 'sa',
+        }}
+        style={{
+          borderRadius: 16,
+        }}
+        formatYLabel={(val) => `${NumberFormat(val)}`}
+      />
     </View>
   );
 }
@@ -146,7 +166,7 @@ const styles = StyleSheet.create({
     paddingLeft: 20,
     paddingBottom: 20,
     paddingTop: 10,
-    fontFamily: 'Bogle-Regular',
     fontSize: 16,
+    fontWeight: 'bold'
   },
 });

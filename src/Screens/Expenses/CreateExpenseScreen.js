@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import { Keyboard, StyleSheet, Text } from "react-native";
 import { useForm, Controller } from "react-hook-form";
 import RNPickerSelect from "react-native-picker-select";
@@ -20,6 +20,7 @@ import DateTimePicker from "@react-native-community/datetimepicker";
 import { Button, Icon } from "react-native-elements";
 import { useSelector } from "react-redux";
 import { SECUNDARY } from "../../styles/colors";
+import DropDownPicker from "react-native-dropdown-picker";
 
 export default function CreateExpenseScreen() {
   const month = useSelector((state) => state.date.month);
@@ -32,6 +33,16 @@ export default function CreateExpenseScreen() {
   const [sumCost, setSumCost] = useState(0);
   const [expenses, setExpenses] = useState([]);
   const [loading, setLoading] = useState(false);
+  const ITEM_HEIGHT = 42
+  const [open, setOpen] = useState(false);
+  const [open2, setOpen2] = useState(false);
+  const [idCategory, setIdCategory] = useState(null);
+  useEffect(() => {
+    sendFromDropDownPickerCategory(idCategory);
+  }, [idCategory]);
+  useEffect(() => {
+    sendDataSubcategory(subcategoryId);
+  }, [subcategoryId]);
 
   //   DATE pIKER ---------------  ///////////////
 
@@ -42,9 +53,7 @@ export default function CreateExpenseScreen() {
   const [show, setShow] = useState(false);
 
   const onChange = (event, selectedDate) => {
-    // console.log('onChange', selectedDate, date);
     const currentDate = selectedDate || date;
-
     setShow(Platform.OS === "ios");
     let newDate = DateFormat(currentDate, "YYYY MMM DD");
     setDateString(newDate);
@@ -68,6 +77,7 @@ export default function CreateExpenseScreen() {
   useEffect(() => {
     fetchCategories();
   }, []);
+
   const fetchCategories = async () => {
     try {
       setLoading(true);
@@ -78,32 +88,23 @@ export default function CreateExpenseScreen() {
         return { label: e.name, value: e.id, subcategories: e.subcategories };
       });
       setCategories(dataFormat);
-    } catch (error){
+      defaultIdCategory();
+    } catch (error) {
       setLoading(false);
       Errors(error);
     }
   };
-  const sendFromSelectCategory = (index) => {
-    setExpenses([]);
-    setSubcategoryId(null);
-    setSumCost(0);
-    const indexArray = categories.findIndex((e) => {
-      return e.value === index;
-    });
-    if (indexArray >= 0) {
-      const dataFormat = formatOptionsSubcategories(
-        categories[indexArray].subcategories
-      );
-      setSubcategories(dataFormat);
+  const defaultIdCategory = () =>{
+    if(categories.length > 0){
+      setIdCategory(categories[0].value)
     }
-  };
+  }
+
   const sendDataSubcategory = (index) => {
     if (!index || index == NaN) {
       setExpenses([]);
-      setSubcategoryId(null);
       setSumCost(0);
     } else {
-      setSubcategoryId(index);
       fetchExpenses(index);
     }
   };
@@ -150,27 +151,65 @@ export default function CreateExpenseScreen() {
   const updateList = () => {
     fetchExpenses(subcategoryId);
   };
+
+
+  const sendFromDropDownPickerCategory = (index) => {
+    setExpenses([]);
+    setSubcategoryId(null);
+    setSumCost(0);
+    const indexArray = categories.findIndex((e) => {
+      return e.value === index;
+    });
+    if (indexArray >= 0) {
+      const dataFormat = formatOptionsSubcategories(
+        categories[indexArray].subcategories
+      );
+      setSubcategories(dataFormat);
+    }
+  };
+
   return (
     <View style={styles.container}>
       <Text>Categoría</Text>
-      {loading ? (
-        <MyLoading />
-      ) : (
-        <DropdownIn data={categories} sendDataToParent={sendFromSelectCategory} />
-      )
-}
+      <DropDownPicker
+        containerStyle={{ height: 40, marginBottom: 10, zIndex: 20 }}
+        open={open}
+        value={idCategory}
+        items={categories}
+        setOpen={setOpen}
+        setValue={setIdCategory}
+        setItems={setCategories}
+        maxHeight={ITEM_HEIGHT * categories.length}
+        placeholder="Selecione una categoría"
+        loading={loading}
+      />
+      {!idCategory ? (
+        <ErrorText msg="Necesita seleccionar una  Categoria" />
+      ) : null}
+
       <Text>Subcategoría</Text>
-      <DropdownIn data={subcategories} sendDataToParent={sendDataSubcategory} />
-      {!subcategoryId ? <ErrorText msg="Necesita una  subcategoria" /> : null}
+      <DropDownPicker
+        containerStyle={{ height: 40, marginBottom: 10, zIndex: 10 }}
+        open={open2}
+        value={subcategoryId}
+        items={subcategories}
+        setOpen={setOpen2}
+        setValue={setSubcategoryId}
+        setItems={setSubcategories}
+        maxHeight={ITEM_HEIGHT * subcategories.length}
+        placeholder="Selecione una subcategoría"
+        loading={loading}
+      />
+      {!subcategoryId ? <ErrorText msg="Necesita seleccionar una subcategoria" /> : null}
       <Controller
         name="cost"
         control={control}
         rules={{
-          required: { value: true, message: "El costo es obligatorio" },
+          required: { value: true, message: "El gasto es obligatorio" },
           min: { value: 1, message: "El minimó valor aceptado es 1" },
           max: {
             value: 99999999,
-            message: "El costo no puede superar el valor de 99.999.999 ",
+            message: "El gasto no puede superar el valor de 99.999.999 ",
           },
         }}
         render={({ onChange, value }) => (
@@ -267,13 +306,4 @@ const styles = StyleSheet.create({
     backgroundColor: "#c5c5c5",
   },
 });
-const DropdownIn = ({ data, sendDataToParent }) => {
-  return (
-    <RNPickerSelect
-      useNativeAndroidPickerStyle={false}
-      placeholder={{}}
-      onValueChange={(value) => sendDataToParent(parseInt(value))}
-      items={data}
-    />
-  );
-};
+

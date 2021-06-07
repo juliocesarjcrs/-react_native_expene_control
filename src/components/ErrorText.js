@@ -12,6 +12,7 @@ const styles = StyleSheet.create({
     // width: 312,
     color: RED,
     fontSize: SMALL,
+    paddingTop: 10
   }
 })
 

@@ -88,13 +88,13 @@ export default function CreateExpenseScreen() {
         return { label: e.name, value: e.id, subcategories: e.subcategories };
       });
       setCategories(dataFormat);
-      defaultIdCategory();
+      defaultIdCategory(dataFormat);
     } catch (error) {
       setLoading(false);
       Errors(error);
     }
   };
-  const defaultIdCategory = () =>{
+  const defaultIdCategory = (categories) =>{
     if(categories.length > 0){
       setIdCategory(categories[0].value)
     }

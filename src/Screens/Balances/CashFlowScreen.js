@@ -1,51 +1,63 @@
 import React, { useEffect, useState } from "react";
 import { Dimensions, StyleSheet, Text, View } from "react-native";
-import { DateFormat, NumberFormat } from "../../utils/Helpers";
+import { DateFormat, GetNumberMonth, NumberFormat } from "../../utils/Helpers";
 import { BIG } from "~/styles/fonts";
 import { Errors } from "../../utils/Errors";
 import { useSelector } from "react-redux";
 import MyLoading from "~/components/loading/MyLoading";
-import { LineChart} from 'react-native-chart-kit';
-import {getLastExpenses} from '../../services/expenses';
-import {getLastIncomes} from '../../services/incomes';
+import { LineChart } from "react-native-chart-kit";
+import { getLastExpenses } from "../../services/expenses";
+import { getLastIncomes } from "../../services/incomes";
 
 export default function CashFlowScreen({ navigation }) {
-
   const month = useSelector((state) => state.date.month);
   const [totalExpenses, setTotalExpenses] = useState(0);
   const [totalIncomes, setTotalIncomes] = useState(0);
   const [dataExpenses, setDatalExpenses] = useState([0]);
   const [dataIncomes, setDataIncomes] = useState([0]);
 
-  const [labels, setLabels] = useState(['']);
+  const [labels, setLabels] = useState([""]);
 
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    fetchLastIncomes();
     fetchLastExpenses();
-    const unsubscribe = navigation.addListener("focus", () => {
+    navigation.addListener("focus", () => {
       fetchLastExpenses();
-      fetchLastIncomes();
     });
   }, [month]);
 
+  useEffect(() => {
+    fetchLastIncomes();
+    navigation.addListener("focus", () => {
+      fetchLastIncomes();
+    });
+  }, [month]);
 
   const fetchLastExpenses = async () => {
     try {
       setLoading(true);
       const { data } = await getLastExpenses(month);
       setLoading(false);
-      setLabels(data.labels)
-      setDatalExpenses(data.graph);
+      setLabels(data.labels);
       const len = data.graph.length;
-      if (len > 0)
-        setTotalExpenses(data.graph[len -1]);
-
+      if (len > 0) {
+        const total = searchTotalInMonth(data.data);
+        setTotalExpenses(total);
+        setDatalExpenses(data.graph);
+      }
     } catch (e) {
       setLoading(false);
       Errors(e);
     }
+  };
+  const searchTotalInMonth = (data) => {
+    const numMonth = GetNumberMonth(month);
+    const objExpense = data.filter((e) => e.month == numMonth);
+    if (objExpense.length > 0 && objExpense[0].sum) {
+      return objExpense[0].sum;
+    }
+    return 0;
   };
 
   const fetchLastIncomes = async () => {
@@ -53,12 +65,12 @@ export default function CashFlowScreen({ navigation }) {
       setLoading(true);
       const { data } = await getLastIncomes();
       setLoading(false);
-      setDataIncomes(data.incomes);
-
       const len = data.incomes.length;
-
-      if (len > 0)
-        setTotalIncomes(data.incomes[len -1]);
+      if (len > 0) {
+        setDataIncomes(data.incomes);
+        const totalCalculate = searchTotalInMonth(data.data);
+        setTotalIncomes(totalCalculate);
+      }
     } catch (e) {
       setLoading(false);
       Errors(e);
@@ -130,10 +142,10 @@ export default function CashFlowScreen({ navigation }) {
             borderRadius: 16,
           },
           // formatYLabel: () => {
-            //   console.log(yLabelIterator.next().value);
-            //   return yLabelIterator.next().value
-            // },
-            formatYLabel: () => 'sa',
+          //   console.log(yLabelIterator.next().value);
+          //   return yLabelIterator.next().value
+          // },
+          formatYLabel: () => "sa",
         }}
         style={{
           borderRadius: 16,
@@ -167,6 +179,6 @@ const styles = StyleSheet.create({
     paddingBottom: 20,
     paddingTop: 10,
     fontSize: 16,
-    fontWeight: 'bold'
+    fontWeight: "bold",
   },
 });

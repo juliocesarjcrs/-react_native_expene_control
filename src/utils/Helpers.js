@@ -15,6 +15,10 @@ export const DateFormat = (date, format = 'DD MMM hh:mm a') => {
 
 }
 
+export const GetNumberMonth =  (date) =>{
+  const num =  moment(date).month();
+  return num +1;
+}
 export const AsignColor = (index) =>{
 
   const leng = colorPalette.length

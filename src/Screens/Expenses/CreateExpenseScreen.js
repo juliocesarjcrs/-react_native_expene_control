@@ -172,7 +172,7 @@ export default function CreateExpenseScreen() {
     <View style={styles.container}>
       <Text>Categoría</Text>
       <DropDownPicker
-        containerStyle={{ height: 40, marginBottom: 10, zIndex: 20 }}
+        // containerStyle={{ height: 40, marginBottom: 10 }}
         open={open}
         value={idCategory}
         items={categories}
@@ -181,7 +181,36 @@ export default function CreateExpenseScreen() {
         setItems={setCategories}
         maxHeight={ITEM_HEIGHT * categories.length}
         placeholder="Selecione una categoría"
+        zIndex={2000}
+        zIndexInverse={1000}
         loading={loading}
+        ActivityIndicatorComponent={({color, size}) => (
+          <MyLoading />
+          // <ActivityIndicator color={color} size={size} />
+        )}
+        activityIndicatorColor="red"
+        activityIndicatorSize={30}
+        dropDownContainerStyle={{
+          backgroundColor: "#dfdfdf"
+        }}
+        listMode="FLATLIST"
+        flatListProps={{
+          initialNumToRender: 10
+        }}
+        listItemContainer={{
+          height: 150,
+          backgroundColor: '#F4C75B'
+        }}
+        selectedItemContainerStyle={{
+          backgroundColor: "#F0AEBB"
+        }}
+        itemSeparator={true}
+        itemSeparatorStyle={{
+          backgroundColor: "white"
+        }}
+        selectedItemLabelStyle={{
+          fontWeight: "bold"
+        }}
       />
       {!idCategory ? (
         <ErrorText msg="Necesita seleccionar una  Categoria" />
@@ -189,7 +218,7 @@ export default function CreateExpenseScreen() {
 
       <Text>Subcategoría</Text>
       <DropDownPicker
-        containerStyle={{ height: 40, marginBottom: 10, zIndex: 10 }}
+        // containerStyle={{ height: 40, marginBottom: 10 }}
         open={open2}
         value={subcategoryId}
         items={subcategories}
@@ -198,7 +227,23 @@ export default function CreateExpenseScreen() {
         setItems={setSubcategories}
         maxHeight={ITEM_HEIGHT * subcategories.length}
         placeholder="Selecione una subcategoría"
+        zIndex={1000}
+        zIndexInverse={2000}
         loading={loading}
+        dropDownContainerStyle={{
+          backgroundColor: "#dfdfdf"
+        }}
+        selectedItemContainerStyle={{
+          backgroundColor: "#F0AEBB"
+        }}
+        itemSeparator={true}
+        itemSeparatorStyle={{
+          backgroundColor: "white"
+        }}
+        selectedItemLabelStyle={{
+          fontWeight: "bold"
+        }}
+    
       />
       {!subcategoryId ? <ErrorText msg="Necesita seleccionar una subcategoria" /> : null}
       <Controller

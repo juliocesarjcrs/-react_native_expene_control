@@ -8,12 +8,9 @@ import {ICON} from '../../../styles/colors';
  const HeaderList = ({data, navigation})=>{
   //  console.log(data);
    const sendEditCategoryScreen = (id) => {
-     console.log('asadasd');
     navigation.navigate("editCategory", { idCategory: id });
   };
-  const sendcreateExpenseScreen = () => {
-    navigation.navigate("createExpense");
-  };
+ 
   return(
     <View>
       <Text>{data.name}</Text>

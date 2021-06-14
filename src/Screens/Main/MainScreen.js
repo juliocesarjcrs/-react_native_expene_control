@@ -14,6 +14,7 @@ import { Button } from "react-native-elements";
 import { BIG } from "../../styles/fonts";
 import { Errors } from "../../utils/Errors";
 import MyLoading from "~/components/loading/MyLoading";
+import MyFaButton from '../../components/buttons/MyFaButton';
 
 export default function MainScreen({ navigation }) {
   const month = useSelector((state) => state.date.month);
@@ -63,9 +64,10 @@ export default function MainScreen({ navigation }) {
     dispatch(setAuthAction(false));
   };
   return (
-    <View>
+    <View style={styles.container}>
       {/* <MyTabs navigation={navigation} /> */}
       <MyMonthPicker />
+      {/* <MyFaButton title="Ingresar gasto" /> */}
       <View style={styles.fixToText}>
         <MyButton onPress={sendcreateExpenseScreen} title="Ingresar gasto" />
         <MyButton onPress={LogOut} title="Cerrar sesión" />
@@ -87,6 +89,10 @@ export default function MainScreen({ navigation }) {
   );
 }
 const styles = StyleSheet.create({
+  container:{
+    flex: 1,
+    backgroundColor: 'white'
+  },
   fixToText: {
     flexDirection: "row",
     justifyContent: "space-between",

@@ -193,14 +193,14 @@ export default function CreateExpenseScreen() {
         dropDownContainerStyle={{
           backgroundColor: "#dfdfdf"
         }}
-        listMode="FLATLIST"
-        flatListProps={{
-          initialNumToRender: 10
-        }}
-        listItemContainer={{
-          height: 150,
-          backgroundColor: '#F4C75B'
-        }}
+        listMode="MODAL"
+        // flatListProps={{
+        //   initialNumToRender: 10
+        // }}
+        // listItemContainer={{
+        //   height: 150,
+        //   backgroundColor: '#F4C75B'
+        // }}
         selectedItemContainerStyle={{
           backgroundColor: "#F0AEBB"
         }}

@@ -1,17 +1,18 @@
 import { createStackNavigator } from "@react-navigation/stack";
-import { createDrawerNavigator } from '@react-navigation/drawer';
+// import { createDrawerNavigator } from '@react-navigation/drawer';
 import {NavigationContainer} from '@react-navigation/native';
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { getUser } from '~/services/users';
 import React, { useEffect } from "react";
 import { useSelector, useDispatch } from 'react-redux'
-import MainStackNavigator from './MainStack';
+// import MainStackNavigator from './MainStack';
 import AuthStackNavigator from './AuthStack';
 import { setUserAction, setAuthAction } from "~/actions/authActions";
 import {setLoadingAuthAction} from '../actions/authActions';
 import Routes from './stackRoutes'
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import {Icon} from 'react-native-elements'
+import {Errors} from '../utils/Errors';
 
 function MyStack() {
   const dispatch = useDispatch();
@@ -34,7 +35,7 @@ function MyStack() {
       dispatch(setLoadingAuthAction(false));
     } catch(e) {
       dispatch(setLoadingAuthAction(false));
-      console.log('errorsA', e);
+      Errors(e)
     }
   }
   const Stack = createStackNavigator();

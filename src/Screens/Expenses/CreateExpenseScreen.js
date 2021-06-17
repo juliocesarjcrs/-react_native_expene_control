@@ -170,7 +170,54 @@ export default function CreateExpenseScreen() {
 
   return (
     <View style={styles.container}>
-      <Text>Categoría</Text>
+      <Controller
+        name="cost"
+        control={control}
+        rules={{
+          required: { value: true, message: "El gasto es obligatorio" },
+          min: { value: 1, message: "El minimó valor aceptado es 1" },
+          max: {
+            value: 99999999,
+            message: "El gasto no puede superar el valor de 99.999.999 ",
+          },
+        }}
+        render={({ onChange, value }) => (
+          <Input
+            label="Gasto"
+            value={value}
+            placeholder="Ej: 20000"
+            onChangeText={(text) => onChange(text)}
+            errorStyle={{ color: "red" }}
+            errorMessage={errors?.cost?.message}
+            keyboardType="numeric"
+          />
+        )}
+        defaultValue=""
+      />
+      <Controller
+        name="commentary"
+        control={control}
+        rules={{
+          maxLength: {
+            value: 200,
+            message: "El comenatario no puede superar los 200 carácteres ",
+          },
+        }}
+        render={({ onChange, value }) => (
+          <Input
+            label="Comentario"
+            value={value}
+            placeholder="Ej: Compra de una camisa"
+            onChangeText={(text) => onChange(text)}
+            multiline
+            numberOfLines={2}
+            errorStyle={{ color: "red" }}
+            errorMessage={errors?.commentary?.message}
+          />
+        )}
+        defaultValue=""
+      />
+            <Text>Categoría</Text>
       <DropDownPicker
         // containerStyle={{ height: 40, marginBottom: 10 }}
         open={open}
@@ -246,53 +293,6 @@ export default function CreateExpenseScreen() {
     
       />
       {!subcategoryId ? <ErrorText msg="Necesita seleccionar una subcategoria" /> : null}
-      <Controller
-        name="cost"
-        control={control}
-        rules={{
-          required: { value: true, message: "El gasto es obligatorio" },
-          min: { value: 1, message: "El minimó valor aceptado es 1" },
-          max: {
-            value: 99999999,
-            message: "El gasto no puede superar el valor de 99.999.999 ",
-          },
-        }}
-        render={({ onChange, value }) => (
-          <Input
-            label="Gasto"
-            value={value}
-            placeholder="Ej: 20000"
-            onChangeText={(text) => onChange(text)}
-            errorStyle={{ color: "red" }}
-            errorMessage={errors?.cost?.message}
-            keyboardType="numeric"
-          />
-        )}
-        defaultValue=""
-      />
-      <Controller
-        name="commentary"
-        control={control}
-        rules={{
-          maxLength: {
-            value: 200,
-            message: "El comenatario no puede superar los 200 carácteres ",
-          },
-        }}
-        render={({ onChange, value }) => (
-          <Input
-            label="Comentario"
-            value={value}
-            placeholder="Ej: Compra de una camisa"
-            onChangeText={(text) => onChange(text)}
-            multiline
-            numberOfLines={2}
-            errorStyle={{ color: "red" }}
-            errorMessage={errors?.commentary?.message}
-          />
-        )}
-        defaultValue=""
-      />
       <View style={styles.containerDate}>
         <Button
           icon={

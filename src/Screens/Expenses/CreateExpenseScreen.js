@@ -277,6 +277,7 @@ export default function CreateExpenseScreen() {
         zIndex={1000}
         zIndexInverse={2000}
         loading={loading}
+        listMode="MODAL"
         dropDownContainerStyle={{
           backgroundColor: "#dfdfdf"
         }}

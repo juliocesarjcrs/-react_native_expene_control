@@ -21,6 +21,7 @@ export default function ListSubcategoriesScreen({ navigation }) {
       console.log("Screen is focused");
       fetchData();
     });
+    return unsubscribe;
   }, []);
 
   const fetchData = async () => {

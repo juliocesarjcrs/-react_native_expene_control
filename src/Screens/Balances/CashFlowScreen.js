@@ -13,7 +13,7 @@ export default function CashFlowScreen({ navigation }) {
   const month = useSelector((state) => state.date.month);
   const [totalExpenses, setTotalExpenses] = useState(0);
   const [totalIncomes, setTotalIncomes] = useState(0);
-  const [dataExpenses, setDatalExpenses] = useState([0]);
+  const [dataExpenses, setDataExpenses] = useState([0]);
   const [dataIncomes, setDataIncomes] = useState([0]);
 
   const [labels, setLabels] = useState([""]);
@@ -21,30 +21,36 @@ export default function CashFlowScreen({ navigation }) {
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    fetchLastExpenses();
-    navigation.addListener("focus", () => {
+    // fetchLastExpenses();
+    const unsuscribe = navigation.addListener("focus", () => {
       fetchLastExpenses();
     });
+    return unsuscribe;
   }, [month]);
 
   useEffect(() => {
-    fetchLastIncomes();
-    navigation.addListener("focus", () => {
+    // fetchLastIncomes();
+    const unsuscribe = navigation.addListener("focus", () => {
       fetchLastIncomes();
     });
+    return unsuscribe;
+
   }, [month]);
 
   const fetchLastExpenses = async () => {
     try {
       setLoading(true);
-      const { data } = await getLastExpenses(month);
+      const { data } = await getLastExpenses();
       setLoading(false);
       setLabels(data.labels);
       const len = data.graph.length;
       if (len > 0) {
         const total = searchTotalInMonth(data.data);
         setTotalExpenses(total);
-        setDatalExpenses(data.graph);
+        setDataExpenses(data.graph);
+      }else{
+        setDataExpenses([0]);
+        setTotalExpenses(0);
       }
     } catch (e) {
       setLoading(false);
@@ -70,6 +76,9 @@ export default function CashFlowScreen({ navigation }) {
         setDataIncomes(data.incomes);
         const totalCalculate = searchTotalInMonth(data.data);
         setTotalIncomes(totalCalculate);
+      }else{
+        setDataIncomes([0]);
+        setTotalIncomes(0);
       }
     } catch (e) {
       setLoading(false);

@@ -20,6 +20,7 @@ export default function SumaryExpenseScreen({ navigation }) {
     const unsubscribe = navigation.addListener("focus", () => {
       fetchData();
     });
+    return unsubscribe;
   }, []);
   const fetchData = async () => {
     try {

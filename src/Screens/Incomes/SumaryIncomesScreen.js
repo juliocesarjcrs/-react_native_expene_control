@@ -20,6 +20,7 @@ export default function SumaryIncomesScreen({ navigation }) {
     const unsubscribe = navigation.addListener("focus", () => {
       fetchData();
     });
+    return unsubscribe;
   }, [month]);
   const fetchData = async () => {
     try {

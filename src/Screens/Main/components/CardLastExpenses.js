@@ -18,19 +18,19 @@ const CardLastExpenses = ({ navigation }) => {
   const [checkboxes, setCheckboxes] = useState([
     {
       id: 1,
-      title: "Ultimas 5 transacciones",
+      title: "Últimas 5 transacciones",
       checked: true,
       take: 5,
     },
     {
       id: 2,
-      title: "Ultimas 10 transacciones",
+      title: "Últimas 10 transacciones",
       checked: false,
       take: 10,
     },
     {
       id: 3,
-      title: "Ultimas 15 transacciones",
+      title: "Últimas 15 transacciones",
       checked: false,
       take: 15,
     },
@@ -71,6 +71,9 @@ const CardLastExpenses = ({ navigation }) => {
       setTake(newTake);
     }
   };
+  const sendLastExpensesScreen = () => {
+    navigation.navigate("lastExpenses");
+  };
 
   return (
     <View style={styles.container}>
@@ -89,6 +92,7 @@ const CardLastExpenses = ({ navigation }) => {
             name={"expand"}
             size={20}
             color={ICON}
+            onPress={sendLastExpensesScreen}
           />
           <Popover
             from={

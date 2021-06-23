@@ -70,6 +70,7 @@ function ExpenseStackScreen() {
         <ExpenseStack.Screen name="createSubcategory" component={Routes.CreateSubcategoryScreen} options={{ title: 'Crear Subcategoría' }}/>
         <ExpenseStack.Screen name="createCategory" component={Routes.CreateCategoryScreen} options={{ title: 'Crear Categoría' }} />
         <ExpenseStack.Screen name="editCategory" component={Routes.EditCategoryScreen} options={{ title: 'Editar Categoría' }}/>
+        <ExpenseStack.Screen name="lastExpenses" component={Routes.LastExpensesScreen} options={{ title: 'Últimos gastos' }}/>
     </ExpenseStack.Navigator>
   );
 }

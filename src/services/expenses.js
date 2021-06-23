@@ -16,6 +16,7 @@ export const deleteExpense = async (idExpense) => {
 }
 
 export const getLastExpensesWithPaginate = async (params= {}) => {
+  console.log('getLastExpensesWithPaginate', params);
   return  axios.get(`${PREFIX}/last`,{params});
 }
 

@@ -14,3 +14,8 @@ export const getExpensesFromSubcategory = async (idSubcategory, month) => {
 export const deleteExpense = async (idExpense) => {
   return  axios.delete(`${PREFIX}/${idExpense}`);
 }
+
+export const getLastExpensesWithPaginate = async (params= {}) => {
+  return  axios.get(`${PREFIX}/last`,{params});
+}
+

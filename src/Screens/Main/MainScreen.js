@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { StyleSheet, Text, View } from "react-native";
+import { ScrollView, StyleSheet, Text, View } from "react-native";
 import MyPieChart from "../../components/charts/MyPieChart";
 import MyButton from "~/components/MyButton";
 import { getCategoryWithSubcategories } from "../../services/categories";
@@ -15,6 +15,7 @@ import { BIG } from "../../styles/fonts";
 import { Errors } from "../../utils/Errors";
 import MyLoading from "~/components/loading/MyLoading";
 import MyFaButton from '../../components/buttons/MyFaButton';
+import CardLastExpenses from './components/CardLastExpenses';
 
 export default function MainScreen({ navigation }) {
   const month = useSelector((state) => state.date.month);
@@ -66,6 +67,7 @@ export default function MainScreen({ navigation }) {
   };
   return (
     <View style={styles.container}>
+       <ScrollView>
       {/* <MyTabs navigation={navigation} /> */}
       <MyMonthPicker />
       {/* <MyFaButton title="Ingresar gasto" /> */}
@@ -86,6 +88,8 @@ export default function MainScreen({ navigation }) {
       ) : (
         <Text>No se registran gastos en este mes</Text>
       )}
+      <CardLastExpenses navigation={navigation} />
+      </ScrollView>
     </View>
   );
 }
@@ -103,5 +107,5 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
     fontSize: BIG,
     marginTop: 5,
-  },
+  }
 });

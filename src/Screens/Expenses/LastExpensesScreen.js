@@ -1,5 +1,12 @@
 import React, { useEffect, useState } from "react";
-import { FlatList, SafeAreaView, ScrollView, StyleSheet, Text, View } from "react-native";
+import {
+  FlatList,
+  SafeAreaView,
+  ScrollView,
+  StyleSheet,
+  Text,
+  View,
+} from "react-native";
 import { getCategoryWithSubcategories } from "../../services/categories";
 import { Errors } from "../../utils/Errors";
 import { DateFormat, NumberFormat } from "../../utils/Helpers";
@@ -8,12 +15,11 @@ import MyAcordeon from "./components/MyAcordeon";
 import MyButton from "~/components/MyButton";
 import { useSelector } from "react-redux";
 import MyLoading from "~/components/loading/MyLoading";
-import {getLastExpensesWithPaginate} from '../../services/expenses';
+import { getLastExpensesWithPaginate } from "../../services/expenses";
 import { Icon } from "react-native-elements";
-import {ICON} from '../../styles/colors';
+import { ICON, MUTED } from "../../styles/colors";
 
 export default function LastExpensesScreen({ navigation }) {
-
   const [lastExpenses, setLastExpenses] = useState([]);
   const [loading, setLoading] = useState(false);
 
@@ -28,7 +34,7 @@ export default function LastExpensesScreen({ navigation }) {
     try {
       setLoading(true);
       const params = {
-        take: 50
+        take: 50,
       };
       const { data } = await getLastExpensesWithPaginate(params);
       setLoading(false);
@@ -40,37 +46,40 @@ export default function LastExpensesScreen({ navigation }) {
   };
   const renderItem = ({ item }) => (
     <View key={item.id} style={styles.containerCard}>
-    <Icon
-      type="font-awesome"
-      style={styles.icon}
-      name={item.iconCategory ? item.iconCategory : "home"}
-      size={20}
-      color={ICON}
-    />
-    <View style={styles.containerText}>
-      <Text style={styles.title}>{item.subcategory}</Text>
-      <Text style={styles.commentary}>{item.commentary}</Text>
+      <Icon
+        type="font-awesome"
+        style={styles.icon}
+        name={item.iconCategory ? item.iconCategory : "home"}
+        size={20}
+        color={ICON}
+      />
+      <View style={styles.containerText}>
+        <Text style={styles.title}>{item.subcategory}</Text>
+        <Text style={styles.commentary}>{item.commentary}</Text>
+      </View>
+      <View style={styles.cardDate}>
+        <Text style={styles.cost}>{NumberFormat(item.cost)}</Text>
+        <Text style={styles.date}>
+          {DateFormat(item.date, "DD MMM")}{" "}
+          {DateFormat(item.createdAt, "hh:mm a")}
+        </Text>
+      </View>
     </View>
-    <View style={styles.cardDate}>
-      <Text style={styles.cost}>{NumberFormat(item.cost)}</Text>
-      <Text style={styles.date}>
-        {DateFormat(item.date, "DD MMM")}{" "}
-        {DateFormat(item.createdAt, "hh:mm a")}
-      </Text>
-    </View>
-  </View>
   );
-
 
   return (
     <SafeAreaView style={styles.container}>
-    <FlatList
-      data={lastExpenses}
-      renderItem={renderItem}
-      keyExtractor={item => item.id}
-    />
-  </SafeAreaView>
-
+      {loading ? (
+        <MyLoading />
+      ) : (
+        <FlatList
+          data={lastExpenses}
+          renderItem={renderItem}
+          keyExtractor={(item) => item.id}
+          ListEmptyComponent={()=>   <Text style={styles.textMuted}>No se registran últimos gastos</Text>}
+        />
+      )}
+    </SafeAreaView>
   );
 }
 
@@ -104,5 +113,8 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
     justifyContent: "flex-end",
   },
-
+  textMuted: {
+    textAlign: "center",
+    color: MUTED,
+  },
 });

@@ -5,7 +5,7 @@ import { View, Text, StyleSheet, TouchableOpacity } from "react-native";
 import { CheckBox, Icon } from "react-native-elements";
 import Popover from "react-native-popover-view";
 import { getLastExpensesWithPaginate } from "../../../services/expenses";
-import { ICON } from "../../../styles/colors";
+import { ICON, MUTED } from "../../../styles/colors";
 import { MEDIUM, SMALL } from "../../../styles/fonts";
 import { DateFormat, NumberFormat } from "../../../utils/Helpers";
 import MyLoading from "~/components/loading/MyLoading";
@@ -130,28 +130,32 @@ const CardLastExpenses = ({ navigation }) => {
         <MyLoading />
       ) : (
         <View>
-          {expenses.map((item) => (
-            <View key={item.id} style={styles.containerCard}>
-              <Icon
-                type="font-awesome"
-                style={styles.icon}
-                name={item.iconCategory ? item.iconCategory : "home"}
-                size={20}
-                color={ICON}
-              />
-              <View style={styles.containerText}>
-                <Text style={styles.title}>{item.subcategory}</Text>
-                <Text style={styles.commentary}>{item.commentary}</Text>
+          {expenses.length == 0 ? (
+            <Text style={styles.textMuted}>No se registran últimos gastos</Text>
+          ) : (
+            expenses.map((item) => (
+              <View key={item.id} style={styles.containerCard}>
+                <Icon
+                  type="font-awesome"
+                  style={styles.icon}
+                  name={item.iconCategory ? item.iconCategory : "home"}
+                  size={20}
+                  color={ICON}
+                />
+                <View style={styles.containerText}>
+                  <Text style={styles.title}>{item.subcategory}</Text>
+                  <Text style={styles.commentary}>{item.commentary}</Text>
+                </View>
+                <View style={styles.cardDate}>
+                  <Text style={styles.cost}>{NumberFormat(item.cost)}</Text>
+                  <Text style={styles.date}>
+                    {DateFormat(item.date, "DD MMM")}{" "}
+                    {DateFormat(item.createdAt, "hh:mm a")}
+                  </Text>
+                </View>
               </View>
-              <View style={styles.cardDate}>
-                <Text style={styles.cost}>{NumberFormat(item.cost)}</Text>
-                <Text style={styles.date}>
-                  {DateFormat(item.date, "DD MMM")}{" "}
-                  {DateFormat(item.createdAt, "hh:mm a")}
-                </Text>
-              </View>
-            </View>
-          ))}
+            ))
+          )}
         </View>
       )}
     </View>
@@ -204,6 +208,10 @@ const styles = StyleSheet.create({
     fontSize: MEDIUM,
     fontWeight: "bold",
     justifyContent: "flex-end",
+  },
+  textMuted: {
+    textAlign: "center",
+    color: MUTED,
   },
 });
 

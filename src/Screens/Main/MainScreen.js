@@ -9,13 +9,13 @@ import { useDispatch } from "react-redux";
 import { setAuthAction } from "~/actions/authActions";
 import MyMonthPicker from "../../components/datePicker/MyMonthPicker";
 import { useSelector } from "react-redux";
-import { SECUNDARY } from "../../styles/colors";
+import { MUTED, SECUNDARY } from "../../styles/colors";
 import { Button } from "react-native-elements";
 import { BIG } from "../../styles/fonts";
 import { Errors } from "../../utils/Errors";
 import MyLoading from "~/components/loading/MyLoading";
-import MyFaButton from '../../components/buttons/MyFaButton';
-import CardLastExpenses from './components/CardLastExpenses';
+import MyFaButton from "../../components/buttons/MyFaButton";
+import CardLastExpenses from "./components/CardLastExpenses";
 
 export default function MainScreen({ navigation }) {
   const month = useSelector((state) => state.date.month);
@@ -67,36 +67,38 @@ export default function MainScreen({ navigation }) {
   };
   return (
     <View style={styles.container}>
-       <ScrollView>
-      {/* <MyTabs navigation={navigation} /> */}
-      <MyMonthPicker />
-      {/* <MyFaButton title="Ingresar gasto" /> */}
-      <View style={styles.fixToText}>
-        <MyButton onPress={sendcreateExpenseScreen} title="Ingresar gasto" />
-        <MyButton onPress={LogOut} title="Cerrar sesión" />
-      </View>
-      <Button
-        title="Detallar gastos"
-        buttonStyle={{ backgroundColor: SECUNDARY }}
-        onPress={sendDetailsExpenseScreen}
-      />
-      <Text style={styles.text}>Total: {NumberFormat(total)}</Text>
-      {loading ? (
-        <MyLoading />
-      ) : total > 0 ? (
-        <MyPieChart data={categories} />
-      ) : (
-        <Text>No se registran gastos en este mes</Text>
-      )}
-      <CardLastExpenses navigation={navigation} />
+      <ScrollView>
+        {/* <MyTabs navigation={navigation} /> */}
+        <MyMonthPicker />
+        {/* <MyFaButton title="Ingresar gasto" /> */}
+        <View style={styles.fixToText}>
+          <MyButton onPress={sendcreateExpenseScreen} title="Ingresar gasto" />
+          <MyButton onPress={LogOut} title="Cerrar sesión" />
+        </View>
+        <Button
+          title="Detallar gastos"
+          buttonStyle={{ backgroundColor: SECUNDARY }}
+          onPress={sendDetailsExpenseScreen}
+        />
+        <Text style={styles.text}>Total: {NumberFormat(total)}</Text>
+        {loading ? (
+          <MyLoading />
+        ) : total > 0 ? (
+          <MyPieChart data={categories} />
+        ) : (
+          <Text style={styles.textMuted}>
+            No se registran gastos en este mes
+          </Text>
+        )}
+        <CardLastExpenses navigation={navigation} />
       </ScrollView>
     </View>
   );
 }
 const styles = StyleSheet.create({
-  container:{
+  container: {
     flex: 1,
-    backgroundColor: 'white'
+    backgroundColor: "white",
   },
   fixToText: {
     flexDirection: "row",
@@ -107,5 +109,9 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
     fontSize: BIG,
     marginTop: 5,
-  }
+  },
+  textMuted: {
+    textAlign: "center",
+    color: MUTED,
+  },
 });

@@ -11,6 +11,8 @@ export const ICON =  '#888080' //'#dcdada'
 
 export const LOADING = '#00ff00'
 
+export const MUTED ="#6C757D"
+
 
 
 

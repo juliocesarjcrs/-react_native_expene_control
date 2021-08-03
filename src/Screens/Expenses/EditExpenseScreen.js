@@ -1,15 +1,15 @@
 import React, { useCallback, useEffect, useState } from "react";
 import { Keyboard, StyleSheet, Text } from "react-native";
 import { useForm, Controller } from "react-hook-form";
-import RNPickerSelect from "react-native-picker-select";
 import { View } from "react-native";
 import { getCategoryWithSubcategories } from "../../services/categories";
 import { Input } from "react-native-elements";
 import MyLoading from "~/components/loading/MyLoading";
 
 import {
-  CreateExpense,
+  editExpense,
   getExpensesFromSubcategory,
+  getOneExpense,
 } from "../../services/expenses";
 import { NumberFormat, DateFormat } from "../../utils/Helpers";
 import { Errors } from "../../utils/Errors";
@@ -22,21 +22,29 @@ import { useSelector } from "react-redux";
 import { SECUNDARY } from "../../styles/colors";
 import DropDownPicker from "react-native-dropdown-picker";
 
-export default function CreateExpenseScreen() {
+export default function EditExpenseScreen({ route, navigation }) {
+  const idExpense = route.params.objectExpense.id;
+  const objectExpense = route.params.objectExpense;
   const month = useSelector((state) => state.date.month);
-  const { handleSubmit, control, errors, reset } = useForm({
-    defaultValues: { cost: "", commentary: "" },
+  const [expenseEdit, setExpenseEdit] = useState({
+    cost: objectExpense.cost.toString(),
+    commentary: objectExpense.commentary,
   });
+  const { handleSubmit, control, errors, reset } = useForm({
+    defaultValues: expenseEdit,
+  });
+
   const [categories, setCategories] = useState([]);
   const [subcategories, setSubcategories] = useState([]);
   const [subcategoryId, setSubcategoryId] = useState(null);
   const [sumCost, setSumCost] = useState(0);
   const [expenses, setExpenses] = useState([]);
   const [loading, setLoading] = useState(false);
-  const ITEM_HEIGHT = 42
+  const ITEM_HEIGHT = 42;
   const [open, setOpen] = useState(false);
   const [open2, setOpen2] = useState(false);
   const [idCategory, setIdCategory] = useState(null);
+
   useEffect(() => {
     sendFromDropDownPickerCategory(idCategory);
   }, [idCategory]);
@@ -45,10 +53,17 @@ export default function CreateExpenseScreen() {
   }, [subcategoryId]);
 
   //   DATE pIKER ---------------  ///////////////
-
-  const [date, setDate] = useState(new Date());
-  console.log('create, ', date);
-  const today = DateFormat(new Date(), "YYYY MMM DD");
+  // 2021-08-03T14:30:25.523Z  sirve
+  // 2021-06-22T00:00:00.000Z   falla
+  // const splitDate =  objectExpense.date.split('-');
+  // const yearNumber = parseInt(splitDate[0]);
+  // const monthNumber = parseInt(splitDate[1]);
+  // const dayNumber = parseInt(splitDate[2]);
+  // let loadDate = new Date(Date.UTC(yearNumber, monthNumber, dayNumber));
+  let loadDate = new Date(objectExpense.date);
+  loadDate.setMinutes(loadDate.getMinutes() + loadDate.getTimezoneOffset());
+  const [date, setDate] = useState(loadDate);
+  const today = DateFormat(loadDate, "YYYY MMM DD");
   const [dateString, setDateString] = useState(today);
   const [mode, setMode] = useState("date");
   const [show, setShow] = useState(false);
@@ -70,9 +85,6 @@ export default function CreateExpenseScreen() {
     showMode("date");
   };
 
-  const showTimepicker = () => {
-    showMode("time");
-  };
   //////////////////////////////////////////////
 
   useEffect(() => {
@@ -89,31 +101,35 @@ export default function CreateExpenseScreen() {
         return { label: e.name, value: e.id, subcategories: e.subcategories };
       });
       setCategories(dataFormat);
-      defaultIdCategory(dataFormat);
+
+      await defaultIdCategory();
     } catch (error) {
       setLoading(false);
       Errors(error);
     }
   };
-  const defaultIdCategory = (categories) =>{
-    if(categories.length > 0){
-      setIdCategory(categories[0].value)
-    }
-  }
+  const defaultIdCategory = async () => {
+    const { data } = await getOneExpense(idExpense);
+    setExpenseEdit({ cost: data.cost, commentary: data.commentary });
+    const idCategoryEdit = data.subcategoryId.categoryId.id;
+    setIdCategory(idCategoryEdit);
+    const idsubcategoryEdit = data.subcategoryId.id;
+    setSubcategoryId(idsubcategoryEdit);
+  };
 
   const sendDataSubcategory = (index) => {
     if (!index || index == NaN) {
       setExpenses([]);
       setSumCost(0);
     } else {
-      fetchExpenses(index);
+      // fetchExpenses(index);
     }
   };
-  const fetchExpenses = async (idSubcategory) => {
-    const { data } = await getExpensesFromSubcategory(idSubcategory, month);
-    setExpenses(data);
-    calculateTotal(data);
-  };
+  // const fetchExpenses = async (idSubcategory) => {
+  //   const { data } = await getExpensesFromSubcategory(idSubcategory, month);
+  //   setExpenses(data);
+  //   calculateTotal(data);
+  // };
   const calculateTotal = (data) => {
     const total = data.reduce((acu, val) => {
       return acu + parseFloat(val.cost);
@@ -136,27 +152,22 @@ export default function CreateExpenseScreen() {
         date: DateFormat(date, "YYYY-MM-DD"),
       };
       setLoading(true);
-      const { data } = await CreateExpense(dataSend);
+      const { data } = await editExpense(idExpense, dataSend);
       setLoading(false);
-      const newExpense = [data, ...expenses];
-      setExpenses(newExpense);
-      calculateTotal(newExpense);
+
       ShowToast();
       reset();
       Keyboard.dismiss();
+      navigation.navigate("lastExpenses");
     } catch (error) {
       setLoading(false);
       Errors(error);
     }
   };
-  const updateList = () => {
-    fetchExpenses(subcategoryId);
-  };
-
 
   const sendFromDropDownPickerCategory = (index) => {
     setExpenses([]);
-    setSubcategoryId(null);
+    // setSubcategoryId(null);
     setSumCost(0);
     const indexArray = categories.findIndex((e) => {
       return e.value === index;
@@ -218,7 +229,7 @@ export default function CreateExpenseScreen() {
         )}
         defaultValue=""
       />
-            <Text>Categoría</Text>
+      <Text>Categoría</Text>
       <DropDownPicker
         // containerStyle={{ height: 40, marginBottom: 10 }}
         open={open}
@@ -232,14 +243,14 @@ export default function CreateExpenseScreen() {
         zIndex={2000}
         zIndexInverse={1000}
         loading={loading}
-        ActivityIndicatorComponent={({color, size}) => (
+        ActivityIndicatorComponent={({ color, size }) => (
           <MyLoading />
           // <ActivityIndicator color={color} size={size} />
         )}
         activityIndicatorColor="red"
         activityIndicatorSize={30}
         dropDownContainerStyle={{
-          backgroundColor: "#dfdfdf"
+          backgroundColor: "#dfdfdf",
         }}
         listMode="MODAL"
         // flatListProps={{
@@ -250,14 +261,14 @@ export default function CreateExpenseScreen() {
         //   backgroundColor: '#F4C75B'
         // }}
         selectedItemContainerStyle={{
-          backgroundColor: "#F0AEBB"
+          backgroundColor: "#F0AEBB",
         }}
         itemSeparator={true}
         itemSeparatorStyle={{
-          backgroundColor: "white"
+          backgroundColor: "white",
         }}
         selectedItemLabelStyle={{
-          fontWeight: "bold"
+          fontWeight: "bold",
         }}
       />
       {!idCategory ? (
@@ -280,21 +291,22 @@ export default function CreateExpenseScreen() {
         loading={loading}
         listMode="MODAL"
         dropDownContainerStyle={{
-          backgroundColor: "#dfdfdf"
+          backgroundColor: "#dfdfdf",
         }}
         selectedItemContainerStyle={{
-          backgroundColor: "#F0AEBB"
+          backgroundColor: "#F0AEBB",
         }}
         itemSeparator={true}
         itemSeparatorStyle={{
-          backgroundColor: "white"
+          backgroundColor: "white",
         }}
         selectedItemLabelStyle={{
-          fontWeight: "bold"
+          fontWeight: "bold",
         }}
-    
       />
-      {!subcategoryId ? <ErrorText msg="Necesita seleccionar una subcategoria" /> : null}
+      {!subcategoryId ? (
+        <ErrorText msg="Necesita seleccionar una subcategoria" />
+      ) : null}
       <View style={styles.containerDate}>
         <Button
           icon={
@@ -326,14 +338,11 @@ export default function CreateExpenseScreen() {
         <MyLoading />
       ) : (
         <Button
-          title="Guardar"
+          title="Editar"
           buttonStyle={{ backgroundColor: SECUNDARY }}
           onPress={handleSubmit(onSubmit)}
         />
       )}
-
-      <Text>Total:{NumberFormat(sumCost)}</Text>
-      <FlatListData expenses={expenses} updateList={updateList}></FlatListData>
     </View>
   );
 }
@@ -353,4 +362,3 @@ const styles = StyleSheet.create({
     backgroundColor: "#c5c5c5",
   },
 });
-

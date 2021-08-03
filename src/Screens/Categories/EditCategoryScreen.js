@@ -8,7 +8,7 @@ import MyButton from "~/components/MyButton";
 import { Errors } from "../../utils/Errors";
 import ShowToast from "../../components/toast/ShowToast";
 import MyLoading from "~/components/loading/MyLoading";
-import ModalIcon from '../../components/modal/ModalIcon';
+import ModalIcon from "../../components/modal/ModalIcon";
 
 export default function EditCategoryScreen({ route }) {
   const idCategory = route.params.idCategory;
@@ -27,8 +27,8 @@ export default function EditCategoryScreen({ route }) {
   const fetchData = async () => {
     try {
       const { data } = await getCategory(idCategory);
-      const editIcon = data.icon  ? data.icon : 'home';
-      setIcon(editIcon)
+      const editIcon = data.icon ? data.icon : "home";
+      setIcon(editIcon);
       setCategory(data);
       reset(data);
     } catch (e) {
@@ -39,7 +39,7 @@ export default function EditCategoryScreen({ route }) {
   const onSubmit = async (payload) => {
     try {
       setLoading(true);
-      const sendPayload =  {...payload, icon}
+      const sendPayload = { ...payload, icon };
       const { data } = await EditCategory(idCategory, sendPayload);
       setLoading(false);
       Keyboard.dismiss();
@@ -49,9 +49,9 @@ export default function EditCategoryScreen({ route }) {
       Errors(error);
     }
   };
-  const setIconHandle = (val) =>{
-    setIcon(val)
-  }
+  const setIconHandle = (val) => {
+    setIcon(val);
+  };
 
   return (
     <View style={styles.container}>
@@ -81,7 +81,7 @@ export default function EditCategoryScreen({ route }) {
         )}
         defaultValue=""
       />
-         <ModalIcon icon={icon} setIcon={setIconHandle} />
+      <ModalIcon icon={icon} setIcon={setIconHandle} />
       {loading ? (
         <MyLoading />
       ) : (

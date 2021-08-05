@@ -37,7 +37,7 @@ const FlatListItem = ({ data, updateList }) => {
         />
         <Text style={styles.title}>{item.name}</Text>
         <Icon
-          type="font-awesome"
+          type="material-community"
           style={{ paddingRight: 15 }}
           name="trash-can"
           size={20}

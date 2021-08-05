@@ -11,6 +11,11 @@ export const getExpensesFromSubcategory = async (idSubcategory, month) => {
     date: month
   }});
 }
+export const getExpensesLastMonthsFromSubcategory = async (idSubcategory) => {
+  return  axios.get(`${PREFIX}/subcategory/${idSubcategory}/last`,{params: {
+    // date: month
+  }});
+}
 export const deleteExpense = async (idExpense) => {
   return  axios.delete(`${PREFIX}/${idExpense}`);
 }
@@ -26,4 +31,5 @@ export const getOneExpense = async (idExpense) => {
 export const editExpense = async (idExpense, payload) => {
   return  axios.put(`${PREFIX}/${idExpense}`,payload);
 }
+
 

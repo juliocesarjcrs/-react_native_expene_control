@@ -79,7 +79,7 @@ const RenderItem = ({item, navigation, updateList})  => {
         }
       >
         <View style={styles.containerPopover}>
-          <Text style={styles.itemPopover} onPress={() => sendEditExpenceScreenn(item)}>Edtar</Text>
+          <Text style={styles.itemPopover} onPress={() => sendEditExpenceScreenn(item)}>Editar</Text>
           <Text style={styles.itemPopover} onPress={() => createTwoButtonAlert(item.id)}>Borrar</Text>
         </View>
       </Popover>
@@ -122,6 +122,9 @@ const styles = StyleSheet.create({
   },
   itemPopover: {
     paddingBottom: 10
-  }
+  },
+  iconHeader: {
+    paddingHorizontal: 10,
+  },
 });
 export default  RenderItem;

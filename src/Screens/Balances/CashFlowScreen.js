@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { Dimensions, StyleSheet, Text, View } from "react-native";
+import { Dimensions, StyleSheet, Text, View, ScrollView } from "react-native";
 import { DateFormat, GetNumberMonth, NumberFormat } from "../../utils/Helpers";
 import { BIG } from "~/styles/fonts";
 import { Errors } from "../../utils/Errors";
@@ -8,6 +8,9 @@ import MyLoading from "~/components/loading/MyLoading";
 import { LineChart } from "react-native-chart-kit";
 import { getLastExpenses } from "../../services/expenses";
 import { getLastIncomes } from "../../services/incomes";
+import SelectJoinCategory from '../../components/dropDown/SelectJoinCategory';
+import GraphBySubcategory from "~/Screens/Balances/components/GraphBySubcategory";
+
 
 export default function CashFlowScreen({ navigation }) {
   const month = useSelector((state) => state.date.month);
@@ -88,6 +91,7 @@ export default function CashFlowScreen({ navigation }) {
 
   return (
     <View style={styles.container}>
+       <ScrollView>
       <Text
         style={{
           fontSize: BIG,
@@ -161,6 +165,8 @@ export default function CashFlowScreen({ navigation }) {
         }}
         formatYLabel={(val) => `${NumberFormat(val)}`}
       />
+      <GraphBySubcategory/>
+      </ScrollView>
     </View>
   );
 }

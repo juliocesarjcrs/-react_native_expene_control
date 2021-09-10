@@ -6,7 +6,7 @@ import { PRIMARY, ICON } from "~/styles/colors";
 import { Errors } from "../../../utils/Errors";
 import { deleteSubategory } from "../../../services/subcategories";
 
-const FlatListItem = ({ data, updateList }) => {
+const FlatListItem = ({ data, updateList, navigation }) => {
   const listItem = ({ item }) => {
     const deleteItem = async (idExpense) => {
       try {
@@ -16,12 +16,14 @@ const FlatListItem = ({ data, updateList }) => {
         Errors(e);
       }
     };
+    const sendEditSubcategoryScreen = (subcategoryObj) => {
+      navigation.navigate("editSubcategory", { subcategoryObj });
+    };
 
     const createTwoButtonAlert = (id) =>
       Alert.alert("Eliminar", "¿Desea eliminar esta Subcategoria?", [
         {
           text: "Cancel",
-          onPress: () => console.log("Cancel Pressed"),
           style: "cancel",
         },
         { text: "OK", onPress: () => deleteItem(id) },
@@ -29,14 +31,25 @@ const FlatListItem = ({ data, updateList }) => {
     return (
       <View style={styles.header}>
         <Text style={styles.title}>{item.name}</Text>
-        <Icon
-          type="material-community"
-          style={{ paddingRight: 15 }}
-          name="trash-can"
-          size={20}
-          color={ICON}
-          onPress={() => createTwoButtonAlert(item.id)}
-        />
+        <View style={{ display: "flex", flexDirection: "row" }}>
+          <View style={{ paddingRight: 15 }}>
+            <Icon
+              type="material-community"
+              name="trash-can"
+              size={20}
+              color={ICON}
+              onPress={() => createTwoButtonAlert(item.id)}
+            />
+          </View>
+          <Icon
+            type="material-community"
+            style={{ paddingRight: 55, color: "white" }}
+            name={"pencil-outline"}
+            size={20}
+            color={ICON}
+            onPress={() => sendEditSubcategoryScreen(item)}
+          />
+        </View>
       </View>
     );
   };

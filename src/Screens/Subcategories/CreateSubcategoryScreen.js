@@ -25,6 +25,10 @@ export default function CreateSubcategoryScreen({ route, navigation }) {
 
   useEffect(() => {
     fetchData();
+    const unsubscribe = navigation.addListener("focus", () => {
+      fetchData();
+    });
+    return unsubscribe;
   }, []);
 
   const fetchData = async () => {
@@ -91,7 +95,7 @@ export default function CreateSubcategoryScreen({ route, navigation }) {
       ) : (
         <MyButton onPress={handleSubmit(create)} title="Guardar" />
       )}
-      <FlatListItem data={subcategories} updateList={updateList} />
+      <FlatListItem data={subcategories} updateList={updateList} navigation={navigation} />
     </View>
   );
 }

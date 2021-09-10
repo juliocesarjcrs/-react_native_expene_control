@@ -26,7 +26,6 @@ export default function ListSubcategoriesScreen({ navigation }) {
 
   const fetchData = async () => {
     try {
-      console.log("fetchData List main");
       const { data } = await getCategoryWithSubcategories();
       const mapping = data.data.map((element) => {
         return { ...element, data: element.subcategories };

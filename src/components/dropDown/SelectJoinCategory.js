@@ -3,12 +3,11 @@ import {View, Text, StyleSheet} from 'react-native';
 import DropDownPicker from "react-native-dropdown-picker";
 import MyLoading from "~/components/loading/MyLoading";
 import {getCategoryWithSubcategories} from '../../services/categories';
-import { getExpensesLastMonthsFromSubcategory} from '../../services/expenses';
 import { useSelector } from "react-redux";
 import {Errors} from '../../utils/Errors';
 import ErrorText from '../ErrorText';
 
-export default function SelectJoinCategory({fetchExpenses}) {
+export default function SelectJoinCategory({fetchExpensesSubcategory,fetchExpensesOnlyCategory}) {
 
   const month = useSelector((state) => state.date.month);
   const [categories, setCategories] = useState([]);
@@ -55,8 +54,7 @@ export default function SelectJoinCategory({fetchExpenses}) {
       setSumCost(0);
     } else {
       const foundSubcategory = subcategories.find(e=> e.value === index);
-      console.log( foundSubcategory);
-      fetchExpenses(foundSubcategory);
+      fetchExpensesSubcategory(foundSubcategory);
     }
   };
 
@@ -77,8 +75,14 @@ export default function SelectJoinCategory({fetchExpenses}) {
     if (indexArray >= 0) {
       const dataFormat = formatOptionsSubcategories(
         categories[indexArray].subcategories
-      );
-      setSubcategories(dataFormat);
+        );
+        setSubcategories(dataFormat);
+        console.log('i categories[indexArray]', categories[indexArray]);
+        const newData = {
+          id: index,
+          label: categories[indexArray].label
+        }
+        fetchExpensesOnlyCategory(newData);
     }
   };
   const formatOptionsSubcategories = (data) => {

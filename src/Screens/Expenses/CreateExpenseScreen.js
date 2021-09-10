@@ -47,7 +47,6 @@ export default function CreateExpenseScreen() {
   //   DATE pIKER ---------------  ///////////////
 
   const [date, setDate] = useState(new Date());
-  console.log('create, ', date);
   const today = DateFormat(new Date(), "YYYY MMM DD");
   const [dateString, setDateString] = useState(today);
   const [mode, setMode] = useState("date");

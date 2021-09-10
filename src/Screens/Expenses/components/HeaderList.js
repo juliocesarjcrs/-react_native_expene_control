@@ -6,7 +6,6 @@ import {Icon} from 'react-native-elements';
 import {ICON} from '../../../styles/colors';
 
  const HeaderList = ({data, navigation})=>{
-  //  console.log(data);
    const sendEditCategoryScreen = (id) => {
     navigation.navigate("editCategory", { idCategory: id });
   };

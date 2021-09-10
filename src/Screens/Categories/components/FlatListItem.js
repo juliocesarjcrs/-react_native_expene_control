@@ -21,7 +21,6 @@ const FlatListItem = ({ data, updateList }) => {
       Alert.alert("Eliminar", "¿Desea eliminar esta categoria?", [
         {
           text: "Cancel",
-          onPress: () => console.log("Cancel Pressed"),
           style: "cancel",
         },
         { text: "OK", onPress: () => deleteItem(id) },

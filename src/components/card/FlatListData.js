@@ -23,7 +23,6 @@ const FlatListData = ({ expenses, updateList }) => {
       Alert.alert("Eliminar", "¿Desea eliminar este gasto?", [
         {
           text: "Cancel",
-          onPress: () => console.log("Cancel Pressed"),
           style: "cancel",
         },
         { text: "OK", onPress: () => deleteItem(id) },

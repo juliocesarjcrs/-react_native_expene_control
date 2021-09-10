@@ -11,6 +11,7 @@ import SumaryIncomesScreen from '~/Screens/Incomes/SumaryIncomesScreen';
 import CreateIncomeScreen from '~/Screens/Incomes/CreateIncomeScreen';
 import CashFlowScreen from '~/Screens/Balances/CashFlowScreen';
 import LastExpensesScreen from '~/Screens/Expenses/LastExpensesScreen';
+import EditSubcategoryScreen from '~/Screens/Subcategories/EditSubcategoryScreen';
 
 export default {
   LoginScreen,
@@ -25,5 +26,6 @@ export default {
   CreateIncomeScreen,
   CashFlowScreen,
   LastExpensesScreen,
-  EditExpenseScreen
+  EditExpenseScreen,
+  EditSubcategoryScreen
 }

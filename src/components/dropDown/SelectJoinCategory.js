@@ -77,7 +77,6 @@ export default function SelectJoinCategory({fetchExpensesSubcategory,fetchExpens
         categories[indexArray].subcategories
         );
         setSubcategories(dataFormat);
-        console.log('i categories[indexArray]', categories[indexArray]);
         const newData = {
           id: index,
           label: categories[indexArray].label

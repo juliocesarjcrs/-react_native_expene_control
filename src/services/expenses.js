@@ -11,16 +11,12 @@ export const getExpensesFromSubcategory = async (idSubcategory, month) => {
     date: month
   }});
 }
-export const getExpensesLastMonthsFromSubcategory = async (idSubcategory) => {
-  return  axios.get(`${PREFIX}/subcategory/${idSubcategory}/last`,{params: {
-    // date: month
-  }});
+export const getExpensesLastMonthsFromSubcategory = async (idSubcategory,params) => {
+  return  axios.get(`${PREFIX}/subcategory/${idSubcategory}/last`,{params});
 }
 
-export const findLastMonthsFromOnlyCategory = async (idCategory) => {
-  return  axios.get(`${PREFIX}/category/${idCategory}`,{params: {
-    // date: month
-  }});
+export const findLastMonthsFromOnlyCategory = async (idCategory, params) => {
+  return  axios.get(`${PREFIX}/category/${idCategory}`,{params});
 }
 
 export const deleteExpense = async (idExpense) => {

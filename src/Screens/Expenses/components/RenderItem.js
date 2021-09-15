@@ -47,7 +47,7 @@ const RenderItem = ({item, navigation, updateList})  => {
         color={ICON}
       />
       <View style={styles.containerText}>
-        <Text style={styles.title}>{item.subcategory}</Text>
+        <Text style={styles.title}>{item.subcategory}-{item.id}</Text>
         <Text style={styles.commentary}>{item.commentary}</Text>
       </View>
       <View style={styles.cardDate}>

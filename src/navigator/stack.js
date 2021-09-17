@@ -59,6 +59,7 @@ const MainStack = createStackNavigator();
 const ExpenseStack = createStackNavigator();
 const IncomeStack = createStackNavigator();
 const BalanceStack = createStackNavigator();
+const SettingsStack = createStackNavigator();
 // const MainStack = createDrawerNavigator();
 
 function ExpenseStackScreen() {
@@ -96,6 +97,14 @@ function BalanceStackScreen() {
     </BalanceStack.Navigator>
   );
 }
+
+function SettingsStackScreen() {
+  return (
+    <SettingsStack.Navigator>
+            <SettingsStack.Screen name="settings" component={Routes.SettingsScreen} options={{ title: 'Ajustes' }}/>
+    </SettingsStack.Navigator>
+  );
+}
 const Tab = createBottomTabNavigator();
 return (
   <NavigationContainer>
@@ -114,6 +123,9 @@ return (
         else if (route.name === 'Balance') {
           iconName = focused ? 'scale-balance' : 'scale-balance';
         }
+        else if (route.name === 'Ajustes') {
+          iconName = focused ? 'cog' : 'cog-outline';
+        }
 
         // You can return any component that you like here!
         return <Icon
@@ -129,11 +141,11 @@ return (
       activeTintColor: 'tomato',
       inactiveTintColor: 'gray',
     }}
-    
     >
       <Tab.Screen name="Gastos" component={ExpenseStackScreen} />
       <Tab.Screen name="Ingresos" component={IncomeStackScreen} />
       <Tab.Screen name="Balance" component={BalanceStackScreen} />
+      <Tab.Screen name="Ajustes" component={SettingsStackScreen} />
     </Tab.Navigator>
     :
       <Stack.Navigator>

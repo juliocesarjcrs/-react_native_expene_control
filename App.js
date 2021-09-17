@@ -30,11 +30,29 @@ export default function App() {
         console.log(error.response.data.message);
         const message =  error.response.data.message ? error.response.data.message :'Sin definir'
         showToast(message)
+      }else if(status ===  400){
+        console.log('400',error.response.data.message);
+        const message = formatError(error.response.data.message );
+        showToast(message)
       }
 
     }
     return Promise.reject(error);
   });
+
+  const formatError = (msg) => {
+    if(!msg) return 'Sin definir';
+    const isArray = Array.isArray(msg);
+    if(isArray){
+      let msgSend = msg[0];
+      // msg.forEach(element => {
+      //   msgSend += element;
+      // });
+      return msgSend;
+    }
+    return msg;
+
+  }
 
   const showToast = (msg) => {
     ToastAndroid.show(msg, ToastAndroid.SHORT);

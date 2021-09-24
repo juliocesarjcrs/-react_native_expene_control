@@ -13,6 +13,14 @@ import CashFlowScreen from '~/Screens/Balances/CashFlowScreen';
 import LastExpensesScreen from '~/Screens/Expenses/LastExpensesScreen';
 import EditSubcategoryScreen from '~/Screens/Subcategories/EditSubcategoryScreen';
 import SettingsScreen from '~/Screens/Settings/SettingsScreen';
+// auth
+import ForgotPasswordScreen from '~/Screens/Auth/ForgotPasswordScreen';
+import CheckCodePasswordScreen from '~/Screens/Auth/CheckCodePasswordScreen';
+import ResetPasswordScreen from '~/Screens/Auth/ResetPasswordScreen';
+
+
+
+
 
 export default {
   LoginScreen,
@@ -29,5 +37,8 @@ export default {
   LastExpensesScreen,
   EditExpenseScreen,
   EditSubcategoryScreen,
-  SettingsScreen
+  SettingsScreen,
+  ForgotPasswordScreen,
+  CheckCodePasswordScreen,
+  ResetPasswordScreen
 }

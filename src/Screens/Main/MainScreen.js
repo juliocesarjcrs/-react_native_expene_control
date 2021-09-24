@@ -23,7 +23,9 @@ export default function MainScreen({ navigation }) {
   const [categories, setCategories] = useState([]);
   const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(false);
+
   useEffect(() => {
+
     fetchData();
     const unsubscribe = navigation.addListener("focus", () => {
       fetchData();
@@ -68,9 +70,7 @@ export default function MainScreen({ navigation }) {
   return (
     <View style={styles.container}>
       <ScrollView>
-        {/* <MyTabs navigation={navigation} /> */}
         <MyMonthPicker />
-        {/* <MyFaButton title="Ingresar gasto" /> */}
         <View style={styles.fixToText}>
           <MyButton onPress={sendcreateExpenseScreen} title="Ingresar gasto" />
           <MyButton onPress={LogOut} title="Cerrar sesión" />

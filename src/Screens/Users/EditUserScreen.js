@@ -17,22 +17,7 @@ export default function EditUserScreen ({navigation}) {
   const { handleSubmit, control,setValue, errors } = useForm({
     defaultValues: {email: 'test2', password: '123'}
   });
-    // {
-    // defaultValues: {email: 'test2'}
-    // defaultValues: async () => ({ email: 'test' })
-    // defaultValues: async () => {
-    //   const jsonValue = await AsyncStorage.getItem('user')
-    //   const user = jsonValue != null ? JSON.parse(jsonValue) : null;
-    //   console.log('user', user);
-    //   return {email: user.email}
-    // }
-    // email: async () => {
-    //   console.log('aquis');
-    //   const jsonValue = await AsyncStorage.getItem('user');
-    //     const user = jsonValue != null ? JSON.parse(jsonValue) : null;
-    //     return {email: user.email};
-    // }
-  // });
+
 
   useEffect(() => {
     fetchData();
@@ -57,11 +42,6 @@ export default function EditUserScreen ({navigation}) {
   const onSubmit = async (payload) => {
     try {
       // const { data } = await login(payload);
-      // await AsyncStorage.setItem("access_token", data.access_token);
-      // const jsonValue = JSON.stringify(data.user);
-      // await AsyncStorage.setItem("user", jsonValue);
-      // dispatch(setUserAction(data.user));
-      // dispatch(setAuthAction(true));
     } catch (error) {
       console.log(error, "LOgin error");
 

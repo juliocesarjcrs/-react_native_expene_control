@@ -24,14 +24,15 @@ export default function App() {
       // console.log(error.response);
       const { status } = error.response;
       if (status === 401) {
-          dispatch(userSignOut());
-          await AsyncStorage.setItem("access_token",null);
+        dispatch(userSignOut());
+        await AsyncStorage.removeItem('access_token');
+        const message = formatError(error.response.data.message );
+        showToast(message)
+        // await AsyncStorage.setItem("access_token",null);
       }else if(status ===  403){
-        console.log(error.response.data.message);
         const message =  error.response.data.message ? error.response.data.message :'Sin definir'
         showToast(message)
       }else if(status ===  400){
-        console.log('400',error.response.data.message);
         const message = formatError(error.response.data.message );
         showToast(message)
       }

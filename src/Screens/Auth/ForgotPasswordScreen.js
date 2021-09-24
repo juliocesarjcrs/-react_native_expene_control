@@ -1,48 +1,47 @@
 import React, { useState } from "react";
 import { View, StyleSheet, Text } from "react-native";
 import { useForm, Controller } from "react-hook-form";
-import { login } from "~/services/auth";
-import { useDispatch } from "react-redux";
-import { setUserAction, setAuthAction } from "~/actions/authActions";
-import AsyncStorage from "@react-native-async-storage/async-storage";
 import MyButton from "~/components/MyButton";
 import { Input } from "react-native-elements";
-import { useSelector } from "react-redux";
+import { useDispatch } from "react-redux";
 import MyLoading from "~/components/loading/MyLoading";
-
-export default function LoginScreen({ navigation }) {
-
+import { Errors } from "~/utils/Errors";
+import { forgotPassword } from "../../services/auth";
+import { setUserAction } from "~/actions/authActions";
+export default function ForgotPasswordScreen({ navigation }) {
     const EMAIL_REGEX =
         /^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
 
-    const { handleSubmit, control, errors } = useForm();
-    const loadingAuth = useSelector((state) => {
-        return state.auth.loadingAuth;
+    const { handleSubmit, control, errors } = useForm({
+        defaultValues: { email: "" },
     });
     const [loading, setLoading] = useState(false);
     const dispatch = useDispatch();
     const onSubmit = async (payload) => {
         try {
             setLoading(true);
-            const { data } = await login(payload);
+            const { data } = await forgotPassword(payload);
             setLoading(false);
-            await AsyncStorage.setItem("access_token", data.access_token);
-            const jsonValue = JSON.stringify(data.user);
-            await AsyncStorage.setItem("user", jsonValue);
             dispatch(setUserAction(data.user));
-            dispatch(setAuthAction(true));
+            navigation.navigate("checkCodePassword");
         } catch (error) {
             setLoading(false);
-            dispatch(setUserAction(null));
-            dispatch(setAuthAction(false));
+            Errors(error);
         }
     };
     return (
         <View style={styles.container}>
-            {loadingAuth ? (
+            {loading ? (
                 <MyLoading />
             ) : (
                 <View style={styles.container2}>
+                    <Text>Restablecer su contraseña</Text>
+                    <Text>
+                        Proporcione la dirección de correo electrónico de su
+                        cuenta para solicitar un código de restablecimineto de
+                        contraseña. Usted recibirá un código a su dirección de
+                        correo electrónico, si este es válido.
+                    </Text>
                     <Controller
                         name="email"
                         control={control}
@@ -67,42 +66,14 @@ export default function LoginScreen({ navigation }) {
                         )}
                         defaultValue=""
                     />
-                    <Controller
-                        name="password"
-                        control={control}
-                        rules={{
-                            required: {
-                                value: true,
-                                message: "La contraseña es obligatorio",
-                            },
-                        }}
-                        render={({ onChange, value }) => (
-                            <Input
-                                value={value}
-                                placeholder="Password"
-                                onChangeText={(text) => onChange(text)}
-                                secureTextEntry={true}
-                                errorStyle={{ color: "red" }}
-                                errorMessage={errors?.password?.message}
-                            />
-                        )}
-                        defaultValue=""
-                    />
                     {loading ? (
                         <MyLoading />
                     ) : (
                         <MyButton
-                            title="Iniciar sesión"
+                            title="Solicitar código de reinicio"
                             onPress={handleSubmit(onSubmit)}
                         />
-                     )}
-
-                    <MyButton
-                        title="Recuperar contraseña"
-                        onPress={() => {
-                            navigation.navigate("forgotPassword");
-                        }}
-                    />
+                    )}
                 </View>
             )}
         </View>
@@ -117,6 +88,7 @@ const styles = StyleSheet.create({
     },
     container2: {
         flexDirection: "column",
-        backgroundColor: "#fff"
+        backgroundColor: "#fff",
+        margin: 5,
     },
 });

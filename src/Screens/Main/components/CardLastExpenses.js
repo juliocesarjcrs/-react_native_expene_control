@@ -37,20 +37,21 @@ const CardLastExpenses = ({ navigation }) => {
   ]);
 
   useEffect(() => {
-    fetchData();
+    fetchDataExpenses();
     const unsubscribe = navigation.addListener("focus", () => {
-      fetchData();
+      fetchDataExpenses();
     });
     return unsubscribe;
   }, [take]);
 
-  const fetchData = async () => {
+  const fetchDataExpenses = async () => {
     try {
       const params = {
         take,
       };
       setLoading(true);
       const { data } = await getLastExpensesWithPaginate(params);
+      console.log('data', data);
       setLoading(false);
       setExpenses(data.data);
     } catch (error) {

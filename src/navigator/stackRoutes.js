@@ -17,6 +17,9 @@ import SettingsScreen from '~/Screens/Settings/SettingsScreen';
 import ForgotPasswordScreen from '~/Screens/Auth/ForgotPasswordScreen';
 import CheckCodePasswordScreen from '~/Screens/Auth/CheckCodePasswordScreen';
 import ResetPasswordScreen from '~/Screens/Auth/ResetPasswordScreen';
+// user
+import EditUserScreen from '~/Screens/Users/EditUserScreen';
+import ChangePasswordScreen from  '~/Screens/Users/ChangePasswordScreen';
 
 
 
@@ -40,5 +43,8 @@ export default {
   SettingsScreen,
   ForgotPasswordScreen,
   CheckCodePasswordScreen,
-  ResetPasswordScreen
+  ResetPasswordScreen,
+  // Users
+  EditUserScreen,
+  ChangePasswordScreen
 }

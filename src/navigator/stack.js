@@ -102,6 +102,8 @@ function SettingsStackScreen() {
   return (
     <SettingsStack.Navigator>
             <SettingsStack.Screen name="settings" component={Routes.SettingsScreen} options={{ title: 'Ajustes' }}/>
+            <SettingsStack.Screen name="editUser" component={Routes.EditUserScreen} options={{ title: 'Editar perfil' }}/>
+            <SettingsStack.Screen name="changePassword" component={Routes.ChangePasswordScreen} options={{ title: 'Cambiar contraseña' }}/>
     </SettingsStack.Navigator>
   );
 }

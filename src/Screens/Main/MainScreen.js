@@ -19,6 +19,7 @@ import CardLastExpenses from "./components/CardLastExpenses";
 
 export default function MainScreen({ navigation }) {
   const month = useSelector((state) => state.date.month);
+  const userAuth = useSelector((state) => state.auth.user);
   const dispatch = useDispatch();
   const [categories, setCategories] = useState([]);
   const [total, setTotal] = useState(0);
@@ -71,6 +72,7 @@ export default function MainScreen({ navigation }) {
     <View style={styles.container}>
       <ScrollView>
         <MyMonthPicker />
+        <Text>{userAuth? userAuth.name: '---'}</Text>
         <View style={styles.fixToText}>
           <MyButton onPress={sendcreateExpenseScreen} title="Ingresar gasto" />
           <MyButton onPress={LogOut} title="Cerrar sesión" />

@@ -4,19 +4,21 @@ import { useForm, Controller } from "react-hook-form";
 import MyButton from "~/components/MyButton";
 import { Input } from "react-native-elements";
 import {Errors} from '../../utils/Errors';
-import {getUser} from '~/services/users';
 import AsyncStorage from "@react-native-async-storage/async-storage";
-
+import {editUser} from '../../services/users';
+import ShowToast from '../../components/toast/ShowToast';
+import { useDispatch } from "react-redux";
+import { setUserAction } from "~/actions/authActions"; 
 export default function EditUserScreen ({navigation}) {
 
   const EMAIL_REGEX =
   /^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
 
- 
-  const [userEdit, setUserEdit] = useState({});
   const { handleSubmit, control,setValue, errors } = useForm({
-    defaultValues: {email: 'test2', password: '123'}
+    defaultValues: {email: '', name: ''}
   });
+
+  const [idUser, setIdUser] = useState(null);
 
 
   useEffect(() => {
@@ -31,20 +33,22 @@ export default function EditUserScreen ({navigation}) {
     try {
       const jsonValue = await AsyncStorage.getItem('user')
       const user = jsonValue != null ? JSON.parse(jsonValue) : null;
-      console.log('user', user);
       setValue("email", user.email);
+      setValue("name", user.name);
+      setIdUser(user.id)
     } catch (error) {
       Errors(error);
     }
   };
 
-  // const dispatch = useDispatch();
+  const dispatch = useDispatch();
   const onSubmit = async (payload) => {
     try {
-      // const { data } = await login(payload);
+      const { data } = await editUser(idUser, payload);
+      dispatch(setUserAction(data));
+      ShowToast();
     } catch (error) {
-      console.log(error, "LOgin error");
-
+      Errors(error);
     }
   };
   return (
@@ -73,19 +77,18 @@ export default function EditUserScreen ({navigation}) {
         defaultValue=""
       />
       <Controller
-        name="password"
+        name="name"
         control={control}
         rules={{
-          required: { value: true, message: "La contraseña es obligatorio" },
+          required: { value: true, message: "El nombre es obligatorio" },
         }}
         render={({ onChange, value }) => (
           <Input
             value={value}
-            placeholder="Password"
+            placeholder="Nombre"
             onChangeText={(text) => onChange(text)}
-            secureTextEntry={true}
             errorStyle={{ color: "red" }}
-            errorMessage={errors?.password?.message}
+            errorMessage={errors?.name?.message}
           />
         )}
         defaultValue=""

@@ -147,7 +147,7 @@ return (
       <Tab.Screen name="Gastos" component={ExpenseStackScreen} />
       <Tab.Screen name="Ingresos" component={IncomeStackScreen} />
       <Tab.Screen name="Balance" component={BalanceStackScreen} />
-      <Tab.Screen name="Ajustes" component={SettingsStackScreen} />
+      {/* <Tab.Screen name="Ajustes" component={SettingsStackScreen} /> */}
     </Tab.Navigator>
     :
       <Stack.Navigator>

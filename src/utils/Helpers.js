@@ -28,6 +28,13 @@ export const AsignColor = (index) =>{
   return '#AEA3CD'
 
 }
+export const  delay =(miliseconst) => {
+  return new Promise(resolve => {
+    setTimeout(() => {
+      resolve(2);
+    }, miliseconst);
+  });
+}
 
 
 

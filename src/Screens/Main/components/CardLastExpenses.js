@@ -1,6 +1,4 @@
-import React from "react";
-import { useState } from "react";
-import { useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import { View, Text, StyleSheet, TouchableOpacity } from "react-native";
 import { CheckBox, Icon } from "react-native-elements";
 import Popover from "react-native-popover-view";
@@ -51,7 +49,6 @@ const CardLastExpenses = ({ navigation }) => {
       };
       setLoading(true);
       const { data } = await getLastExpensesWithPaginate(params);
-      console.log('data', data);
       setLoading(false);
       setExpenses(data.data);
     } catch (error) {

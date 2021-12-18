@@ -9,5 +9,9 @@ export  const  changePassword = async(idUser, payload) =>{
 }
 
 export  const editUser = async(idUser, payload) =>{
-  return await axios.put(`${PREFIX}/${idUser}`, payload)
+  return await axios.put(`${PREFIX}/${idUser}`, payload,  {
+    headers: {
+      'Content-Type': 'multipart/form-data'
+    }
+  })
 }

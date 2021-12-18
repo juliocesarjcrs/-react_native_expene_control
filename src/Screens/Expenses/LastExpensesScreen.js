@@ -1,37 +1,69 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { FlatList, SafeAreaView, StyleSheet, Text } from "react-native";
 import { Errors } from "../../utils/Errors";
 import MyLoading from "~/components/loading/MyLoading";
 import { getLastExpensesWithPaginate } from "../../services/expenses";
 import { MUTED } from "../../styles/colors";
 import RenderItem from "./components/RenderItem";
+import BarSearch from './components/BarSearch';
+import {  useDispatch, useSelector } from "react-redux";
+import usePrevious from '../../customHooks/usePrevious';
+import {setQueryAction} from '../../actions/SearchActions';
 
 export default function LastExpensesScreen({ navigation }) {
   const [lastExpenses, setLastExpenses] = useState([]);
   const [loading, setLoading] = useState(false);
   const [page, setPage] = useState(1);
   const [stopeFetch, setStopeFetch] = useState(false);
+  // PARA EL BUSCADOR
+  const dispatch = useDispatch();
+  const query = useSelector((state) => state.search.query);
+  const prevQuery = usePrevious(query);
+  // la primera vez resetea el buscador
+  useEffect(() => {
+    dispatch(setQueryAction (null));
+
+  }, []);
 
   useEffect(() => {
     fetchData();
-    const unsubscribe = navigation.addListener("focus", () => {
+    return navigation.addListener("focus", () => {
       fetchData();
     });
-    return unsubscribe;
-  }, [page]);
+  }, [page, query]);
+  useEffect(() => {
+    if(page!==1){
+      setPage(1);
+    }
+  }, [query]);
+
   const fetchData = async () => {
     try {
       // setLoading(true);
       const params = {
         take: 15,
-        page
+        page,
+        query
       };
       const { data } = await getLastExpensesWithPaginate(params);
       // setLoading(false);
-      if(data.data.length <= 0){
-        setStopeFetch(false);
+      if (data.data.length <= 0) {
+          setStopeFetch(false);
       }
-      let concatPages = lastExpenses.concat(data.data);
+      let concatPages = [];
+      const condition1 = query === null && prevQuery === undefined;
+      const condition2 = query === null && prevQuery === null;
+      const condition3 = query === '' && prevQuery === '';
+      if (condition1 || condition2) {
+          concatPages = lastExpenses.concat(data.data);
+      } else {
+        if(condition3){
+            concatPages = lastExpenses.concat(data.data);
+            concatPages = getUniqArrDeep(concatPages)
+          }else{
+            concatPages = data.data.length > 0 ? data.data : lastExpenses;
+          }
+      }
       setLastExpenses(concatPages);
     } catch (e) {
       // setLoading(false);
@@ -43,6 +75,11 @@ export default function LastExpensesScreen({ navigation }) {
       setPage(page + 1);
     }
   };
+  const getUniqArrDeep = arr => {
+    const arrStr = arr.map(item => JSON.stringify(item))
+    return [...new Set(arrStr)]
+        .map(item => JSON.parse(item))
+}
 
   return (
     <SafeAreaView style={styles.container}>
@@ -65,6 +102,7 @@ export default function LastExpensesScreen({ navigation }) {
           initialNumToRender={10}
           onEndReached={loadMoreData}
           onEndReachedThreshold={0.5}
+          ListHeaderComponent={BarSearch}
         />
       )}
     </SafeAreaView>

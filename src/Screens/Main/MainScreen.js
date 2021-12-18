@@ -1,14 +1,13 @@
 import React, { useEffect, useState } from "react";
-import { ScrollView, StyleSheet, Text, View } from "react-native";
+import { ScrollView, StyleSheet, Text, View, Image } from "react-native";
 import MyPieChart from "../../components/charts/MyPieChart";
 import MyButton from "~/components/MyButton";
 import { getCategoryWithSubcategories } from "../../services/categories";
 import { AsignColor, NumberFormat } from "../../utils/Helpers";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { useDispatch } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import { setAuthAction } from "~/actions/authActions";
 import MyMonthPicker from "../../components/datePicker/MyMonthPicker";
-import { useSelector } from "react-redux";
 import { MUTED, SECUNDARY } from "../../styles/colors";
 import { Button } from "react-native-elements";
 import { BIG } from "../../styles/fonts";
@@ -16,6 +15,7 @@ import { Errors } from "../../utils/Errors";
 import MyLoading from "~/components/loading/MyLoading";
 import MyFaButton from "../../components/buttons/MyFaButton";
 import CardLastExpenses from "./components/CardLastExpenses";
+import {getUser} from '../../services/users';
 
 export default function MainScreen({ navigation }) {
   const month = useSelector((state) => state.date.month);
@@ -24,6 +24,7 @@ export default function MainScreen({ navigation }) {
   const [categories, setCategories] = useState([]);
   const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(false);
+  const [userLoggued, setUserLoggued] = useState({});
 
   useEffect(() => {
 
@@ -68,11 +69,40 @@ export default function MainScreen({ navigation }) {
     await AsyncStorage.removeItem("user");
     dispatch(setAuthAction(false));
   };
+
+  // load image
+  useEffect(() => {
+    fetchDataUserLogued();
+    const unsubscribe = navigation.addListener("focus", () => {
+      fetchDataUserLogued();
+    });
+    return unsubscribe;
+  }, []);
+
+  const fetchDataUserLogued = async () => {
+    try {
+      const jsonValue = await AsyncStorage.getItem('user')
+      const user = jsonValue != null ? JSON.parse(jsonValue) : null;
+      const {data} = await getUser(user.id);
+      setUserLoggued(data);
+    } catch (error) {
+      Errors(error);
+    }
+  };
   return (
     <View style={styles.container}>
       <ScrollView>
         <MyMonthPicker />
-        <Text>{userAuth? userAuth.name: '---'}</Text>
+        <Text>{userLoggued.name? userLoggued.name: '---'}</Text>
+        {/* {
+          userLoggued.image &&
+        <Image
+        style={styles.logo}
+        source={{
+          uri: `http://192.168.1.11:4000/load/file?file=${userLoggued.image}`
+        }}
+      />
+        } */}
         <View style={styles.fixToText}>
           <MyButton onPress={sendcreateExpenseScreen} title="Ingresar gasto" />
           <MyButton onPress={LogOut} title="Cerrar sesión" />
@@ -115,5 +145,9 @@ const styles = StyleSheet.create({
   textMuted: {
     textAlign: "center",
     color: MUTED,
+  },
+  logo: {
+    width: 66,
+    height: 58,
   },
 });

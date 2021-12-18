@@ -39,7 +39,6 @@ export default function CreateIncomeScreen({navigation}) {
   const [show, setShow] = useState(false);
 
   const onChange = (event, selectedDate) => {
-    // console.log('onChange', selectedDate, date);
     const currentDate = selectedDate || date;
 
     setShow(Platform.OS === "ios");

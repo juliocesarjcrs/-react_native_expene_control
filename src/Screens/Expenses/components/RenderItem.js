@@ -53,7 +53,7 @@ const RenderItem = ({item, navigation, updateList})  => {
       <View style={styles.cardDate}>
         <Text style={styles.cost}>{NumberFormat(item.cost)}</Text>
         <Text style={styles.date}>
-          {DateFormat(item.date, "DD MMM")}{" "}
+          {DateFormat(item.dateFormat, "DD MMM")}{" "}
           {DateFormat(item.createdAt, "hh:mm a")}
         </Text>
       </View>

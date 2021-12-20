@@ -36,10 +36,9 @@ const CardLastExpenses = ({ navigation }) => {
 
   useEffect(() => {
     fetchDataExpenses();
-    const unsubscribe = navigation.addListener("focus", () => {
+    return navigation.addListener("focus", () => {
       fetchDataExpenses();
     });
-    return unsubscribe;
   }, [take]);
 
   const fetchDataExpenses = async () => {
@@ -147,7 +146,7 @@ const CardLastExpenses = ({ navigation }) => {
                 <View style={styles.cardDate}>
                   <Text style={styles.cost}>{NumberFormat(item.cost)}</Text>
                   <Text style={styles.date}>
-                    {DateFormat(item.date, "DD MMM")}{" "}
+                    {DateFormat(item.dateFormat, "DD MMM")}{" "}
                     {DateFormat(item.createdAt, "hh:mm a")}
                   </Text>
                 </View>

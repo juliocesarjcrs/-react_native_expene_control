@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { Dimensions, StyleSheet, Text, View, ScrollView } from "react-native";
+import { Rect, Text as TextSVG, Svg } from "react-native-svg";
 import { DateFormat, GetNumberMonth, NumberFormat } from "../../utils/Helpers";
 import { BIG } from "~/styles/fonts";
 import { Errors } from "../../utils/Errors";
@@ -8,7 +9,6 @@ import MyLoading from "~/components/loading/MyLoading";
 import { LineChart } from "react-native-chart-kit";
 import { getLastExpenses } from "../../services/expenses";
 import { getLastIncomes } from "../../services/incomes";
-import SelectJoinCategory from '../../components/dropDown/SelectJoinCategory';
 import GraphBySubcategory from "~/Screens/Balances/components/GraphBySubcategory";
 
 
@@ -18,30 +18,40 @@ export default function CashFlowScreen({ navigation }) {
   const [totalIncomes, setTotalIncomes] = useState(0);
   const [dataExpenses, setDataExpenses] = useState([0]);
   const [dataIncomes, setDataIncomes] = useState([0]);
+  const [dataSavings, setDataSavings] = useState([0]);
 
   const [labels, setLabels] = useState([""]);
 
   const [loading, setLoading] = useState(false);
+  // decorator graph
+  let [tooltipPos, setTooltipPos] = useState({
+    x: 0,
+    y: 0,
+    visible: false,
+    value: 0,
+});
 
   useEffect(() => {
-    // fetchLastExpenses();
-    const unsuscribe = navigation.addListener("focus", () => {
+    return navigation.addListener("focus", () => {
       fetchLastExpenses();
     });
-    return unsuscribe;
   }, [month]);
 
   useEffect(() => {
-    // fetchLastIncomes();
-    const unsuscribe = navigation.addListener("focus", () => {
+    return navigation.addListener("focus", () => {
       fetchLastIncomes();
     });
-    return unsuscribe;
-
   }, [month]);
+
+  useEffect(() => {
+    return navigation.addListener("focus", () => {
+      calculateDataSavings();
+    });
+  }, [dataExpenses, dataIncomes]);
 
   const fetchLastExpenses = async () => {
     try {
+      setTooltipPos({ x: 0, y: 0, visible: false, value: 0 });
       setLoading(true);
       const { data } = await getLastExpenses();
       setLoading(false);
@@ -88,6 +98,15 @@ export default function CashFlowScreen({ navigation }) {
       Errors(e);
     }
   };
+  const calculateDataSavings = () => {
+    let savings = [0];
+    if(dataIncomes.length > 0 && dataExpenses.length > 0){
+      dataIncomes.forEach((income, key) => {
+        savings[key] = income - (dataExpenses[key] ? dataExpenses[key] : 0)
+      });
+    }
+    setDataSavings(savings);
+  }
 
   return (
     <View style={styles.container}>
@@ -140,6 +159,11 @@ export default function CashFlowScreen({ navigation }) {
               strokeWidth: 2,
               color: (opacity = 1) => `rgba(0, 100, 0)`,
             },
+            {
+              data: dataSavings,
+              strokeWidth: 2,
+              color: (opacity = 1) => `rgba(135,206,250)`,
+            },
           ],
           legend: ["Gastos", "Ingresos"],
         }}
@@ -164,6 +188,50 @@ export default function CashFlowScreen({ navigation }) {
           borderRadius: 16,
         }}
         formatYLabel={(val) => `${NumberFormat(val)}`}
+        decorator={() => {
+          return tooltipPos.visible ? (
+              <View>
+                  <Svg>
+                      <Rect
+                          x={tooltipPos.x - 15}
+                          y={tooltipPos.y + 10}
+                          width="80"
+                          height="30"
+                          fill="black"
+                      />
+                      <TextSVG
+                          x={tooltipPos.x + 25}
+                          y={tooltipPos.y + 30}
+                          fill="white"
+                          fontSize="14"
+                          fontWeight="bold"
+                          textAnchor="middle"
+                      >
+                          {NumberFormat(tooltipPos.value)}
+                      </TextSVG>
+                  </Svg>
+              </View>
+          ) : null;
+      }}
+      onDataPointClick={(data) => {
+          let isSamePoint =
+              tooltipPos.x === data.x && tooltipPos.y === data.y;
+
+          isSamePoint
+              ? setTooltipPos((previousState) => {
+                    return {
+                        ...previousState,
+                        value: data.value,
+                        visible: !previousState.visible,
+                    };
+                })
+              : setTooltipPos({
+                    x: data.x,
+                    value: data.value,
+                    y: data.y,
+                    visible: true,
+                });
+      }}
       />
       <GraphBySubcategory/>
       </ScrollView>

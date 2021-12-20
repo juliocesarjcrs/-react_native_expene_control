@@ -3,7 +3,7 @@ import { ScrollView, StyleSheet, Text, View, Image } from "react-native";
 import MyPieChart from "../../components/charts/MyPieChart";
 import MyButton from "~/components/MyButton";
 import { getCategoryWithSubcategories } from "../../services/categories";
-import { AsignColor, NumberFormat } from "../../utils/Helpers";
+import { AsignColor, compareValues, NumberFormat } from "../../utils/Helpers";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useDispatch, useSelector } from "react-redux";
 import { setAuthAction } from "~/actions/authActions";
@@ -29,10 +29,9 @@ export default function MainScreen({ navigation }) {
   useEffect(() => {
 
     fetchData();
-    const unsubscribe = navigation.addListener("focus", () => {
+    return navigation.addListener("focus", () => {
       fetchData();
     });
-    return unsubscribe;
   }, [month]);
   const fetchData = async () => {
     try {
@@ -49,6 +48,7 @@ export default function MainScreen({ navigation }) {
           legendFontSize: 15,
         };
       });
+      dataFormat.sort(compareValues('population','desc'));
       setCategories(dataFormat);
     } catch (e) {
       setLoading(false);
@@ -73,10 +73,10 @@ export default function MainScreen({ navigation }) {
   // load image
   useEffect(() => {
     fetchDataUserLogued();
-    const unsubscribe = navigation.addListener("focus", () => {
+    return navigation.addListener("focus", () => {
       fetchDataUserLogued();
     });
-    return unsubscribe;
+
   }, []);
 
   const fetchDataUserLogued = async () => {

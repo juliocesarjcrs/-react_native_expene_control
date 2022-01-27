@@ -14,6 +14,6 @@ export const CreateIncome = async (payload) => {
 export const deleteIncome= async (idIncome) => {
   return  axios.delete(`${PREFIX}/${idIncome}`);
 }
-export const getLastIncomes = async () => {
-  return  axios.get(PREFIX);
+export const getLastIncomes = async (params) => {
+  return  axios.get(PREFIX, {params});
 }

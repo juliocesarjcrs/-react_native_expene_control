@@ -1,7 +1,7 @@
 import axios from '~/plugins/axiosConfig'
 const PREFIX = 'expenses'
-export const getLastExpenses = async () => {
-  return  axios.get(PREFIX);
+export const getLastExpenses = async (params) => {
+  return  axios.get(PREFIX,{params});
 }
 export const CreateExpense= async (payload) => {
   return  axios.post(PREFIX, payload);

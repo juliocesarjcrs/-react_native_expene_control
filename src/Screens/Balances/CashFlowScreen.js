@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import { Dimensions, StyleSheet, Text, View, ScrollView } from "react-native";
 import { Rect, Text as TextSVG, Svg } from "react-native-svg";
 import { DateFormat, GetNumberMonth, NumberFormat } from "../../utils/Helpers";
-import { BIG } from "~/styles/fonts";
+import { BIG, SMALL } from "~/styles/fonts";
 import { Errors } from "../../utils/Errors";
 import { useSelector } from "react-redux";
 import MyLoading from "~/components/loading/MyLoading";
@@ -13,12 +13,16 @@ import GraphBySubcategory from "~/Screens/Balances/components/GraphBySubcategory
 
 
 export default function CashFlowScreen({ navigation }) {
+  const numMonthsQuery = 12;
   const month = useSelector((state) => state.date.month);
   const [totalExpenses, setTotalExpenses] = useState(0);
   const [totalIncomes, setTotalIncomes] = useState(0);
   const [dataExpenses, setDataExpenses] = useState([0]);
   const [dataIncomes, setDataIncomes] = useState([0]);
   const [dataSavings, setDataSavings] = useState([0]);
+  const [averageExpenses, setAverageExpenses] = useState(0);
+  const [averageIncomes, setAverageIncomes] = useState(0);
+
 
   const [labels, setLabels] = useState([""]);
 
@@ -53,17 +57,22 @@ export default function CashFlowScreen({ navigation }) {
     try {
       setTooltipPos({ x: 0, y: 0, visible: false, value: 0 });
       setLoading(true);
-      const { data } = await getLastExpenses();
+      const query = {
+        numMonths: numMonthsQuery
+      }
+      const { data } = await getLastExpenses(query);
       setLoading(false);
-      setLabels(data.labels);
+      setLabels(filterLimitDataForGraph(data.labels));
+      setAverageExpenses(data.average);
       const len = data.graph.length;
       if (len > 0) {
         const total = searchTotalInMonth(data.data);
         setTotalExpenses(total);
-        setDataExpenses(data.graph);
+        setDataExpenses(filterLimitDataForGraph(data.graph));
       }else{
         setDataExpenses([0]);
         setTotalExpenses(0);
+        setAverageExpenses(0);
       }
     } catch (e) {
       setLoading(false);
@@ -78,20 +87,29 @@ export default function CashFlowScreen({ navigation }) {
     }
     return 0;
   };
+  const filterLimitDataForGraph = (data) => {
+    let len = data.length;
+    return data.slice(len-5, len);
+  }
 
   const fetchLastIncomes = async () => {
     try {
       setLoading(true);
-      const { data } = await getLastIncomes();
+      const query = {
+        numMonths: numMonthsQuery
+      }
+      const { data } = await getLastIncomes(query);
       setLoading(false);
       const len = data.incomes.length;
       if (len > 0) {
-        setDataIncomes(data.incomes);
+        setDataIncomes(filterLimitDataForGraph(data.incomes));
         const totalCalculate = searchTotalInMonth(data.data);
         setTotalIncomes(totalCalculate);
+        setAverageIncomes(data.average);
       }else{
         setDataIncomes([0]);
         setTotalIncomes(0);
+        setAverageIncomes(0);
       }
     } catch (e) {
       setLoading(false);
@@ -126,11 +144,15 @@ export default function CashFlowScreen({ navigation }) {
       ) : (
         <View>
           <View style={styles.item}>
-            <Text style={styles.title}>Ingresos</Text>
+            <Text style={styles.title}>Ingresos:
+              <Text style={styles.average}>  Prom: {NumberFormat(averageIncomes)}</Text>
+            </Text>
             <Text style={{ color: "green" }}>{NumberFormat(totalIncomes)}</Text>
           </View>
           <View style={styles.item}>
-            <Text style={styles.title}>Gastos</Text>
+            <Text style={styles.title}>Gastos:
+              <Text style={styles.average}>      Prom: {NumberFormat(averageExpenses)}</Text>
+            </Text>
             <Text style={{ color: "red" }}>{NumberFormat(totalExpenses)}</Text>
           </View>
           <View style={styles.item}>
@@ -165,7 +187,7 @@ export default function CashFlowScreen({ navigation }) {
               color: (opacity = 1) => `rgba(135,206,250)`,
             },
           ],
-          legend: ["Gastos", "Ingresos"],
+          legend: ["Gastos", "Ingresos", "Ahorros"],
         }}
         width={Dimensions.get("window").width - 16}
         height={200}
@@ -263,5 +285,9 @@ const styles = StyleSheet.create({
     paddingTop: 10,
     fontSize: 16,
     fontWeight: "bold",
+  },
+  average: {
+    fontSize: SMALL,
+    paddingHorizontal: 10
   },
 });

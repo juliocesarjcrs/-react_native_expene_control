@@ -14,6 +14,7 @@ import GraphBySubcategory from "~/Screens/Balances/components/GraphBySubcategory
 
 export default function CashFlowScreen({ navigation }) {
   const numMonthsQuery = 12;
+  const numMonthsGraph = 5;
   const month = useSelector((state) => state.date.month);
   const [totalExpenses, setTotalExpenses] = useState(0);
   const [totalIncomes, setTotalIncomes] = useState(0);
@@ -22,6 +23,7 @@ export default function CashFlowScreen({ navigation }) {
   const [dataSavings, setDataSavings] = useState([0]);
   const [averageExpenses, setAverageExpenses] = useState(0);
   const [averageIncomes, setAverageIncomes] = useState(0);
+  const [sumSavings, setSumSavings] = useState(0);
 
 
   const [labels, setLabels] = useState([""]);
@@ -48,6 +50,7 @@ export default function CashFlowScreen({ navigation }) {
   }, [month]);
 
   useEffect(() => {
+    calculateDataSavings();
     return navigation.addListener("focus", () => {
       calculateDataSavings();
     });
@@ -89,7 +92,7 @@ export default function CashFlowScreen({ navigation }) {
   };
   const filterLimitDataForGraph = (data) => {
     let len = data.length;
-    return data.slice(len-5, len);
+    return data.slice(len- numMonthsGraph, len);
   }
 
   const fetchLastIncomes = async () => {
@@ -123,6 +126,10 @@ export default function CashFlowScreen({ navigation }) {
         savings[key] = income - (dataExpenses[key] ? dataExpenses[key] : 0)
       });
     }
+    const acuSavings = savings.reduce((acu, val) =>{ 
+      return acu + val; 
+    },0)
+    setSumSavings(acuSavings)
     setDataSavings(savings);
   }
 
@@ -156,14 +163,21 @@ export default function CashFlowScreen({ navigation }) {
             <Text style={{ color: "red" }}>{NumberFormat(totalExpenses)}</Text>
           </View>
           <View style={styles.item}>
-            <Text style={styles.title}>Saldo</Text>
+            <Text style={styles.title}>Saldo
+              <Text style={styles.average}>           Acu : {NumberFormat(sumSavings)}</Text>
+            </Text>
             <Text style={{ color: "blue" }}>
               {NumberFormat(totalIncomes - totalExpenses)}
             </Text>
           </View>
+
+          <View style={styles.item}>
+              <Text style={styles.average}>El calculo del promedio se realiza de los últimos {numMonthsQuery} meses</Text>
+          </View>
+
         </View>
       )}
-      <Text style={styles.chartTitle}>Últimos meses</Text>
+      <Text style={styles.chartTitle}>Últimos meses ({numMonthsGraph})</Text>
       <LineChart
         bezier
         withHorizontalLabels={true}

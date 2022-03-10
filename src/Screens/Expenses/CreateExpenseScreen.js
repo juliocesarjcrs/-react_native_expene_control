@@ -17,10 +17,11 @@ import FlatListData from "../../components/card/FlatListData";
 import ErrorText from "../../components/ErrorText";
 import ShowToast from "../../components/toast/ShowToast";
 import DateTimePicker from "@react-native-community/datetimepicker";
-import { Button, Icon } from "react-native-elements";
+import { Button, Icon,FAB } from "react-native-elements";
 import { useSelector } from "react-redux";
-import { SECUNDARY } from "../../styles/colors";
 import DropDownPicker from "react-native-dropdown-picker";
+import { SECUNDARY, ICON,ICON_DROPDOWN, COLOR_SEPARATOR_DROPDOWN, COLOR_TEXT_DROPDOWN } from "~/styles/colors";
+import { MEGA_BIG } from "~/styles/fonts";
 
 export default function CreateExpenseScreen() {
   const month = useSelector((state) => state.date.month);
@@ -85,7 +86,14 @@ export default function CreateExpenseScreen() {
       setLoading(false);
       const filter = data.data.filter((f) => f.subcategories.length > 0);
       const dataFormat = filter.map((e) => {
-        return { label: e.name, value: e.id, subcategories: e.subcategories };
+        return { label: e.name, value: e.id, subcategories: e.subcategories,
+          icon: ()=>  <Icon
+            type="font-awesome"
+            name={e.icon ? e.icon : "home"}
+            size={35}
+            color={ICON_DROPDOWN}
+        />
+         };
       });
       setCategories(dataFormat);
       defaultIdCategory(dataFormat);
@@ -217,9 +225,8 @@ export default function CreateExpenseScreen() {
         )}
         defaultValue=""
       />
-            <Text>Categoría</Text>
+      <Text style={styles.subtitle}>Categoría</Text>
       <DropDownPicker
-        // containerStyle={{ height: 40, marginBottom: 10 }}
         open={open}
         value={idCategory}
         items={categories}
@@ -233,7 +240,6 @@ export default function CreateExpenseScreen() {
         loading={loading}
         ActivityIndicatorComponent={({color, size}) => (
           <MyLoading />
-          // <ActivityIndicator color={color} size={size} />
         )}
         activityIndicatorColor="red"
         activityIndicatorSize={30}
@@ -241,29 +247,29 @@ export default function CreateExpenseScreen() {
           backgroundColor: "#dfdfdf"
         }}
         listMode="MODAL"
-        // flatListProps={{
-        //   initialNumToRender: 10
-        // }}
-        // listItemContainer={{
-        //   height: 150,
-        //   backgroundColor: '#F4C75B'
-        // }}
+        // styles modal
+        itemSeparator={true}
+        itemSeparatorStyle={{
+          backgroundColor: COLOR_SEPARATOR_DROPDOWN,
+          paddingVertical:5
+        }}
         selectedItemContainerStyle={{
           backgroundColor: "#F0AEBB"
         }}
-        itemSeparator={true}
-        itemSeparatorStyle={{
-          backgroundColor: "white"
-        }}
         selectedItemLabelStyle={{
           fontWeight: "bold"
+        }}
+        // como se ve el select
+        textStyle={{
+          fontSize: 18,
+          color: COLOR_TEXT_DROPDOWN
         }}
       />
       {!idCategory ? (
         <ErrorText msg="Necesita seleccionar una  Categoria" />
       ) : null}
 
-      <Text>Subcategoría</Text>
+      <Text style={styles.subtitle}>Subcategoría</Text>
       <DropDownPicker
         // containerStyle={{ height: 40, marginBottom: 10 }}
         open={open2}
@@ -274,24 +280,36 @@ export default function CreateExpenseScreen() {
         setItems={setSubcategories}
         maxHeight={ITEM_HEIGHT * subcategories.length}
         placeholder="Selecione una subcategoría"
+        placeholderStyle={{
+          color: "grey"
+        }}
         zIndex={1000}
         zIndexInverse={2000}
         loading={loading}
         listMode="MODAL"
-        dropDownContainerStyle={{
-          backgroundColor: "#dfdfdf"
+        // styles modal
+        itemSeparator={true}
+        itemSeparatorStyle={{
+          backgroundColor: COLOR_SEPARATOR_DROPDOWN,
+          paddingVertical:5
         }}
         selectedItemContainerStyle={{
           backgroundColor: "#F0AEBB"
         }}
-        itemSeparator={true}
-        itemSeparatorStyle={{
-          backgroundColor: "white"
-        }}
         selectedItemLabelStyle={{
           fontWeight: "bold"
         }}
-    
+        // como se ve el select
+        textStyle={{
+          fontSize: MEGA_BIG,
+          color: COLOR_TEXT_DROPDOWN
+        }}
+        // prueba
+        dropDownContainerStyle={{
+          backgroundColor: "#dfdfdf"
+        }}
+
+
       />
       {!subcategoryId ? <ErrorText msg="Necesita seleccionar una subcategoria" /> : null}
       <View style={styles.containerDate}>
@@ -324,11 +342,12 @@ export default function CreateExpenseScreen() {
       {loading ? (
         <MyLoading />
       ) : (
-        <Button
-          title="Guardar"
-          buttonStyle={{ backgroundColor: SECUNDARY }}
-          onPress={handleSubmit(onSubmit)}
-        />
+        <FAB title="Guardar gasto" onPress={handleSubmit(onSubmit)} />
+        // <Button
+        //   title="Guardar"
+        //   buttonStyle={{ backgroundColor: SECUNDARY }}
+        //   onPress={handleSubmit(onSubmit)}
+        // />
       )}
 
       <Text>Total:{NumberFormat(sumCost)}</Text>
@@ -339,11 +358,13 @@ export default function CreateExpenseScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#fff",
+    backgroundColor: "#F3F5F7",
+    margin: 8
   },
   containerDate: {
     display: "flex",
     flexDirection: "row",
+    marginVertical:5
   },
   textDate: {
     paddingVertical: 10,
@@ -351,5 +372,8 @@ const styles = StyleSheet.create({
     color: "white",
     backgroundColor: "#c5c5c5",
   },
+  subtitle: {
+    fontWeight: "bold"
+  }
 });
 

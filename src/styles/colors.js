@@ -13,6 +13,11 @@ export const LOADING = '#00ff00'
 
 export const MUTED ="#6C757D"
 
+export const ICON_DROPDOWN =  '#bca1e2';
+export const COLOR_SEPARATOR_DROPDOWN =  '#F4EBEC';
+export const COLOR_TEXT_DROPDOWN =  '#82709B';
+
+
 
 
 

@@ -166,7 +166,7 @@ export default function CashFlowScreen({ navigation }) {
             <Text style={styles.title}>Saldo
               <Text style={styles.average}>           Acu : {NumberFormat(sumSavings)}</Text>
             </Text>
-            <Text style={{ color: "blue" }}>
+            <Text style={{ color: "#87CEFA" }}>
               {NumberFormat(totalIncomes - totalExpenses)}
             </Text>
           </View>

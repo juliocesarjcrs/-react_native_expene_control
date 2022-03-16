@@ -1,4 +1,4 @@
-import React, {useEffect, useState} from 'react';
+import React, {useEffect, useState,forwardRef, useImperativeHandle} from 'react';
 import {View, Text, StyleSheet} from 'react-native';
 import DropDownPicker from "react-native-dropdown-picker";
 import MyLoading from "~/components/loading/MyLoading";
@@ -7,8 +7,7 @@ import { useSelector } from "react-redux";
 import {Errors} from '../../utils/Errors';
 import ErrorText from '../ErrorText';
 
-export default function SelectJoinCategory({fetchExpensesSubcategory,fetchExpensesOnlyCategory}) {
-
+const SelectJoinCategory = forwardRef(({fetchExpensesSubcategory,fetchExpensesOnlyCategory}, ref) => {
   const month = useSelector((state) => state.date.month);
   const [categories, setCategories] = useState([]);
   const [subcategories, setSubcategories] = useState([]);
@@ -20,7 +19,11 @@ export default function SelectJoinCategory({fetchExpensesSubcategory,fetchExpens
   const [open, setOpen] = useState(false);
   const [open2, setOpen2] = useState(false);
   const [idCategory, setIdCategory] = useState(null);
-
+  useImperativeHandle(ref, () => ({
+    resetSubcategory() {
+      setSubcategoryId(null);
+    },
+  }))
 
   useEffect(() => {
     fetchCategories();
@@ -165,15 +168,18 @@ export default function SelectJoinCategory({fetchExpensesSubcategory,fetchExpens
         selectedItemLabelStyle={{
           fontWeight: "bold"
         }}
-    
+
       />
       {!subcategoryId ? <ErrorText msg="Necesita seleccionar una subcategoria" /> : null}
     </View>
   )
-}
+
+      });
 const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: "#fff",
   }
 });
+
+export default SelectJoinCategory;

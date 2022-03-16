@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import {
     View,
     Text,
@@ -23,6 +23,7 @@ import { CheckBox, Icon } from "react-native-elements";
 import Popover from "react-native-popover-view";
 
 export default function GraphBySubcategory() {
+    const selectJoinCategoryRef = useRef()
     const [dataExpenses, setDataExpenses] = useState([0]);
     const [labels, setLabels] = useState([""]);
     const [title, setTitle] = useState([""]);
@@ -55,7 +56,7 @@ export default function GraphBySubcategory() {
             id: 3,
             title: "Últimos 12 meses",
             checked: false,
-            numMonths: 24,
+            numMonths: 12,
         },
     ]);
     const chartConfig = {
@@ -130,8 +131,8 @@ export default function GraphBySubcategory() {
             setLabels(data.labels);
             setTitle(
                 `${dataCategory.label} PROM: ${NumberFormat(data.average)}`
-            );
-            const len = data.graph.length;
+                );
+                const len = data.graph.length;
             if (len > 0) {
                 setDataExpenses(data.graph);
             } else {
@@ -152,6 +153,7 @@ export default function GraphBySubcategory() {
         checkboxData[index].checked = true;
         setCheckboxes(checkboxData);
         if (!oldValue) {
+            selectJoinCategoryRef.current.resetSubcategory();
             const newNumMonths = checkboxData[index].numMonths;
             setNumMonths(newNumMonths);
         }
@@ -214,6 +216,7 @@ export default function GraphBySubcategory() {
             <SelectJoinCategory
                 fetchExpensesSubcategory={fetchExpensesSubcategory}
                 fetchExpensesOnlyCategory={fetchExpensesOnlyCategory}
+                ref={selectJoinCategoryRef}
             />
             {loading ? (
                 <MyLoading />
@@ -291,3 +294,10 @@ const styles = StyleSheet.create({
         paddingHorizontal: 10,
     },
 });
+const MyComponent = React.forwardRef(({pro1}, ref) => {
+    return (
+        <View ref={ref}>
+            <Text>hijo</Text>
+        </View>
+    )
+})

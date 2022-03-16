@@ -15,3 +15,15 @@ export  const editUser = async(idUser, payload) =>{
     }
   })
 }
+
+export  const createUser = async(payload) =>{
+  return await axios.post(`${PREFIX}`, payload,  {
+    headers: {
+      'Content-Type': 'multipart/form-data'
+    }
+  })
+}
+
+export  const  getUsersList = async() =>{
+  return await axios.get(`${PREFIX}`)
+}

@@ -103,6 +103,7 @@ function SettingsStackScreen() {
     <SettingsStack.Navigator>
             <SettingsStack.Screen name="settings" component={Routes.SettingsScreen} options={{ title: 'Ajustes' }}/>
             <SettingsStack.Screen name="editUser" component={Routes.EditUserScreen} options={{ title: 'Editar perfil' }}/>
+            <SettingsStack.Screen name="createUser" component={Routes.CreateUserScreen} options={{ title: 'Crear usuario' }}/>
             <SettingsStack.Screen name="changePassword" component={Routes.ChangePasswordScreen} options={{ title: 'Cambiar contraseña' }}/>
     </SettingsStack.Navigator>
   );
@@ -147,7 +148,7 @@ return (
       <Tab.Screen name="Gastos" component={ExpenseStackScreen} />
       <Tab.Screen name="Ingresos" component={IncomeStackScreen} />
       <Tab.Screen name="Balance" component={BalanceStackScreen} />
-      {/* <Tab.Screen name="Ajustes" component={SettingsStackScreen} /> */}
+      <Tab.Screen name="Ajustes" component={SettingsStackScreen} />
     </Tab.Navigator>
     :
       <Stack.Navigator>

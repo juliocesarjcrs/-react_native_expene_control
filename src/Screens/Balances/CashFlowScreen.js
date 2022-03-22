@@ -269,7 +269,7 @@ export default function CashFlowScreen({ navigation }) {
                 });
       }}
       />
-      <GraphBySubcategory/>
+      <GraphBySubcategory navigation={navigation}/>
       </ScrollView>
     </View>
   );

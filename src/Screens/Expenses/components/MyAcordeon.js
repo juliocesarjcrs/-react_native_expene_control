@@ -6,6 +6,7 @@ import { Icon, Divider } from "react-native-elements";
 import { ICON, PRIMARY_BLACK } from "../../../styles/colors";
 import ListSubcategory from "../../../components/card/ListSubcategory";
 import MyProgressBar from "~/components/progressBar/MyProgressBar";
+import { cutText } from "~/utils/Helpers";
 
 const MyAcordeon = ({ data, editCategory, createSubcategory }) => {
   const { id, icon, name, budget } = data;
@@ -31,7 +32,7 @@ const MyAcordeon = ({ data, editCategory, createSubcategory }) => {
       <View style={{ flex: 1 }}>
           <View style={styles.container}>
               <View style={{ flex: 1 }}>
-                  <View style={styles.title}>
+                  <View style={styles.containerTitle}>
                       <Icon
                           type="font-awesome"
                           style={{ paddingLeft: 5 }}
@@ -45,7 +46,7 @@ const MyAcordeon = ({ data, editCategory, createSubcategory }) => {
                               color: expanded ? PRIMARY_BLACK : "black",
                           }}
                       >
-                          {name} ({data.data.length})
+                          {cutText(name,27)} ({data.data.length})
                       </Text>
                       <Icon
                           type="material-community"
@@ -54,12 +55,24 @@ const MyAcordeon = ({ data, editCategory, createSubcategory }) => {
                           color={ICON}
                           onPress={() => sendEditCategoryScreen(id)}
                       />
+                      {budget > 0 && (
+                          <View style={styles.containerBudget}>
+                              <Text style={styles.budget}>
+                                  {NumberFormat(budget)}
+                              </Text>
+                              <Text style={{color:data.total <= budget ?'gray': 'red'}}>
+                                  {NumberFormat(data.total)}
+                              </Text>
+                          </View>
+                      )}
                   </View>
-                  <Text style={{ paddingLeft: 50 }}>
-                      {NumberFormat(data.total)}
-                  </Text>
+                  {budget <= 0 && (
+                      <Text style={{ paddingLeft: 50 }}>
+                          {NumberFormat(data.total)}
+                      </Text>
+                  )}
                   {budget > 0 && (
-                      <MyProgressBar height={20} percentage={percent} />
+                      <MyProgressBar height={15} percentage={percent} />
                   )}
 
                   <Divider
@@ -83,12 +96,12 @@ const MyAcordeon = ({ data, editCategory, createSubcategory }) => {
                           color={ICON}
                           onPress={() => sendCreateSubategoryScreen(id)}
                       />
+                      <Icon
+                          name={expanded ? "chevron-up" : "chevron-down"}
+                          type="font-awesome"
+                          onPress={() => togleExpanded()}
+                      />
                   </View>
-                  <Icon
-                      name={expanded ? "chevron-up" : "chevron-down"}
-                      type="font-awesome"
-                      onPress={() => togleExpanded()}
-                  />
               </View>
           </View>
           <View>
@@ -106,16 +119,25 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     justifyContent: "space-between",
   },
-  title: {
+  containerTitle: {
     display: "flex",
     flexDirection: "row",
     paddingVertical: 3,
+    justifyContent:'flex-start'
   },
   containerIcon: {
     display: "flex",
     flexDirection: "row",
     alignItems: "flex-start",
-    paddingRight: 10
+    paddingRight: 10,
   },
+  budget:{
+      fontWeight:'bold'
+  },
+  containerBudget:{
+      alignSelf:'flex-end',
+      marginLeft:5,
+    //   backgroundColor: '#F9D8D8',
+  }
 });
 export default MyAcordeon;

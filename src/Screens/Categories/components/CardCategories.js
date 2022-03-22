@@ -3,17 +3,10 @@ import {View, Text, TextInput, StyleSheet} from 'react-native';
 import { Icon } from "react-native-elements";
 import { PRIMARY, ICON } from "~/styles/colors";
 import { MEDIUM, SMALL } from "~/styles/fonts";
+import { cutText } from "~/utils/Helpers";
 
  const CardCategories = ({item})=>{
    const [query, setQuery] = useState('');
-   console.log('item', item);
-   const cutText =(text, n= 12) =>{
-    if(text.length >n){
-      return text.slice(0, n)+'...';
-    }else{
-      return text;
-    }
-   }
    return (
       //  <View style={styles.container}>
            <View style={styles.box}>

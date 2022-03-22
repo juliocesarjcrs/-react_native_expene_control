@@ -14,6 +14,8 @@ export default function SumaryExpenseScreen({ navigation }) {
   const [categories, setCategories] = useState([]);
   const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(false);
+  const [totalBudget, setTotalBudget] = useState(0);
+
 
   useEffect(() => {
     fetchData();
@@ -27,9 +29,12 @@ export default function SumaryExpenseScreen({ navigation }) {
       setLoading(true);
       const { data } = await getCategoryWithSubcategories(month);
       setLoading(false);
+      let tempTotalBudget= 0;
       const mapping = data.data.map((element) => {
+        tempTotalBudget += element.budget;
         return { ...element, data: element.subcategories };
       });
+      setTotalBudget(tempTotalBudget);
       setCategories(mapping);
       setTotal(data.total);
     } catch (e) {
@@ -52,36 +57,33 @@ export default function SumaryExpenseScreen({ navigation }) {
   };
 
   return (
-    <View style={styles.container}>
-      <View style={styles.fixToText}>
-        <MyButton onPress={sendcreateExpenseScreen} title="ingresar gasto" />
-        <MyButton onPress={sendCategoryScreen} title="Crear Categoria" />
+      <View style={styles.container}>
+          <View style={styles.fixToText}>
+              <MyButton
+                  onPress={sendcreateExpenseScreen}
+                  title="ingresar gasto"
+              />
+              <MyButton onPress={sendCategoryScreen} title="Crear Categoria" />
+          </View>
+          <View style={styles.header}>
+            <Text style={styles.title}>Total gastos: {NumberFormat(total)}</Text>
+            <Text style={styles.title}>Presupuesto: {NumberFormat(totalBudget)}</Text>
+          </View>
+          {loading ? (
+              <MyLoading />
+          ) : (
+              <ScrollView>
+                  {categories.map((e, idx) => (
+                      <MyAcordeon
+                          key={e.id}
+                          data={e}
+                          editCategory={sendEditCategoryScreen}
+                          createSubcategory={sendCreateCategoryScreen}
+                      />
+                  ))}
+              </ScrollView>
+          )}
       </View>
-      <Text
-        style={{
-          fontSize: BIG,
-          fontWeight: "bold",
-          textAlign: "center",
-          marginBottom: 4,
-        }}
-      >
-        Total gastos: {NumberFormat(total)}
-      </Text>
-      {loading ? (
-        <MyLoading />
-      ) : (
-        <ScrollView>
-          {categories.map((e, idx) => (
-            <MyAcordeon
-              key={e.id}
-              data={e}
-              editCategory={sendEditCategoryScreen}
-              createSubcategory={sendCreateCategoryScreen}
-            />
-          ))}
-        </ScrollView>
-      )}
-    </View>
   );
 }
 
@@ -94,4 +96,15 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     justifyContent: "space-between",
   },
+  title:{
+    fontSize: BIG,
+    fontWeight: "bold",
+    textAlign: "center",
+    marginBottom: 4,
+  },
+  header:{
+    backgroundColor:'#D2D1E8',
+    borderRadius:12,
+    marginHorizontal:4
+  }
 });

@@ -24,7 +24,7 @@ import Popover from "react-native-popover-view";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
 
-export default function GraphBySubcategory() {
+export default function GraphBySubcategory({navigation}) {
     const selectJoinCategoryRef = useRef()
     const [dataExpenses, setDataExpenses] = useState([0]);
     const [labels, setLabels] = useState([""]);
@@ -47,9 +47,9 @@ export default function GraphBySubcategory() {
 
     useEffect(() => {
         fetchUserLogued();
-        // return navigation.addListener("focus", () => {
-        //   fetchUserLogued();
-        // });
+        return navigation.addListener("focus", () => {
+          fetchUserLogued();
+        });
       }, []);
       const fetchUserLogued = async () => {
         try {

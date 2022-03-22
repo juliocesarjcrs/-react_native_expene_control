@@ -36,7 +36,7 @@ const MyProgressBar = ({
             borderRadius: 5,
             backgroundColor: getCompletedColor,
             position: 'absolute',
-            bottom:20
+            bottom:15
           }}
         />
         <View
@@ -45,7 +45,7 @@ const MyProgressBar = ({
             height: getheight,
             bottom:10,
           }}>
-          <Text style={{textAlign: 'right'}}>{getPercentage}</Text>
+          <Text style={{textAlign: 'right', color:'gray'}}>{getPercentage}</Text>
         </View>
       </View>
     </View>

@@ -60,7 +60,7 @@ export default function GraphBySubcategory({navigation}) {
           setInitialDateMonth(user.createdAt);
           let copyCheckboxes = checkboxes;
           copyCheckboxes[3].numMonths = tempInitialMonth;
-          copyCheckboxes[3].title = `Desde(${initialMonth}) ${DateFormat(initialDateMonth, "DD MMM YYYY")}`;
+          copyCheckboxes[3].title = `Hace(${tempInitialMonth}) ${DateFormat(user.createdAt, "DD MMM YYYY")}`;
           setCheckboxes(copyCheckboxes);
         } catch (error) {
           Errors(error);
@@ -88,7 +88,7 @@ export default function GraphBySubcategory({navigation}) {
         },
         {
             id: 4,
-            title: `Desde(${initialMonth}) ${DateFormat(initialDateMonth, "DD MMM YYYY")}`,
+            title: `Hace(${initialMonth}) ${DateFormat(initialDateMonth, "DD MMM YYYY")}`,
             checked: false,
             numMonths: initialMonth,
         },

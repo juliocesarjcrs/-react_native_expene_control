@@ -17,6 +17,12 @@ export const ICON_DROPDOWN =  '#bca1e2';
 export const COLOR_SEPARATOR_DROPDOWN =  '#F4EBEC';
 export const COLOR_TEXT_DROPDOWN =  '#82709B';
 
+// Progressbar
+export const COMPLETE_COLOR_PROGRESS_BAR =  '#5DC25A';
+export const MISSING_COLOR_PROGRESS_BAR =  '#DCDCDC';
+
+
+
 
 
 

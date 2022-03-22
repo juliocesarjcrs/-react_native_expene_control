@@ -59,6 +59,10 @@ export const compareValues =(key, order = 'asc') => {
   };
 }
 
+export const GetInitialMonth =  (date) =>{
+  return moment().diff(moment(date), 'months');
+}
+
 
 
 

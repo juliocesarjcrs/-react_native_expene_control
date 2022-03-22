@@ -13,7 +13,7 @@ import {
     getExpensesLastMonthsFromSubcategory,
 } from "../../../services/expenses";
 import { Errors } from "../../../utils/Errors";
-import { NumberFormat } from "../../../utils/Helpers";
+import { NumberFormat, GetInitialMonth, DateFormat } from "../../../utils/Helpers";
 import { Rect, Text as TextSVG, Svg } from "react-native-svg";
 import { BIG } from "../../../styles/fonts";
 import { ICON } from "../../../styles/colors";
@@ -21,6 +21,8 @@ import { ICON } from "../../../styles/colors";
 import MyLoading from "~/components/loading/MyLoading";
 import { CheckBox, Icon } from "react-native-elements";
 import Popover from "react-native-popover-view";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+
 
 export default function GraphBySubcategory() {
     const selectJoinCategoryRef = useRef()
@@ -38,6 +40,32 @@ export default function GraphBySubcategory() {
     const [dataCategory, setDataCategory] = useState();
 
     const [numMonths, setNumMonths] = useState(3);
+    const [userLoggued, setUserLoggued] = useState({});
+    const [initialMonth, setInitialMonth] = useState(0);
+    const [initialDateMonth, setInitialDateMonth] = useState(0);
+
+
+    useEffect(() => {
+        fetchUserLogued();
+        // return navigation.addListener("focus", () => {
+        //   fetchUserLogued();
+        // });
+      }, []);
+      const fetchUserLogued = async () => {
+        try {
+          const jsonValue = await AsyncStorage.getItem('user')
+          const user = jsonValue != null ? JSON.parse(jsonValue) : null;
+          let tempInitialMonth = GetInitialMonth(user.createdAt);
+          setInitialMonth(tempInitialMonth);
+          setInitialDateMonth(user.createdAt);
+          let copyCheckboxes = checkboxes;
+          copyCheckboxes[3].numMonths = tempInitialMonth;
+          copyCheckboxes[3].title = `Desde(${initialMonth}) ${DateFormat(initialDateMonth, "DD MMM YYYY")}`;
+          setCheckboxes(copyCheckboxes);
+        } catch (error) {
+          Errors(error);
+        }
+      };
 
     const [checkboxes, setCheckboxes] = useState([
         {
@@ -57,6 +85,12 @@ export default function GraphBySubcategory() {
             title: "Últimos 12 meses",
             checked: false,
             numMonths: 12,
+        },
+        {
+            id: 4,
+            title: `Desde(${initialMonth}) ${DateFormat(initialDateMonth, "DD MMM YYYY")}`,
+            checked: false,
+            numMonths: initialMonth,
         },
     ]);
     const chartConfig = {

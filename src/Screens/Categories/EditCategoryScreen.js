@@ -27,10 +27,11 @@ export default function EditCategoryScreen({ route }) {
   const fetchData = async () => {
     try {
       const { data } = await getCategory(idCategory);
+      let dataTransfor = {...data,  budget: data.budget.toString()};
       const editIcon = data.icon ? data.icon : "home";
       setIcon(editIcon);
-      setCategory(data);
-      reset(data);
+      setCategory(dataTransfor);
+      reset(dataTransfor);
     } catch (e) {
       Errors(e);
     }
@@ -77,6 +78,29 @@ export default function EditCategoryScreen({ route }) {
             onChangeText={(text) => onChange(text)}
             errorStyle={{ color: "red" }}
             errorMessage={errors?.name?.message}
+          />
+        )}
+        defaultValue=""
+      />
+        <Controller
+        name="budget"
+        control={control}
+        rules={{
+          min: { value: 0, message: "El minimó valor aceptado es 1" },
+          max: {
+            value: 99999999,
+            message: "El presupuesto no puede superar el valor de 99.999.999 ",
+          },
+        }}
+        render={({ onChange, value }) => (
+          <Input
+            label="Presupuesto"
+            value={value}
+            placeholder="Ej: 200000"
+            onChangeText={(text) => onChange(text)}
+            errorStyle={{ color: "red" }}
+            errorMessage={errors?.budget?.message}
+            keyboardType="numeric"
           />
         )}
         defaultValue=""

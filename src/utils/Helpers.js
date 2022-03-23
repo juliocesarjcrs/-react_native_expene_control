@@ -79,7 +79,8 @@ export const cutText =(text, n= 12) =>{
   return {
     day: today,
     daysInMonth,
-    percentage
+    percentage,
+    numPercentage: percent(daysInMonth, today)
   };
 }
 

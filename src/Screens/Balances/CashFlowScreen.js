@@ -10,6 +10,9 @@ import { LineChart } from "react-native-chart-kit";
 import { getLastExpenses } from "../../services/expenses";
 import { getLastIncomes } from "../../services/incomes";
 import GraphBySubcategory from "~/Screens/Balances/components/GraphBySubcategory";
+import { Tooltip } from 'react-native-elements';
+import { BACKGROUND_TOOLTIP } from "~/styles/colors";
+
 
 
 export default function CashFlowScreen({ navigation }) {
@@ -22,7 +25,9 @@ export default function CashFlowScreen({ navigation }) {
   const [dataIncomes, setDataIncomes] = useState([0]);
   const [dataSavings, setDataSavings] = useState([0]);
   const [averageExpenses, setAverageExpenses] = useState(0);
+  const [previousAverageExpenses, setPreviousAverageExpenses] = useState(0);
   const [averageIncomes, setAverageIncomes] = useState(0);
+  const [previousAverageIncomes, setPreviousAverageIncomes] = useState(0);
   const [sumSavings, setSumSavings] = useState(0);
 
 
@@ -67,6 +72,7 @@ export default function CashFlowScreen({ navigation }) {
       setLoading(false);
       setLabels(filterLimitDataForGraph(data.labels));
       setAverageExpenses(data.average);
+      setPreviousAverageExpenses(data.previosAverage);
       const len = data.graph.length;
       if (len > 0) {
         const total = searchTotalInMonth(data.data);
@@ -76,6 +82,7 @@ export default function CashFlowScreen({ navigation }) {
         setDataExpenses([0]);
         setTotalExpenses(0);
         setAverageExpenses(0);
+        setPreviousAverageExpenses(0);
       }
     } catch (e) {
       setLoading(false);
@@ -109,10 +116,12 @@ export default function CashFlowScreen({ navigation }) {
         const totalCalculate = searchTotalInMonth(data.data);
         setTotalIncomes(totalCalculate);
         setAverageIncomes(data.average);
+        setPreviousAverageIncomes(data.previosAverage);
       }else{
         setDataIncomes([0]);
         setTotalIncomes(0);
         setAverageIncomes(0);
+        setPreviousAverageIncomes(0);
       }
     } catch (e) {
       setLoading(false);
@@ -152,27 +161,61 @@ export default function CashFlowScreen({ navigation }) {
         <View>
           <View style={styles.item}>
             <Text style={styles.title}>Ingresos:
-              <Text style={styles.average}>  Prom: {NumberFormat(averageIncomes)}</Text>
             </Text>
+          <Tooltip
+            popover={ <View>
+             <Text style={styles.contAverage}>  Promedio:
+                <Text style={styles.average}>  {NumberFormat(averageIncomes)}</Text>
+             </Text>
+             <Text style={styles.contAverage}>  Prom ant:
+                <Text style={styles.average}>  {NumberFormat(previousAverageIncomes)}</Text>
+             </Text>
+            </View>}
+            width={200}
+            backgroundColor={BACKGROUND_TOOLTIP}
+          >
             <Text style={{ color: "green" }}>{NumberFormat(totalIncomes)}</Text>
+          </Tooltip>
           </View>
           <View style={styles.item}>
             <Text style={styles.title}>Gastos:
-              <Text style={styles.average}>      Prom: {NumberFormat(averageExpenses)}</Text>
             </Text>
-            <Text style={{ color: "red" }}>{NumberFormat(totalExpenses)}</Text>
+            <Tooltip
+            popover={ <View>
+             <Text style={styles.contAverage}>  Promedio:
+                <Text style={styles.average}>  {NumberFormat(averageExpenses)}</Text>
+             </Text>
+             <Text style={styles.contAverage}>  Prom ant:
+                <Text style={styles.average}>  {NumberFormat(previousAverageExpenses)}</Text>
+             </Text>
+            </View>}
+            width={200}
+            backgroundColor={BACKGROUND_TOOLTIP}
+          >
+           <Text style={{ color: "red" }}>{NumberFormat(totalExpenses)}</Text> 
+          </Tooltip>
           </View>
           <View style={styles.item}>
             <Text style={styles.title}>Saldo
-              <Text style={styles.average}>           Acu : {NumberFormat(sumSavings)}</Text>
             </Text>
-            <Text style={{ color: "#87CEFA" }}>
+            <Tooltip
+            popover={ <View>
+              <Text style={styles.contAverage}>  Ahorro acumulado:
+                <Text style={styles.average}>                    {NumberFormat(sumSavings)}</Text> 
+              </Text>
+            </View>
+            }
+            width={200}
+            backgroundColor={BACKGROUND_TOOLTIP}
+          >
+           <Text style={{ color: "#87CEFA" }}>
               {NumberFormat(totalIncomes - totalExpenses)}
             </Text>
+          </Tooltip>
           </View>
 
           <View style={styles.item}>
-              <Text style={styles.average}>El calculo del promedio se realiza de los últimos {numMonthsQuery} meses</Text>
+              <Text style={styles.text}>El calculo del promedio se realiza de los últimos {numMonthsQuery} meses</Text>
           </View>
 
         </View>
@@ -302,6 +345,20 @@ const styles = StyleSheet.create({
   },
   average: {
     fontSize: SMALL,
-    paddingHorizontal: 10
+    paddingHorizontal: 10,
+    color:'white',
+    fontWeight:'300'
   },
+  contAverage:{
+    fontSize: SMALL,
+    paddingHorizontal: 10,
+    color:'white',
+    fontWeight: 'bold'
+  },
+  text:{
+    fontSize: SMALL,
+    paddingHorizontal: 10,
+    color:'black',
+    fontWeight:'300'
+  }
 });

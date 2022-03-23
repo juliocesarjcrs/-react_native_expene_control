@@ -21,6 +21,11 @@ export const COLOR_TEXT_DROPDOWN =  '#82709B';
 export const COMPLETE_COLOR_PROGRESS_BAR =  '#5DC25A';
 export const MISSING_COLOR_PROGRESS_BAR =  '#DCDCDC';
 
+// tolltip
+export const BACKGROUND_TOOLTIP =  '#A16CF8';
+
+
+
 
 
 

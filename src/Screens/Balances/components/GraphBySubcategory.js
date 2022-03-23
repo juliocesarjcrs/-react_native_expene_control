@@ -22,6 +22,7 @@ import MyLoading from "~/components/loading/MyLoading";
 import { CheckBox, Icon } from "react-native-elements";
 import Popover from "react-native-popover-view";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { cutText } from "~/utils/Helpers";
 
 
 export default function GraphBySubcategory({navigation}) {
@@ -164,7 +165,7 @@ export default function GraphBySubcategory({navigation}) {
             setLoading(false);
             setLabels(data.labels);
             setTitle(
-                `${dataCategory.label} PROM: ${NumberFormat(data.average)}`
+                `${cutText(dataCategory.label,18)} PROM Actu: ${NumberFormat(data.average)} Prev: ${NumberFormat(data.previosAverage)}`
                 );
                 const len = data.graph.length;
             if (len > 0) {

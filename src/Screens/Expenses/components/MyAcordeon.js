@@ -46,7 +46,7 @@ const MyAcordeon = ({ data, editCategory, createSubcategory }) => {
                               color: expanded ? PRIMARY_BLACK : "black",
                           }}
                       >
-                          {cutText(name,27)} ({data.data.length})
+                          {cutText(name,18)} ({data.data.length})
                       </Text>
                       <Icon
                           type="material-community"
@@ -72,7 +72,9 @@ const MyAcordeon = ({ data, editCategory, createSubcategory }) => {
                       </Text>
                   )}
                   {budget > 0 && (
-                      <MyProgressBar height={15} percentage={percent} />
+                      <View style={styles.containerProgressBar}>
+                          <MyProgressBar height={15} percentage={percent} />
+                      </View>
                   )}
 
                   <Divider
@@ -136,8 +138,15 @@ const styles = StyleSheet.create({
   },
   containerBudget:{
       alignSelf:'flex-end',
-      marginLeft:5,
+      marginLeft:3,
     //   backgroundColor: '#F9D8D8',
+  },
+  containerProgressBar: {
+    // backgroundColor:'#F2FA7E', 
+    // marginHorizontal:6,
+    marginLeft:15,
+    marginRight:6,
+    paddingHorizontal:8
   }
 });
 export default MyAcordeon;

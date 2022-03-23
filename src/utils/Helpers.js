@@ -71,16 +71,23 @@ export const cutText =(text, n= 12) =>{
   }
  }
 
- export const dayMonth =  () =>{
+ export const dayMonth =  (offset=0) =>{
    const today =  moment().date();
    const daysInMonth = moment().daysInMonth();
-   const percentage = `${percent(daysInMonth, today).toFixed(2)}%`
-   console.log('today', today, percentage);
+   let percentage = 0;
+   const numPercentage = percent(daysInMonth, today);
+   if(offset > 0){
+     let temp = numPercentage + offset;
+     percentage = `${temp.toFixed(2)}%`
+   }else{
+     percentage = `${numPercentage.toFixed(2)}%`
+   }
   return {
     day: today,
     daysInMonth,
     percentage,
-    numPercentage: percent(daysInMonth, today)
+    withOffset: offset > 0,
+    numPercentage: numPercentage
   };
 }
 

@@ -18,8 +18,8 @@ const MyProgressBar = ({
   const [getCompletedColor, setCompletedColor] = useState(completedColor);
   const [getPercentageReal, setPercentageReal] = useState(percentage);
 
-  const day = dayMonth();
-  const  today = day.day <= 9 ? '9%' : day.percentage;
+  const day = dayMonth(12);
+  const  today = day.percentage;
   const tempPercentage= parseFloat(getPercentage.substring());
 
   if(tempPercentage > 100){
@@ -66,6 +66,7 @@ const MyProgressBar = ({
             justifyContent: 'flex-end',
             position:'absolute',
             bottom: 5,
+            left: -18,
             // backgroundColor:'red'
           }}>
             <View style={styles.verticalLine} />
@@ -78,7 +79,7 @@ const MyProgressBar = ({
 const styles = StyleSheet.create({
   container: {
     justifyContent: 'center',
-    marginLeft:10
+    // marginLeft:10
   },
   verticalLine: {
     backgroundColor:'gray',
@@ -86,7 +87,7 @@ const styles = StyleSheet.create({
     height:15,
     position:'relative',
     bottom: 17,
-    left:15,
+    left:17,
     opacity:0.6
   }
 

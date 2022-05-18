@@ -16,7 +16,7 @@ import { BACKGROUND_TOOLTIP } from "~/styles/colors";
 
 
 export default function CashFlowScreen({ navigation }) {
-  const numMonthsQuery = 12;
+  const numMonthsQuery = 11;
   const numMonthsGraph = 5;
   const month = useSelector((state) => state.date.month);
   const [totalExpenses, setTotalExpenses] = useState(0);

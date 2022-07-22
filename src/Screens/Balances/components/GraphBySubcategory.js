@@ -121,7 +121,7 @@ export default function GraphBySubcategory({navigation}) {
             setLoading(false);
             setLabels(data.labels);
             setTitle(
-                `${foundSubcategory.label} PROM: ${NumberFormat(data.average)}`
+                `${foundSubcategory.label} PROM: ${NumberFormat(data.average)} SUM: ${NumberFormat(data.sum)}`
             );
             const len = data.graph.length;
             if (len > 0) {

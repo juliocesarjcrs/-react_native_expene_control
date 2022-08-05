@@ -85,6 +85,8 @@ function IncomeStackScreen() {
             <IncomeStack.Screen name="sumaryIncomes" component={Routes.SumaryIncomesScreen} options={{ title: 'Resumen ingresos del mes' }}/>
             <IncomeStack.Screen name="createIncome" component={Routes.CreateIncomeScreen} options={{ title: 'Agregar ingreso' }}/>
             <IncomeStack.Screen name="createCategory" component={Routes.CreateCategoryScreen} options={{ title: 'Crear Categoría' }} />
+            <IncomeStack.Screen name="lastIncomes" component={Routes.LastIncomesScreen} options={{ title: 'Últimos ingresos' }} />
+            <IncomeStack.Screen name="editIncome" component={Routes.EditIncomeScreen} options={{ title: 'Editar ingreso' }} />
 
     </IncomeStack.Navigator>
   );

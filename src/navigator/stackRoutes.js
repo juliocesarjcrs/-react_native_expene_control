@@ -22,8 +22,9 @@ import EditUserScreen from '~/Screens/Users/EditUserScreen';
 import CreateUserScreen from '~/Screens/Users/CreateUserScreen';
 
 import ChangePasswordScreen from  '~/Screens/Users/ChangePasswordScreen';
-
-
+// incomes
+import LastIncomesScreen from '~/Screens/Incomes/LastIncomesScreen';
+import EditIncomeScreen from '~/Screens/Incomes/EditIncomeScreen';
 
 
 
@@ -49,5 +50,8 @@ export default {
   // Users
   EditUserScreen,
   ChangePasswordScreen,
-  CreateUserScreen
+  CreateUserScreen,
+  // incomes
+  LastIncomesScreen,
+  EditIncomeScreen,
 }

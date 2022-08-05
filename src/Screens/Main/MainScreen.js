@@ -16,6 +16,7 @@ import MyLoading from "~/components/loading/MyLoading";
 import MyFaButton from "../../components/buttons/MyFaButton";
 import CardLastExpenses from "./components/CardLastExpenses";
 import {getUser} from '../../services/users';
+import CardLastIncomes from './components/CardLastIncomes';
 
 export default function MainScreen({ navigation }) {
   const month = useSelector((state) => state.date.month);
@@ -123,6 +124,7 @@ export default function MainScreen({ navigation }) {
           </Text>
         )}
         <CardLastExpenses navigation={navigation} />
+        <CardLastIncomes navigation={navigation} />
       </ScrollView>
     </View>
   );

@@ -8,6 +8,8 @@ import { BIG } from "../../styles/fonts";
 import { FAB } from "react-native-elements";
 import { Errors } from "../../utils/Errors";
 import MyLoading from "~/components/loading/MyLoading";
+import CardLastIncomes from '../Main/components/CardLastIncomes';
+
 
 export default function SumaryIncomesScreen({ navigation }) {
   const [total, setTotal] = useState(0);
@@ -74,7 +76,11 @@ export default function SumaryIncomesScreen({ navigation }) {
           ))}
         </ScrollView>
       )}
-      <FAB title="Nueva categoría" onPress={sendCreteCategoryScrenn} />
+       <ScrollView>
+        <FAB title="Nueva categoría" onPress={sendCreteCategoryScrenn} />
+        <CardLastIncomes navigation={navigation} />
+
+       </ScrollView>
     </View>
   );
 }

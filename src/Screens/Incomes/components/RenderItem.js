@@ -6,20 +6,19 @@ import {DateFormat, NumberFormat} from '../../../utils/Helpers';
 import { Icon } from "react-native-elements";
 import Popover from 'react-native-popover-view';
 import {Errors} from '../../../utils/Errors';
-import {deleteExpense} from '../../../services/expenses';
+import {deleteIncome} from '../../../services/incomes';
 import ShowToast from '../../../components/toast/ShowToast';
 
 
 const RenderItem = ({item, navigation, updateList})  => {
-
   const [showPopover, setShowPopover] = useState(false);
   const sendEditIncomeScreenn = (objectIncome)=>{
     setShowPopover(false);
     navigation.navigate("editIncome", { objectIncome });
   }
-  const deleteItem = async (idExpense) => {
+  const deleteItem = async (idIncome) => {
     try {
-      await deleteExpense(idExpense);
+      await deleteIncome(idIncome);
       ShowToast();
       updateList();
     } catch (e) {
@@ -47,7 +46,7 @@ const RenderItem = ({item, navigation, updateList})  => {
         color={ICON}
       />
       <View style={styles.containerText}>
-        {/* <Text style={styles.title}>{item.subcategory}</Text> */}
+        <Text style={styles.title}>{item.category}</Text>
         <Text style={styles.commentary}>{item.commentary}</Text>
       </View>
       <View style={styles.cardDate}>

@@ -140,7 +140,7 @@ const CardLastIncomes = ({ navigation }) => {
                   color={ICON}
                 />
                 <View style={styles.containerText}>
-                  <Text style={styles.title}>{item.subcategory}</Text>
+                  <Text style={styles.title}>{item.category}</Text>
                   <Text style={styles.commentary}>{item.commentary}</Text>
                 </View>
                 <View style={styles.cardDate}>

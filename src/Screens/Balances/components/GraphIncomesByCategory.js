@@ -1,0 +1,293 @@
+import React, { useEffect, useState, useRef } from "react";
+import {
+    View,
+    Text,
+    TouchableOpacity,
+    Dimensions,
+    StyleSheet,
+} from "react-native";
+import { LineChart } from "react-native-chart-kit";
+import SelectOnlyCategory from "~/components/dropDown/SelectOnlyCategory";
+import {
+    findLastIncomesMonthsFromOnlyCategory
+} from "../../../services/incomes";
+import { Errors } from "../../../utils/Errors";
+import { NumberFormat, GetInitialMonth, DateFormat } from "../../../utils/Helpers";
+import { Rect, Text as TextSVG, Svg } from "react-native-svg";
+import { BIG } from "../../../styles/fonts";
+import { ICON } from "../../../styles/colors";
+
+import MyLoading from "~/components/loading/MyLoading";
+import { CheckBox, Icon } from "react-native-elements";
+import Popover from "react-native-popover-view";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import { cutText } from "~/utils/Helpers";
+
+
+export default function GraphIncomesByCategory({navigation}) {
+    const selectOnlyCategoryRef = useRef()
+    const [dataIncomes, setDataIncomes] = useState([0]);
+    const [labels, setLabels] = useState([""]);
+    const [title, setTitle] = useState([""]);
+    const [loading, setLoading] = useState(false);
+    const screenWidth = Dimensions.get("window").width;
+    let [tooltipPos, setTooltipPos] = useState({
+        x: 0,
+        y: 0,
+        visible: false,
+        value: 0,
+    });
+    const [dataCategory, setDataCategory] = useState();
+
+    const [numMonths, setNumMonths] = useState(3);
+    const [initialMonth, setInitialMonth] = useState(0);
+    const [initialDateMonth, setInitialDateMonth] = useState(0);
+
+
+    useEffect(() => {
+        fetchUserLogued();
+        return navigation.addListener("focus", () => {
+          fetchUserLogued();
+        });
+      }, []);
+      const fetchUserLogued = async () => {
+        try {
+          const jsonValue = await AsyncStorage.getItem('user')
+          const user = jsonValue != null ? JSON.parse(jsonValue) : null;
+          let tempInitialMonth = GetInitialMonth(user.createdAt);
+          setInitialMonth(tempInitialMonth);
+          setInitialDateMonth(user.createdAt);
+          let copyCheckboxes = checkboxes;
+          copyCheckboxes[3].numMonths = tempInitialMonth;
+          copyCheckboxes[3].title = `Hace(${tempInitialMonth}) ${DateFormat(user.createdAt, "DD MMM YYYY")}`;
+          setCheckboxes(copyCheckboxes);
+        } catch (error) {
+          Errors(error);
+        }
+      };
+
+    const [checkboxes, setCheckboxes] = useState([
+        {
+            id: 1,
+            title: "Últimos 3 meses",
+            checked: true,
+            numMonths: 3,
+        },
+        {
+            id: 2,
+            title: "Últimos 6 meses",
+            checked: false,
+            numMonths: 6,
+        },
+        {
+            id: 3,
+            title: "Últimos 12 meses",
+            checked: false,
+            numMonths: 12,
+        },
+        {
+            id: 4,
+            title: `Hace(${initialMonth}) ${DateFormat(initialDateMonth, "DD MMM YYYY")}`,
+            checked: false,
+            numMonths: initialMonth,
+        },
+    ]);
+    const chartConfig = {
+        backgroundGradientFrom: "#1E2923",
+        backgroundGradientFromOpacity: 0,
+        backgroundGradientTo: "#08130D",
+        backgroundGradientToOpacity: 0.5,
+        decimalPlaces: 0,
+        color: (opacity = 1) => `rgba(0, 0, 0, ${opacity})`,
+        strokeWidth: 2, // optional, default 3
+        barPercentage: 0.5,
+        useShadowColorFromDataset: false, // optional
+    };
+
+    useEffect(() => {
+        if (dataCategory) {
+            fetchCategory();
+        }
+    }, [dataCategory, numMonths]);
+
+    const fetchIncomesOnlyCategory = async (foundCategory) => {
+        setDataCategory(foundCategory);
+    };
+
+    const fetchCategory = async () => {
+        try {
+            setTooltipPos({ x: 0, y: 0, visible: false, value: 0 });
+            setLoading(true);
+            const params = {
+                numMonths,
+            };
+            const { data } = await findLastIncomesMonthsFromOnlyCategory(
+                dataCategory.id,
+                params
+            );
+            setLoading(false);
+            setLabels(data.labels);
+            setTitle(
+                `${cutText(dataCategory.label,18)} PROM Actu: ${NumberFormat(data.average)} Prev: ${NumberFormat(data.previosAverage)} SUM: ${NumberFormat(data.sum)}`
+                );
+                const len = data.graph.length;
+            if (len > 0) {
+                setDataIncomes(data.graph);
+            } else {
+                setDataIncomes([0]);
+            }
+        } catch (e) {
+            setLoading(false);
+            Errors(e);
+        }
+    };
+
+    const toggleCheckbox = (id, index) => {
+        let checkboxData = [...checkboxes];
+        const oldValue = checkboxData[index].checked;
+        checkboxData = checkboxData.map((e) => {
+            return { ...e, checked: false };
+        });
+        checkboxData[index].checked = true;
+        setCheckboxes(checkboxData);
+        if (!oldValue) {
+            const newNumMonths = checkboxData[index].numMonths;
+            setNumMonths(newNumMonths);
+        }
+    };
+    return (
+        <View>
+            <View
+                style={{
+                    display: "flex",
+                    flexDirection: "row",
+                    justifyContent: "space-between",
+                    alignItems: 'center'
+                }}
+            >
+                <Text
+                    style={{
+                        fontSize: BIG,
+                        fontWeight: "bold",
+                        textAlign: "center",
+                        marginVertical: 15
+                    }}
+                >
+                    Evolución de los ingresos por categorías
+                </Text>
+                <View>
+                    <Popover
+                        from={
+                            <TouchableOpacity>
+                                <Icon
+                                    type="font-awesome"
+                                    style={styles.iconHeader}
+                                    name={"ellipsis-v"}
+                                    size={20}
+                                    color={ICON}
+                                />
+                            </TouchableOpacity>
+                        }
+                    >
+                        <View>
+                            {checkboxes.map((cb, index) => {
+                                return (
+                                    <CheckBox
+                                        center
+                                        key={cb.id}
+                                        title={cb.title}
+                                        iconType="material"
+                                        checkedIcon="check-box"
+                                        uncheckedIcon="check-box-outline-blank"
+                                        checked={cb.checked}
+                                        onPress={() =>
+                                            toggleCheckbox(cb.id, index)
+                                        }
+                                    />
+                                );
+                            })}
+                        </View>
+                    </Popover>
+                </View>
+            </View>
+            <SelectOnlyCategory
+                fetchIncomesOnlyCategory={fetchIncomesOnlyCategory}
+                ref={selectOnlyCategoryRef}
+            />
+            {loading ? (
+                <MyLoading />
+            ) : (
+                <LineChart
+                    data={{
+                        labels: labels,
+                        datasets: [
+                            {
+                                data: dataIncomes,
+                                color: (opacity = 1) =>
+                                    `rgba(134, 65, 244, ${opacity})`,
+                                strokeWidth: 2,
+                            },
+                        ],
+                        legend: [title],
+                    }}
+                    width={screenWidth}
+                    height={256}
+                    verticalLabelRotation={30}
+                    chartConfig={chartConfig}
+                    formatYLabel={(val) => `${NumberFormat(val)}`}
+                    bezier
+                    decorator={() => {
+                        return tooltipPos.visible ? (
+                            <View>
+                                <Svg>
+                                    <Rect
+                                        x={tooltipPos.x - 15}
+                                        y={tooltipPos.y + 10}
+                                        width="80"
+                                        height="30"
+                                        fill="black"
+                                    />
+                                    <TextSVG
+                                        x={tooltipPos.x + 25}
+                                        y={tooltipPos.y + 30}
+                                        fill="white"
+                                        fontSize="16"
+                                        fontWeight="bold"
+                                        textAnchor="middle"
+                                    >
+                                        {NumberFormat(tooltipPos.value)}
+                                    </TextSVG>
+                                </Svg>
+                            </View>
+                        ) : null;
+                    }}
+                    onDataPointClick={(data) => {
+                        let isSamePoint =
+                            tooltipPos.x === data.x && tooltipPos.y === data.y;
+
+                        isSamePoint
+                            ? setTooltipPos((previousState) => {
+                                  return {
+                                      ...previousState,
+                                      value: data.value,
+                                      visible: !previousState.visible,
+                                  };
+                              })
+                            : setTooltipPos({
+                                  x: data.x,
+                                  value: data.value,
+                                  y: data.y,
+                                  visible: true,
+                              });
+                    }}
+                />
+            )}
+        </View>
+    );
+}
+const styles = StyleSheet.create({
+    iconHeader: {
+        paddingHorizontal: 10,
+    },
+});
+

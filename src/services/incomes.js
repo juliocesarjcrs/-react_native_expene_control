@@ -26,3 +26,6 @@ export const getLastIncomesWithPaginate = async (params= {}) => {
 export const editIncome = async (idIncome, payload) => {
   return  axios.put(`${PREFIX}/${idIncome}`,payload);
 }
+export const findLastIncomesMonthsFromOnlyCategory = async (idCategory, params) => {
+  return  axios.get(`${PREFIX}/category/${idCategory}`,{params});
+}

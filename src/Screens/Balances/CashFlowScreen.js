@@ -12,6 +12,7 @@ import { getLastIncomes } from "../../services/incomes";
 import GraphBySubcategory from "~/Screens/Balances/components/GraphBySubcategory";
 import { Tooltip } from 'react-native-elements';
 import { BACKGROUND_TOOLTIP } from "~/styles/colors";
+import GraphIncomesByCategory from './components/GraphIncomesByCategory';
 
 
 
@@ -313,6 +314,7 @@ export default function CashFlowScreen({ navigation }) {
       }}
       />
       <GraphBySubcategory navigation={navigation}/>
+      <GraphIncomesByCategory navigation={navigation}/>
       </ScrollView>
     </View>
   );

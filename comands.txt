@@ -1,1 +1,7 @@
 expo build:android
+
+// actualizar SKU
+
+1- delete folder  node_moudels
+2- change file package.json   "expo": "^44.0.0",
+3- run  npm i --legacy-peer-deps

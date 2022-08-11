@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from "react";
-import { FlatList, SafeAreaView, StyleSheet, Text } from "react-native";
+import { FlatList, SafeAreaView, StyleSheet, Text, View, ActivityIndicator } from "react-native";
 import { Errors } from "../../utils/Errors";
 import MyLoading from "~/components/loading/MyLoading";
 import { getLastExpensesWithPaginate } from "../../services/expenses";
@@ -13,6 +13,7 @@ import {setQueryAction} from '../../actions/SearchActions';
 export default function LastExpensesScreen({ navigation }) {
   const [lastExpenses, setLastExpenses] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [loadingFooter, setLoadingFotter] = useState(false);
   const [page, setPage] = useState(1);
   const [stopeFetch, setStopeFetch] = useState(false);
   // PARA EL BUSCADOR
@@ -33,19 +34,22 @@ export default function LastExpensesScreen({ navigation }) {
   }, [page, query]);
   useEffect(() => {
     if(page!==1){
+      console.log('eNTRA SET NEW PAGE', page);
       setPage(1);
     }
   }, [query]);
 
   const fetchData = async () => {
     try {
-      // setLoading(true);
       const params = {
         take: 15,
         page,
         query
       };
+      // setLoading(true);
+      setLoadingFotter(true);
       const { data } = await getLastExpensesWithPaginate(params);
+      setLoadingFotter(false);
       // setLoading(false);
       if (data.data.length <= 0) {
           setStopeFetch(false);
@@ -55,17 +59,23 @@ export default function LastExpensesScreen({ navigation }) {
       const condition2 = query === null && prevQuery === null;
       const condition3 = query === '' && prevQuery === '';
       if (condition1 || condition2) {
-          concatPages = lastExpenses.concat(data.data);
+        concatPages = lastExpenses.concat(data.data);
       } else {
         if(condition3){
             concatPages = lastExpenses.concat(data.data);
             concatPages = getUniqArrDeep(concatPages)
           }else{
-            concatPages = data.data.length > 0 ? data.data : lastExpenses;
+            if(page >1){
+              concatPages = lastExpenses.concat(data.data);
+              concatPages = getUniqArrDeep(concatPages)
+            }else{
+              concatPages =  data.data;
+            }
           }
       }
       setLastExpenses(concatPages);
     } catch (e) {
+      setLoadingFotter(false);
       // setLoading(false);
       Errors(e);
     }
@@ -80,6 +90,10 @@ export default function LastExpensesScreen({ navigation }) {
     return [...new Set(arrStr)]
         .map(item => JSON.parse(item))
 }
+
+const renderFooter = () => {
+    return <View>{loadingFooter ? <MyLoading /> : null}</View>;
+};
 
   return (
     <SafeAreaView style={styles.container}>
@@ -103,6 +117,7 @@ export default function LastExpensesScreen({ navigation }) {
           onEndReached={loadMoreData}
           onEndReachedThreshold={0.5}
           ListHeaderComponent={BarSearch}
+          ListFooterComponent={renderFooter}
         />
       )}
     </SafeAreaView>

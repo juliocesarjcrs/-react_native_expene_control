@@ -17,6 +17,7 @@ import CheckBoxOptions from "../../components/checbox/CheckBoxOptions";
 
 export default function CashFlowScreen({ navigation }) {
     const month = useSelector((state) => state.date.month);
+    const year = parseInt(month.substring(0, 4));
     const [totalExpenses, setTotalExpenses] = useState(0);
     const [totalIncomes, setTotalIncomes] = useState(0);
     const [dataExpenses, setDataExpenses] = useState([0]);
@@ -92,7 +93,7 @@ export default function CashFlowScreen({ navigation }) {
     };
     const searchTotalInMonth = (data) => {
         const numMonth = GetNumberMonth(month);
-        const objExpense = data.filter((e) => e.month == numMonth);
+        const objExpense = data.filter((e) => (e.month == numMonth && e.year === year));
         if (objExpense.length > 0 && objExpense[0].sum) {
             return objExpense[0].sum;
         }

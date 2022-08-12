@@ -1,31 +1,19 @@
 import React, { useEffect, useState, useRef } from "react";
-import {
-    View,
-    Text,
-    TouchableOpacity,
-    Dimensions,
-    StyleSheet,
-} from "react-native";
+import { View, Text, Dimensions } from "react-native";
 import { LineChart } from "react-native-chart-kit";
 import SelectOnlyCategory from "~/components/dropDown/SelectOnlyCategory";
-import {
-    findLastIncomesMonthsFromOnlyCategory
-} from "../../../services/incomes";
+import { findLastIncomesMonthsFromOnlyCategory } from "../../../services/incomes";
 import { Errors } from "../../../utils/Errors";
-import { NumberFormat, GetInitialMonth, DateFormat } from "../../../utils/Helpers";
+import { NumberFormat } from "../../../utils/Helpers";
 import { Rect, Text as TextSVG, Svg } from "react-native-svg";
 import { BIG } from "../../../styles/fonts";
-import { ICON } from "../../../styles/colors";
 
 import MyLoading from "~/components/loading/MyLoading";
-import { CheckBox, Icon } from "react-native-elements";
-import Popover from "react-native-popover-view";
-import AsyncStorage from "@react-native-async-storage/async-storage";
 import { cutText } from "~/utils/Helpers";
+import CheckBoxOptions from "../../../components/checbox/CheckBoxOptions";
 
-
-export default function GraphIncomesByCategory({navigation}) {
-    const selectOnlyCategoryRef = useRef()
+export default function GraphIncomesByCategory({ navigation }) {
+    const selectOnlyCategoryRef = useRef();
     const [dataIncomes, setDataIncomes] = useState([0]);
     const [labels, setLabels] = useState([""]);
     const [title, setTitle] = useState([""]);
@@ -40,58 +28,7 @@ export default function GraphIncomesByCategory({navigation}) {
     const [dataCategory, setDataCategory] = useState();
 
     const [numMonths, setNumMonths] = useState(3);
-    const [initialMonth, setInitialMonth] = useState(0);
-    const [initialDateMonth, setInitialDateMonth] = useState(0);
 
-
-    useEffect(() => {
-        fetchUserLogued();
-        return navigation.addListener("focus", () => {
-          fetchUserLogued();
-        });
-      }, []);
-      const fetchUserLogued = async () => {
-        try {
-          const jsonValue = await AsyncStorage.getItem('user')
-          const user = jsonValue != null ? JSON.parse(jsonValue) : null;
-          let tempInitialMonth = GetInitialMonth(user.createdAt);
-          setInitialMonth(tempInitialMonth);
-          setInitialDateMonth(user.createdAt);
-          let copyCheckboxes = checkboxes;
-          copyCheckboxes[3].numMonths = tempInitialMonth;
-          copyCheckboxes[3].title = `Hace(${tempInitialMonth}) ${DateFormat(user.createdAt, "DD MMM YYYY")}`;
-          setCheckboxes(copyCheckboxes);
-        } catch (error) {
-          Errors(error);
-        }
-      };
-
-    const [checkboxes, setCheckboxes] = useState([
-        {
-            id: 1,
-            title: "Últimos 3 meses",
-            checked: true,
-            numMonths: 3,
-        },
-        {
-            id: 2,
-            title: "Últimos 6 meses",
-            checked: false,
-            numMonths: 6,
-        },
-        {
-            id: 3,
-            title: "Últimos 12 meses",
-            checked: false,
-            numMonths: 12,
-        },
-        {
-            id: 4,
-            title: `Hace(${initialMonth}) ${DateFormat(initialDateMonth, "DD MMM YYYY")}`,
-            checked: false,
-            numMonths: initialMonth,
-        },
-    ]);
     const chartConfig = {
         backgroundGradientFrom: "#1E2923",
         backgroundGradientFromOpacity: 0,
@@ -128,9 +65,13 @@ export default function GraphIncomesByCategory({navigation}) {
             setLoading(false);
             setLabels(data.labels);
             setTitle(
-                `${cutText(dataCategory.label,18)} PROM Actu: ${NumberFormat(data.average)} Prev: ${NumberFormat(data.previosAverage)} SUM: ${NumberFormat(data.sum)}`
-                );
-                const len = data.graph.length;
+                `${cutText(dataCategory.label, 18)} PROM Actu: ${NumberFormat(
+                    data.average
+                )} Prev: ${NumberFormat(
+                    data.previosAverage
+                )} SUM: ${NumberFormat(data.sum)}`
+            );
+            const len = data.graph.length;
             if (len > 0) {
                 setDataIncomes(data.graph);
             } else {
@@ -142,18 +83,8 @@ export default function GraphIncomesByCategory({navigation}) {
         }
     };
 
-    const toggleCheckbox = (id, index) => {
-        let checkboxData = [...checkboxes];
-        const oldValue = checkboxData[index].checked;
-        checkboxData = checkboxData.map((e) => {
-            return { ...e, checked: false };
-        });
-        checkboxData[index].checked = true;
-        setCheckboxes(checkboxData);
-        if (!oldValue) {
-            const newNumMonths = checkboxData[index].numMonths;
-            setNumMonths(newNumMonths);
-        }
+    const updateNum = (val) => {
+        setNumMonths(val);
     };
     return (
         <View>
@@ -162,7 +93,7 @@ export default function GraphIncomesByCategory({navigation}) {
                     display: "flex",
                     flexDirection: "row",
                     justifyContent: "space-between",
-                    alignItems: 'center'
+                    alignItems: "center",
                 }}
             >
                 <Text
@@ -170,45 +101,15 @@ export default function GraphIncomesByCategory({navigation}) {
                         fontSize: BIG,
                         fontWeight: "bold",
                         textAlign: "center",
-                        marginVertical: 15
+                        marginVertical: 15,
                     }}
                 >
                     Evolución de los ingresos por categorías
                 </Text>
-                <View>
-                    <Popover
-                        from={
-                            <TouchableOpacity>
-                                <Icon
-                                    type="font-awesome"
-                                    style={styles.iconHeader}
-                                    name={"ellipsis-v"}
-                                    size={20}
-                                    color={ICON}
-                                />
-                            </TouchableOpacity>
-                        }
-                    >
-                        <View>
-                            {checkboxes.map((cb, index) => {
-                                return (
-                                    <CheckBox
-                                        center
-                                        key={cb.id}
-                                        title={cb.title}
-                                        iconType="material"
-                                        checkedIcon="check-box"
-                                        uncheckedIcon="check-box-outline-blank"
-                                        checked={cb.checked}
-                                        onPress={() =>
-                                            toggleCheckbox(cb.id, index)
-                                        }
-                                    />
-                                );
-                            })}
-                        </View>
-                    </Popover>
-                </View>
+                <CheckBoxOptions
+                    navigation={navigation}
+                    updateNum={updateNum}
+                ></CheckBoxOptions>
             </View>
             <SelectOnlyCategory
                 fetchIncomesOnlyCategory={fetchIncomesOnlyCategory}
@@ -285,9 +186,3 @@ export default function GraphIncomesByCategory({navigation}) {
         </View>
     );
 }
-const styles = StyleSheet.create({
-    iconHeader: {
-        paddingHorizontal: 10,
-    },
-});
-

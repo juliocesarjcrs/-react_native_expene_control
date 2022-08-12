@@ -34,7 +34,6 @@ export default function LastExpensesScreen({ navigation }) {
   }, [page, query]);
   useEffect(() => {
     if(page!==1){
-      console.log('eNTRA SET NEW PAGE', page);
       setPage(1);
     }
   }, [query]);

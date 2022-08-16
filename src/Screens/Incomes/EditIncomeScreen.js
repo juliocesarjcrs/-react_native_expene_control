@@ -41,9 +41,10 @@ export default function EditIncomeScreen({navigation, route}) {
   const [idCategory, setIdCategory] = useState(null);
 
   //   DATE pIKER ---------------  ///////////////
-
-  const [date, setDate] = useState(new Date());
-  const today = DateFormat(new Date(), "YYYY MMM DD");
+  let loadDate = new Date(objectIncome.date);
+  loadDate.setMinutes(loadDate.getMinutes() + loadDate.getTimezoneOffset());
+  const [date, setDate] = useState(loadDate);
+  const today = DateFormat(loadDate, "YYYY MMM DD");
   const [dateString, setDateString] = useState(today);
   const [mode, setMode] = useState("date");
   const [show, setShow] = useState(false);
@@ -99,7 +100,7 @@ export default function EditIncomeScreen({navigation, route}) {
       ShowToast();
       reset();
       Keyboard.dismiss();
-      navigation.navigate("lastIncomes");
+      navigation.navigate("lastIncomes",{ data });
     } catch (error) {
       setLoading(false);
       Errors(error);

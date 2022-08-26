@@ -24,9 +24,11 @@ export default function LastIncomesScreen({ navigation, route }) {
   // Cuando viene de editar
   // console.log('1----------paramsEdictedIncome', paramsEdictedIncome);
   const [edictedIncome, setEdictedIncome ] = useState(null);
-  // if (paramsEdictedIncome) {
-  //   setEdictedIncome(paramsEdictedIncome);
-  // }
+  if (paramsEdictedIncome) {
+    console.log('1------------ ',paramsEdictedIncome.id, route);
+  }else{
+    console.log('else2----------');
+  }
   const updateWhenEdit = () => {
       if (edictedIncome) {
           console.log("----------Entró 1", lastIncomes);

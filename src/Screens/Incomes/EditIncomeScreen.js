@@ -100,7 +100,8 @@ export default function EditIncomeScreen({navigation, route}) {
       ShowToast();
       reset();
       Keyboard.dismiss();
-      navigation.navigate("lastIncomes",{ data });
+      navigation.navigate("lastIncomes");
+      // navigation.navigate("lastIncomes",{ data });
     } catch (error) {
       setLoading(false);
       Errors(error);

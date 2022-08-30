@@ -26,7 +26,8 @@ import ChangePasswordScreen from  '~/Screens/Users/ChangePasswordScreen';
 import LastIncomesScreen from '~/Screens/Incomes/LastIncomesScreen';
 import EditIncomeScreen from '~/Screens/Incomes/EditIncomeScreen';
 
-
+// others
+import CalculeProductsScreen from '~/Screens/Others/CalculeProductsScreen';
 
 export default {
   LoginScreen,
@@ -54,4 +55,6 @@ export default {
   // incomes
   LastIncomesScreen,
   EditIncomeScreen,
+  // others
+  CalculeProductsScreen,
 }

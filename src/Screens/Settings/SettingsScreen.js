@@ -35,12 +35,16 @@ export default function SettingsScreen ({navigation}) {
   const sendCreateUserScreen= () => {
     navigation.navigate("createUser");
   };
+  const sendcCalculeProductsScreen= () => {
+    navigation.navigate("calculeProducts");
+  };
   return (
     <View style={styles.container}>
       <View>
           {userLoggued.role==1 && <MyButton onPress={sendEditUserScreen} title="Editar perfil" />}
           <MyButton onPress={sendchangePasswordScreen} title="Cambiar contraseña" />
           {userLoggued.role==1 && <MyButton onPress={sendCreateUserScreen} title="Crear Usuario" /> }
+          <MyButton onPress={sendcCalculeProductsScreen} title="Calcuar productos" />
         </View>
       {/* <Text>Configuraciones</Text> */}
       {/* <EditUserScreen navigation={navigation}></EditUserScreen> */}

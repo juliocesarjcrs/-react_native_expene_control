@@ -107,7 +107,7 @@ function SettingsStackScreen() {
             <SettingsStack.Screen name="editUser" component={Routes.EditUserScreen} options={{ title: 'Editar perfil' }}/>
             <SettingsStack.Screen name="createUser" component={Routes.CreateUserScreen} options={{ title: 'Crear usuario' }}/>
             <SettingsStack.Screen name="changePassword" component={Routes.ChangePasswordScreen} options={{ title: 'Cambiar contraseña' }}/>
-            <SettingsStack.Screen name="calculeProducts" component={Routes.CalculeProductsScreen} options={{ title: 'Calculas productos' }}/>
+            <SettingsStack.Screen name="calculeProducts" component={Routes.CalculeProductsScreen} options={{ title: 'Calcular productos' }}/>
     </SettingsStack.Navigator>
   );
 }

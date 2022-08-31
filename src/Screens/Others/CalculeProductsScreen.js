@@ -9,10 +9,11 @@ import {
 import RowInput from "./components/RowInput";
 import { NumberFormat } from "~/utils/Helpers";
 import {Button, Icon, Input} from 'react-native-elements';
+import uuid from 'react-native-uuid';
 
 export default function CalculeProductsScreen() {
-    const [generalDiscount, setGeneralDiscount] = useState('5');
-    const unit = { id: "1", price: "", realVal: "0", discount: generalDiscount };
+    const [generalDiscount, setGeneralDiscount] = useState('15');
+    const unit = { id: uuid.v4(), price: "", realVal: "0", discount: generalDiscount };
     const [products, setProducts] = useState([unit]);
     const [realTotal, setRealTotal] = useState(0);
     const [isScrollEnabled, setIsScrollEnabled] = useState(false);
@@ -28,33 +29,35 @@ export default function CalculeProductsScreen() {
     }, [products]);
 
     useEffect(() => {
-        changeDiscount();
+        setTimeout(() => {
+            changeDiscount();
+          }, 2000);
     }, [generalDiscount]);
 
     const changeDiscount = () => {
-        const copyProducts = products.map((e, idx) => {
-            return { ...e, discount: generalDiscount };
-        });
-        setProducts(copyProducts);
+        console.log('generalDiscount', generalDiscount);
+        // const copyProducts = products.map((e, idx) => {
+        //     return { ...e, discount: generalDiscount };
+        // });
+        // setProducts([]);
+        // setTimeout(() => {
+        //     setProducts(copyProducts);
+        //   }, 1000);
+        setProducts(products.map(a => {return {...a, discount:generalDiscount }}))
+
+        // setProducts(copyProducts);
     }
 
     const addRow = () => {
         let newArray;
-        newArray = [...products, { ...unit, id: products.length + 1 }];
+        newArray = [...products, { ...unit, id: uuid.v4() }];
         setProducts(newArray);
     };
     const removeRow = (id) => {
-        const indexOfObject = products.findIndex((object) => {
-            return object.id === id;
-        });
-        let copyProducts = products;
-        if (indexOfObject >= 0) {
-            copyProducts.splice(indexOfObject, 1);
-            copyProducts = copyProducts.map((e, idx) => {
-                return { ...e, id: idx+1 };
-            });
-        }
-        setProducts(copyProducts);
+        const newArr = [...products];
+        newArr.splice(newArr.findIndex(item => item.id === id), 1)
+        setProducts(newArr)
+
     };
     const calculateTotal = () => {
         const total = products.reduce((acu, val) => acu + val.realVal, 0);
@@ -71,19 +74,16 @@ export default function CalculeProductsScreen() {
         setProducts(copyProducts);
         calculateTotal();
     };
+    const onChange = (val) => {
+        setGeneralDiscount(val);
+    };
+
     const footerComponent = () => {
         return <Text style={{marginLeft:160, fontSize: 15, fontWeight:'bold'}}>Total: {NumberFormat(realTotal)}</Text>;
     };
     const headerComponent = () => {
         return (
             <View>
-                <Input
-                    label={"Descuento general"}
-                    value={generalDiscount}
-                    placeholder="Ej: 20000"
-                    onChangeText={(value) => setGeneralDiscount(value)}
-                    keyboardType="numeric"
-                />
                 <Button
                     icon={
                         <Icon
@@ -116,6 +116,13 @@ export default function CalculeProductsScreen() {
     return (
         <View style={styles.container}>
             <SafeAreaView style={styles.container}>
+            <Input
+                    label={"Descuento general"}
+                    value={generalDiscount}
+                    placeholder="Ej: 20000"
+                    onChangeText={(text) => onChange(text)}
+                    keyboardType="numeric"
+                />
                 <FlatList
                     data={products}
                     scrollEnabled={isScrollEnabled}
@@ -127,10 +134,10 @@ export default function CalculeProductsScreen() {
                         />
                     )}
                     keyExtractor={(item) => item.id.toString()}
-                    // extraData={products}
-                    initialNumToRender={4}
+                    extraData={products}
                     ListHeaderComponent={headerComponent}
                     ListFooterComponent={footerComponent}
+                    removeClippedSubviews={false}
                 />
             </SafeAreaView>
         </View>

@@ -1,18 +1,14 @@
 import React, { useEffect, useState } from "react";
-import { Keyboard, StyleSheet, Text } from "react-native";
+import { Keyboard, StyleSheet, Text, View } from "react-native";
 import { useForm, Controller } from "react-hook-form";
-import RNPickerSelect from "react-native-picker-select";
-import { View } from "react-native";
 import { getCategoryTypeIncome } from "../../services/categories";
-import { Input } from "react-native-elements";
+import { Input, Button, Icon } from "react-native-elements";
 import MyLoading from "~/components/loading/MyLoading";
-
-import { NumberFormat, DateFormat } from "../../utils/Helpers";
+import { DateFormat } from "../../utils/Helpers";
 import { Errors } from "../../utils/Errors";
 import ErrorText from "../../components/ErrorText";
 import ShowToast from "../../components/toast/ShowToast";
 import DateTimePicker from "@react-native-community/datetimepicker";
-import { Button, Icon } from "react-native-elements";
 import { useSelector } from "react-redux";
 import {SECUNDARY} from '../../styles/colors';
 import {editIncome} from '../../services/incomes';
@@ -23,6 +19,7 @@ export default function EditIncomeScreen({navigation, route}) {
   const ITEM_HEIGHT = 42;
   const idIncome = route.params.objectIncome.id;
   const objectIncome = route.params.objectIncome;
+  console.log('objectIncome', objectIncome);
 
   const month = useSelector((state) => state.date.month);
   const [incomeEdit, setIncomeEdit] = useState({

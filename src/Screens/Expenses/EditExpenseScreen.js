@@ -111,9 +111,9 @@ export default function EditExpenseScreen({ route, navigation }) {
   const defaultIdCategory = async () => {
     const { data } = await getOneExpense(idExpense);
     setExpenseEdit({ cost: data.cost, commentary: data.commentary });
-    const idCategoryEdit = data.subcategoryId.categoryId.id;
+    const idCategoryEdit = data.subcategories.category.id;
     setIdCategory(idCategoryEdit);
-    const idsubcategoryEdit = data.subcategoryId.id;
+    const idsubcategoryEdit = data.subcategories.id;
     setSubcategoryId(idsubcategoryEdit);
   };
 

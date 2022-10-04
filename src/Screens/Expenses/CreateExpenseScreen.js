@@ -1,10 +1,8 @@
-import React, { useCallback, useEffect, useState } from "react";
-import { Keyboard, StyleSheet, Text } from "react-native";
+import React, { useEffect, useState } from "react";
+import { Keyboard, StyleSheet, Text, View } from "react-native";
 import { useForm, Controller } from "react-hook-form";
-import RNPickerSelect from "react-native-picker-select";
-import { View } from "react-native";
 import { getCategoryWithSubcategories } from "../../services/categories";
-import { Input } from "react-native-elements";
+import { CheckBox, Input, Button, Icon,FAB } from "react-native-elements";
 import MyLoading from "~/components/loading/MyLoading";
 
 import {
@@ -17,11 +15,11 @@ import FlatListData from "../../components/card/FlatListData";
 import ErrorText from "../../components/ErrorText";
 import ShowToast from "../../components/toast/ShowToast";
 import DateTimePicker from "@react-native-community/datetimepicker";
-import { Button, Icon,FAB } from "react-native-elements";
 import { useSelector } from "react-redux";
 import DropDownPicker from "react-native-dropdown-picker";
-import { SECUNDARY, ICON,ICON_DROPDOWN, COLOR_SEPARATOR_DROPDOWN, COLOR_TEXT_DROPDOWN } from "~/styles/colors";
+import { ICON_DROPDOWN, COLOR_SEPARATOR_DROPDOWN, COLOR_TEXT_DROPDOWN } from "~/styles/colors";
 import { MEGA_BIG } from "~/styles/fonts";
+import {getExchangeCurrency} from '../../services/external';
 
 export default function CreateExpenseScreen() {
   const month = useSelector((state) => state.date.month);
@@ -52,6 +50,41 @@ export default function CreateExpenseScreen() {
   const [dateString, setDateString] = useState(today);
   const [mode, setMode] = useState("date");
   const [show, setShow] = useState(false);
+  // convertidor de moneda
+  const [currencySymbol, setcurrencySymbol] = useState('COP');
+  const [checkboxes, setCheckboxes] = useState([
+      {
+          id: 1,
+          title: "COP",
+          checked: true,
+          value: "COP",
+      },
+      {
+          id: 2,
+          title: "EUR",
+          checked: false,
+          value: "EUR",
+      },
+      {
+          id: 3,
+          title: "CHF",
+          checked: false,
+          value: "CHF",
+      },
+  ]);
+  const toggleCheckbox = (id, index) => {
+      let checkboxData = [...checkboxes];
+      const oldValue = checkboxData[index].checked;
+      checkboxData = checkboxData.map((e) => {
+          return { ...e, checked: false };
+      });
+      checkboxData[index].checked = true;
+      setCheckboxes(checkboxData);
+      if (!oldValue) {
+          const newvalue = checkboxData[index].value;
+          setcurrencySymbol(newvalue);
+      }
+  };
 
   const onChange = (event, selectedDate) => {
     const currentDate = selectedDate || date;
@@ -70,9 +103,6 @@ export default function CreateExpenseScreen() {
     showMode("date");
   };
 
-  const showTimepicker = () => {
-    showMode("time");
-  };
   //////////////////////////////////////////////
 
   useEffect(() => {
@@ -133,6 +163,22 @@ export default function CreateExpenseScreen() {
     });
   };
   const onSubmit = async (payload) => {
+
+    let newAmount = null;
+    if(currencySymbol !== 'COP'){
+      try {
+        const values = {
+          "amount": payload.cost,
+          "from": currencySymbol,
+          "to": "COP"
+        };
+        const { data} = await getExchangeCurrency(values);
+        newAmount = data.result;
+        payload.cost = newAmount;
+      } catch (error) {
+        console.log('error---', error);
+      }
+    }
     try {
       if (!subcategoryId) {
         return;
@@ -177,182 +223,197 @@ export default function CreateExpenseScreen() {
   };
 
   return (
-    <View style={styles.container}>
-      <Controller
-        name="cost"
-        control={control}
-        rules={{
-          required: { value: true, message: "El gasto es obligatorio" },
-          min: { value: 1, message: "El minimó valor aceptado es 1" },
-          max: {
-            value: 99999999,
-            message: "El gasto no puede superar el valor de 99.999.999 ",
-          },
-        }}
-        render={({ onChange, value }) => (
-          <Input
-            label="Gasto"
-            value={value}
-            placeholder="Ej: 20000"
-            onChangeText={(text) => onChange(text)}
-            errorStyle={{ color: "red" }}
-            errorMessage={errors?.cost?.message}
-            keyboardType="numeric"
+      <View style={styles.container}>
+          <Controller
+              name="cost"
+              control={control}
+              rules={{
+                  required: { value: true, message: "El gasto es obligatorio" },
+                  min: { value: 1, message: "El minimó valor aceptado es 1" },
+                  max: {
+                      value: 99999999,
+                      message:
+                          "El gasto no puede superar el valor de 99.999.999 ",
+                  },
+              }}
+              render={({ onChange, value }) => (
+                  <Input
+                      label="Gasto"
+                      value={value}
+                      placeholder="Ej: 20000"
+                      onChangeText={(text) => onChange(text)}
+                      errorStyle={{ color: "red" }}
+                      errorMessage={errors?.cost?.message}
+                      keyboardType="numeric"
+                  />
+              )}
+              defaultValue=""
           />
-        )}
-        defaultValue=""
-      />
-      <Controller
-        name="commentary"
-        control={control}
-        rules={{
-          maxLength: {
-            value: 200,
-            message: "El comenatario no puede superar los 200 carácteres ",
-          },
-        }}
-        render={({ onChange, value }) => (
-          <Input
-            label="Comentario"
-            value={value}
-            placeholder="Ej: Compra de una camisa"
-            onChangeText={(text) => onChange(text)}
-            multiline
-            numberOfLines={2}
-            errorStyle={{ color: "red" }}
-            errorMessage={errors?.commentary?.message}
+          <Controller
+              name="commentary"
+              control={control}
+              rules={{
+                  maxLength: {
+                      value: 200,
+                      message:
+                          "El comenatario no puede superar los 200 carácteres ",
+                  },
+              }}
+              render={({ onChange, value }) => (
+                  <Input
+                      label="Comentario"
+                      value={value}
+                      placeholder="Ej: Compra de una camisa"
+                      onChangeText={(text) => onChange(text)}
+                      multiline
+                      numberOfLines={2}
+                      errorStyle={{ color: "red" }}
+                      errorMessage={errors?.commentary?.message}
+                  />
+              )}
+              defaultValue=""
           />
-        )}
-        defaultValue=""
-      />
-      <Text style={styles.subtitle}>Categoría</Text>
-      <DropDownPicker
-        open={open}
-        value={idCategory}
-        items={categories}
-        setOpen={setOpen}
-        setValue={setIdCategory}
-        setItems={setCategories}
-        maxHeight={ITEM_HEIGHT * categories.length}
-        placeholder="Selecione una categoría"
-        zIndex={2000}
-        zIndexInverse={1000}
-        loading={loading}
-        ActivityIndicatorComponent={({color, size}) => (
-          <MyLoading />
-        )}
-        activityIndicatorColor="red"
-        activityIndicatorSize={30}
-        dropDownContainerStyle={{
-          backgroundColor: "#dfdfdf"
-        }}
-        listMode="MODAL"
-        // styles modal
-        itemSeparator={true}
-        itemSeparatorStyle={{
-          backgroundColor: COLOR_SEPARATOR_DROPDOWN,
-          paddingVertical:5
-        }}
-        selectedItemContainerStyle={{
-          backgroundColor: "#F0AEBB"
-        }}
-        selectedItemLabelStyle={{
-          fontWeight: "bold"
-        }}
-        // como se ve el select
-        textStyle={{
-          fontSize: 18,
-          color: COLOR_TEXT_DROPDOWN
-        }}
-      />
-      {!idCategory ? (
-        <ErrorText msg="Necesita seleccionar una  Categoria" />
-      ) : null}
+          <Text style={styles.subtitle}>Categoría</Text>
+          <DropDownPicker
+              open={open}
+              value={idCategory}
+              items={categories}
+              setOpen={setOpen}
+              setValue={setIdCategory}
+              setItems={setCategories}
+              maxHeight={ITEM_HEIGHT * categories.length}
+              placeholder="Selecione una categoría"
+              zIndex={2000}
+              zIndexInverse={1000}
+              loading={loading}
+              ActivityIndicatorComponent={({ color, size }) => <MyLoading />}
+              activityIndicatorColor="red"
+              activityIndicatorSize={30}
+              dropDownContainerStyle={{
+                  backgroundColor: "#dfdfdf",
+              }}
+              listMode="MODAL"
+              // styles modal
+              itemSeparator={true}
+              itemSeparatorStyle={{
+                  backgroundColor: COLOR_SEPARATOR_DROPDOWN,
+                  paddingVertical: 5,
+              }}
+              selectedItemContainerStyle={{
+                  backgroundColor: "#F0AEBB",
+              }}
+              selectedItemLabelStyle={{
+                  fontWeight: "bold",
+              }}
+              // como se ve el select
+              textStyle={{
+                  fontSize: 18,
+                  color: COLOR_TEXT_DROPDOWN,
+              }}
+          />
+          {!idCategory ? (
+              <ErrorText msg="Necesita seleccionar una  Categoria" />
+          ) : null}
 
-      <Text style={styles.subtitle}>Subcategoría</Text>
-      <DropDownPicker
-        // containerStyle={{ height: 40, marginBottom: 10 }}
-        open={open2}
-        value={subcategoryId}
-        items={subcategories}
-        setOpen={setOpen2}
-        setValue={setSubcategoryId}
-        setItems={setSubcategories}
-        maxHeight={ITEM_HEIGHT * subcategories.length}
-        placeholder="Selecione una subcategoría"
-        placeholderStyle={{
-          color: "grey"
-        }}
-        zIndex={1000}
-        zIndexInverse={2000}
-        loading={loading}
-        listMode="MODAL"
-        // styles modal
-        itemSeparator={true}
-        itemSeparatorStyle={{
-          backgroundColor: COLOR_SEPARATOR_DROPDOWN,
-          paddingVertical:5
-        }}
-        selectedItemContainerStyle={{
-          backgroundColor: "#F0AEBB"
-        }}
-        selectedItemLabelStyle={{
-          fontWeight: "bold"
-        }}
-        // como se ve el select
-        textStyle={{
-          fontSize: MEGA_BIG,
-          color: COLOR_TEXT_DROPDOWN
-        }}
-        // prueba
-        dropDownContainerStyle={{
-          backgroundColor: "#dfdfdf"
-        }}
+          <Text style={styles.subtitle}>Subcategoría</Text>
+          <DropDownPicker
+              // containerStyle={{ height: 40, marginBottom: 10 }}
+              open={open2}
+              value={subcategoryId}
+              items={subcategories}
+              setOpen={setOpen2}
+              setValue={setSubcategoryId}
+              setItems={setSubcategories}
+              maxHeight={ITEM_HEIGHT * subcategories.length}
+              placeholder="Selecione una subcategoría"
+              placeholderStyle={{
+                  color: "grey",
+              }}
+              zIndex={1000}
+              zIndexInverse={2000}
+              loading={loading}
+              listMode="MODAL"
+              // styles modal
+              itemSeparator={true}
+              itemSeparatorStyle={{
+                  backgroundColor: COLOR_SEPARATOR_DROPDOWN,
+                  paddingVertical: 5,
+              }}
+              selectedItemContainerStyle={{
+                  backgroundColor: "#F0AEBB",
+              }}
+              selectedItemLabelStyle={{
+                  fontWeight: "bold",
+              }}
+              // como se ve el select
+              textStyle={{
+                  fontSize: MEGA_BIG,
+                  color: COLOR_TEXT_DROPDOWN,
+              }}
+              // prueba
+              dropDownContainerStyle={{
+                  backgroundColor: "#dfdfdf",
+              }}
+          />
+          {!subcategoryId ? (
+              <ErrorText msg="Necesita seleccionar una subcategoria" />
+          ) : null}
+          <View style={styles.containerDate}>
+              <Button
+                  icon={
+                      <Icon
+                          type="material-community"
+                          name="calendar"
+                          size={25}
+                          color="white"
+                      />
+                  }
+                  iconLeft
+                  title="  Fecha "
+                  onPress={showDatepicker}
+              />
+              <Text style={styles.textDate}>{dateString}</Text>
+          </View>
+          <View style={styles.rows}>
+              {checkboxes.map((cb, index) => {
+                  return (
+                      <CheckBox
+                          center
+                          key={cb.id}
+                          title={cb.title}
+                          iconType="material"
+                          checkedIcon="check-box"
+                          uncheckedIcon="check-box-outline-blank"
+                          checked={cb.checked}
+                          onPress={() => toggleCheckbox(cb.id, index)}
+                          containerStyle={styles.containerCheckbox}
+                      />
+                  );
+              })}
+          </View>
 
+          {show && (
+              <DateTimePicker
+                  testID="dateTimePicker"
+                  value={date}
+                  mode={mode}
+                  is24Hour={true}
+                  display="default"
+                  onChange={onChange}
+              />
+          )}
+          {loading ? (
+              <MyLoading />
+          ) : (
+              <FAB title="Guardar gasto" onPress={handleSubmit(onSubmit)} />
+          )}
 
-      />
-      {!subcategoryId ? <ErrorText msg="Necesita seleccionar una subcategoria" /> : null}
-      <View style={styles.containerDate}>
-        <Button
-          icon={
-            <Icon
-              type="material-community"
-              name="calendar"
-              size={25}
-              color="white"
-            />
-          }
-          iconLeft
-          title="  Fecha "
-          onPress={showDatepicker}
-        />
-        <Text style={styles.textDate}>{dateString}</Text>
+          <Text>Total:{NumberFormat(sumCost)}</Text>
+          <FlatListData
+              expenses={expenses}
+              updateList={updateList}
+          ></FlatListData>
       </View>
-
-      {show && (
-        <DateTimePicker
-          testID="dateTimePicker"
-          value={date}
-          mode={mode}
-          is24Hour={true}
-          display="default"
-          onChange={onChange}
-        />
-      )}
-      {loading ? (
-        <MyLoading />
-      ) : (
-        <FAB title="Guardar gasto" onPress={handleSubmit(onSubmit)} />
-        // <Button
-        //   title="Guardar"
-        //   buttonStyle={{ backgroundColor: SECUNDARY }}
-        //   onPress={handleSubmit(onSubmit)}
-        // />
-      )}
-
-      <Text>Total:{NumberFormat(sumCost)}</Text>
-      <FlatListData expenses={expenses} updateList={updateList}></FlatListData>
-    </View>
   );
 }
 const styles = StyleSheet.create({
@@ -374,6 +435,14 @@ const styles = StyleSheet.create({
   },
   subtitle: {
     fontWeight: "bold"
+  },
+  rows: {
+    backgroundColor: "#F3F5F7",
+    flexDirection: 'row',
+
+  },
+  containerCheckbox: {
+    paddingVertical: 2,
   }
 });
 

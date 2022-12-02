@@ -95,6 +95,7 @@ export default function MainScreen({ navigation }) {
       <ScrollView>
         <MyMonthPicker />
         <Text>{userLoggued.name? userLoggued.name: '---'}</Text>
+        {/* <Text>AWS-Render</Text> */}
         {/* {
           userLoggued.image &&
         <Image

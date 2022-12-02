@@ -43,7 +43,8 @@ export default function LastExpensesScreen({ navigation }) {
       const params = {
         take: 15,
         page,
-        query
+        query,
+        orderBy: 'date'
       };
       // setLoading(true);
       setLoadingFotter(true);

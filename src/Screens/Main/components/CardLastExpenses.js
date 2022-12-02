@@ -45,6 +45,7 @@ const CardLastExpenses = ({ navigation }) => {
     try {
       const params = {
         take,
+        orderBy: 'id'
       };
       setLoading(true);
       const { data } = await getLastExpensesWithPaginate(params);

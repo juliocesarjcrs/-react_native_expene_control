@@ -374,7 +374,7 @@ export default function CreateExpenseScreen() {
               />
               <Text style={styles.textDate}>{dateString}</Text>
           </View>
-          <View style={styles.rows}>
+          {/* <View style={styles.rows}>
               {checkboxes.map((cb, index) => {
                   return (
                       <CheckBox
@@ -390,7 +390,7 @@ export default function CreateExpenseScreen() {
                       />
                   );
               })}
-          </View>
+          </View> */}
 
           {show && (
               <DateTimePicker

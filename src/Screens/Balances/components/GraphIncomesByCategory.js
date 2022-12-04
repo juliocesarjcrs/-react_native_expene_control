@@ -64,12 +64,15 @@ export default function GraphIncomesByCategory({ navigation }) {
             );
             setLoading(false);
             setLabels(data.labels);
+            // setTitle(
+            //     `
+            //     ${cutText(dataCategory.label, 18)}
+            //     PROM Actu: ${NumberFormat(data.average)}
+            //     Prev: ${NumberFormat(data.previosAverage)}
+            //     SUM: ${NumberFormat(data.sum)}`
+            // );
             setTitle(
-                `${cutText(dataCategory.label, 18)} PROM Actu: ${NumberFormat(
-                    data.average
-                )} Prev: ${NumberFormat(
-                    data.previosAverage
-                )} SUM: ${NumberFormat(data.sum)}`
+                `PROM Actu: ${NumberFormat(data.average)} Prev: ${NumberFormat(data.previosAverage)} SUM: ${NumberFormat(data.sum)}`
             );
             const len = data.graph.length;
             if (len > 0) {
@@ -132,10 +135,11 @@ export default function GraphIncomesByCategory({ navigation }) {
                         legend: [title],
                     }}
                     width={screenWidth}
-                    height={256}
+                    height={280}
                     verticalLabelRotation={30}
                     chartConfig={chartConfig}
                     formatYLabel={(val) => `${NumberFormat(val)}`}
+                    yLabelsOffset={4}
                     bezier
                     decorator={() => {
                         return tooltipPos.visible ? (

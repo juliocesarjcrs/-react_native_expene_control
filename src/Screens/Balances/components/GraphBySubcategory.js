@@ -172,10 +172,11 @@ export default function GraphBySubcategory({ navigation }) {
                         legend: [title], // optional
                     }}
                     width={screenWidth}
-                    height={256}
+                    height={280}
                     verticalLabelRotation={30}
                     chartConfig={chartConfig}
                     formatYLabel={(val) => `${NumberFormat(val)}`}
+                    yLabelsOffset={4}
                     bezier
                     decorator={() => {
                         return tooltipPos.visible ? (

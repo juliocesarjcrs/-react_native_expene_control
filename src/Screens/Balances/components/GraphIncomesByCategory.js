@@ -135,11 +135,11 @@ export default function GraphIncomesByCategory({ navigation }) {
                         legend: [title],
                     }}
                     width={screenWidth}
-                    height={280}
-                    verticalLabelRotation={30}
+                    height={300}
+                    verticalLabelRotation={40}
                     chartConfig={chartConfig}
                     formatYLabel={(val) => `${NumberFormat(val)}`}
-                    yLabelsOffset={4}
+                    yLabelsOffset={2}
                     bezier
                     decorator={() => {
                         return tooltipPos.visible ? (

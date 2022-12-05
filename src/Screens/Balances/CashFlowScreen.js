@@ -320,6 +320,7 @@ export default function CashFlowScreen({ navigation }) {
                         borderRadius: 16,
                     }}
                     formatYLabel={(val) => `${NumberFormat(val)}`}
+                    yLabelsOffset={2}
                     decorator={() => {
                         return tooltipPos.visible ? (
                             <View>
@@ -364,7 +365,7 @@ export default function CashFlowScreen({ navigation }) {
                                   visible: true,
                               });
                     }}
-                    verticalLabelRotation={30}
+                    verticalLabelRotation={40}
                 />
                 <GraphBySubcategory navigation={navigation} />
                 <GraphIncomesByCategory navigation={navigation} />

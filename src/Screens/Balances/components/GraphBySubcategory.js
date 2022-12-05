@@ -173,7 +173,7 @@ export default function GraphBySubcategory({ navigation }) {
                     }}
                     width={screenWidth}
                     height={280}
-                    verticalLabelRotation={30}
+                    verticalLabelRotation={40}
                     chartConfig={chartConfig}
                     formatYLabel={(val) => `${NumberFormat(val)}`}
                     yLabelsOffset={4}

@@ -88,7 +88,7 @@ export default function EditIncomeScreen({navigation, route}) {
       }
       const dataSend = {
         ...payload,
-        idCategory,
+        categoryId: idCategory,
         date: DateFormat(date, "YYYY-MM-DD"),
       };
       setLoading(true);

@@ -1,25 +1,26 @@
 import React, { useEffect, useState } from "react";
 import { Dimensions, StyleSheet, Text, View, ScrollView } from "react-native";
 import { Rect, Text as TextSVG, Svg } from "react-native-svg";
-import { DateFormat, GetNumberMonth, NumberFormat } from "../../utils/Helpers";
+import { DateFormat, getDateStartOfMonth, NumberFormat } from "../../utils/Helpers";
 import { BIG, SMALL } from "~/styles/fonts";
 import { Errors } from "../../utils/Errors";
 import { useSelector } from "react-redux";
 import MyLoading from "~/components/loading/MyLoading";
 import { LineChart } from "react-native-chart-kit";
-import { getLastExpenses } from "../../services/expenses";
-import { getLastIncomes } from "../../services/incomes";
 import GraphBySubcategory from "~/Screens/Balances/components/GraphBySubcategory";
-import { Tooltip } from "react-native-elements";
+import { Icon, Tooltip } from "react-native-elements";
 import { BACKGROUND_TOOLTIP } from "~/styles/colors";
 import GraphIncomesByCategory from "./components/GraphIncomesByCategory";
 import CheckBoxOptions from "../../components/checbox/CheckBoxOptions";
+import {getSavingsByUser, getUpdateAllSavingsByUser} from '../../services/savings';
+import {ICON} from '../../styles/colors';
 
 export default function CashFlowScreen({ navigation }) {
     const month = useSelector((state) => state.date.month);
     const year = parseInt(month.substring(0, 4));
     const [totalExpenses, setTotalExpenses] = useState(0);
     const [totalIncomes, setTotalIncomes] = useState(0);
+    const [totalSavings, setTotalSavings] = useState(0);
     const [dataExpenses, setDataExpenses] = useState([0]);
     const [dataIncomes, setDataIncomes] = useState([0]);
     const [dataSavings, setDataSavings] = useState([0]);
@@ -29,7 +30,7 @@ export default function CashFlowScreen({ navigation }) {
     const [previousAverageIncomes, setPreviousAverageIncomes] = useState(0);
     const [sumSavings, setSumSavings] = useState(0);
     const [numMonthsGraph, setNumMonthsGraph] = useState(4);
-    const [numMonthsQuery, setNumMonthsQuery] = useState(12);
+    const [numMonthsQuery, setNumMonthsQuery] = useState(4);
 
     const [labels, setLabels] = useState([""]);
 
@@ -43,106 +44,93 @@ export default function CashFlowScreen({ navigation }) {
     });
 
     useEffect(() => {
-        fetchLastExpenses();
+        fetchSavingsByUser();
         return navigation.addListener("focus", () => {
-            fetchLastExpenses();
+            fetchSavingsByUser();
         });
     }, [month, numMonthsQuery]);
 
-    useEffect(() => {
-        fetchLastIncomes();
-        return navigation.addListener("focus", () => {
-            fetchLastIncomes();
-        });
-    }, [month, numMonthsQuery]);
-
-    useEffect(() => {
-        calculateDataSavings();
-        return navigation.addListener("focus", () => {
-            calculateDataSavings();
-        });
-    }, [dataExpenses, dataIncomes]);
-
-    const fetchLastExpenses = async () => {
+    const fetchSavingsByUser = async () => {
         try {
             setTooltipPos({ x: 0, y: 0, visible: false, value: 0 });
             setLoading(true);
             const query = {
                 numMonths: numMonthsQuery,
             };
-            const { data } = await getLastExpenses(query);
+            const { data } = await getSavingsByUser(query);
             setLoading(false);
-            setLabels(filterLimitDataForGraph(data.labels));
-            setAverageExpenses(data.average);
-            setPreviousAverageExpenses(data.previosAverage);
-            const len = data.graph.length;
-            if (len > 0) {
-                const total = searchTotalInMonth(data.data);
-                setTotalExpenses(total);
-                setDataExpenses(filterLimitDataForGraph(data.graph));
-            } else {
-                setDataExpenses([0]);
-                setTotalExpenses(0);
-                setAverageExpenses(0);
-                setPreviousAverageExpenses(0);
-            }
+            const filterLabels = filterLimitDataForGraph(data.graph.labels);
+            const filterExpenses = filterLimitDataForGraph(data.graph.expenses);
+            const filterIncomes = filterLimitDataForGraph(data.graph.incomes);
+            const filterSavings = filterLimitDataForGraph(data.graph.savings);
+            const previosExpenses = filterExpenses.slice(0);
+            previosExpenses.pop();
+            const previosIncomes = filterIncomes.slice(0);
+            previosIncomes.pop();
+
+            setLabels(filterLabels);
+            setSearchTotalInMonth(data.data);
+            // expenses
+            setDataExpenses(filterExpenses);
+            setAverageExpenses(calculateAverage(filterExpenses));
+            setPreviousAverageExpenses(calculateAverage(previosExpenses));
+            // incomes
+            setDataIncomes(filterIncomes);
+            setAverageIncomes(calculateAverage(filterIncomes));
+            setPreviousAverageIncomes(calculateAverage(previosIncomes));
+            // savings
+            const acuSavings = filterSavings.reduce((acu, val) => {
+                return acu + val;
+            }, 0);
+            setSumSavings(acuSavings);
+            setDataSavings(filterSavings);
         } catch (e) {
             setLoading(false);
             Errors(e);
         }
     };
-    const searchTotalInMonth = (data) => {
-        const numMonth = GetNumberMonth(month);
-        const objExpense = data.filter((e) => (e.month == numMonth && e.year === year));
-        if (objExpense.length > 0 && objExpense[0].sum) {
-            return objExpense[0].sum;
-        }
-        return 0;
-    };
-    const filterLimitDataForGraph = (data) => {
-        let len = data.length;
-        return data.slice(len - numMonthsGraph, len);
-    };
-
-    const fetchLastIncomes = async () => {
+    const updateAllSavingsByUser = async () => {
         try {
             setLoading(true);
             const query = {
                 numMonths: numMonthsQuery,
             };
-            const { data } = await getLastIncomes(query);
+            const { data } = await getUpdateAllSavingsByUser(query);
             setLoading(false);
-            const len = data.incomes.length;
-            if (len > 0) {
-                setDataIncomes(filterLimitDataForGraph(data.incomes));
-                const totalCalculate = searchTotalInMonth(data.data);
-                setTotalIncomes(totalCalculate);
-                setAverageIncomes(data.average);
-                setPreviousAverageIncomes(data.previosAverage);
-            } else {
-                setDataIncomes([0]);
-                setTotalIncomes(0);
-                setAverageIncomes(0);
-                setPreviousAverageIncomes(0);
+            if(data.result){
+                fetchSavingsByUser();
             }
-        } catch (e) {
+        } catch (error) {
             setLoading(false);
-            Errors(e);
+            Errors(error);
         }
-    };
-    const calculateDataSavings = () => {
-        let savings = [0];
-        if (dataIncomes.length > 0 && dataExpenses.length > 0) {
-            dataIncomes.forEach((income, key) => {
-                savings[key] =
-                    income - (dataExpenses[key] ? dataExpenses[key] : 0);
-            });
-        }
-        const acuSavings = savings.reduce((acu, val) => {
-            return acu + val;
+
+    }
+    const calculateAverage = (dataArray) => {
+        const sum = dataArray.reduce((acu, val) => {
+          return acu + parseFloat(val);
         }, 0);
-        setSumSavings(acuSavings);
-        setDataSavings(savings);
+        return dataArray.length > 0 ? sum / dataArray.length : 0;
+      }
+    const setSearchTotalInMonth = (allData) => {
+        const startMonthFormat = getDateStartOfMonth(month);
+        const objData = allData.filter((e) => e.date == startMonthFormat);
+        let totalExpenseByMonth = 0;
+        let totalIncomeByMonth = 0;
+        let totalSavingByMonth = 0;
+        if (objData.length > 0) {
+            totalExpenseByMonth = objData[0].expense;
+            totalIncomeByMonth = objData[0].income;
+            totalSavingByMonth = objData[0].saving;
+        }
+        setTotalExpenses(totalExpenseByMonth);
+        setTotalIncomes(totalIncomeByMonth);
+        setTotalSavings(totalSavingByMonth);
+    };
+
+    const filterLimitDataForGraph = (data) => {
+        let len = data.length;
+        return data.slice(len - numMonthsGraph, len);
     };
 
     const LabelPopover = ({
@@ -238,7 +226,7 @@ export default function CashFlowScreen({ navigation }) {
                                 backgroundColor={BACKGROUND_TOOLTIP}
                             >
                                 <Text style={{ color: "#87CEFA" }}>
-                                    {NumberFormat(totalIncomes - totalExpenses)}
+                                    {NumberFormat(totalSavings)}
                                 </Text>
                             </Tooltip>
                         </View>
@@ -248,6 +236,19 @@ export default function CashFlowScreen({ navigation }) {
                                 El calculo del promedio se realiza de los
                                 últimos {numMonthsQuery} meses
                             </Text>
+                        </View>
+                        <View style={styles.item}>
+                            <Text style={styles.text}>
+                                Precione icono para actualizar el mes
+                            </Text>
+                            <Icon
+                                type="font-awesome"
+                                // style={styles.icon}
+                                name={"refresh"}
+                                size={20}
+                                color={ICON}
+                                onPress={() => updateAllSavingsByUser()}
+                            />
                         </View>
                     </View>
                 )}

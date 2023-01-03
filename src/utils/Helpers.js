@@ -95,6 +95,10 @@ export const percent =(total, cant) =>{
   return total >0 ? (cant*100) / total: 0
 }
 
+export const getDateStartOfMonth =  (date) =>{
+  return moment(date).startOf('month').format('YYYY-MM-DD');
+}
+
 
 
 

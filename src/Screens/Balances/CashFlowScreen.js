@@ -14,6 +14,7 @@ import GraphIncomesByCategory from "./components/GraphIncomesByCategory";
 import CheckBoxOptions from "../../components/checbox/CheckBoxOptions";
 import {getSavingsByUser, getUpdateAllSavingsByUser} from '../../services/savings';
 import {ICON} from '../../styles/colors';
+import MyTable from '../../components/tables/MyTable';
 
 export default function CashFlowScreen({ navigation }) {
     const month = useSelector((state) => state.date.month);
@@ -42,6 +43,8 @@ export default function CashFlowScreen({ navigation }) {
         visible: false,
         value: 0,
     });
+    // Table component
+    const [tableData, setTableData] = useState([]);
 
     useEffect(() => {
         fetchSavingsByUser();
@@ -59,6 +62,18 @@ export default function CashFlowScreen({ navigation }) {
             };
             const { data } = await getSavingsByUser(query);
             setLoading(false);
+            // all data
+            const allDataSavings =  filterLimitDataForGraph(data.data);
+            const sumPercentSaving =  allDataSavings.reduce((acu,val) => {
+                return acu + parseFloat(val.saving *100/ val.income)
+            },0)
+            let meanSavingsByNumMonths =  allDataSavings.length > 0 ? Math.round(sumPercentSaving / allDataSavings.length) : 0;
+            let dataTable =  allDataSavings. map(e =>{
+                return [`${DateFormat(e.date, "MMMM YYYY")}`, `${Math.round(e.saving *100/ e.income)} %`];
+            })
+            dataTable.push(['Promedio', `${meanSavingsByNumMonths} %` ]);
+            setTableData(dataTable);
+            // data filter
             const filterLabels = filterLimitDataForGraph(data.graph.labels);
             const filterExpenses = filterLimitDataForGraph(data.graph.expenses);
             const filterIncomes = filterLimitDataForGraph(data.graph.incomes);
@@ -173,6 +188,11 @@ export default function CashFlowScreen({ navigation }) {
         setNumMonthsQuery(val);
         setNumMonthsGraph(val);
     };
+
+    const tableHead = [
+        "Mes",
+        "% Ahorro"
+    ];
 
     return (
         <View style={styles.container}>
@@ -368,6 +388,7 @@ export default function CashFlowScreen({ navigation }) {
                     }}
                     verticalLabelRotation={40}
                 />
+                <MyTable navigation={navigation} tableHead={tableHead} tableData={tableData}  />
                 <GraphBySubcategory navigation={navigation} />
                 <GraphIncomesByCategory navigation={navigation} />
             </ScrollView>

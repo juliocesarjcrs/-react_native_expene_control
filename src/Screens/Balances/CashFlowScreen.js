@@ -65,11 +65,12 @@ export default function CashFlowScreen({ navigation }) {
             // all data
             const allDataSavings =  filterLimitDataForGraph(data.data);
             const sumPercentSaving =  allDataSavings.reduce((acu,val) => {
-                return acu + parseFloat(val.saving *100/ val.income)
+                return acu + (val.income > 0 ? parseFloat(val.saving *100/ val.income): 0);
             },0)
             let meanSavingsByNumMonths =  allDataSavings.length > 0 ? Math.round(sumPercentSaving / allDataSavings.length) : 0;
             let dataTable =  allDataSavings. map(e =>{
-                return [`${DateFormat(e.date, "MMMM YYYY")}`, `${Math.round(e.saving *100/ e.income)} %`];
+                let meanSaaving = e.income > 0 ? Math.round(e.saving *100/ e.income) : 0;
+                return [`${DateFormat(e.date, "MMMM YYYY")}`, `${meanSaaving} %`];
             })
             dataTable.push(['Promedio', `${meanSavingsByNumMonths} %` ]);
             setTableData(dataTable);

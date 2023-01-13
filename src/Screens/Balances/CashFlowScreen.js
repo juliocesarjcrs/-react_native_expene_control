@@ -70,9 +70,15 @@ export default function CashFlowScreen({ navigation }) {
             let meanSavingsByNumMonths =  allDataSavings.length > 0 ? Math.round(sumPercentSaving / allDataSavings.length) : 0;
             let dataTable =  allDataSavings. map(e =>{
                 let meanSaaving = e.income > 0 ? Math.round(e.saving *100/ e.income) : 0;
-                return [`${DateFormat(e.date, "MMMM YYYY")}`, `${meanSaaving} %`];
+                return [`${DateFormat(e.date, "MMMM YYYY")}`, `${meanSaaving} %`, `${NumberFormat(e.saving)}`];
             })
-            dataTable.push(['Promedio', `${meanSavingsByNumMonths} %` ]);
+            // mean saving
+            const sumSaving =  allDataSavings.reduce((acu,val) => {
+                return acu + parseFloat(val.saving);
+            },0)
+            let meanSavingsValByNumMonths =  allDataSavings.length > 0 ? sumSaving / allDataSavings.length : 0;
+
+            dataTable.push(['Promedio', `${meanSavingsByNumMonths} %`, `${NumberFormat(meanSavingsValByNumMonths)}` ]);
             setTableData(dataTable);
             // data filter
             const filterLabels = filterLimitDataForGraph(data.graph.labels);
@@ -192,7 +198,8 @@ export default function CashFlowScreen({ navigation }) {
 
     const tableHead = [
         "Mes",
-        "% Ahorro"
+        "% Ahorro",
+        "Valor"
     ];
 
     return (

@@ -18,8 +18,8 @@ export default function MyButton({title, onPress}){
 
 const styles = StyleSheet.create({
   container:{
-    padding: 5,
+    // padding: 5,
     marginHorizontal: 5,
-    marginVertical: 30
+    marginVertical: 10
   }
 })

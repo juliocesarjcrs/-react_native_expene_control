@@ -16,7 +16,7 @@ import MyLoading from "~/components/loading/MyLoading";
 import MyFaButton from "../../components/buttons/MyFaButton";
 import CardLastExpenses from "./components/CardLastExpenses";
 import {getUser} from '../../services/users';
-
+import {getUrlSignedAws} from '../../services/files';
 
 export default function MainScreen({ navigation }) {
   const month = useSelector((state) => state.date.month);
@@ -26,6 +26,7 @@ export default function MainScreen({ navigation }) {
   const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(false);
   const [userLoggued, setUserLoggued] = useState({});
+  const [userImgSigned, setUserImgSigned] = useState(null);
 
   useEffect(() => {
 
@@ -86,25 +87,44 @@ export default function MainScreen({ navigation }) {
       const user = jsonValue != null ? JSON.parse(jsonValue) : null;
       const {data} = await getUser(user.id);
       setUserLoggued(data);
+      if (data.image){
+        getUrlAws(data.image);
+      }
     } catch (error) {
       Errors(error);
     }
+  };
+  // get url signed AWS
+  const getUrlAws = async (keyImg) => {
+      try {
+          if (keyImg) {
+              setLoading(true);
+              const query = {
+                  file: keyImg,
+              };
+              const { data } = await getUrlSignedAws(query);
+              setLoading(false);
+              setUserImgSigned(data);
+          }
+      } catch (error) {
+          setLoading(false);
+          Errors(error);
+      }
   };
   return (
     <View style={styles.container}>
       <ScrollView>
         <MyMonthPicker />
-        <Text>{userLoggued.name? userLoggued.name: '---'}</Text>
-        {/* <Text>AWS-Render</Text> */}
-        {/* {
-          userLoggued.image &&
-        <Image
-        style={styles.logo}
-        source={{
-          uri: `http://192.168.1.11:4000/load/file?file=${userLoggued.image}`
-        }}
-      />
-        } */}
+        {
+          userLoggued.image && userImgSigned &&
+          <Image
+          style={styles.logo}
+          source={{
+            uri: userImgSigned
+          }}
+          />
+        }
+        <Text style={{ fontWeight:'bold'}}>{userLoggued.name? userLoggued.name: '---'}</Text>
         <View style={styles.fixToText}>
           <MyButton onPress={sendcreateExpenseScreen} title="Ingresar gasto" />
           <MyButton onPress={LogOut} title="Cerrar sesión" />
@@ -125,7 +145,7 @@ export default function MainScreen({ navigation }) {
           </Text>
         )}
         <CardLastExpenses navigation={navigation} />
-       
+
       </ScrollView>
     </View>
   );
@@ -136,6 +156,9 @@ const styles = StyleSheet.create({
     backgroundColor: "white",
   },
   fixToText: {
+    // backgroundColor: 'pink',
+    marginTop:0,
+    paddingTop:0,
     flexDirection: "row",
     justifyContent: "space-between",
   },
@@ -150,6 +173,8 @@ const styles = StyleSheet.create({
     color: MUTED,
   },
   logo: {
+    marginLeft:10,
+    marginTop:5,
     width: 66,
     height: 58,
   },

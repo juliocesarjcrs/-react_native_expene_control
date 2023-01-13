@@ -10,6 +10,8 @@ import ShowToast from '../../components/toast/ShowToast';
 import { useDispatch } from "react-redux";
 import { setUserAction } from "~/actions/authActions";
 import * as ImagePicker from 'expo-image-picker';
+import {getUrlSignedAws} from '../../services/files';
+import MyLoading from "~/components/loading/MyLoading";
 export default function EditUserScreen ({navigation}) {
 
   const EMAIL_REGEX =
@@ -24,6 +26,7 @@ export default function EditUserScreen ({navigation}) {
   const [saveImage, setSaveImage] = useState(null);
   const [type, setType] = useState(null);
   const [fileName, setFileName] = useState(null);
+  const [loading, setLoading] = useState(false);
 
 
   useEffect(() => {
@@ -42,12 +45,29 @@ export default function EditUserScreen ({navigation}) {
       setValue("email", data.email);
       setValue("name", data.name);
       if(data.image){
-        setSaveImage(data.image);
+        getUrlAws(data.image);
       }
       setIdUser(data.id)
     } catch (error) {
       Errors(error);
     }
+  };
+    // get url signed AWS
+    const getUrlAws = async (keyImg) => {
+      try {
+          if (keyImg) {
+              setLoading(true);
+              const query = {
+                  file: keyImg,
+              };
+              const { data } = await getUrlSignedAws(query);
+              setLoading(false);
+              setSaveImage(data);
+          }
+      } catch (error) {
+          setLoading(false);
+          Errors(error);
+      }
   };
 
   const dispatch = useDispatch();
@@ -59,10 +79,13 @@ export default function EditUserScreen ({navigation}) {
       if(image){
         formData.append('image', {type:type, uri:image, name:fileName});
       }
+      setLoading(true);
       const { data } = await editUser(idUser, formData);
+      setLoading(false);
       dispatch(setUserAction(data));
       ShowToast();
     } catch (error) {
+      setLoading(false);
       Errors(error);
     }
   };
@@ -102,58 +125,86 @@ export default function EditUserScreen ({navigation}) {
   };
 
   return (
-    <View style={styles.container}>
-      <Text>Editar usuario</Text>
-      <View style={styles.container2}>
-        <Controller
-        name="email"
-        control={control}
-        rules={{
-          required: { value: true, message: "Email es obligatorio" },
-          pattern: {
-            value: EMAIL_REGEX,
-            message: "Not a valid email",
-          },
-        }}
-        render={({ onChange, value }) => (
-          <Input
-            value={value}
-            placeholder="Email"
-            onChangeText={(text) => onChange(text)}
-            errorStyle={{ color: "red" }}
-            errorMessage={errors?.email?.message}
-          />
-        )}
-        defaultValue=""
-      />
-      <Controller
-        name="name"
-        control={control}
-        rules={{
-          required: { value: true, message: "El nombre es obligatorio" },
-        }}
-        render={({ onChange, value }) => (
-          <Input
-            value={value}
-            placeholder="Nombre"
-            onChangeText={(text) => onChange(text)}
-            errorStyle={{ color: "red" }}
-            errorMessage={errors?.name?.message}
-          />
-        )}
-        defaultValue=""
-      />
-      <MyButton title="Editar datos" onPress={handleSubmit(onSubmit)} />
+      <View style={styles.container}>
+          <Text>Editar usuario</Text>
+          <View style={styles.container2}>
+              <Controller
+                  name="email"
+                  control={control}
+                  rules={{
+                      required: {
+                          value: true,
+                          message: "Email es obligatorio",
+                      },
+                      pattern: {
+                          value: EMAIL_REGEX,
+                          message: "Not a valid email",
+                      },
+                  }}
+                  render={({ onChange, value }) => (
+                      <Input
+                          value={value}
+                          placeholder="Email"
+                          onChangeText={(text) => onChange(text)}
+                          errorStyle={{ color: "red" }}
+                          errorMessage={errors?.email?.message}
+                      />
+                  )}
+                  defaultValue=""
+              />
+              <Controller
+                  name="name"
+                  control={control}
+                  rules={{
+                      required: {
+                          value: true,
+                          message: "El nombre es obligatorio",
+                      },
+                  }}
+                  render={({ onChange, value }) => (
+                      <Input
+                          value={value}
+                          placeholder="Nombre"
+                          onChangeText={(text) => onChange(text)}
+                          errorStyle={{ color: "red" }}
+                          errorMessage={errors?.name?.message}
+                      />
+                  )}
+                  defaultValue=""
+              />
+                 {loading ? (
+        <MyLoading />
+      ) : (
+        <MyButton title="Editar perfil" onPress={handleSubmit(onSubmit)} />
+      )}
+          </View>
+          <View
+              style={{
+                  flex: 1,
+                  alignItems: "center",
+                  justifyContent: "center",
+              }}
+          >
+              <MyButton
+                  title="Seleccione una imágen"
+                  onPress={pickImage}
+              />
+              {/* <Text>{saveImage}</Text> */}
+              {image && (
+                  <Image
+                      source={{ uri: image }}
+                      style={{ width: 200, height: 200 }}
+                  />
+              )}
+              {saveImage && !image && (
+                  <Image
+                      source={{uri:saveImage}}
+                      style={{ width: 200, height: 200 }}
+                  />
+              )}
+          </View>
       </View>
-      <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
-      <MyButton title="Pick an image from camera roll" onPress={pickImage} />
-      <Text>{saveImage}</Text>
-      {image && <Image source={{ uri: image }} style={{ width: 200, height: 200 }} />}
-      {saveImage && !image && <Image source={{ uri: 'http://192.168.1.11:4000/load/file?file='+saveImage }} style={{ width: 200, height: 200 }} />}
-    </View>
-
-    </View>
-  )
+  );
 
 
 }

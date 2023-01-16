@@ -56,7 +56,8 @@ export default function LoginScreen({ navigation }) {
                                 message: "Not a valid email",
                             },
                         }}
-                        render={({ onChange, value }) => (
+                        // render={({ onChange, value }) => (
+                            render={({ field: { onChange, value } }) => (
                             <Input
                                 value={value}
                                 placeholder="Email"
@@ -76,7 +77,8 @@ export default function LoginScreen({ navigation }) {
                                 message: "La contraseña es obligatorio",
                             },
                         }}
-                        render={({ onChange, value }) => (
+                        // render={({ onChange, value }) => (
+                        render={({ field: { onChange , value  } }) => (
                             <Input
                                 value={value}
                                 placeholder="Password"

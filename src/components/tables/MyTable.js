@@ -1,23 +1,26 @@
 import React from "react";
 import {StyleSheet, View} from 'react-native';
-import {
-    Table,
-    Row,
-    Rows,
-} from "react-native-table-component";
+import MRow from './MRow';
+import MyHead from './MyHead';
 
 const MyTable = ({ navigation, tableHead, tableData }) => {
 
     return (
         <View>
-            <Table borderStyle={{ borderWidth: 2, borderColor: "#c8e1ff" }}>
+            <MyHead borderStyle={{ borderWidth: 2, borderColor: "#c8e1ff" }}data={tableHead}></MyHead>
+            { tableData.map((e,idx) =>{
+                return  <MRow key={idx} data={e} ></MRow>
+            })}
+            {/* <Table borderStyle={{ borderWidth: 2, borderColor: "#c8e1ff" }}>
                 <Row
                     data={tableHead}
                     style={styles.head}
-                    textStyle={styles.text}
+                    // textStyle={styles.text}
                 />
-                <Rows data={tableData} textStyle={styles.text} />
-            </Table>
+                <Rows data={tableData}
+                // textStyle={styles.text}
+                />
+            </Table> */}
         </View>
     );
 };

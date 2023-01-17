@@ -18,7 +18,15 @@ import {Errors} from '../../utils/Errors';
 export default function CreateSubcategoryScreen({ route, navigation }) {
   const idCategory = route.params.idCategory;
   const [subcategories, setSubcategories] = useState([]);
-  const { handleSubmit, control, errors, reset } = useForm({
+  const {
+    handleSubmit,
+    control,
+    reset,
+
+    formState: {
+      errors,
+    },
+  } = useForm({
     defaultValues: { name: null },
   });
   const [loading, setLoading] = useState(false);
@@ -78,7 +86,7 @@ export default function CreateSubcategoryScreen({ route, navigation }) {
             message: "El nombre no puede superar 200 caracteres",
           },
         }}
-        render={({ onChange, value }) => (
+        render={({ field: { onChange , value  } }) => (
           <Input
           label="Subcategoria"
           value={value}

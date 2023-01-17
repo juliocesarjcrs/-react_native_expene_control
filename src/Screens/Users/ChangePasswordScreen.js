@@ -10,7 +10,15 @@ import ShowToast from "../../components/toast/ShowToast";
 
 export default function ChangePasswordScreen({ navigation }) {
 
-    const { handleSubmit, control, errors, watch } = useForm({
+    const {
+        handleSubmit,
+        control,
+        watch,
+
+        formState: {
+            errors,
+        },
+    } = useForm({
         defaultValues: {
             currentlyPassword: "",
             password: "",
@@ -49,7 +57,7 @@ export default function ChangePasswordScreen({ navigation }) {
                                 "La contraseña tiene que ser mayor a 2 caracteres",
                         },
                     }}
-                    render={({ onChange, value }) => (
+                    render={({ field: { onChange , value  } }) => (
                         <Input
                             value={value}
                             placeholder="Contraseña actual"
@@ -75,7 +83,7 @@ export default function ChangePasswordScreen({ navigation }) {
                                 "La contraseña tiene que ser mayor a 2 caracteres",
                         },
                     }}
-                    render={({ onChange, value }) => (
+                    render={({ field: { onChange , value  } }) => (
                         <Input
                             value={value}
                             placeholder="Nueva contraseña"
@@ -104,7 +112,7 @@ export default function ChangePasswordScreen({ navigation }) {
                             value === password.current ||
                             "La contraseña no coincide",
                     }}
-                    render={({ onChange, value }) => (
+                    render={({ field: { onChange , value  } }) => (
                         <Input
                             value={value}
                             placeholder="Confirmar la nueva contraseña"

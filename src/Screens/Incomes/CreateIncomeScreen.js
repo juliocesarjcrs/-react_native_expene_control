@@ -1,19 +1,16 @@
 import React, { useEffect, useState } from "react";
-import { Keyboard, StyleSheet, Text } from "react-native";
+import { Keyboard, StyleSheet, Text, View } from "react-native";
 import { useForm, Controller } from "react-hook-form";
 import RNPickerSelect from "react-native-picker-select";
-import { View } from "react-native";
-import { getCategoryTypeIncome, getCategoryWithSubcategories } from "../../services/categories";
-import { Input } from "react-native-elements";
+import { getCategoryTypeIncome } from "../../services/categories";
+import { Input, Button, Icon  } from "react-native-elements";
 import MyLoading from "~/components/loading/MyLoading";
 
-import { NumberFormat, DateFormat } from "../../utils/Helpers";
+import { DateFormat } from "../../utils/Helpers";
 import { Errors } from "../../utils/Errors";
-import FlatListData from "../../components/card/FlatListData";
 import ErrorText from "../../components/ErrorText";
 import ShowToast from "../../components/toast/ShowToast";
 import DateTimePicker from "@react-native-community/datetimepicker";
-import { Button, Icon } from "react-native-elements";
 import { useSelector } from "react-redux";
 import {SECUNDARY} from '../../styles/colors';
 import {CreateIncome} from '../../services/incomes';
@@ -22,7 +19,15 @@ import {CreateIncome} from '../../services/incomes';
 
 export default function CreateIncomeScreen({navigation}) {
   const month = useSelector((state) => state.date.month);
-  const { handleSubmit, control, errors, reset } = useForm({
+  const {
+    handleSubmit,
+    control,
+    reset,
+
+    formState: {
+      errors,
+    },
+  } = useForm({
     defaultValues: { cost: "", commentary: "" },
   });
   const [categories, setCategories] = useState([]);
@@ -99,7 +104,12 @@ export default function CreateIncomeScreen({navigation}) {
   return (
     <View style={styles.container}>
       <Text>Categoria</Text>
-      <DropdownIn data={categories} sendDataToParent={sendFromSelectCategory} />
+      <RNPickerSelect
+        useNativeAndroidPickerStyle={false}
+        placeholder={{}}
+        onValueChange={(value) => sendFromSelectCategory(parseInt(value))}
+        items={categories}
+      />
       {!categoryId ? <ErrorText msg="Necesita una categoria de ingresos" /> : null}
       <Controller
             name="amount"
@@ -112,7 +122,7 @@ export default function CreateIncomeScreen({navigation}) {
                 message: "El costo no puede superar el valor de 99.999.999 ",
               },
             }}
-            render={({ onChange, value }) => (
+            render={({ field: { onChange , value  } }) => (
               <Input
                 label="Ingreso"
                 value={value}
@@ -134,7 +144,7 @@ export default function CreateIncomeScreen({navigation}) {
             message: "El comenatario no puede superar los 200 carácteres ",
           },
         }}
-        render={({ onChange, value }) => (
+        render={({ field: { onChange , value  } }) => (
           <Input
             label="Comentario"
             value={value}
@@ -200,13 +210,4 @@ const styles = StyleSheet.create({
     backgroundColor: "#c5c5c5"
   },
 });
-const DropdownIn = ({ data, sendDataToParent }) => {
-  return (
-    <RNPickerSelect
-      useNativeAndroidPickerStyle={false}
-      placeholder={{}}
-      onValueChange={(value) => sendDataToParent(parseInt(value))}
-      items={data}
-    />
-  );
-};
+

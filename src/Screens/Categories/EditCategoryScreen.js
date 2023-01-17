@@ -14,7 +14,15 @@ export default function EditCategoryScreen({ route }) {
   const idCategory = route.params.idCategory;
 
   const [category, setCategory] = useState([]);
-  const { handleSubmit, control, errors, reset } = useForm({
+  const {
+    handleSubmit,
+    control,
+    reset,
+
+    formState: {
+      errors,
+    },
+  } = useForm({
     defaultValues: category,
   });
   const [icon, setIcon] = useState("home");
@@ -70,7 +78,7 @@ export default function EditCategoryScreen({ route }) {
             message: "El nombre no puede superar 200 caracteres",
           },
         }}
-        render={({ onChange, value }) => (
+        render={({ field: { onChange , value  } }) => (
           <Input
             label="Categoria"
             value={value}
@@ -92,7 +100,7 @@ export default function EditCategoryScreen({ route }) {
             message: "El presupuesto no puede superar el valor de 99.999.999 ",
           },
         }}
-        render={({ onChange, value }) => (
+        render={({ field: { onChange , value  } }) => (
           <Input
             label="Presupuesto"
             value={value}

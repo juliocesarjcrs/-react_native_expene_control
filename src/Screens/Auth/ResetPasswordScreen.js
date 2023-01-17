@@ -10,7 +10,14 @@ import { useSelector } from "react-redux";
 import ShowToast from '../../components/toast/ShowToast';
 
 export default function ResetPasswordScreen({navigation}) {
-    const { handleSubmit, control, errors } = useForm({
+    const {
+        handleSubmit,
+        control,
+
+        formState: {
+            errors,
+        },
+    } = useForm({
         defaultValues: { password: "" },
     });
     const [loading, setLoading] = useState(false);
@@ -49,7 +56,7 @@ export default function ResetPasswordScreen({navigation}) {
                       message: "La contraseña debe tener mínimo 4 caracteres",
                   },
                 }}
-                render={({ onChange, value }) => (
+                render={({ field: { onChange , value  } }) => (
                     <Input
                         value={value}
                         placeholder="Password"

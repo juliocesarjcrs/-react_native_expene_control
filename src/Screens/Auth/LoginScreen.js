@@ -15,7 +15,14 @@ export default function LoginScreen({ navigation }) {
     const EMAIL_REGEX =
         /^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
 
-    const { handleSubmit, control, errors } = useForm();
+    const {
+        handleSubmit,
+        control,
+
+        formState: {
+            errors,
+        },
+    } = useForm();
     const loadingAuth = useSelector((state) => {
         return state.auth.loadingAuth;
     });
@@ -56,7 +63,6 @@ export default function LoginScreen({ navigation }) {
                                 message: "Not a valid email",
                             },
                         }}
-                        // render={({ onChange, value }) => (
                             render={({ field: { onChange, value } }) => (
                             <Input
                                 value={value}
@@ -77,7 +83,6 @@ export default function LoginScreen({ navigation }) {
                                 message: "La contraseña es obligatorio",
                             },
                         }}
-                        // render={({ onChange, value }) => (
                         render={({ field: { onChange , value  } }) => (
                             <Input
                                 value={value}

@@ -17,7 +17,15 @@ export default function EditUserScreen ({navigation}) {
   const EMAIL_REGEX =
   /^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
 
-  const { handleSubmit, control,setValue, errors } = useForm({
+  const {
+      handleSubmit,
+      control,
+      setValue,
+
+      formState: {
+          errors,
+      },
+  } = useForm({
     defaultValues: {email: '', name: ''}
   });
 
@@ -141,7 +149,7 @@ export default function EditUserScreen ({navigation}) {
                           message: "Not a valid email",
                       },
                   }}
-                  render={({ onChange, value }) => (
+                  render={({ field: { onChange , value  } }) => (
                       <Input
                           value={value}
                           placeholder="Email"
@@ -161,7 +169,7 @@ export default function EditUserScreen ({navigation}) {
                           message: "El nombre es obligatorio",
                       },
                   }}
-                  render={({ onChange, value }) => (
+                  render={({ field: { onChange , value  } }) => (
                       <Input
                           value={value}
                           placeholder="Nombre"

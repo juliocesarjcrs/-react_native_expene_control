@@ -23,7 +23,15 @@ import {getExchangeCurrency} from '../../services/external';
 
 export default function CreateExpenseScreen() {
   const month = useSelector((state) => state.date.month);
-  const { handleSubmit, control, errors, reset } = useForm({
+  const {
+      handleSubmit,
+      control,
+      reset,
+
+      formState: {
+          errors,
+      },
+  } = useForm({
     defaultValues: { cost: "", commentary: "" },
   });
   const [categories, setCategories] = useState([]);
@@ -236,7 +244,7 @@ export default function CreateExpenseScreen() {
                           "El gasto no puede superar el valor de 99.999.999 ",
                   },
               }}
-              render={({ onChange, value }) => (
+              render={({ field: { onChange , value  } }) => (
                   <Input
                       label="Gasto"
                       value={value}
@@ -259,7 +267,7 @@ export default function CreateExpenseScreen() {
                           "El comenatario no puede superar los 200 carácteres ",
                   },
               }}
-              render={({ onChange, value }) => (
+              render={({ field: { onChange , value  } }) => (
                   <Input
                       label="Comentario"
                       value={value}

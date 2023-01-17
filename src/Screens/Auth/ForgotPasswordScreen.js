@@ -12,7 +12,14 @@ export default function ForgotPasswordScreen({ navigation }) {
     const EMAIL_REGEX =
         /^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
 
-    const { handleSubmit, control, errors } = useForm({
+    const {
+        handleSubmit,
+        control,
+
+        formState: {
+            errors,
+        },
+    } = useForm({
         defaultValues: { email: "" },
     });
     const [loading, setLoading] = useState(false);
@@ -55,7 +62,7 @@ export default function ForgotPasswordScreen({ navigation }) {
                                 message: "Not a valid email",
                             },
                         }}
-                        render={({ onChange, value }) => (
+                        render={({ field: { onChange , value  } }) => (
                             <Input
                                 value={value}
                                 placeholder="Email"

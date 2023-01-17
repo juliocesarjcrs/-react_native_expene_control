@@ -30,7 +30,15 @@ export default function EditExpenseScreen({ route, navigation }) {
     cost: objectExpense.cost.toString(),
     commentary: objectExpense.commentary,
   });
-  const { handleSubmit, control, errors, reset } = useForm({
+  const {
+    handleSubmit,
+    control,
+    reset,
+
+    formState: {
+      errors,
+    },
+  } = useForm({
     defaultValues: expenseEdit,
   });
 
@@ -193,7 +201,7 @@ export default function EditExpenseScreen({ route, navigation }) {
             message: "El gasto no puede superar el valor de 99.999.999 ",
           },
         }}
-        render={({ onChange, value }) => (
+        render={({ field: { onChange , value  } }) => (
           <Input
             label="Gasto"
             value={value}
@@ -215,7 +223,7 @@ export default function EditExpenseScreen({ route, navigation }) {
             message: "El comenatario no puede superar los 200 carácteres ",
           },
         }}
-        render={({ onChange, value }) => (
+        render={({ field: { onChange , value  } }) => (
           <Input
             label="Comentario"
             value={value}

@@ -10,7 +10,14 @@ import { useSelector } from "react-redux";
 
 export default function CheckCodePasswordScreen({navigation}) {
 
-    const { handleSubmit, control, errors } = useForm({
+    const {
+        handleSubmit,
+        control,
+
+        formState: {
+            errors,
+        },
+    } = useForm({
         defaultValues: { recoveryCode: "" },
     });
     const [loading, setLoading] = useState(false);
@@ -49,7 +56,7 @@ export default function CheckCodePasswordScreen({navigation}) {
                         message: "El código debe tener mínimo 4 caracteres",
                     },
                 }}
-                render={({ onChange, value }) => (
+                render={({ field: { onChange , value  } }) => (
                     <Input
                         label="Código"
                         value={value}

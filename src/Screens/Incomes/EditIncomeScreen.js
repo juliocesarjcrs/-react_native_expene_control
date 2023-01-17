@@ -26,7 +26,15 @@ export default function EditIncomeScreen({navigation, route}) {
     amount: objectIncome.cost.toString(),
     commentary: objectIncome.commentary,
   });
-  const { handleSubmit, control, errors, reset } = useForm({
+  const {
+    handleSubmit,
+    control,
+    reset,
+
+    formState: {
+      errors,
+    },
+  } = useForm({
     defaultValues: incomeEdit,
   });
 
@@ -161,7 +169,7 @@ export default function EditIncomeScreen({navigation, route}) {
                 message: "El costo no puede superar el valor de 99.999.999 ",
               },
             }}
-            render={({ onChange, value }) => (
+            render={({ field: { onChange , value  } }) => (
               <Input
                 label="Ingreso"
                 value={value}
@@ -183,7 +191,7 @@ export default function EditIncomeScreen({navigation, route}) {
             message: "El comenatario no puede superar los 200 carácteres ",
           },
         }}
-        render={({ onChange, value }) => (
+        render={({ field: { onChange , value  } }) => (
           <Input
             label="Comentario"
             value={value}

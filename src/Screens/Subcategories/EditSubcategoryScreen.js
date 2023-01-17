@@ -14,7 +14,15 @@ import ShowToast from '../../components/toast/ShowToast';
 
 export default function EditSubcategoryScreen({ route, navigation }) {
   const subcategoryObj = route.params.subcategoryObj;
-  const { handleSubmit, control, errors, reset } = useForm({
+  const {
+    handleSubmit,
+    control,
+    reset,
+
+    formState: {
+      errors,
+    },
+  } = useForm({
     defaultValues: { name: subcategoryObj.name },
   });
   const [loading, setLoading] = useState(false);
@@ -51,7 +59,7 @@ export default function EditSubcategoryScreen({ route, navigation }) {
             message: "El nombre no puede superar 200 caracteres",
           },
         }}
-        render={({ onChange, value }) => (
+        render={({ field: { onChange , value  } }) => (
           <Input
             label="Subcategoria"
             value={value}

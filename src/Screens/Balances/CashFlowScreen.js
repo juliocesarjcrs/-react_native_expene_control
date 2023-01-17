@@ -313,17 +313,17 @@ export default function CashFlowScreen({ navigation }) {
                             {
                                 data: dataExpenses,
                                 strokeWidth: 2,
-                                color: (opacity = 1) => `rgba(220, 20, 60)`,
+                                color: (opacity = 1) => `rgba(220, 20, 60,1)`,
                             },
                             {
                                 data: dataIncomes,
                                 strokeWidth: 2,
-                                color: (opacity = 1) => `rgba(0, 100, 0)`,
+                                color: (opacity = 1) => `rgba(0, 100, 0, 1)`,
                             },
                             {
                                 data: dataSavings,
                                 strokeWidth: 2,
-                                color: (opacity = 1) => `rgba(135,206,250)`,
+                                color: (opacity = 1) => `rgba(135, 206, 250, 1)`,
                             },
                         ],
                         legend: ["Gastos", "Ingresos", "Ahorros"],

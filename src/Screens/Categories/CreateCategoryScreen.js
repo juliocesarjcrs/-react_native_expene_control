@@ -17,7 +17,15 @@ import ModalIcon from '../../components/modal/ModalIcon';
 export default function CreateCategoryScreen({ navigation }) {
   const [icon, setIcon] = useState("home");
   const [categories, setCategories] = useState([]);
-  const { handleSubmit, control, errors, reset } = useForm({
+  const {
+    handleSubmit,
+    control,
+    reset,
+
+    formState: {
+      errors,
+    },
+  } = useForm({
     defaultValues: { name: "" },
   });
   const [loading, setLoading] = useState(false);
@@ -92,7 +100,7 @@ export default function CreateCategoryScreen({ navigation }) {
             message: "El nombre no puede superar 200 caracteres",
           },
         }}
-        render={({ onChange, value }) => (
+        render={({ field: { onChange , value  } }) => (
           <Input
             label="Categoria"
             value={value}

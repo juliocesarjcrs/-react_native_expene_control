@@ -142,11 +142,9 @@ return (
 
       />
       },
+      tabBarActiveTintColor: "tomato",
+      tabBarInactiveTintColor: "gray",
     })}
-    tabBarOptions={{
-      activeTintColor: 'tomato',
-      inactiveTintColor: 'gray',
-    }}
     >
       <Tab.Screen name="Gastos" component={ExpenseStackScreen} />
       <Tab.Screen name="Ingresos" component={IncomeStackScreen} />

@@ -12,8 +12,10 @@ import ErrorText from "../../components/ErrorText";
 import ShowToast from "../../components/toast/ShowToast";
 import DateTimePicker from "@react-native-community/datetimepicker";
 import { useSelector } from "react-redux";
-import {SECUNDARY} from '../../styles/colors';
+import {COLOR_SEPARATOR_DROPDOWN, COLOR_TEXT_DROPDOWN, SECUNDARY} from '../../styles/colors';
 import {CreateIncome} from '../../services/incomes';
+import {MEGA_BIG} from '../../styles/fonts';
+import DropDownPicker from 'react-native-dropdown-picker';
 
 
 
@@ -42,6 +44,9 @@ export default function CreateIncomeScreen({navigation}) {
   const [dateString, setDateString] = useState(today);
   const [mode, setMode] = useState("date");
   const [show, setShow] = useState(false);
+  // select categories
+  const [open, setOpen] = useState(false);
+  const ITEM_HEIGHT = 42
 
   const onChange = (event, selectedDate) => {
     const currentDate = selectedDate || date;
@@ -104,12 +109,51 @@ export default function CreateIncomeScreen({navigation}) {
   return (
     <View style={styles.container}>
       <Text>Categoria</Text>
-      <RNPickerSelect
+      {/* <RNPickerSelect
         useNativeAndroidPickerStyle={false}
         placeholder={{}}
         onValueChange={(value) => sendFromSelectCategory(parseInt(value))}
         items={categories}
-      />
+      /> */}
+            <DropDownPicker
+              // containerStyle={{ height: 40, marginBottom: 10 }}
+              open={open}
+              value={categoryId}
+              items={categories}
+              setOpen={setOpen}
+              setValue={setCategoryId}
+              setItems={setCategories}
+              maxHeight={ITEM_HEIGHT * categories.length}
+              placeholder="Selecione una subcategoría"
+              placeholderStyle={{
+                  color: "grey",
+              }}
+              zIndex={1000}
+              zIndexInverse={2000}
+              loading={loading}
+              listMode="MODAL"
+              // styles modal
+              itemSeparator={true}
+              itemSeparatorStyle={{
+                  backgroundColor: COLOR_SEPARATOR_DROPDOWN,
+                  paddingVertical: 5,
+              }}
+              selectedItemContainerStyle={{
+                  backgroundColor: "#F0AEBB",
+              }}
+              selectedItemLabelStyle={{
+                  fontWeight: "bold",
+              }}
+              // como se ve el select
+              textStyle={{
+                  fontSize: MEGA_BIG,
+                  color: COLOR_TEXT_DROPDOWN,
+              }}
+              // prueba
+              dropDownContainerStyle={{
+                  backgroundColor: "#dfdfdf",
+              }}
+          />
       {!categoryId ? <ErrorText msg="Necesita una categoria de ingresos" /> : null}
       <Controller
             name="amount"

@@ -67,9 +67,13 @@ export default function MainScreen({ navigation }) {
     navigation.navigate("sumary");
   };
   const LogOut = async () => {
-    await AsyncStorage.removeItem("access_token");
-    await AsyncStorage.removeItem("user");
-    dispatch(setAuthAction(false));
+    try {
+      await AsyncStorage.removeItem("access_token");
+      await AsyncStorage.removeItem("user");
+      dispatch(setAuthAction(false));
+    } catch (error) {
+      Errors(error);
+    }
   };
 
   // load image

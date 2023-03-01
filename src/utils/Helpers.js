@@ -6,7 +6,7 @@ import 'intl/locale-data/jsonp/en';
 import {colorPalette} from './colorPalette';
 
 export const NumberFormat = (number) => {
-  const valor = new Intl.NumberFormat('en-IN',{maximumFractionDigits:0}).format(number)
+  const valor = new Intl.NumberFormat('es-CO',{maximumFractionDigits:0}).format(number)
   return `$ ${valor}`
 }
 

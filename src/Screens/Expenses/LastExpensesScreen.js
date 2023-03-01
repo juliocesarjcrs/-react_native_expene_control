@@ -23,7 +23,6 @@ export default function LastExpensesScreen({ navigation }) {
   // la primera vez resetea el buscador
   useEffect(() => {
     dispatch(setQueryAction (null));
-
   }, []);
 
   useEffect(() => {
@@ -60,6 +59,7 @@ export default function LastExpensesScreen({ navigation }) {
       const condition3 = query === '' && prevQuery === '';
       if (condition1 || condition2) {
         concatPages = lastExpenses.concat(data.data);
+        concatPages = getUniqArrDeep(concatPages)
       } else {
         if(condition3){
             concatPages = lastExpenses.concat(data.data);

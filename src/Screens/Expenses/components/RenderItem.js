@@ -26,14 +26,14 @@ const RenderItem = ({item, navigation, updateList})  => {
       Errors(e);
     }
   };
-  const createTwoButtonAlert = (id) => {
+  const createTwoButtonAlert = (expenseDelete) => {
     setShowPopover(false);
-    return ( Alert.alert("Eliminar", "¿Desea eliminar este gasto?", [
+    return ( Alert.alert("Eliminar", `¿Desea eliminar gasto de ${expenseDelete.subcategory} por ${NumberFormat(expenseDelete.cost)} ? `, [
       {
         text: "Cancel",
         style: "cancel",
       },
-      { text: "OK", onPress: () => deleteItem(id) },
+      { text: "OK", onPress: () => deleteItem(expenseDelete.id) },
     ]));
   }
 
@@ -80,7 +80,7 @@ const RenderItem = ({item, navigation, updateList})  => {
       >
         <View style={styles.containerPopover}>
           <Text style={styles.itemPopover} onPress={() => sendEditExpenceScreenn(item)}>Editar</Text>
-          <Text style={styles.itemPopover} onPress={() => createTwoButtonAlert(item.id)}>Borrar</Text>
+          <Text style={styles.itemPopover} onPress={() => createTwoButtonAlert(item)}>Borrar</Text>
         </View>
       </Popover>
     </View>

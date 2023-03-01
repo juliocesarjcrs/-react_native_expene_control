@@ -95,6 +95,7 @@ export default function LastIncomesScreen({ navigation, route }) {
           const condition3 = query === "" && prevQuery === "";
           if (condition1 || condition2) {
               concatPages = lastIncomes.concat(data.data);
+              concatPages = getUniqArrDeep(concatPages)
           } else {
               if (condition3) {
                   concatPages = lastIncomes.concat(data.data);

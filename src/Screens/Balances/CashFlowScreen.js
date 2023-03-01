@@ -30,6 +30,7 @@ export default function CashFlowScreen({ navigation }) {
     const [averageIncomes, setAverageIncomes] = useState(0);
     const [previousAverageIncomes, setPreviousAverageIncomes] = useState(0);
     const [sumSavings, setSumSavings] = useState(0);
+    const [sumPreviousSavings, setSumPreviousSavings] = useState(0);
     const [numMonthsGraph, setNumMonthsGraph] = useState(4);
     const [numMonthsQuery, setNumMonthsQuery] = useState(4);
 
@@ -89,6 +90,8 @@ export default function CashFlowScreen({ navigation }) {
             previosExpenses.pop();
             const previosIncomes = filterIncomes.slice(0);
             previosIncomes.pop();
+            const previosSavings = filterSavings.slice(0);
+            previosSavings.pop();
 
             setLabels(filterLabels);
             setSearchTotalInMonth(data.data);
@@ -104,8 +107,12 @@ export default function CashFlowScreen({ navigation }) {
             const acuSavings = filterSavings.reduce((acu, val) => {
                 return acu + val;
             }, 0);
+            const acuPreviosSavings = previosSavings.reduce((acu, val) => {
+                return acu + val;
+            }, 0);
             setSumSavings(acuSavings);
             setDataSavings(filterSavings);
+            setSumPreviousSavings(acuPreviosSavings);
         } catch (e) {
             setLoading(false);
             Errors(e);
@@ -246,6 +253,12 @@ export default function CashFlowScreen({ navigation }) {
                                             Ahorro:
                                             <Text style={styles.average}>
                                                 {NumberFormat(sumSavings)}
+                                            </Text>
+                                        </Text>
+                                        <Text style={styles.contAverage}>
+                                            Ahorro ant:
+                                            <Text style={styles.average}>
+                                                {NumberFormat(sumPreviousSavings)}
                                             </Text>
                                         </Text>
                                     </View>

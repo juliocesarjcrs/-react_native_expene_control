@@ -5,6 +5,13 @@ import 'intl';
 import 'intl/locale-data/jsonp/en';
 import {colorPalette} from './colorPalette';
 
+import * as dayjs  from 'dayjs';
+import * as isLeapYear from 'dayjs/plugin/isLeapYear';
+import 'dayjs/locale/es';
+
+// dayjs.extend(isLeapYear); //  TypeError: Object is not a function, js engine: hermes
+dayjs.locale('es');
+
 export const NumberFormat = (number) => {
   const valor = new Intl.NumberFormat('es-CO',{maximumFractionDigits:0}).format(number)
   return `$ ${valor}`
@@ -28,7 +35,7 @@ export const AsignColor = (index) =>{
   return '#AEA3CD'
 
 }
-export const  delay =(miliseconst) => {
+export const  delay =(miliseconst=1000) => {
   return new Promise(resolve => {
     setTimeout(() => {
       resolve(2);
@@ -98,6 +105,41 @@ export const percent =(total, cant) =>{
 export const getDateStartOfMonth =  (date) =>{
   return moment(date).startOf('month').format('YYYY-MM-DD');
 }
+
+export const handlerDataSearch = (
+    newData,
+    dataOldArray,
+    query,
+    prevQuery,
+    page
+) => {
+    let concatPages = [];
+    const condition1 = query === null && prevQuery === undefined;
+    const condition2 = query === null && prevQuery === null;
+    const condition3 = query === "" && prevQuery === "";
+    if (condition1 || condition2) {
+        concatPages = dataOldArray.concat(newData);
+        concatPages = getUniqArrDeep(concatPages);
+    } else {
+        if (condition3) {
+            concatPages = dataOldArray.concat(newData);
+            concatPages = getUniqArrDeep(concatPages);
+        } else {
+            if (page > 1) {
+                concatPages = dataOldArray.concat(newData);
+                concatPages = getUniqArrDeep(concatPages);
+            } else {
+                concatPages = newData;
+            }
+        }
+    }
+    return concatPages;
+};
+
+const getUniqArrDeep = (arr) => {
+    const arrStr = arr.map((item) => JSON.stringify(item));
+    return [...new Set(arrStr)].map((item) => JSON.parse(item));
+};
 
 
 

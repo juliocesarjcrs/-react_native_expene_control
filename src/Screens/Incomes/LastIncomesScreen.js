@@ -90,8 +90,6 @@ export default function LastIncomesScreen({ navigation, route }) {
             if (data.data.length <= 0) {
                 setStopeFetch(true);
             }
-            const deepLastIncomes = cloneDeep(lastIncomes);
-            const deepCloneData = cloneDeep(data.data);
             const concatPages = handlerDataSearch(
               data.data,
               lastIncomes,

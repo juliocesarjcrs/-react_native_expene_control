@@ -1,15 +1,12 @@
-import moment from "moment";
-import 'moment/locale/es'  // without this line it didn't work
-moment.locale('es')
 import 'intl';
 import 'intl/locale-data/jsonp/en';
 import {colorPalette} from './colorPalette';
 
-import * as dayjs  from 'dayjs';
-import * as isLeapYear from 'dayjs/plugin/isLeapYear';
+import dayjs from 'dayjs';
+import isLeapYear from 'dayjs/plugin/isLeapYear';
 import 'dayjs/locale/es';
 
-// dayjs.extend(isLeapYear); //  TypeError: Object is not a function, js engine: hermes
+dayjs.extend(isLeapYear); //  TypeError: Object is not a function, js engine: hermes
 dayjs.locale('es');
 
 export const NumberFormat = (number) => {
@@ -18,14 +15,10 @@ export const NumberFormat = (number) => {
 }
 
 export const DateFormat = (date, format = 'DD MMM hh:mm a') => {
-  return moment(date).format(format);
+  return dayjs(date).format(format);
 
 }
 
-export const GetNumberMonth =  (date) =>{
-  const num =  moment(date).month();
-  return num +1;
-}
 export const AsignColor = (index) =>{
 
   const leng = colorPalette.length
@@ -67,7 +60,7 @@ export const compareValues =(key, order = 'asc') => {
 }
 
 export const GetInitialMonth =  (date) =>{
-  return moment().diff(moment(date), 'months');
+  return dayjs().diff(dayjs(date), 'months');
 }
 
 export const cutText =(text, n= 12) =>{
@@ -79,8 +72,8 @@ export const cutText =(text, n= 12) =>{
  }
 
  export const dayMonth =  (offset=0) =>{
-   const today =  moment().date();
-   const daysInMonth = moment().daysInMonth();
+   const today =  dayjs().date();
+   const daysInMonth = dayjs().daysInMonth();
    let percentage = 0;
    const numPercentage = percent(daysInMonth, today);
    if(offset > 0){
@@ -103,7 +96,7 @@ export const percent =(total, cant) =>{
 }
 
 export const getDateStartOfMonth =  (date) =>{
-  return moment(date).startOf('month').format('YYYY-MM-DD');
+  return dayjs(date).startOf('month').format('YYYY-MM-DD');
 }
 
 export const handlerDataSearch = (

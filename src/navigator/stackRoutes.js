@@ -28,7 +28,8 @@ import EditIncomeScreen from '~/Screens/Incomes/EditIncomeScreen';
 
 // others
 import CalculeProductsScreen from '~/Screens/Others/CalculeProductsScreen';
-
+// loands
+import CreateLoanScreen from '~/Screens/Loans/CreateLoanScreen';
 export default {
   LoginScreen,
   MainScreen,
@@ -57,4 +58,6 @@ export default {
   EditIncomeScreen,
   // others
   CalculeProductsScreen,
+  // loans
+  CreateLoanScreen
 }

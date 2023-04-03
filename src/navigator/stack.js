@@ -108,6 +108,7 @@ function SettingsStackScreen() {
             <SettingsStack.Screen name="createUser" component={Routes.CreateUserScreen} options={{ title: 'Crear usuario' }}/>
             <SettingsStack.Screen name="changePassword" component={Routes.ChangePasswordScreen} options={{ title: 'Cambiar contraseña' }}/>
             <SettingsStack.Screen name="calculeProducts" component={Routes.CalculeProductsScreen} options={{ title: 'Calcular productos' }}/>
+            <SettingsStack.Screen name="createLoan" component={Routes.CreateLoanScreen} options={{ title: 'Crear préstamo' }}/>
     </SettingsStack.Navigator>
   );
 }

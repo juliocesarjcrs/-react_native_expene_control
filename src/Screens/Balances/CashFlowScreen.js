@@ -15,6 +15,7 @@ import CheckBoxOptions from "../../components/checbox/CheckBoxOptions";
 import {getSavingsByUser, getUpdateAllSavingsByUser} from '../../services/savings';
 import {ICON} from '../../styles/colors';
 import MyTable from '../../components/tables/MyTable';
+import {GetLoans} from '../../services/loans';
 
 export default function CashFlowScreen({ navigation }) {
     const month = useSelector((state) => state.date.month);
@@ -33,6 +34,8 @@ export default function CashFlowScreen({ navigation }) {
     const [sumPreviousSavings, setSumPreviousSavings] = useState(0);
     const [numMonthsGraph, setNumMonthsGraph] = useState(4);
     const [numMonthsQuery, setNumMonthsQuery] = useState(4);
+    const [totalSavingsHistory, setTotalSavingsHistory] = useState(0);
+
 
     const [labels, setLabels] = useState([""]);
 
@@ -113,11 +116,34 @@ export default function CashFlowScreen({ navigation }) {
             setSumSavings(acuSavings);
             setDataSavings(filterSavings);
             setSumPreviousSavings(acuPreviosSavings);
+            // historico savings
+            historySaving(data.graph.savings)
         } catch (e) {
             setLoading(false);
             Errors(e);
         }
     };
+    const historySaving = async (history)=> {
+        let totalHistory = 0;
+        const acuHistorySavings = history.reduce((acu, val) => {
+            return acu + val;
+        }, 0);
+        totalHistory = acuHistorySavings;
+        const {data} = await GetLoans();
+        const filter = data.find(e => e.type === 1);
+        if (filter) {
+            totalHistory += parseInt(filter.loan);
+        }
+        const filterLoans = data.filter(e => e.type !== 1);
+
+        const acuLoans = filterLoans.reduce((acu, val) => {
+            return acu + val.loan;
+        }, 0);
+
+        totalHistory -= acuLoans;
+        setTotalSavingsHistory(totalHistory);
+
+    }
     const updateAllSavingsByUser = async () => {
         try {
             setLoading(true);
@@ -249,16 +275,24 @@ export default function CashFlowScreen({ navigation }) {
                             <Tooltip
                                 popover={
                                     <View>
-                                        <Text style={styles.contAverage}>
+                                        {/* <Text style={styles.contAverage}>
                                             Ahorro:
                                             <Text style={styles.average}>
                                                 {NumberFormat(sumSavings)}
                                             </Text>
-                                        </Text>
+                                        </Text> */}
                                         <Text style={styles.contAverage}>
                                             Ahorro ant:
                                             <Text style={styles.average}>
                                                 {NumberFormat(sumPreviousSavings)}
+                                            </Text>
+                                        </Text>
+                                        <Text style={styles.contAverage}>
+                                            {" "}
+                                            Histórico:
+                                            <Text style={styles.average}>
+                                                {" "}
+                                                {NumberFormat(totalSavingsHistory)}
                                             </Text>
                                         </Text>
                                     </View>

@@ -29,7 +29,6 @@ export default function CreateLoanScreen() {
         try {
             setLoading(true);
             const { data } = await GetLoans();
-            console.log("fetchLoans", data);
             setLoans(data);
             setLoading(false);
         } catch (error) {

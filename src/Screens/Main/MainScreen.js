@@ -17,7 +17,7 @@ import MyFaButton from "../../components/buttons/MyFaButton";
 import CardLastExpenses from "./components/CardLastExpenses";
 import {getUser} from '../../services/users';
 import {getUrlSignedAws} from '../../services/files';
-
+import {URL_BASE} from "@env";
 export default function MainScreen({ navigation }) {
   const month = useSelector((state) => state.date.month);
   const userAuth = useSelector((state) => state.auth.user);
@@ -128,6 +128,7 @@ export default function MainScreen({ navigation }) {
           }}
           />
         }
+        <Text style={{ fontWeight:'bold'}}>{URL_BASE}</Text>
         <Text style={{ fontWeight:'bold'}}>{userLoggued.name? userLoggued.name: '---'}</Text>
         <View style={styles.fixToText}>
           <MyButton onPress={sendcreateExpenseScreen} title="Ingresar gasto" />

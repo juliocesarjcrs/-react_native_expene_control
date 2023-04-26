@@ -1,16 +1,9 @@
 import axios from "axios";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-// import {URL_BASE} from '@env'
-
+import {URL_BASE} from "@env";
+console.log('env.URL_BASE,',URL_BASE);
 const axiosInstance = axios.create({
-  // baseURL: "http://192.168.1.11:4000/",
-  // baseURL: URL_BASE,
-  baseURL: "https://expense-control-nestjs.onrender.com/",
-  // headers: {
-  //   'Accept': 'application/json',
-  //   'Content-Type': 'application/json',
-  //   'Access-Control-Allow-Origin': '*'
-  // }
+  baseURL: URL_BASE,
 });
 axiosInstance.interceptors.request.use(
   async function (config) {

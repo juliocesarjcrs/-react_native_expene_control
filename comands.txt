@@ -9,3 +9,5 @@ expo build:android
 // build con eas
 
 eas build --profile production --platform android
+eas build --profile development --platform android
+eas build --local // doesn't work

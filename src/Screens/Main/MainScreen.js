@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import { ScrollView, StyleSheet, Text, View, Image } from "react-native";
 import MyPieChart from "../../components/charts/MyPieChart";
 import MyButton from "~/components/MyButton";
-import { getCategoryWithSubcategories } from "../../services/categories";
+import { getAllExpensesByMonth } from "../../services/categories";
 import { AsignColor, compareValues, NumberFormat } from "../../utils/Helpers";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useDispatch, useSelector } from "react-redux";
@@ -38,7 +38,7 @@ export default function MainScreen({ navigation }) {
   const fetchData = async () => {
     try {
       setLoading(true);
-      const { data } = await getCategoryWithSubcategories(month);
+      const { data } = await getAllExpensesByMonth(month);
       setLoading(false);
       setTotal(data.total);
       const dataFormat = data.data.map((e, idx) => {

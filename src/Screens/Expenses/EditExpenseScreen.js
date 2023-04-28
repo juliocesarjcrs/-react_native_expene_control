@@ -2,7 +2,7 @@ import React, { useCallback, useEffect, useState } from "react";
 import { Keyboard, StyleSheet, Text } from "react-native";
 import { useForm, Controller } from "react-hook-form";
 import { View } from "react-native";
-import { getCategoryWithSubcategories } from "../../services/categories";
+import { getAllSubcategoriesExpensesByMonth } from "../../services/categories";
 import { Input } from "react-native-elements";
 import MyLoading from "~/components/loading/MyLoading";
 
@@ -102,7 +102,7 @@ export default function EditExpenseScreen({ route, navigation }) {
   const fetchCategories = async () => {
     try {
       setLoading(true);
-      const { data } = await getCategoryWithSubcategories(month);
+      const { data } = await getAllSubcategoriesExpensesByMonth(month);
       setLoading(false);
       const filter = data.data.filter((f) => f.subcategories.length > 0);
       const dataFormat = filter.map((e) => {

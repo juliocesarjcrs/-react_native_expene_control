@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { ScrollView, StyleSheet, Text, View } from "react-native";
-import { getCategoryWithSubcategories } from "../../services/categories";
+import { getAllSubcategoriesExpensesByMonth } from "../../services/categories";
 import { Errors } from "../../utils/Errors";
 import { NumberFormat } from "../../utils/Helpers";
 import { BIG } from "../../styles/fonts";
@@ -27,7 +27,7 @@ export default function SumaryExpenseScreen({ navigation }) {
   const fetchData = async () => {
     try {
       setLoading(true);
-      const { data } = await getCategoryWithSubcategories(month);
+      const { data } = await getAllSubcategoriesExpensesByMonth(month);
       setLoading(false);
       let tempTotalBudget= 0;
       const mapping = data.data.map((element) => {

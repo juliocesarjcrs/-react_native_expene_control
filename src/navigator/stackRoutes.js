@@ -1,5 +1,5 @@
 import LoginScreen from '~/Screens/Auth/LoginScreen';
-import ListSubCategoriesScreen from '~/Screens/Subcategories/ListSubcategoriesScreen';
+// import ListSubCategoriesScreen from '~/Screens/Subcategories/ListSubcategoriesScreen';
 import CreateSubcategoryScreen from '~/Screens/Subcategories/CreateSubcategoryScreen';
 import CreateCategoryScreen from '~/Screens/Categories/CreateCategoryScreen';
 import EditCategoryScreen from '~/Screens/Categories/EditCategoryScreen';
@@ -9,7 +9,9 @@ import MainScreen from '~/Screens/Main/MainScreen'
 import SumaryExpenseScreen from '~/Screens/Expenses/SumaryExpenseScreen';
 import SumaryIncomesScreen from '~/Screens/Incomes/SumaryIncomesScreen';
 import CreateIncomeScreen from '~/Screens/Incomes/CreateIncomeScreen';
+// balances
 import CashFlowScreen from '~/Screens/Balances/CashFlowScreen';
+import GraphBalancesScreen from '~/Screens/Balances/GraphBalancesScreen';
 import LastExpensesScreen from '~/Screens/Expenses/LastExpensesScreen';
 import EditSubcategoryScreen from '~/Screens/Subcategories/EditSubcategoryScreen';
 import SettingsScreen from '~/Screens/Settings/SettingsScreen';
@@ -33,7 +35,7 @@ import CreateLoanScreen from '~/Screens/Loans/CreateLoanScreen';
 export default {
   LoginScreen,
   MainScreen,
-  ListSubCategoriesScreen,
+  // ListSubCategoriesScreen,
   CreateSubcategoryScreen,
   CreateCategoryScreen,
   EditCategoryScreen,
@@ -41,7 +43,9 @@ export default {
   SumaryExpenseScreen,
   SumaryIncomesScreen,
   CreateIncomeScreen,
+  // balances
   CashFlowScreen,
+  GraphBalancesScreen,
   LastExpensesScreen,
   EditExpenseScreen,
   EditSubcategoryScreen,

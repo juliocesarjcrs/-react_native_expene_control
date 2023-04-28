@@ -96,6 +96,7 @@ function BalanceStackScreen() {
   return (
     <BalanceStack.Navigator>
             <BalanceStack.Screen name="cashFlow" component={Routes.CashFlowScreen} options={{ title: 'Balance' }}/>
+            <BalanceStack.Screen name="graphBalances" component={Routes.GraphBalancesScreen} options={{ title: 'Graficas Balance' }}/>
     </BalanceStack.Navigator>
   );
 }

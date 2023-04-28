@@ -38,7 +38,6 @@ export const getAllExpensesByMonth = async (month) => {
 };
 
 export const getAllSubcategoriesExpensesByMonth = async (month) => {
-    console.log(month)
     return axios.get(`${PREFIX}/subcategories/expenses/month`, {
         params: {
             date: month,

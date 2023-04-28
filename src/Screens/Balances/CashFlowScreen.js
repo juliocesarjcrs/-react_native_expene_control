@@ -7,10 +7,8 @@ import { Errors } from "../../utils/Errors";
 import { useSelector } from "react-redux";
 import MyLoading from "~/components/loading/MyLoading";
 import { LineChart } from "react-native-chart-kit";
-import GraphBySubcategory from "~/Screens/Balances/components/GraphBySubcategory";
-import { Icon, Tooltip } from "react-native-elements";
+import { FAB, Icon, Tooltip } from "react-native-elements";
 import { BACKGROUND_TOOLTIP } from "~/styles/colors";
-import GraphIncomesByCategory from "./components/GraphIncomesByCategory";
 import CheckBoxOptions from "../../components/checbox/CheckBoxOptions";
 import {getSavingsByUser, getUpdateAllSavingsByUser} from '../../services/savings';
 import {ICON} from '../../styles/colors';
@@ -234,7 +232,9 @@ export default function CashFlowScreen({ navigation }) {
         "% Ahorro",
         "Valor"
     ];
-
+    const sendGraphBalancesScreen = () => {
+        navigation.navigate("graphBalances");
+      };
     return (
         <View style={styles.container}>
             <ScrollView>
@@ -444,8 +444,12 @@ export default function CashFlowScreen({ navigation }) {
                     verticalLabelRotation={40}
                 />
                 <MyTable navigation={navigation} tableHead={tableHead} tableData={tableData}  />
-                <GraphBySubcategory navigation={navigation} />
-                <GraphIncomesByCategory navigation={navigation} />
+                {!loading && (
+                    <FAB
+                    title="Gráficas de balance"
+                    onPress={sendGraphBalancesScreen}
+                    />
+                )}
             </ScrollView>
         </View>
     );

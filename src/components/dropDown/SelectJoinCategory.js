@@ -2,7 +2,7 @@ import React, {useEffect, useState,forwardRef, useImperativeHandle} from 'react'
 import {View, Text, StyleSheet} from 'react-native';
 import DropDownPicker from "react-native-dropdown-picker";
 import MyLoading from "~/components/loading/MyLoading";
-import {getCategoryWithSubcategories} from '../../services/categories';
+import {getAllSubcategoriesExpensesByMonth} from '../../services/categories';
 import { useSelector } from "react-redux";
 import {Errors} from '../../utils/Errors';
 import ErrorText from '../ErrorText';
@@ -32,7 +32,7 @@ const SelectJoinCategory = forwardRef(({fetchExpensesSubcategory,fetchExpensesOn
   const fetchCategories = async () => {
     try {
       setLoading(true);
-      const { data } = await getCategoryWithSubcategories(month);
+      const { data } = await getAllSubcategoriesExpensesByMonth(month);
       setLoading(false);
       const filter = data.data.filter((f) => f.subcategories.length > 0);
       const dataFormat = filter.map((e) => {

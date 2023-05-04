@@ -147,7 +147,7 @@ const CardLastExpenses = ({ navigation }) => {
                 <View style={styles.cardDate}>
                   <Text style={styles.cost}>{NumberFormat(item.cost)}</Text>
                   <Text style={styles.date}>
-                    {DateFormat(item.dateFormat, "DD MMM")}{" "}
+                    {DateFormat(item.dateFormat, "DD MMM YYYY")}{"   "}
                     {DateFormat(item.createdAt, "hh:mm a")}
                   </Text>
                 </View>

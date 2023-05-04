@@ -81,6 +81,10 @@ export default function LastExpensesScreen({ navigation }) {
     const renderFooter = () => {
         return <View>{loadingFooter ? <MyLoading /> : null}</View>;
     };
+    const deleteFromList = (idExpense) =>{
+        const filter = lastExpenses.filter(e => e.id !== idExpense)
+        setLastExpenses(filter);
+    };
 
     return (
         <SafeAreaView style={styles.container}>

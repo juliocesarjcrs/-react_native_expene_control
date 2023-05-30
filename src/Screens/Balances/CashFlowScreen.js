@@ -135,7 +135,7 @@ export default function CashFlowScreen({ navigation }) {
         const filterLoans = data.filter(e => e.type !== 1);
 
         const acuLoans = filterLoans.reduce((acu, val) => {
-            return acu + val.loan;
+            return acu + parseInt(val.loan);
         }, 0);
 
         totalHistory -= acuLoans;

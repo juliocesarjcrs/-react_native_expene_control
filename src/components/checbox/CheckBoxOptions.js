@@ -22,7 +22,7 @@ const CheckBoxOptions = ({navigation, updateNum}) => {
         try {
             const jsonValue = await AsyncStorage.getItem("user");
             const user = jsonValue != null ? JSON.parse(jsonValue) : null;
-            let tempInitialMonth = GetInitialMonth(user.createdAt);
+            let tempInitialMonth = GetInitialMonth(user.createdAt, 1);
             setInitialMonth(tempInitialMonth);
             setInitialDateMonth(user.createdAt);
             let copyCheckboxes = checkboxes;

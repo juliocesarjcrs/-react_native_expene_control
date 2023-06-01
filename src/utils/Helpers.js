@@ -59,8 +59,8 @@ export const compareValues =(key, order = 'asc') => {
   };
 }
 
-export const GetInitialMonth =  (date) =>{
-  return dayjs().diff(dayjs(date), 'months');
+export const GetInitialMonth =  (date, offset=0) =>{
+  return dayjs().diff(dayjs(date), 'months') + offset;
 }
 
 export const cutText =(text, n= 12) =>{

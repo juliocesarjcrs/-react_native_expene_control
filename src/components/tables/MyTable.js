@@ -11,16 +11,6 @@ const MyTable = ({ navigation, tableHead, tableData }) => {
             { tableData.map((e,idx) =>{
                 return  <MRow key={idx} data={e} ></MRow>
             })}
-            {/* <Table borderStyle={{ borderWidth: 2, borderColor: "#c8e1ff" }}>
-                <Row
-                    data={tableHead}
-                    style={styles.head}
-                    // textStyle={styles.text}
-                />
-                <Rows data={tableData}
-                // textStyle={styles.text}
-                />
-            </Table> */}
         </View>
     );
 };

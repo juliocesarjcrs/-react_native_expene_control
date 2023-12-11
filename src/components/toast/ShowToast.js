@@ -1,8 +1,8 @@
 import React from 'react';
 import {ToastAndroid} from 'react-native';
 
-  const ShowToast = () => {
-    ToastAndroid.show("Operación exitosa", ToastAndroid.SHORT);
+  const ShowToast = (msg= "Operación exitosa") => {
+    ToastAndroid.show(msg, ToastAndroid.SHORT);
   };
 
   export default ShowToast

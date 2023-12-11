@@ -2,9 +2,10 @@ import { createStackNavigator } from "@react-navigation/stack";
 import React from "react";
 
 import Routes from './stackRoutes'
+import { AuthStackParamList } from "../shared/types";
 
 function AuthStackNavigator() {
-  const AuthStack = createStackNavigator();
+  const AuthStack = createStackNavigator<AuthStackParamList>();
 
   return (
     <AuthStack.Navigator>

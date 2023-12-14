@@ -4,7 +4,7 @@ export type UserModel = {
   name: string;
   image: string | null;
   email: string;
-  password: string;
+  password?: string;
   recoveryCode: string | null;
   role: number;
 }

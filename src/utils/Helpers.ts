@@ -9,17 +9,17 @@ import 'dayjs/locale/es';
 dayjs.extend(isLeapYear); //  TypeError: Object is not a function, js engine: hermes
 dayjs.locale('es');
 
-export const NumberFormat = (number) => {
+export const NumberFormat = (number: number | string) => {
   const valor = new Intl.NumberFormat('es-CO',{maximumFractionDigits:0}).format(number)
   return `$ ${valor}`
 }
 
-export const DateFormat = (date, format = 'DD MMM hh:mm a') => {
+export const DateFormat = (date: string, format = 'DD MMM hh:mm a') => {
   return dayjs(date).format(format);
 
 }
 
-export const AsignColor = (index) =>{
+export const AsignColor = (index: number) =>{
 
   const leng = colorPalette.length
   if(index < leng){
@@ -135,6 +135,17 @@ const getUniqArrDeep = (arr) => {
 };
 
 
+export const filterLimitDataForGraph = <T>(data: T[], numMonthsGraph:  number): T[] => {
+  const len = data.length;
+  return data.slice(len - numMonthsGraph, len);
+};
+
+export const calculateAverage = (data: number []) => {
+  const sum = data.reduce((acu, val) => {
+    return acu + val;
+  }, 0);
+  return data.length > 0 ? sum / data.length : 0;
+}
 
 
 

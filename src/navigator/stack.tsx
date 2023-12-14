@@ -2,21 +2,30 @@ import { createStackNavigator } from "@react-navigation/stack";
 // import { createDrawerNavigator } from '@react-navigation/drawer';
 import {NavigationContainer} from '@react-navigation/native';
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { getUser } from '~/services/users';
+// import { getUser } from '~/services/users';
 import React, { useEffect } from "react";
 import { useSelector, useDispatch } from 'react-redux'
 // import MainStackNavigator from './MainStack';
 import AuthStackNavigator from './AuthStack';
-import { setUserAction, setAuthAction } from "~/actions/authActions";
-import {setLoadingAuthAction} from '../actions/authActions';
+// import { setUserAction, setAuthAction } from "~/actions/authActions";
+
+// Redux
+import {setIsAuthAction, setLoadingAuthAction, setUserAction} from '../actions/authActions';
 import Routes from './stackRoutes'
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import {Icon} from 'react-native-elements'
 import {Errors} from '../utils/Errors';
+import { BalanceStackParamList, ExpenseStackParamList, IncomeStackParamList, MainTabParamList, SettingsStackParamList, UserModel } from "../shared/types";
 
-function MyStack() {
+// Services
+import { getUser } from "../services/users";
+
+// Types
+import { AuthState, RootState } from "../shared/types/reducers";
+
+export default function MyStack() {
   const dispatch = useDispatch();
-  const auth = useSelector((state) => state.auth.auth);
+  const isAuth = useSelector((state: RootState) => state.auth.isAuth);
   useEffect(()=>{
     getData()
   },[])
@@ -25,12 +34,12 @@ function MyStack() {
     try {
       dispatch(setLoadingAuthAction(true));
       const jsonValue = await AsyncStorage.getItem('user')
-      const user = jsonValue != null ? JSON.parse(jsonValue) : null;
+      const user: UserModel| null = jsonValue != null ? JSON.parse(jsonValue) : null;
       if(user && user.id){
         const {data} = await getUser(user.id)
         dispatch(setLoadingAuthAction(false));
         dispatch(setUserAction(data.user));
-        dispatch(setAuthAction(true));
+        dispatch(setIsAuthAction(true));
       }
       dispatch(setLoadingAuthAction(false));
     } catch(e) {
@@ -55,11 +64,11 @@ function MyStack() {
 
 
 
-const MainStack = createStackNavigator();
-const ExpenseStack = createStackNavigator();
-const IncomeStack = createStackNavigator();
-const BalanceStack = createStackNavigator();
-const SettingsStack = createStackNavigator();
+const MainStack = createStackNavigator<MainTabParamList>();
+const ExpenseStack = createStackNavigator<ExpenseStackParamList>();
+const IncomeStack = createStackNavigator<IncomeStackParamList>();
+const BalanceStack = createStackNavigator<BalanceStackParamList>();
+const SettingsStack = createStackNavigator<SettingsStackParamList>();
 // const MainStack = createDrawerNavigator();
 
 function ExpenseStackScreen() {
@@ -118,11 +127,11 @@ const Tab = createBottomTabNavigator();
 return (
   <NavigationContainer>
       {
-        auth ?
+        isAuth ?
     <Tab.Navigator
     screenOptions={({ route }) => ({
       tabBarIcon: ({ focused, color, size }) => {
-        let iconName;
+        let iconName = 'home';
 
         if (route.name === 'Gastos') {
           iconName = focused ? 'cash' : 'cash-multiple';
@@ -164,6 +173,3 @@ return (
 );
 }
 
-
-
-export default MyStack;

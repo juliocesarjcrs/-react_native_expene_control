@@ -15,7 +15,7 @@ import { login } from "../../services/auth";
 
 // Types
 import { PayloadLogin } from "../../shared/types/services";
-import { setAuthAction, setUserAction } from "../../actions/authActions";
+import { setIsAuthAction, setUserAction } from "../../actions/authActions";
 
 // Components
 import MyLoading from "../../components/loading/MyLoading";
@@ -65,7 +65,7 @@ export default function LoginScreen({ navigation } : LoginScreenProps)  {
             const jsonValue = JSON.stringify(data.user);
             await AsyncStorage.setItem("user", jsonValue);
             dispatch(setUserAction(data.user));
-            dispatch(setAuthAction(true));
+            dispatch(setIsAuthAction(true));
         } catch (error) {
             if (typeof error === 'string') {
                 ShowToast(`Error: ${error}`);
@@ -77,7 +77,7 @@ export default function LoginScreen({ navigation } : LoginScreenProps)  {
             }
             setLoading(false);
             dispatch(setUserAction(null));
-            dispatch(setAuthAction(false));
+            dispatch(setIsAuthAction(false));
             Errors(error);
         }
     };

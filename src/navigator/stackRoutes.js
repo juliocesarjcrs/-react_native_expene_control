@@ -34,6 +34,8 @@ import CalculeProductsScreen from '~/Screens/Others/CalculeProductsScreen';
 import ExportExpenseScreen from '~/Screens/Expenses/ExportExpenseScreen';
 // loands
 import CreateLoanScreen from '~/Screens/Loans/CreateLoanScreen';
+
+import AdvancedSearchScreen from  '../Screens/common/advance-search';
 export default {
   LoginScreen,
   MainScreen,
@@ -65,6 +67,7 @@ export default {
   // others
   CalculeProductsScreen,
   ExportExpenseScreen,
+  AdvancedSearchScreen,
   // loans
   CreateLoanScreen
 }

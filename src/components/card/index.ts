@@ -1,0 +1,1 @@
+export {ListResultSearch} from './ListResultSearch'

@@ -21,7 +21,7 @@ export type IncomeStackParamList = {
   sumaryIncomes: undefined;
   createIncome: undefined;
   createCategory: undefined;
-  lastIncomes: undefined;
+  lastIncomes: { data?: any } | undefined;
   editIncome: undefined;
 };
 
@@ -38,4 +38,5 @@ export type SettingsStackParamList = {
   calculeProducts: undefined;
   createLoan: undefined;
   exportData: undefined;
+  advancedSearch: undefined;
 };

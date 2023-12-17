@@ -1,60 +1,44 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useState } from "react";
 import { FlatList, SafeAreaView, StyleSheet, Text, View } from "react-native";
+import { StackNavigationProp } from "@react-navigation/stack";
 import { Errors } from "../../utils/Errors";
-import MyLoading from "~/components/loading/MyLoading";
-import { getLastIncomesWithPaginate } from "../../services/incomes";
 import { MUTED } from "../../styles/colors";
 import RenderItem from "./components/RenderItem";
-import BarSearch from "~/components/search/BarSearch";
 import { useDispatch, useSelector } from "react-redux";
 import usePrevious from "../../customHooks/usePrevious";
 import { setQueryAction } from "../../actions/SearchActions";
+
+// Services
+import { getLastExpensesWithPaginate } from "../../services/expenses";
+
+// Components
+import MyLoading from "../../components/loading/MyLoading";
+import { BarSearch } from "../../components/search";
+
+// Types
+import { ExpenseModel, ExpenseStackParamList } from "../../shared/types";
+import { RootState } from "../../shared/types/reducers";
+
+// Utils
 import { handlerDataSearch } from "../../utils/Helpers";
 
-export default function LastIncomesScreen({ navigation, route }) {
-    const paramsEdictedIncome = route.params ? route.params.data : null;
-    const [lastIncomes, setLastIncomes] = useState([]);
+type LastExpenseScreenNavigationProp = StackNavigationProp<ExpenseStackParamList, 'lastExpenses'>;
+
+interface LastExpenseScreenProps {
+  navigation: LastExpenseScreenNavigationProp;
+}
+
+
+export default function LastExpensesScreen({ navigation } : LastExpenseScreenProps) {
+    const [lastExpenses, setLastExpenses] = useState<ExpenseModel[]>([]);
     const [loading, setLoading] = useState(false);
     const [loadingFooter, setLoadingFotter] = useState(false);
     const [page, setPage] = useState(1);
     const [stopeFetch, setStopeFetch] = useState(false);
     // PARA EL BUSCADOR
     const dispatch = useDispatch();
-    const query = useSelector((state) => state.search.query);
+    const query = useSelector((state: RootState) => state.search.query);
     const prevQuery = usePrevious(query);
-    const [isMounted, setIsMounted] = useState(true);
-    // Cuando viene de editar
-    // console.log('1----------paramsEdictedIncome', paramsEdictedIncome);
-    const [edictedIncome, setEdictedIncome] = useState(null);
-    if (paramsEdictedIncome) {
-        // console.log('1------------ ',paramsEdictedIncome.id, route);
-    } else {
-        // console.log('else2----------');
-    }
-    const updateWhenEdit = () => {
-        if (edictedIncome) {
-            console.log("----------Entró 1", lastIncomes);
-            const indexArray = lastIncomes.findIndex((e) => {
-                return e.id === edictedIncome.id;
-            });
-            if (indexArray >= 0) {
-                let temp = {
-                    cost: edictedIncome.amount,
-                    commentary: edictedIncome.commentary,
-                    dateFormat: edictedIncome.date,
-                };
-                let tempIncomes = lastIncomes;
-                tempIncomes[indexArray] = {
-                    ...tempIncomes[indexArray],
-                    ...temp,
-                };
-                setLastIncomes(tempIncomes);
-                // console.log('sigue aqui 22------concatPages:', concatPages);
-            }
-        } else {
-            console.log("ELSE----------");
-        }
-    };
     // la primera vez resetea el buscador
     useEffect(() => {
         dispatch(setQueryAction(null));
@@ -68,7 +52,7 @@ export default function LastIncomesScreen({ navigation, route }) {
     }, [page]);
     /**Solo se lanza la primera vez cuando se contruye el component y al dar click boton buscar */
     useEffect(() => {
-        setLastIncomes([]);
+        setLastExpenses([]);
         setPage(1);
         setStopeFetch(false);
         if (page === 1 && query !== null) {
@@ -78,26 +62,26 @@ export default function LastIncomesScreen({ navigation, route }) {
 
     const fetchData = async () => {
         try {
-            // setLoading(true);
             const params = {
-                take: 25,
+                take: 15,
                 page,
                 query,
+                orderBy: "date",
             };
             setLoadingFotter(true);
-            const { data } = await getLastIncomesWithPaginate(params);
+            const { data } = await getLastExpensesWithPaginate(params);
             setLoadingFotter(false);
             if (data.data.length <= 0) {
                 setStopeFetch(true);
             }
-            const concatPages = handlerDataSearch(
-              data.data,
-              lastIncomes,
+            let concatPages = handlerDataSearch(
+                data.data,
+                lastExpenses,
                 params.query,
                 prevQuery,
                 params.page
             );
-            setLastIncomes(concatPages);
+            setLastExpenses(concatPages);
         } catch (e) {
             setLoadingFotter(false);
             Errors(e);
@@ -111,6 +95,7 @@ export default function LastIncomesScreen({ navigation, route }) {
             }
         }
     };
+
     const renderFooter = () => {
         return <View>{loadingFooter ? <MyLoading /> : null}</View>;
     };
@@ -121,7 +106,7 @@ export default function LastIncomesScreen({ navigation, route }) {
                 <MyLoading />
             ) : (
                 <FlatList
-                    data={lastIncomes}
+                    data={lastExpenses}
                     renderItem={({ item }) => (
                         <RenderItem
                             item={item}
@@ -132,7 +117,7 @@ export default function LastIncomesScreen({ navigation, route }) {
                     keyExtractor={(item) => item.id.toString()}
                     ListEmptyComponent={() => (
                         <Text style={styles.textMuted}>
-                            No se registran últimos ingresos
+                            No se registran últimos gastos
                         </Text>
                     )}
                     initialNumToRender={10}

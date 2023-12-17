@@ -1,23 +1,23 @@
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { BIG } from '../../styles/fonts';
-import MyButton from '../../components/MyButton';
+import { StackNavigationProp } from '@react-navigation/stack';
 import { useState } from 'react';
 import { Errors } from '../../utils/Errors';
 
 // Services
 import { getAllExpensesByRangeDates } from '../../services/expenses2';
+
+// Utils
+import { DateFormat, NumberFormat, cutText } from '../../utils/Helpers';
+
+// Components
+import { DateSelector } from '../../components/datePicker';
 import MyLoading from '../../components/loading/MyLoading';
 import MyTable from '../../components/tables/MyTable';
-import { StackNavigationProp } from '@react-navigation/stack';
-import { DateFormat, NumberFormat, cutText } from '../../utils/Helpers';
-import DateTimePicker from '@react-native-community/datetimepicker';
-import { Button, Icon } from 'react-native-elements';
-type RootStackParamList = {
-  Home: undefined; // Puedes ajustar esto según tus rutas y parámetros
-  ExportExpense: undefined; // Asegúrate de que coincida con el nombre de tu pantalla
-  // Otras pantallas...
-};
-type ExportExpenseScreenNavigationProp = StackNavigationProp<RootStackParamList, 'ExportExpense'>;
+import MyButton from '../../components/MyButton';
+import { SettingsStackParamList } from '../../shared/types';
+
+type ExportExpenseScreenNavigationProp = StackNavigationProp<SettingsStackParamList, 'exportData'>;
 
 interface ExportExpenseScreenProps {
   navigation: ExportExpenseScreenNavigationProp;
@@ -34,18 +34,14 @@ export default function ExportExpenseScreen({ navigation }: ExportExpenseScreenP
   const [showStartDate, setShowStartDate] = useState(false);
   const [showEndDate, setShowEndDate] = useState(false);
 
-  const handleStartDateChange = (event: Event, selectedDate?: Date) => {
+  const handleStartDateChange = (selectedDate: Date) => {
     setShowStartDate(false);
-    if (selectedDate) {
-      setStartDate(selectedDate);
-    }
+    setStartDate(selectedDate);
   };
 
-  const handleEndDateChange = (event: Event, selectedDate?: Date) => {
+  const handleEndDateChange = (selectedDate: Date) => {
     setShowEndDate(false);
-    if (selectedDate) {
-      setEndDate(selectedDate);
-    }
+    setEndDate(selectedDate);
   };
 
   const showStartDatePicker = () => {
@@ -91,26 +87,23 @@ export default function ExportExpenseScreen({ navigation }: ExportExpenseScreenP
 
   return (
     <View style={styles.container}>
-      <View style={styles.containerDate}>
-        <Button
-          icon={<Icon type="material-community" name="calendar" size={25} color="white" />}
-          title=" Fecha inicial"
+      <Text>Seleccione un rango de fechas:</Text>
+      <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+        <DateSelector
+          label="Fecha Ini"
+          date={startDate}
+          showDatePicker={showStartDate}
           onPress={showStartDatePicker}
+          onDateChange={handleStartDateChange}
         />
-        <Text style={styles.textDate}>{DateFormat(startDate, 'YYYY MMM DD')}</Text>
-      </View>
-
-      <View style={styles.containerDate}>
-        <Button
-          icon={<Icon type="material-community" name="calendar" size={25} color="white" />}
-          title=" Fecha Fin"
+        <DateSelector
+          label="Fecha Fin"
+          date={endDate}
+          showDatePicker={showEndDate}
           onPress={showEndDatePicker}
+          onDateChange={handleEndDateChange}
         />
-        <Text style={styles.textDate}>{DateFormat(endDate, 'YYYY MMM DD')}</Text>
       </View>
-      {showStartDate && <DateTimePicker value={startDate} mode="date" onChange={handleStartDateChange} />}
-
-      {showEndDate && <DateTimePicker value={endDate} mode="date" onChange={handleEndDateChange} />}
       <ScrollView horizontal={true}>
         {isEmptyData && <Text> No existe datos para esas fechas </Text>}
         <MyTable navigation={navigation} tableHead={tableHead} tableData={tableData} />

@@ -44,6 +44,9 @@ export default function SettingsScreen ({navigation}) {
   const sendExportExpenseScreen= () => {
     navigation.navigate("exportData");
   };
+  const sendAdvancedSearchScreen= () => {
+    navigation.navigate("advancedSearch");
+  };
   return (
     <View style={styles.container}>
       <View>
@@ -53,6 +56,7 @@ export default function SettingsScreen ({navigation}) {
           <MyButton onPress={sendcCalculeProductsScreen} title="Calcuar productos" />
           <MyButton onPress={sendCreateLoanScreen} title="Crear préstamo" />
           <MyButton onPress={sendExportExpenseScreen} title="Expotar datos" />
+          <MyButton onPress={sendAdvancedSearchScreen} title="Busqueda Avanzada" />
         </View>
       {/* <Text>Configuraciones</Text> */}
       {/* <EditUserScreen navigation={navigation}></EditUserScreen> */}

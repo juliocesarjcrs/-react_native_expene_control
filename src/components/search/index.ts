@@ -1,0 +1,1 @@
+export { BarSearch} from './BarSearch';

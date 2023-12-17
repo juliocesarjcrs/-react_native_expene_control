@@ -21,6 +21,7 @@ import { setIsAuthAction, setUserAction } from "../../actions/authActions";
 import MyLoading from "../../components/loading/MyLoading";
 import MyButton from "../../components/MyButton";
 import { AuthStackParamList } from "../../shared/types";
+import { RootState } from "../../shared/types/reducers";
 
 interface LoginFormData {
     email: string;
@@ -32,11 +33,6 @@ interface LoginFormData {
     navigation: LoginScreenNavigationProp;
   }
 
-  interface RootState {
-    auth: {
-      loadingAuth: boolean;
-    };
-  }
 export default function LoginScreen({ navigation } : LoginScreenProps)  {
 
     const EMAIL_REGEX =

@@ -14,7 +14,7 @@ export const NumberFormat = (number: number | string) => {
   return `$ ${valor}`
 }
 
-export const DateFormat = (date: string, format = 'DD MMM hh:mm a') => {
+export const DateFormat = (date: string | Date, format = 'DD MMM hh:mm a') => {
   return dayjs(date).format(format);
 
 }

@@ -1,23 +1,24 @@
-import React from "react";
-import { View, Text } from "react-native";
-import { Icon } from "react-native-elements";
-import { StyleSheet } from "react-native";
-import { MEDIUM, SMALL } from "../../styles/fonts";
-import { ICON, MUTED } from "../../styles/colors";
-import { DateFormat, NumberFormat } from "../../utils/Helpers";
+import React from 'react';
+import { View, Text, StyleSheet } from 'react-native';
+import { Icon } from 'react-native-elements';
 
-// Components
-import { ListResultSearchProps } from "../../shared/types/components/card";
+// Styles
+import { MEDIUM, SMALL } from '../../styles/fonts';
+import { ICON } from '../../styles/colors';
 
+// Utils
+import { DateFormat, NumberFormat } from '../../utils/Helpers';
 
+// Types
+import { ListResultSearchProps } from '../../shared/types/components/card';
 
-export const ListResultSearch: React.FC<ListResultSearchProps> = (item ) => {
+export const ListResultSearch: React.FC<ListResultSearchProps> = (item) => {
   return (
     <View key={item.id} style={styles.containerCard}>
       <Icon
         type="font-awesome"
         style={styles.icon}
-        name={item.iconCategory ? item.iconCategory : "home"}
+        name={item.iconCategory ? item.iconCategory : 'home'}
         size={20}
         color={ICON}
       />
@@ -28,8 +29,9 @@ export const ListResultSearch: React.FC<ListResultSearchProps> = (item ) => {
       <View style={styles.cardDate}>
         <Text style={styles.cost}>{NumberFormat(item.amount)}</Text>
         <Text style={styles.date}>
-          {DateFormat(item.dateFormat, "DD MMM YYYY")}{"   "}
-          {DateFormat(item.createdAt, "hh:mm a")}
+          {DateFormat(item.dateFormat, 'DD MMM YYYY')}
+          {'   '}
+          {DateFormat(item.createdAt, 'hh:mm a')}
         </Text>
       </View>
     </View>
@@ -37,48 +39,36 @@ export const ListResultSearch: React.FC<ListResultSearchProps> = (item ) => {
 };
 const styles = StyleSheet.create({
   title: {
-    color: "white",
-    fontSize: MEDIUM,
-    padding: 2,
-  },
-  item: {
-    padding: 2,
-    color: "white",
-    fontSize: SMALL,
+    fontWeight: 'bold'
   },
   icon: {
-    // backgroundColor: "pink",
     borderRadius: 100,
     padding: 2,
-    marginTop: 10,
+    marginTop: 10
   },
   containerCard: {
-    display: "flex",
-    flexDirection: "row",
-    justifyContent: "space-between",
-    paddingVertical: 6,
+    display: 'flex',
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    paddingVertical: 6
   },
   containerText: {
     paddingLeft: 10,
     paddingVertical: 4,
-    flex: 1,
+    flex: 1
   },
   commentary: {
-    fontSize: SMALL,
+    fontSize: SMALL
   },
   cardDate: {
-    paddingHorizontal: 5,
+    paddingHorizontal: 5
   },
   date: {
-    fontSize: SMALL,
+    fontSize: SMALL
   },
   cost: {
     fontSize: MEDIUM,
-    fontWeight: "bold",
-    justifyContent: "flex-end",
-  },
-  textMuted: {
-    textAlign: "center",
-    color: MUTED,
-  },
+    fontWeight: 'bold',
+    justifyContent: 'flex-end'
+  }
 });

@@ -44,7 +44,6 @@ const SelectOnlyCategory = forwardRef(
         return e.value === index;
       });
       if (index && indexArray >= 0) {
-        console.log('categoriesFormat', categoriesFormat)
         const newData: DropDownSelectFormat = {
           id: index,
           label: categoriesFormat[indexArray].label,

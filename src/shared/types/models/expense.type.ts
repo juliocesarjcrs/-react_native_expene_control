@@ -3,8 +3,8 @@ export type ExpenseModel = {
   createdAt: string;
   cost: number;
   commentary: string | null;
-  userId: number;
   date: string;
+  userId: number;
   subcategoryId: number;
 
 }

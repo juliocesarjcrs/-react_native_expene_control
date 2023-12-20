@@ -2,11 +2,15 @@ import React from "react";
 
 import store from "./src/store/store";
 import { Provider } from "react-redux";
-import MyStack from "~/navigator/stack";
-import axiosInstance from "~/plugins/axiosConfig";
 import { userSignOut } from "./src/actions/authActions";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import {ToastAndroid} from 'react-native';
+import axiosInstance from "./src/plugins/axiosConfig";
+import MyStack from "./src/navigator/stack";
+import { AxiosError } from "axios";
+export type ApiError = {
+  error: string;
+}
 
 export default function App() {
 /** Intercept any unauthorized request.
@@ -30,19 +34,33 @@ export default function App() {
         showToast(message)
         // await AsyncStorage.setItem("access_token",null);
       }else if(status ===  403){
-        const message =  error.response.data.message ? error.response.data.message :'Sin definir'
+        const message =  error.response.data.message ? error.response.data.message :'Sin definir 1'
         showToast(message)
       }else if(status ===  400){
-        const message = formatError(error.response.data.message );
-        showToast(message)
+        console.log('::: type :::', typeof error)
+        if (error instanceof AxiosError) {
+          console.log('::: Error :::', error)
+
+          // AxiosError tiene propiedades específicas
+          const axiosError = error as AxiosError;
+          // Comprueba si la respuesta tiene una propiedad 'error'
+          const apiError = axiosError.response?.data as ApiError
+          if (apiError?.error) {
+            showToast(apiError.error)
+          }
+        }else{
+          const message = formatError(error.response.data.message );
+          showToast(message)
+
+        }
       }
 
     }
     return Promise.reject(error);
   });
 
-  const formatError = (msg) => {
-    if(!msg) return 'Sin definir';
+  const formatError = (msg: string) => {
+    if(!msg) return 'Sin definir general';
     const isArray = Array.isArray(msg);
     if(isArray){
       let msgSend = msg[0];
@@ -55,7 +73,7 @@ export default function App() {
 
   }
 
-  const showToast = (msg) => {
+  const showToast = (msg: string) => {
     ToastAndroid.show(msg, ToastAndroid.SHORT);
   };
   return (

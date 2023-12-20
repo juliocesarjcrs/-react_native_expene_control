@@ -27,5 +27,4 @@ export type IncomeSearchOptionsQuery = {
 export type FindIncomesByCategoryIdResponse = {
   incomes: IncomeModel[];
   sum: number
-
 }

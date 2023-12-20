@@ -1,9 +1,13 @@
 
 export const Errors = (error) => {
+
+
   if (error.response) {
     // The request was made and the server responded with a status code
     // that falls out of the range of 2xx
     console.log('1----',error.response.data);
+    const controllError = error.response.data;
+    if (error.response.data)
     // console.log('1.1----',error.response.status);
     // console.log('1.2----',error.response.headers);
     if(error.response.status === 401){

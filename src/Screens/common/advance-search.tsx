@@ -1,5 +1,5 @@
 import React, { useRef, useState } from 'react';
-import { FlatList, StyleSheet, Text, View } from 'react-native';
+import { FlatList, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { StackNavigationProp } from '@react-navigation/stack';
 
 // Services
@@ -7,7 +7,7 @@ import { getSubategoriesByCategory } from '../../services/subcategories';
 import { findIncomesByCategoryId } from '../../services/incomes';
 
 // Types
-import { IncomeModel, SettingsStackParamList, SubcategoryModel } from '../../shared/types';
+import { SettingsStackParamList, SubcategoryModel } from '../../shared/types';
 import { DropDownSelectFormat } from '../../shared/types/components';
 import { Checkbox } from 'react-native-paper';
 import { Errors } from '../../utils/Errors';
@@ -23,10 +23,13 @@ import { ListResultSearch } from '../../components/card';
 
 // Styles
 import { PRIMARY } from '../../styles/colors';
-import { MEDIUM, SMALL } from '../../styles/fonts';
+import { MEDIUM } from '../../styles/fonts';
 
 // Utils
-import { DateFormat, NumberFormat } from '../../utils/Helpers';
+import { NumberFormat } from '../../utils/Helpers';
+import { ExpenseSearchOptionsQuery } from '../../shared/types/services/expense-service.type';
+import { findExpensesBySubcategories } from '../../services/expenses';
+import { handleErrors } from '../../utils/handleErrors';
 
 type AdvancedSearchNavigationProp = StackNavigationProp<SettingsStackParamList, 'exportData'>;
 
@@ -39,8 +42,6 @@ export default function AdvancedSearchScreen({ navigation }: AdvancedSearchProps
   const [selectedCategory, setSelectedCategory] = useState<DropDownSelectFormat | null>(null);
   const [subcategories, setSubcategories] = useState<SubcategoryModel[]>([]);
   const [selectedSubcategories, setSelectedSubcategories] = useState<number[]>([]);
-  // const [startDate, setStartDate] = useState<string>('');
-  // const [endDate, setEndDate] = useState<string>('');
   const [searchType, setSearchType] = useState<number>(1); // Default: Ingreso
   const [startDate, setStartDate] = useState(new Date());
   const [endDate, setEndDate] = useState(new Date());
@@ -49,7 +50,6 @@ export default function AdvancedSearchScreen({ navigation }: AdvancedSearchProps
 
   const [resultSearch, setResultSearch] = useState<ListResultSearchProps[]>([]);
   const [sumResultSearch, setSumResultSearch] = useState(0);
-
 
   const handleCategoryChange = async (categorySelectFormat: DropDownSelectFormat) => {
     const categoryId = categorySelectFormat.id;
@@ -63,27 +63,54 @@ export default function AdvancedSearchScreen({ navigation }: AdvancedSearchProps
   };
 
   const handleSearch = async (text: string) => {
-    if(searchType===1 && selectedCategory){
-      const queryParams: IncomeSearchOptionsQuery = {
-        startDate,
-        endDate,
-        searchValue: text,
-        orderBy: 'date'
-      }
-      console.log('queryParams:', queryParams);
-      const {data} = await findIncomesByCategoryId(selectedCategory.id, queryParams);
-      const dataResultSearchFormated: ListResultSearchProps [] = data.incomes.map( e =>{
-        return {id:  e.id,
-          iconCategory: selectedCategory.iconName,
-          //subcategory: 'string',
-          commentary: e.commentary,
-          amount: e.amount,
-          dateFormat: e.date,
-          createdAt: e.createdAt}
-      })
+    try {
+      if (searchType === 1 && selectedCategory) {
+        const queryParams: IncomeSearchOptionsQuery = {
+          startDate,
+          endDate,
+          searchValue: text,
+          orderBy: 'date'
+        };
+        const { data } = await findIncomesByCategoryId(selectedCategory.id, queryParams);
+        const dataResultSearchFormated: ListResultSearchProps[] = data.incomes.map((e) => {
+          return {
+            id: e.id,
+            iconCategory: selectedCategory.iconName,
+            subcategory: 'N/A',
+            commentary: e.commentary,
+            amount: e.amount,
+            dateFormat: e.date,
+            createdAt: e.createdAt
+          };
+        });
 
-      setResultSearch(dataResultSearchFormated)
-      setSumResultSearch(data.sum)
+        setResultSearch(dataResultSearchFormated);
+        setSumResultSearch(data.sum);
+      } else if (searchType === 0 && selectedCategory) {
+        const queryParams: ExpenseSearchOptionsQuery = {
+          subcategoriesId: selectedSubcategories,
+          startDate,
+          endDate,
+          searchValue: text,
+          orderBy: 'date'
+        };
+        const { data } = await findExpensesBySubcategories(queryParams);
+        const dataResultSearchFormated: ListResultSearchProps[] = data.expenses.map((e) => {
+          return {
+            id: e.id,
+            iconCategory: selectedCategory.iconName,
+            subcategory: e.subcategories.name,
+            commentary: e.commentary,
+            amount: e.cost,
+            dateFormat: e.date,
+            createdAt: e.createdAt
+          };
+        });
+        setResultSearch(dataResultSearchFormated);
+        setSumResultSearch(data.sum);
+      }
+    } catch (error) {
+      Errors(error);
     }
   };
 
@@ -104,95 +131,89 @@ export default function AdvancedSearchScreen({ navigation }: AdvancedSearchProps
     setShowEndDate(false);
     setEndDate(selectedDate);
   };
-
-
+  const handleSearchTypeChange = (value: number) => {
+    setSelectedSubcategories([]);
+    setResultSearch([]);
+    setSearchType(value);
+  };
 
   return (
     <View>
-      <Text>Seleccione un tipo de búsqueda:</Text>
-      <RadioButtonGroup selectedValue={searchType} onSelect={setSearchType} />
-      <SelectOnlyCategory
-        handleCategoryChange={handleCategoryChange}
-        ref={selectOnlyCategoryRef}
-        searchType={searchType}
-      />
+      <ScrollView>
+        <Text style={styles.subtitle}>Seleccione un tipo de búsqueda:</Text>
+        <RadioButtonGroup selectedValue={searchType} onSelect={handleSearchTypeChange} />
 
-      {selectedCategory && (
-        <>
-          <Text>Seleccione subcategorías:</Text>
-          <View style={{ flexDirection: 'row', flexWrap: 'wrap' }}>
-            {subcategories.map((subcategory) => (
-              <Checkbox.Item
-                key={subcategory.id}
-                label={subcategory.name}
-                status={selectedSubcategories.includes(subcategory.id) ? 'checked' : 'unchecked'}
-                onPress={() =>
-                  setSelectedSubcategories((prev) =>
-                    prev.includes(subcategory.id)
-                      ? prev.filter((id) => id !== subcategory.id)
-                      : [...prev, subcategory.id]
-                  )
-                }
-              />
-            ))}
-          </View>
-        </>
-      )}
+        <SelectOnlyCategory
+          handleCategoryChange={handleCategoryChange}
+          ref={selectOnlyCategoryRef}
+          searchType={searchType}
+        />
 
-      <Text>Seleccione un rango de fechas:</Text>
-      <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-        <DateSelector
-          label="Fecha Ini"
-          date={startDate}
-          showDatePicker={showStartDate}
-          onPress={showStartDatePicker}
-          onDateChange={handleStartDateChange}
-        />
-        <DateSelector
-          label="Fecha Fin"
-          date={endDate}
-          showDatePicker={showEndDate}
-          onPress={showEndDatePicker}
-          onDateChange={handleEndDateChange}
-        />
-      </View>
-      <BarSearch shouldDispatch={false} onQueryChange={handleSearch}/>
+        {selectedCategory && (
+          <>
+            {subcategories.length > 0 && <Text style={styles.subtitle}>Seleccione subcategorías:</Text>}
+            <ScrollView horizontal>
+              <View style={{ flexDirection: 'row', flexWrap: 'wrap' }}>
+                {subcategories.map((subcategory) => (
+                  <Checkbox.Item
+                    key={subcategory.id}
+                    label={subcategory.name}
+                    status={selectedSubcategories.includes(subcategory.id) ? 'checked' : 'unchecked'}
+                    onPress={() =>
+                      setSelectedSubcategories((prev) =>
+                        prev.includes(subcategory.id)
+                          ? prev.filter((id) => id !== subcategory.id)
+                          : [...prev, subcategory.id]
+                      )
+                    }
+                  />
+                ))}
+              </View>
+            </ScrollView>
+          </>
+        )}
+
+        <Text style={styles.subtitle}>Seleccione un rango de fechas:</Text>
+        <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+          <DateSelector
+            label="Fecha Ini"
+            date={startDate}
+            showDatePicker={showStartDate}
+            onPress={showStartDatePicker}
+            onDateChange={handleStartDateChange}
+          />
+          <DateSelector
+            label="Fecha Fin"
+            date={endDate}
+            showDatePicker={showEndDate}
+            onPress={showEndDatePicker}
+            onDateChange={handleEndDateChange}
+          />
+        </View>
+        <BarSearch shouldDispatch={false} onQueryChange={handleSearch} />
+      </ScrollView>
       <FlatList
         keyExtractor={(item) => item.id.toString()}
         data={resultSearch}
-        renderItem={({ item }: { item: ListResultSearchProps }) => (
-          <ListResultSearch {...item} />
-        )}
-        ListHeaderComponent={<Text>{NumberFormat(sumResultSearch)}</Text>}
+        renderItem={({ item }: { item: ListResultSearchProps }) => <ListResultSearch {...item} />}
+        ListHeaderComponent={<Text style={styles.headerSummary}>Total: {NumberFormat(sumResultSearch)}</Text>}
       />
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  header: {
-    display: "flex",
-    flexDirection: "row",
-    // width: 300,
-    backgroundColor: PRIMARY,
-    padding: 5,
-    // alignItems: "center",
-    justifyContent: "space-between",
-  },
-  title: {
-    color: "white",
+  subtitle: {
+    fontWeight: 'bold',
     fontSize: MEDIUM,
-    padding: 2,
+    padding: 2
   },
-  item: {
-    padding: 2,
-    color: "white",
-    fontSize: SMALL,
-  },
-  icon: {
-    // backgroundColor: "pink",
-    borderRadius: 100,
-    padding: 2,
-    marginTop: 10,
+
+  headerSummary: {
+    fontWeight: 'bold',
+    textAlign: 'center',
+    color: 'white',
+    backgroundColor: PRIMARY,
+    paddingVertical: 3
   }
 });

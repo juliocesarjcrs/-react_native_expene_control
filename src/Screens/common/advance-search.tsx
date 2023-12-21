@@ -29,7 +29,6 @@ import { MEDIUM } from '../../styles/fonts';
 import { NumberFormat } from '../../utils/Helpers';
 import { ExpenseSearchOptionsQuery } from '../../shared/types/services/expense-service.type';
 import { findExpensesBySubcategories } from '../../services/expenses';
-import { handleErrors } from '../../utils/handleErrors';
 
 type AdvancedSearchNavigationProp = StackNavigationProp<SettingsStackParamList, 'exportData'>;
 
@@ -55,7 +54,7 @@ export default function AdvancedSearchScreen({ navigation }: AdvancedSearchProps
     const categoryId = categorySelectFormat.id;
     try {
       const { data } = await getSubategoriesByCategory(categoryId, { withExpenses: false });
-      setSubcategories(data);
+      setSubcategories(data as SubcategoryModel[]);
       setSelectedCategory(categorySelectFormat);
     } catch (error) {
       Errors(error);

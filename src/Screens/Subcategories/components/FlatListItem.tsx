@@ -1,26 +1,43 @@
 import React from "react";
 import { Alert, FlatList, StyleSheet, Text, View } from "react-native";
 import { Icon } from "react-native-elements";
-import { MEDIUM } from "~/styles/fonts";
-import { PRIMARY, ICON } from "~/styles/colors";
-import { Errors } from "../../../utils/Errors";
+
+// Services
 import { deleteSubategory } from "../../../services/subcategories";
 
-const FlatListItem = ({ data, updateList, navigation }) => {
-  const listItem = ({ item }) => {
-    const deleteItem = async (idExpense) => {
+// Types
+import { SubcategoriesWithExpenses } from "../../../shared/types/services/subcategories-services.type";
+
+// Utils
+import { Errors } from "../../../utils/Errors";
+
+// Styles
+import { ICON, PRIMARY } from "../../../styles/colors";
+import { MEDIUM } from "../../../styles/fonts";
+
+
+interface FlatListItemProps {
+  data: [] | SubcategoriesWithExpenses[];
+  updateList: () => void;
+  navigation: {
+    navigate: (screen: string, params: Record<string, any>) => void;
+  };
+}
+const FlatListItem: React.FC<FlatListItemProps> = ({ data, updateList, navigation }) => {
+  const listItem = ({ item }: { item: SubcategoriesWithExpenses }) => {
+    const deleteItem = async (idExpense: number) => {
       try {
-        const { data } = await deleteSubategory(idExpense);
+        await deleteSubategory(idExpense);
         updateList();
       } catch (e) {
         Errors(e);
       }
     };
-    const sendEditSubcategoryScreen = (subcategoryObj) => {
-      navigation.navigate("editSubcategory", { subcategoryObj });
+    const sendEditSubcategoryScreen = (subcategoryObject: SubcategoriesWithExpenses) => {
+      navigation.navigate("editSubcategory", { subcategoryObject });
     };
 
-    const createTwoButtonAlert = (id) =>
+    const createTwoButtonAlert = (id: number) =>
       Alert.alert("Eliminar", "¿Desea eliminar esta Subcategoria?", [
         {
           text: "Cancel",

@@ -28,3 +28,24 @@ export type FindIncomesByCategoryIdResponse = {
   incomes: IncomeModel[];
   sum: number
 }
+// getLastIncomesWithPaginate
+export type GetLastIncomesWithPaginateQuery = {
+  take?: number;
+  page?: number;
+  query?: string | null;
+}
+
+export type LastIncomes = {
+  id: number;
+  createdAt: string;
+  amount: number;
+  commentary: string;
+  date: string;
+  dateFormat: string;
+  category: string;
+  iconCategory: string;
+};
+
+export type GetLastIncomesWithPaginateResponse = {
+  data: LastIncomes[];
+};

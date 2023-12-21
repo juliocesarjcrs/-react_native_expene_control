@@ -1,6 +1,6 @@
 import { AxiosResponse } from 'axios';
 import axios from '../plugins/axiosConfig'
-import { CreateExpensePayload, EditExpensePayload, ExpenseSearchOptionsQuery, FindExpensesBySubcategoriesResponse, FindLastMonthsFromOnlyCategoryQuery, GetExpensesLastMonthsFromSubcategoryQuery } from '../shared/types/services/expense-service.type';
+import { CreateExpensePayload, EditExpensePayload, ExpenseSearchOptionsQuery, FindExpensesBySubcategoriesResponse, FindLastMonthsFromOnlyCategoryQuery, GetExpensesLastMonthsFromSubcategoryQuery, GetLastExpensesWithPaginateQuery, GetLastExpensesWithPaginateResponse } from '../shared/types/services/expense-service.type';
 import { AllExpensesByRangeDatesResponse } from '../shared/types/services';
 const PREFIX = 'expenses'
 export const getLastExpenses = async (params: any) => {
@@ -28,7 +28,7 @@ export const deleteExpense = async (idExpense: number) => {
   return axios.delete(`${PREFIX}/${idExpense}`);
 }
 
-export const getLastExpensesWithPaginate = async (params = {}) => {
+export const getLastExpensesWithPaginate = async (params: GetLastExpensesWithPaginateQuery = {}): Promise<AxiosResponse<GetLastExpensesWithPaginateResponse>> => {
   return axios.get(`${PREFIX}/last`, { params });
 }
 

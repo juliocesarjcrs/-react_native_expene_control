@@ -1,10 +1,28 @@
-import { SubcategoryModel } from "../models";
+import { ExpenseModel, SubcategoryModel } from "../models";
 
 
 export type CreateSubcategoryPayload = Omit<SubcategoryModel, 'id'>;
-export type EditSubcategoryPayload = Partial<SubcategoryModel>;
+export type EditSubcategoryPayload = Partial<SubcategoryModel> & {
+  name: string;
+};
 
-export type GetSubategoriesByCategoryQuery= {
+export type GetSubategoriesByCategoryQuery = {
   withExpenses?: boolean;
 }
-export type GetSubategoriesByCategoryResponse = SubcategoryModel[];
+
+// GetSubcategoriesByCategory
+
+
+
+
+export type SubcategoriesWithExpenses = {
+  id: number;
+  createdAt: string;
+  name: string;
+  icon: string | null;
+  categoryId: number;
+  userId: number;
+  expenses: ExpenseModel[];
+};
+
+export type GetSubategoriesByCategoryResponse = SubcategoriesWithExpenses | SubcategoryModel[];

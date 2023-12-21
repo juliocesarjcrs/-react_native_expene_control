@@ -1,8 +1,7 @@
 export type SubcategoryModel = {
   id: number;
-  createdAt: string;
+  createdAt?: string;
   name: string;
-  icon: string | null;
-  type: number;
-  userId: number;
+  icon?: string | null;
+  categoryId?: number;
 }

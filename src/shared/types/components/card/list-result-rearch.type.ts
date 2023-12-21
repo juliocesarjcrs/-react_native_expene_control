@@ -5,5 +5,5 @@ export type ListResultSearchProps = {
   commentary: string | null;
   amount: number;
   dateFormat: string;
-  createdAt: string;
+  createdAt?: string;
 }

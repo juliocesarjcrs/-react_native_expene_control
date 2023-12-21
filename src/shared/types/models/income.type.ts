@@ -4,6 +4,6 @@ export type IncomeModel = {
   categoryId: number;
   date: string;
   commentary: string | null;
-  createdAt: string;
+  createdAt?: string;
 
 }

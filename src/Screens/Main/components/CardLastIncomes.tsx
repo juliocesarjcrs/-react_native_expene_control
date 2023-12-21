@@ -2,15 +2,33 @@ import React, { useState, useEffect } from "react";
 import { View, Text, StyleSheet, TouchableOpacity } from "react-native";
 import { CheckBox, Icon } from "react-native-elements";
 import Popover from "react-native-popover-view";
+import { StackNavigationProp } from "@react-navigation/stack";
+
+// Services
 import { getLastIncomesWithPaginate } from "../../../services/incomes";
-import { ICON, MUTED } from "../../../styles/colors";
-import { MEDIUM, SMALL } from "../../../styles/fonts";
+
+// Components
+import MyLoading from "../../../components/loading/MyLoading";
+
+// Types
+import { IncomeStackParamList } from "../../../shared/types";
+import { LastIncomes } from "../../../shared/types/services/income-service.type";
+
+// Utils
 import { DateFormat, NumberFormat } from "../../../utils/Helpers";
-import MyLoading from "~/components/loading/MyLoading";
 import { Errors } from "../../../utils/Errors";
 
-const CardLastIncomes = ({ navigation }) => {
-  const [incomes, setIncomes] = useState([]);
+// Styles
+import { ICON, MUTED } from "../../../styles/colors";
+import { MEDIUM, SMALL } from "../../../styles/fonts";
+
+type CardLastIncomesNavigationProp = StackNavigationProp<IncomeStackParamList, 'lastIncomes'>;
+
+interface CardLastIncomesProps {
+  navigation: CardLastIncomesNavigationProp;
+}
+const CardLastIncomes = ({ navigation }: CardLastIncomesProps) => {
+  const [incomes, setIncomes] = useState<LastIncomes [] | []>([]);
   const [take, setTake] = useState(5);
   const [loading, setLoading] = useState(false);
   const [checkboxes, setCheckboxes] = useState([
@@ -55,7 +73,7 @@ const CardLastIncomes = ({ navigation }) => {
       Errors(error);
     }
   };
-  const toggleCheckbox = (id, index) => {
+  const toggleCheckbox = (id: number, index: number) => {
     let checkboxData = [...checkboxes];
     const oldValue = checkboxData[index].checked;
     checkboxData = checkboxData.map((e) => {

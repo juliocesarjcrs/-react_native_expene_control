@@ -43,3 +43,28 @@ export type FindExpensesBySubcategoriesResponse = {
   expenses: ExpenseModelWithSubcategories[];
   sum: number
 }
+
+// getLastExpensesWithPaginate
+
+export type GetLastExpensesWithPaginateQuery = {
+  take?: number;
+  page?: number;
+  query?: string | null;
+  orderBy?: string;
+}
+
+export type LastExpense = {
+  id: number;
+  createdAt: string;
+  cost: number;
+  commentary: string;
+  date: string;
+  dateFormat: string;
+  category: string;
+  iconCategory: string;
+  subcategory: string;
+};
+
+export type GetLastExpensesWithPaginateResponse = {
+  data: LastExpense[];
+};

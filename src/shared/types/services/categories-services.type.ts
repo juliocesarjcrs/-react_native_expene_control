@@ -37,3 +37,16 @@ export type Category = {
   total: number;
   subcategories: Subcategory[];
 }
+
+// getCategoryTypeIncome
+export type GetCategoryTypeIncomeResponse  =  {
+  data: Category[];
+  total: number;
+}
+
+export type CateroryFormatIncome = {
+  label: string
+  value: number,
+  // iconName?: string | null
+
+}

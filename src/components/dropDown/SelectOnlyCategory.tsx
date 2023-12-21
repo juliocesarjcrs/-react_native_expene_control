@@ -20,9 +20,10 @@ import { COLOR_SEPARATOR_DROPDOWN, COLOR_TEXT_DROPDOWN, ICON_DROPDOWN } from '..
 interface SelectOnlyCategoryProps {
   handleCategoryChange: (data: DropDownSelectFormat) => void;
   searchType: number;
+  selectedCategoryId?: number | null;
 }
 const SelectOnlyCategory = forwardRef(
-  ({ handleCategoryChange, searchType }: SelectOnlyCategoryProps, ref: Ref<any>) => {
+  ({ handleCategoryChange, searchType, selectedCategoryId }: SelectOnlyCategoryProps, ref: Ref<any>) => {
     const [categoriesFormat, setCategoriesFormat] = useState<CateroryFormat[]>([]);
     const [loading, setLoading] = useState(false);
     const ITEM_HEIGHT = 42;
@@ -34,7 +35,6 @@ const SelectOnlyCategory = forwardRef(
     useEffect(() => {
       fetchCategories();
     }, [searchType]);
-
     useEffect(() => {
       sendFromDropDownPickerCategory(idCategory);
     }, [idCategory]);
@@ -48,7 +48,6 @@ const SelectOnlyCategory = forwardRef(
           id: index,
           label: categoriesFormat[indexArray].label,
           iconName: categoriesFormat[indexArray].iconName
-         // icon: categoriesFormat[indexArray].icon
         };
         handleCategoryChange(newData);
       }
@@ -81,7 +80,11 @@ const SelectOnlyCategory = forwardRef(
 
     const defaultIdCategory = (categoriesFormat: CateroryFormat[]) => {
       if (categoriesFormat.length > 0) {
-        setIdCategory(categoriesFormat[0].value);
+        if (selectedCategoryId !== undefined && selectedCategoryId !== null) {
+          setIdCategory(selectedCategoryId);
+        } else {
+          setIdCategory(categoriesFormat[0].value);
+        }
       }
     };
 
@@ -107,23 +110,23 @@ const SelectOnlyCategory = forwardRef(
             backgroundColor: '#dfdfdf'
           }}
           listMode="MODAL"
-            // styles modal
-            itemSeparator={true}
-            itemSeparatorStyle={{
-                backgroundColor: COLOR_SEPARATOR_DROPDOWN,
-                paddingVertical: 5,
-            }}
-            selectedItemContainerStyle={{
-                backgroundColor: "#F0AEBB",
-            }}
-            selectedItemLabelStyle={{
-                fontWeight: "bold",
-            }}
-            // como se ve el select
-            textStyle={{
-                fontSize: 18,
-                color: COLOR_TEXT_DROPDOWN,
-            }}
+          // styles modal
+          itemSeparator={true}
+          itemSeparatorStyle={{
+            backgroundColor: COLOR_SEPARATOR_DROPDOWN,
+            paddingVertical: 5
+          }}
+          selectedItemContainerStyle={{
+            backgroundColor: '#F0AEBB'
+          }}
+          selectedItemLabelStyle={{
+            fontWeight: 'bold'
+          }}
+          // como se ve el select
+          textStyle={{
+            fontSize: 18,
+            color: COLOR_TEXT_DROPDOWN
+          }}
         />
         {!idCategory ? <ErrorText msg="Necesita seleccionar una  Categoria" /> : null}
       </View>

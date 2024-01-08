@@ -137,7 +137,7 @@ export default function AdvancedSearchScreen({ navigation }: AdvancedSearchProps
   };
 
   return (
-    <View>
+    <View style={styles.container}>
       <ScrollView>
         <Text style={styles.subtitle}>Seleccione un tipo de búsqueda:</Text>
         <RadioButtonGroup selectedValue={searchType} onSelect={handleSearchTypeChange} />
@@ -202,6 +202,10 @@ export default function AdvancedSearchScreen({ navigation }: AdvancedSearchProps
 }
 
 const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: 'white'
+  },
   subtitle: {
     fontWeight: 'bold',
     fontSize: MEDIUM,

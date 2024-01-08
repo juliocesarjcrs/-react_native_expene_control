@@ -50,3 +50,7 @@ export type CateroryFormatIncome = {
   // iconName?: string | null
 
 }
+// GetCategoryWithSubcategories
+export type GetCategoryWithSubcategoriesResponse = {
+  data: Category[];
+}

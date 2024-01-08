@@ -5,7 +5,7 @@ import { useState } from 'react';
 import { Errors } from '../../utils/Errors';
 
 // Services
-import { getAllExpensesByRangeDates } from '../../services/expenses';
+import { getAllExpensesByRangeDates } from '../../services/categories';
 
 // Utils
 import { DateFormat, NumberFormat, cutText } from '../../utils/Helpers';

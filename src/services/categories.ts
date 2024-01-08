@@ -1,5 +1,5 @@
 import axios from '../plugins/axiosConfig'
-import { CreateCategoryPayload, EditCategoryPayload, GetAllSubcategoriesExpensesByMonthResponse, GetCategoriesParams, GetCategoriesResponse, GetCategoryTypeIncomeResponse } from "../shared/types/services";
+import { AllExpensesByRangeDatesResponse, CreateCategoryPayload, EditCategoryPayload, GetAllSubcategoriesExpensesByMonthResponse, GetCategoriesParams, GetCategoriesResponse, GetCategoryTypeIncomeResponse, GetCategoryWithSubcategoriesResponse } from "../shared/types/services";
 import { AxiosResponse } from "axios";
 const PREFIX = "categories";
 export const getCategories = async (params: GetCategoriesParams): Promise<AxiosResponse<GetCategoriesResponse>> => {
@@ -14,13 +14,9 @@ export const CreateCategory = async (payload: CreateCategoryPayload) => {
 export const EditCategory = async (idCategory: number, payload: EditCategoryPayload) => {
     return axios.put(`${PREFIX}/${idCategory}`, payload);
 };
-// export const getCategoryWithSubcategories = async (month: string) => { // deprecated
-//     return axios.get(`${PREFIX}/subcategories`, {
-//         params: {
-//             date: month,
-//         },
-//     });
-// };
+export const getCategoryWithSubcategories = async (): Promise<AxiosResponse<GetCategoryWithSubcategoriesResponse>> => { // deprecated
+    return axios.get(`${PREFIX}/subcategories`);
+};
 export const deleteCategory = async (idCategory: number) => {
     return axios.delete(`${PREFIX}/${idCategory}`);
 };
@@ -46,4 +42,14 @@ export const getAllSubcategoriesExpensesByMonth = async (month: string): Promise
         },
     });
 };
+
+
+export const getAllExpensesByRangeDates = async (startDate: string, endDate: string): Promise<AxiosResponse<AllExpensesByRangeDatesResponse>> => {
+    return axios.get(`${PREFIX}/expenses/month`, {
+        params: {
+            startDate,
+            endDate
+        },
+    });
+}
 

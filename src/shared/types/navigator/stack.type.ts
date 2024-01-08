@@ -86,4 +86,5 @@ export type SettingsStackParamList = {
   createLoan: undefined;
   exportData: undefined;
   advancedSearch: undefined;
+  virtualBudget: undefined;
 };

@@ -47,6 +47,9 @@ export default function SettingsScreen ({navigation}) {
   const sendAdvancedSearchScreen= () => {
     navigation.navigate("advancedSearch");
   };
+  const sendVirtualBudgetScreen= () => {
+    navigation.navigate("virtualBudget");
+  };
   return (
     <View style={styles.container}>
       <View>
@@ -57,6 +60,7 @@ export default function SettingsScreen ({navigation}) {
           <MyButton onPress={sendCreateLoanScreen} title="Crear préstamo" />
           <MyButton onPress={sendExportExpenseScreen} title="Expotar datos" />
           <MyButton onPress={sendAdvancedSearchScreen} title="Busqueda Avanzada" />
+          <MyButton onPress={sendVirtualBudgetScreen} title="Presupuesto virtual" />
         </View>
       {/* <Text>Configuraciones</Text> */}
       {/* <EditUserScreen navigation={navigation}></EditUserScreen> */}

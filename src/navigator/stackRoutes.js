@@ -36,6 +36,10 @@ import ExportExpenseScreen from '~/Screens/Expenses/ExportExpenseScreen';
 import CreateLoanScreen from '~/Screens/Loans/CreateLoanScreen';
 
 import AdvancedSearchScreen from  '../Screens/common/advance-search';
+
+// budgets
+import  VirtualBudgetScreen from '../Screens/Budgest/VirtualBudgetScreen';
+
 export default {
   LoginScreen,
   MainScreen,
@@ -69,5 +73,7 @@ export default {
   ExportExpenseScreen,
   AdvancedSearchScreen,
   // loans
-  CreateLoanScreen
+  CreateLoanScreen,
+  // budgets
+  VirtualBudgetScreen
 }

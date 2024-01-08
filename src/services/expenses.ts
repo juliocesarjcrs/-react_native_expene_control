@@ -40,16 +40,6 @@ export const editExpense = async (idExpense: number, payload: EditExpensePayload
   return axios.put(`${PREFIX}/${idExpense}`, payload);
 }
 
-
-export const getAllExpensesByRangeDates = async (startDate: string, endDate: string): Promise<AxiosResponse<AllExpensesByRangeDatesResponse>> => {
-  return axios.get(`categories/expenses/month`, {
-    params: {
-      startDate,
-      endDate
-    },
-  });
-}
-
 export const findExpensesBySubcategories = async (params: ExpenseSearchOptionsQuery): Promise<AxiosResponse<FindExpensesBySubcategoriesResponse>> => {
   return axios.get(`${PREFIX}/by-subcategories`, { params });
 }

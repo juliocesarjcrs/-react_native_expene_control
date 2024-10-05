@@ -1,15 +1,26 @@
 import React, { useEffect, useState } from "react";
 import { Keyboard, StyleSheet, Text, View } from "react-native";
-import { useForm, Controller } from "react-hook-form";
-import MyLoading from "~/components/loading/MyLoading";
-import { FAB, Input } from "react-native-elements";
-import { CreateLoan, GetLoans } from "../../services/loans";
-import { Errors } from "../../utils/Errors";
-import FlatListLoans from "./components/FlatListLoans";
 import { RadioButton } from "react-native-paper";
+import { useForm, Controller } from "react-hook-form";
+import { useMutation, useQuery } from "@apollo/client";
+import { FAB, Input } from "react-native-elements";
+
+// Graphql
+import { GET_LOANS } from "../../graphql/queries";
+import { CREATE_LOAN } from "../../graphql/mutations";
+
+// Components
+import FlatListLoans from "./components/FlatListLoans";
+import MyLoading from "../../components/loading/MyLoading";
+
+
+// Utils
+import { Errors } from "../../utils/Errors";
+
+// Types
+import { CreateLoanPayload, GetLoanResult } from "../../shared/types/graphql";
 export default function CreateLoanScreen() {
-    const [loans, setLoans] = useState([]);
-    const [loading, setLoading] = useState(false);
+    const [isSubmitting, setIsSubmitting] = useState(false);
     const [type, setType] = useState(0);
     const {
         handleSubmit,
@@ -18,65 +29,59 @@ export default function CreateLoanScreen() {
 
         formState: { errors },
     } = useForm({
-        defaultValues: { loan: "", commentary: "" },
+        defaultValues: { amount: "", commentary: "" },
     });
+    const { loading, error, data, refetch } = useQuery<GetLoanResult>(GET_LOANS);
+    const [createLoanMutation] = useMutation(CREATE_LOAN);
 
     useEffect(() => {
-        fetchLoans();
-    }, []);
-
-    const fetchLoans = async () => {
-        try {
-            setLoading(true);
-            const { data } = await GetLoans();
-            setLoans(data);
-            setLoading(false);
-        } catch (error) {
-            setLoading(false);
+        if (error) {
             Errors(error);
         }
-    };
+    }, [error]);
 
-    const onSubmit = async (payload) => {
+    const onSubmit = async (payload:  Record<string, string>) => {
         try {
-            setLoading(true);
-            const dataTransform = {
-                ...payload,
-                id: loans.length + 1,
-                date: new Date(),
-                createdAt: new Date(),
-                type,
-            };
-            await CreateLoan(dataTransform);
-            fetchLoans();
-            setLoading(false);
+            setIsSubmitting(true);
+            const variables = {
+                amount: Number(payload.amount),
+                commentary: payload.commentary,
+                type
+            }
+            console.log('varai', variables)
+            const { data } = await createLoanMutation({
+                variables
+            });
+
+            refetch();
             reset();
             Keyboard.dismiss();
         } catch (error) {
-            setLoading(false);
             Errors(error);
+        } finally {
+            setIsSubmitting(false);
         }
     };
-    const updateList = () => {
-        fetchLoans();
+    const updateList = async () => {
+        await refetch();
     };
     return (
         <View style={styles.container}>
             <RadioButton.Group
-                onValueChange={(newValue) => setType(newValue)}
-                value={type}
+                onValueChange={(newValue) => setType(Number(newValue))}
+                value={String(type)}
             >
                 <View>
                     <Text>Tipo préstamo</Text>
-                    <RadioButton value={0} />
+                    <RadioButton value="0" />
                 </View>
                 <View>
                     <Text>Tipo desface</Text>
-                    <RadioButton value={1} />
+                    <RadioButton value="1" />
                 </View>
             </RadioButton.Group>
             <Controller
-                name="loan"
+                name="amount"
                 control={control}
                 rules={{
                     required: {
@@ -89,6 +94,7 @@ export default function CreateLoanScreen() {
                         message:
                             "El préstamo no puede superar el valor de 99.999.999 ",
                     },
+                    validate: (value) => !isNaN(Number(value)) || "Debe ser un número válido"
                 }}
                 render={({ field: { onChange, value } }) => (
                     <Input
@@ -97,7 +103,7 @@ export default function CreateLoanScreen() {
                         placeholder="Ej: 20000"
                         onChangeText={(text) => onChange(text)}
                         errorStyle={{ color: "red" }}
-                        errorMessage={errors?.loan?.message}
+                        errorMessage={errors?.amount?.message}
                         keyboardType="numeric"
                     />
                 )}
@@ -128,7 +134,7 @@ export default function CreateLoanScreen() {
                 defaultValue=""
             />
 
-            {loading ? (
+            {loading || isSubmitting  ? (
                 <MyLoading />
             ) : (
                 <FAB
@@ -136,7 +142,7 @@ export default function CreateLoanScreen() {
                     onPress={handleSubmit(onSubmit)}
                 />
             )}
-            <FlatListLoans loans={loans} updateList={updateList} />
+            <FlatListLoans loans={data?.loans} updateList={updateList} />
         </View>
     );
 }

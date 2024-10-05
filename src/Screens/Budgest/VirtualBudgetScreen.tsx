@@ -1,5 +1,5 @@
-import { ScrollView, StyleSheet, Text, TextInput, View, TouchableWithoutFeedback, KeyboardAvoidingView, Platform } from 'react-native';
-import { BIG } from '../../styles/fonts';
+import { ScrollView, StyleSheet, Text, TextInput, View, TouchableWithoutFeedback } from 'react-native';
+
 import { StackNavigationProp } from '@react-navigation/stack';
 import { useEffect, useState } from 'react';
 import { Errors } from '../../utils/Errors';
@@ -10,14 +10,13 @@ import { createBudgets, getBudgets } from '../../services/budgets';
 
 // Components
 import MyLoading from '../../components/loading/MyLoading';
-import MyButton from '../../components/MyButton';
 
 // Types
 import { SettingsStackParamList } from '../../shared/types';
 import { Category, CreateBudgetPayload } from '../../shared/types/services';
 
 // Utils
-import { DateFormat, NumberFormat, cutText } from '../../utils/Helpers';
+import { NumberFormat } from '../../utils/Helpers';
 import ShowToast from '../../components/toast/ShowToast';
 import YearCitySelector from './components/YearCytySelector';
 import { FAB } from 'react-native-elements';

@@ -74,7 +74,7 @@ export default function LastExpensesScreen({ navigation } : LastExpenseScreenPro
             if (data.data.length <= 0) {
                 setStopeFetch(true);
             }
-            let concatPages = handlerDataSearch(
+            const concatPages = handlerDataSearch(
                 data.data,
                 lastExpenses,
                 params.query,

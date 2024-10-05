@@ -5,9 +5,12 @@
     "android": "expo run:android",
     "ios": "expo run:ios",
     "web": "expo start --web",
-    "eject": "expo eject"
+    "eject": "expo eject",
+    "clear:cache": "expo start -c",
+    "lint": "expo lint"
   },
   "dependencies": {
+    "@apollo/client": "^3.11.8",
     "@react-native-async-storage/async-storage": "1.23.1",
     "@react-native-community/datetimepicker": "8.0.1",
     "@react-navigation/bottom-tabs": "^6.5.3",
@@ -15,7 +18,7 @@
     "@react-navigation/native": "^6.1.2",
     "@react-navigation/stack": "^6.3.11",
     "@reduxjs/toolkit": "^1.9.1",
-    "axios": "^1.2.2",
+    "axios": "^1.7.7",
     "dayjs": "^1.11.7",
     "expo": "~51.0.31",
     "expo-build-properties": "~0.12.5",
@@ -23,6 +26,7 @@
     "expo-image-picker": "~15.0.7",
     "expo-splash-screen": "~0.27.5",
     "expo-status-bar": "~1.12.1",
+    "graphql": "^15.8.0",
     "intl": "^1.2.5",
     "react": "18.2.0",
     "react-dom": "18.2.0",
@@ -50,9 +54,14 @@
   },
   "devDependencies": {
     "@babel/core": "^7.24.0",
+    "@eslint/js": "^9.11.1",
     "babel-plugin-root-import": "^6.6.0",
     "babel-plugin-transform-inline-environment-variables": "^0.4.3",
-    "react-native-dotenv": "^3.4.8"
+    "eslint": "^9.11.1",
+    "eslint-plugin-react": "^7.37.1",
+    "globals": "^15.10.0",
+    "react-native-dotenv": "^3.4.8",
+    "typescript-eslint": "^8.8.0"
   },
   "private": true,
   "name": "react_native_expene_control",

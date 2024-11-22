@@ -31,7 +31,7 @@ export default function GraphIncomesByCategory({ navigation }: GraphIncomesByCat
   const [title, setTitle] = useState(['']);
   const [loading, setLoading] = useState(false);
   const screenWidth = Dimensions.get('window').width;
-  let [tooltipPos, setTooltipPos] = useState({
+  const [tooltipPos, setTooltipPos] = useState({
     x: 0,
     y: 0,
     visible: false,
@@ -166,22 +166,21 @@ export default function GraphIncomesByCategory({ navigation }: GraphIncomesByCat
             ) : null;
           }}
           onDataPointClick={(data) => {
-            let isSamePoint = tooltipPos.x === data.x && tooltipPos.y === data.y;
-
-            isSamePoint
-              ? setTooltipPos((previousState) => {
-                  return {
-                    ...previousState,
-                    value: data.value,
-                    visible: !previousState.visible
-                  };
-                })
-              : setTooltipPos({
-                  x: data.x,
-                  value: data.value,
-                  y: data.y,
-                  visible: true
-                });
+            const isSamePoint = tooltipPos.x === data.x && tooltipPos.y === data.y;
+            if (isSamePoint) {
+              setTooltipPos((previousState) => ({
+                ...previousState,
+                value: data.value,
+                visible: !previousState.visible
+              }));
+            } else {
+              setTooltipPos({
+                x: data.x,
+                value: data.value,
+                y: data.y,
+                visible: true
+              });
+            }
           }}
         />
       )}

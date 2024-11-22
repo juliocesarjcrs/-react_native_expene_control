@@ -7,8 +7,3 @@ export type  Loan = {
   loan: string
 }
 
-
-export type GetLoansResponse = {
-  data: Loan[];
-}
-// export type PayloadCreateLoan = Omit<Loan, 'data'>;

@@ -18,7 +18,7 @@ import MyLoading from "../../components/loading/MyLoading";
 import { Errors } from "../../utils/Errors";
 
 // Types
-import { CreateLoanPayload, GetLoanResult } from "../../shared/types/graphql";
+import { GetLoanResult } from "../../shared/types/graphql";
 export default function CreateLoanScreen() {
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [type, setType] = useState(0);

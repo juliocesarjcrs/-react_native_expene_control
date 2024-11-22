@@ -12,11 +12,12 @@ import { Errors } from '../../utils/Errors';
 import { useSelector } from 'react-redux';
 import { LineChart } from 'react-native-chart-kit';
 import { FAB, Icon } from 'react-native-elements';
+import { useQuery } from '@apollo/client';
 
 import CheckBoxOptions from '../../components/checbox/CheckBoxOptions';
 import { getSavingsByUser, getUpdateAllSavingsByUser } from '../../services/savings';
 import { ICON } from '../../styles/colors';
-import { GetLoans } from '../../services/loans';
+
 import { StackNavigationProp } from '@react-navigation/stack';
 
 import { BIG, SMALL } from '../../styles/fonts';
@@ -24,6 +25,11 @@ import { BIG, SMALL } from '../../styles/fonts';
 import { FinancialRecord } from '../../shared/types/services';
 import { RootState } from '../../shared/types/reducers';
 import { BalanceStackParamList } from '../../shared/types';
+import { GetLoanResult } from '../../shared/types/graphql';
+
+// Graphql
+import { GET_LOANS } from '../../graphql/queries';
+
 // Components
 import MyLoading from '../../components/loading/MyLoading';
 import MyTable from '../../components/tables/MyTable';
@@ -38,7 +44,7 @@ interface CashFlowScreenProps {
 
 export default function CashFlowScreen({ navigation }: CashFlowScreenProps) {
   const month = useSelector((state: RootState) => state.date.month);
-  const year = parseInt(month.substring(0, 4));
+  // const year = parseInt(month.substring(0, 4));
   const [totalExpenses, setTotalExpenses] = useState(0);
   const [totalIncomes, setTotalIncomes] = useState(0);
   const [totalSavings, setTotalSavings] = useState(0);
@@ -49,7 +55,7 @@ export default function CashFlowScreen({ navigation }: CashFlowScreenProps) {
   const [previousAverageExpenses, setPreviousAverageExpenses] = useState(0);
   const [averageIncomes, setAverageIncomes] = useState(0);
   const [previousAverageIncomes, setPreviousAverageIncomes] = useState(0);
-  const [sumSavings, setSumSavings] = useState(0);
+  // const [sumSavings, setSumSavings] = useState(0);
   const [sumPreviousSavings, setSumPreviousSavings] = useState(0);
   const [numMonthsGraph, setNumMonthsGraph] = useState(4);
   const [numMonthsQuery, setNumMonthsQuery] = useState(4);
@@ -57,17 +63,29 @@ export default function CashFlowScreen({ navigation }: CashFlowScreenProps) {
   const [totalSavingsWithLoansHistory, setTotalSavingsWithLoansHistory] = useState(0);
 
   const [labels, setLabels] = useState(['']);
-
   const [loading, setLoading] = useState(false);
   // decorator graph
-  let [tooltipPos, setTooltipPos] = useState({
+  const [tooltipPos, setTooltipPos] = useState({
     x: 0,
     y: 0,
     visible: false,
     value: 0
   });
-  // Table component
   const [tableData, setTableData] = useState<string[][]>([]);
+
+  const { loading: loadingGraphql, error, data } = useQuery<GetLoanResult>(GET_LOANS);
+
+  useEffect(() => {
+    if (!loadingGraphql && !error && data) {
+      fetchSavingsByUser();
+    }
+  }, [loadingGraphql, error, data]);
+
+  useEffect(() => {
+    if (error) {
+      Errors(error);
+    }
+  }, [error]);
 
   useEffect(() => {
     fetchSavingsByUser();
@@ -90,16 +108,16 @@ export default function CashFlowScreen({ navigation }: CashFlowScreenProps) {
       const sumPercentSaving = allDataSavings.reduce((acu, val) => {
         return acu + (val.income > 0 ? (val.saving * 100) / val.income : 0);
       }, 0);
-      let meanSavingsByNumMonths = allDataSavings.length > 0 ? Math.round(sumPercentSaving / allDataSavings.length) : 0;
-      let dataTable = allDataSavings.map((e) => {
-        let meanSaaving = e.income > 0 ? Math.round((e.saving * 100) / e.income) : 0;
+      const meanSavingsByNumMonths = allDataSavings.length > 0 ? Math.round(sumPercentSaving / allDataSavings.length) : 0;
+      const dataTable = allDataSavings.map((e) => {
+      const meanSaaving = e.income > 0 ? Math.round((e.saving * 100) / e.income) : 0;
         return [`${DateFormat(e.date, 'MMMM YYYY')}`, `${meanSaaving} %`, `${NumberFormat(e.saving)}`];
       });
       // mean saving
       const sumSaving = allDataSavings.reduce((acu, val) => {
         return acu + val.saving;
       }, 0);
-      let meanSavingsValByNumMonths = allDataSavings.length > 0 ? sumSaving / allDataSavings.length : 0;
+      const meanSavingsValByNumMonths = allDataSavings.length > 0 ? sumSaving / allDataSavings.length : 0;
 
       dataTable.push(['Promedio', `${meanSavingsByNumMonths} %`, `${NumberFormat(meanSavingsValByNumMonths)}`]);
       setTableData(dataTable);
@@ -126,13 +144,13 @@ export default function CashFlowScreen({ navigation }: CashFlowScreenProps) {
       setAverageIncomes(calculateAverage(filterIncomes));
       setPreviousAverageIncomes(calculateAverage(previosIncomes));
       // savings
-      const acuSavings = filterSavings.reduce((acu, val) => {
-        return acu + val;
-      }, 0);
+      // const acuSavings = filterSavings.reduce((acu, val) => {
+      //   return acu + val;
+      // }, 0);
       const acuPreviosSavings = previosSavings.reduce((acu, val) => {
         return acu + val;
       }, 0);
-      setSumSavings(acuSavings);
+      // setSumSavings(acuSavings);
       setDataSavings(filterSavings);
       setSumPreviousSavings(acuPreviosSavings);
       // historico savings
@@ -148,19 +166,20 @@ export default function CashFlowScreen({ navigation }: CashFlowScreenProps) {
       return acu + val;
     }, 0);
     totalHistory = acuHistorySavings;
-    const { data } = await GetLoans();
-    const filter = data.find((e) => e.type === 1);
-    if (filter) {
-      totalHistory += parseInt(filter.loan);
-    }
-    const filterLoans = data.filter((e) => e.type !== 1);
+    if (data){
+      const filter = data.loans.find((e) => e.type === 1);
+      if (filter) {
+        totalHistory += filter.amount;
+      }
+      const filterLoans = data.loans.filter((e) => e.type !== 1);
+      const acuLoans = filterLoans.reduce((acu, val) => {
+        return acu + val.amount;
+      }, 0);
+      setTotalSavingsWithLoansHistory(totalHistory);
+      totalHistory -= acuLoans;
+      setTotalSavingsHistory(totalHistory);
 
-    const acuLoans = filterLoans.reduce((acu, val) => {
-      return acu + parseInt(val.loan);
-    }, 0);
-    setTotalSavingsWithLoansHistory(totalHistory);
-    totalHistory -= acuLoans;
-    setTotalSavingsHistory(totalHistory);
+    }
   };
   const updateAllSavingsByUser = async () => {
     try {
@@ -216,7 +235,7 @@ export default function CashFlowScreen({ navigation }: CashFlowScreenProps) {
         >
           Balance del mes {DateFormat(month, 'MMMM')}
         </Text>
-        {loading ? (
+        {loading || loadingGraphql ? (
           <MyLoading />
         ) : (
           <View>
@@ -287,17 +306,17 @@ export default function CashFlowScreen({ navigation }: CashFlowScreenProps) {
               {
                 data: dataExpenses,
                 strokeWidth: 2,
-                color: (opacity = 1) => `rgba(220, 20, 60,1)`
+                color: (opacity = 1) => `rgba(220, 20, 60, ${opacity})`
               },
               {
                 data: dataIncomes,
                 strokeWidth: 2,
-                color: (opacity = 1) => `rgba(0, 100, 0, 1)`
+                color: (opacity = 1) => `rgba(0, 100, 0, ${opacity})`
               },
               {
                 data: dataSavings,
                 strokeWidth: 2,
-                color: (opacity = 1) => `rgba(135, 206, 250, 1)`
+                color: (opacity = 1) => `rgba(135, 206, 250, ${opacity})`
               }
             ],
             legend: ['Gastos', 'Ingresos', 'Ahorros']
@@ -344,22 +363,21 @@ export default function CashFlowScreen({ navigation }: CashFlowScreenProps) {
             ) : null;
           }}
           onDataPointClick={(data) => {
-            let isSamePoint = tooltipPos.x === data.x && tooltipPos.y === data.y;
-
-            isSamePoint
-              ? setTooltipPos((previousState) => {
-                  return {
-                    ...previousState,
-                    value: data.value,
-                    visible: !previousState.visible
-                  };
-                })
-              : setTooltipPos({
-                  x: data.x,
-                  value: data.value,
-                  y: data.y,
-                  visible: true
-                });
+            const isSamePoint = tooltipPos.x === data.x && tooltipPos.y === data.y;
+            if (isSamePoint) {
+              setTooltipPos((previousState) => ({
+                ...previousState,
+                value: data.value,
+                visible: !previousState.visible
+              }));
+            } else {
+              setTooltipPos({
+                x: data.x,
+                value: data.value,
+                y: data.y,
+                visible: true
+              });
+            }
           }}
           verticalLabelRotation={40}
         />

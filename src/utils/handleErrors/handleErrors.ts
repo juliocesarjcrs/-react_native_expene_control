@@ -1,5 +1,5 @@
 import { AxiosError } from "axios";
-import ShowToast from "../../components/toast/ShowToast";
+import ShowToast from '../../utils/toastUtils';
 export type ApiError = {
   error: string;
 }

@@ -10,7 +10,7 @@ import { EditSubcategory } from '../../services/subcategories';
 
 // Components
 import MyLoading from '../../components/loading/MyLoading';
-import ShowToast from '../../components/toast/ShowToast';
+import ShowToast from '../../utils/toastUtils';
 import MyButton from '../../components/MyButton';
 
 // Types

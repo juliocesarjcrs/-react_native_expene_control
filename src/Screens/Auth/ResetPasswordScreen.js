@@ -7,7 +7,7 @@ import MyLoading from "~/components/loading/MyLoading";
 import MyButton from "~/components/MyButton";
 import { passwordRecovery } from "../../services/auth";
 import { useSelector } from "react-redux";
-import ShowToast from '../../components/toast/ShowToast';
+import ShowToast from '../../utils/toastUtils';
 
 export default function ResetPasswordScreen({navigation}) {
     const {

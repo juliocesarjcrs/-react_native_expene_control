@@ -54,3 +54,10 @@ export type CateroryFormatIncome = {
 export type GetCategoryWithSubcategoriesResponse = {
   data: Category[];
 }
+
+export type CategoryWithoutTypeAndSubcategories = Omit<Category, 'type' | 'subcategories'>;
+
+export type GetAllExpensesByMonthResponse = {
+  data: CategoryWithoutTypeAndSubcategories[];
+  total: number;
+};

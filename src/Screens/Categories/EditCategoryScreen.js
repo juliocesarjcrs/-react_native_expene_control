@@ -6,7 +6,7 @@ import { Input } from "react-native-elements";
 import { EditCategory, getCategory } from "../../services/categories";
 import MyButton from "~/components/MyButton";
 import { Errors } from "../../utils/Errors";
-import ShowToast from "../../components/toast/ShowToast";
+import ShowToast from '../../utils/toastUtils';
 import MyLoading from "~/components/loading/MyLoading";
 import ModalIcon from "../../components/modal/ModalIcon";
 

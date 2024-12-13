@@ -5,7 +5,7 @@ import MyButton from "~/components/MyButton";
 import { Input } from "react-native-elements";
 import {Errors} from '../../utils/Errors';
 import {getUsersList, createUser} from '../../services/users';
-import ShowToast from '../../components/toast/ShowToast';
+import ShowToast from '../../utils/toastUtils';
 import {MEDIUM} from '~/styles/fonts';
 
 export default function CreateUserScreen ({navigation}) {

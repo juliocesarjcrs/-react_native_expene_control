@@ -1,7 +1,7 @@
+import React, { useEffect, useState } from 'react';
 import { ScrollView, StyleSheet, Text, TextInput, View, TouchableWithoutFeedback } from 'react-native';
 
 import { StackNavigationProp } from '@react-navigation/stack';
-import { useEffect, useState } from 'react';
 import { Errors } from '../../utils/Errors';
 
 // Services
@@ -17,7 +17,7 @@ import { Category, CreateBudgetPayload } from '../../shared/types/services';
 
 // Utils
 import { NumberFormat } from '../../utils/Helpers';
-import ShowToast from '../../components/toast/ShowToast';
+import ShowToast from '../../utils/toastUtils';
 import YearCitySelector from './components/YearCytySelector';
 import { FAB } from 'react-native-elements';
 
@@ -32,7 +32,7 @@ export default function VirtualBudgetScreen({ navigation }: VirtualBudgetScreenP
 
   const [categories, setCategories] = useState<Category[]>([]);
   const [budgetValues, setBudgetValues] = useState<CreateBudgetPayload[]>([]);
-  const [selectedYear, setSelectedYear] = useState(2024);
+  const [selectedYear, setSelectedYear] = useState(2025);
   const [selectedCity, setSelectedCity] = useState('Pereira');
 
   useEffect(() => {

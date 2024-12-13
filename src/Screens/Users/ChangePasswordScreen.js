@@ -6,7 +6,7 @@ import { Input } from "react-native-elements";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { changePassword } from "../../services/users";
 import { Errors } from "../../utils/Errors";
-import ShowToast from "../../components/toast/ShowToast";
+import ShowToast from '../../utils/toastUtils';
 
 export default function ChangePasswordScreen({ navigation }) {
 

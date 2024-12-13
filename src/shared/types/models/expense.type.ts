@@ -8,3 +8,10 @@ export type ExpenseModel = {
   subcategoryId: number;
 
 }
+
+export type ExtendedExpenseModel = ExpenseModel & {
+  category: string;
+  dateFormat: string;
+  iconCategory: string;
+  subcategory: string;
+};

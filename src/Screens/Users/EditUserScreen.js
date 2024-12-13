@@ -6,12 +6,12 @@ import { Input } from "react-native-elements";
 import {Errors} from '../../utils/Errors';
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import {editUser, getUser} from '../../services/users';
-import ShowToast from '../../components/toast/ShowToast';
+import ShowToast from '../../utils/toastUtils';
 import { useDispatch } from "react-redux";
-import { setUserAction } from "~/actions/authActions";
 import * as ImagePicker from 'expo-image-picker';
 import {getUrlSignedAws} from '../../services/files';
 import MyLoading from "~/components/loading/MyLoading";
+import {setUser} from '../../features/auth/authSlice';
 export default function EditUserScreen ({navigation}) {
 
   const EMAIL_REGEX =
@@ -90,7 +90,7 @@ export default function EditUserScreen ({navigation}) {
       setLoading(true);
       const { data } = await editUser(idUser, formData);
       setLoading(false);
-      dispatch(setUserAction(data));
+      dispatch(setUser(data));
       ShowToast();
     } catch (error) {
       setLoading(false);

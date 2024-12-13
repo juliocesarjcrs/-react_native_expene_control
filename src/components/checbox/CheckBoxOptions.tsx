@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useRef } from "react";
+import React, { useEffect, useState } from "react";
 
 import { View, StyleSheet, TouchableOpacity } from "react-native";
 import { CheckBox, Icon } from "react-native-elements";
@@ -7,10 +7,26 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { Errors } from "../../utils/Errors";
 import { DateFormat, GetInitialMonth } from "../../utils/Helpers";
 import {ICON} from '../../styles/colors';
-const CheckBoxOptions = ({navigation, updateNum}) => {
-    const [numMonths, setNumMonths] = useState(3);
+import { StackNavigationProp } from "@react-navigation/stack";
+
+type CheckboxOption = {
+    id: number;
+    title: string;
+    checked: boolean;
+    numMonths: number;
+  }
+interface CheckBoxOptionsProps<T extends StackNavigationProp<any>> {
+    navigation: T;
+    updateNum: (numMonths: number) => void;
+  }
+  function CheckBoxOptions<T extends StackNavigationProp<any>>({
+    navigation,
+    updateNum,
+  }: CheckBoxOptionsProps<T>) {
+
+    // const [numMonths, setNumMonths] = useState(3);
     const [initialMonth, setInitialMonth] = useState(0);
-    const [initialDateMonth, setInitialDateMonth] = useState(0);
+    const [initialDateMonth, setInitialDateMonth] = useState<string>('');
 
     useEffect(() => {
         fetchUserLogued();
@@ -21,11 +37,14 @@ const CheckBoxOptions = ({navigation, updateNum}) => {
     const fetchUserLogued = async () => {
         try {
             const jsonValue = await AsyncStorage.getItem("user");
+            if(!jsonValue){
+                return
+            }
             const user = jsonValue != null ? JSON.parse(jsonValue) : null;
-            let tempInitialMonth = GetInitialMonth(user.createdAt, 1);
+            const tempInitialMonth = GetInitialMonth(user.createdAt, 1);
             setInitialMonth(tempInitialMonth);
             setInitialDateMonth(user.createdAt);
-            let copyCheckboxes = checkboxes;
+            const copyCheckboxes = checkboxes;
             copyCheckboxes[3].numMonths = tempInitialMonth;
             copyCheckboxes[3].title = `Hace(${tempInitialMonth}) ${DateFormat(
                 user.createdAt,
@@ -37,7 +56,7 @@ const CheckBoxOptions = ({navigation, updateNum}) => {
         }
     };
 
-    const [checkboxes, setCheckboxes] = useState([
+    const [checkboxes, setCheckboxes] = useState<CheckboxOption[]>([
         {
             id: 1,
             title: "Últimos 3 meses",
@@ -66,7 +85,7 @@ const CheckBoxOptions = ({navigation, updateNum}) => {
             numMonths: initialMonth,
         },
     ]);
-    const toggleCheckbox = (id, index) => {
+    const toggleCheckbox = ( index: number) => {
         let checkboxData = [...checkboxes];
         const oldValue = checkboxData[index].checked;
         checkboxData = checkboxData.map((e) => {
@@ -76,7 +95,7 @@ const CheckBoxOptions = ({navigation, updateNum}) => {
         setCheckboxes(checkboxData);
         if (!oldValue) {
             const newNumMonths = checkboxData[index].numMonths;
-            setNumMonths(newNumMonths);
+            // setNumMonths(newNumMonths);
             updateNum(newNumMonths)
         }
     };
@@ -106,7 +125,7 @@ const CheckBoxOptions = ({navigation, updateNum}) => {
                                 checkedIcon="check-box"
                                 uncheckedIcon="check-box-outline-blank"
                                 checked={cb.checked}
-                                onPress={() => toggleCheckbox(cb.id, index)}
+                                onPress={() => toggleCheckbox(index)}
                             />
                         );
                     })}

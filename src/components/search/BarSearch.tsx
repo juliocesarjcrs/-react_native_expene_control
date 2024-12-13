@@ -2,34 +2,35 @@ import React, { useState } from 'react';
 import { View, TextInput, StyleSheet } from 'react-native';
 import { FAB } from 'react-native-elements';
 import { useDispatch } from 'react-redux';
-import { setQueryAction } from '../../actions/SearchActions';
-
+import { setQuery } from '../../features/searchExpenses/searchExpensesSlice';
+// Types
+import { AppDispatch } from '../../shared/types/reducers/root-state.type';
 interface BarSearchProps {
   shouldDispatch?: boolean;
   onQueryChange?: (query: string) => void;
 }
 
 export const BarSearch: React.FC<BarSearchProps> = ({ shouldDispatch = true, onQueryChange }) => {
-  const [query, setQuery] = useState('');
-  const dispatch = useDispatch();
+  const [queryState, setQueryState] = useState('');
+  const dispatch: AppDispatch = useDispatch();
 
   const handleSearch = async (text: string) => {
-    setQuery(text);
+    setQueryState(text);
     //if (onQueryChange) {
     //onQueryChange(text);
     // }
   };
   const handleSubmit = () => {
     if (shouldDispatch) {
-      dispatch(setQueryAction(query));
+      dispatch(setQuery(queryState));
     } else if (onQueryChange) {
-      onQueryChange(query);
+      onQueryChange(queryState);
     }
   };
 
   return (
     <View style={styles.content}>
-      <TextInput style={styles.input} onChangeText={handleSearch} value={query} placeholder="Buscador ..." />
+      <TextInput style={styles.input} onChangeText={handleSearch} value={queryState} placeholder="Buscador ..." />
       <FAB title="Buscar" onPress={handleSubmit} />
     </View>
   );

@@ -12,7 +12,7 @@ import { editIncome } from '../../services/incomes';
 import { DateSelector } from '../../components/datePicker';
 import SelectOnlyCategory from '../../components/dropDown/SelectOnlyCategory';
 import MyLoading from '../../components/loading/MyLoading';
-import ShowToast from '../../components/toast/ShowToast';
+import ShowToast from '../../utils/toastUtils';
 
 // Types
 import { EditIncomePayload } from '../../shared/types/services/income-service.type';

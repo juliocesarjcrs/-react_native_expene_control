@@ -10,7 +10,7 @@ import { CreateIncome } from '../../services/incomes';
 // Components
 import MyLoading from '../../components/loading/MyLoading';
 import ErrorText from '../../components/ErrorText';
-import ShowToast from '../../components/toast/ShowToast';
+import ShowToast from '../../utils/toastUtils';
 
 // Types
 import { IncomeStackParamList } from '../../shared/types';

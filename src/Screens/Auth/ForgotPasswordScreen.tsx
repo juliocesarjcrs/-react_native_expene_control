@@ -8,14 +8,16 @@ import { forgotPassword } from '../../services/auth';
 import { StackNavigationProp } from '@react-navigation/stack';
 import { AuthStackParamList } from '../../shared/types';
 import { Errors } from '../../utils/Errors';
+import { setUser } from '../../features/auth/authSlice';
 
 // Components
 import MyLoading from '../../components/loading/MyLoading';
 import MyButton from '../../components/MyButton';
-import { setUserAction } from '../../actions/authActions';
+
 
 // Types
 import { ForgotPasswordPayload } from '../../shared/types/services';
+import { AppDispatch } from '../../shared/types/reducers/root-state.type';
 
 type ForgotPasswordScreenNavigationProp = StackNavigationProp<AuthStackParamList, 'forgotPassword'>;
 
@@ -36,13 +38,13 @@ export default function ForgotPasswordScreen({ navigation }: forgotPasswordProps
     defaultValues: { email: '' }
   });
   const [loading, setLoading] = useState(false);
-  const dispatch = useDispatch();
+  const dispatch: AppDispatch = useDispatch();
   const onSubmit = async (payload: ForgotPasswordPayload) => {
     try {
       setLoading(true);
       const { data } = await forgotPassword(payload);
       setLoading(false);
-      dispatch(setUserAction(data.user));
+      dispatch(setUser(data.user));
       navigation.navigate('checkCodePassword');
     } catch (error) {
       setLoading(false);

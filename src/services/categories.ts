@@ -1,5 +1,5 @@
 import axios from '../plugins/axiosConfig'
-import { AllExpensesByRangeDatesResponse, CreateCategoryPayload, EditCategoryPayload, GetAllSubcategoriesExpensesByMonthResponse, GetCategoriesParams, GetCategoriesResponse, GetCategoryTypeIncomeResponse, GetCategoryWithSubcategoriesResponse } from "../shared/types/services";
+import { AllExpensesByRangeDatesResponse, CreateCategoryPayload, EditCategoryPayload, GetAllExpensesByMonthResponse, GetAllSubcategoriesExpensesByMonthResponse, GetCategoriesParams, GetCategoriesResponse, GetCategoryTypeIncomeResponse, GetCategoryWithSubcategoriesResponse } from "../shared/types/services";
 import { AxiosResponse } from "axios";
 const PREFIX = "categories";
 export const getCategories = async (params: GetCategoriesParams): Promise<AxiosResponse<GetCategoriesResponse>> => {
@@ -27,7 +27,7 @@ export const getCategoryTypeIncome = async (month: string): Promise<AxiosRespons
         },
     });
 };
-export const getAllExpensesByMonth = async (month: string) => {
+export const getAllExpensesByMonth = async (month: string): Promise<AxiosResponse<GetAllExpensesByMonthResponse>> => {
     return axios.get(`${PREFIX}/expenses/month`, {
         params: {
             date: month,

@@ -9,10 +9,10 @@ import { Keyboard } from "react-native";
 import { Errors } from "../../utils/Errors";
 import { Input } from "react-native-elements";
 import MyLoading from "~/components/loading/MyLoading";
-import ShowToast from "../../components/toast/ShowToast";
 import { RadioButton } from "react-native-paper";
 
 import ModalIcon from '../../components/modal/ModalIcon';
+import ShowToast from '../../utils/toastUtils';
 
 export default function CreateCategoryScreen({ navigation }) {
   const [icon, setIcon] = useState("home");

@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { View, StyleSheet, Text } from "react-native";
+import { View, StyleSheet } from "react-native";
 import { useForm, Controller } from "react-hook-form";
 import { useDispatch } from "react-redux";
 import AsyncStorage from "@react-native-async-storage/async-storage";
@@ -7,7 +7,6 @@ import { Input } from "react-native-elements";
 import { useSelector } from "react-redux";
 
 import {Errors} from '../../utils/Errors';
-import ShowToast from '../../components/toast/ShowToast';
 import { StackNavigationProp } from "@react-navigation/stack";
 
 // Services
@@ -15,13 +14,17 @@ import { login } from "../../services/auth";
 
 // Types
 import { PayloadLogin } from "../../shared/types/services";
-import { setIsAuthAction, setUserAction } from "../../actions/authActions";
+// import { setIsAuthAction, setUserAction } from "../../actions/authActions";
+import { setIsAuth, setUser } from "../../features/auth/authSlice";
 
 // Components
 import MyLoading from "../../components/loading/MyLoading";
 import MyButton from "../../components/MyButton";
 import { AuthStackParamList } from "../../shared/types";
 import { RootState } from "../../shared/types/reducers";
+import { AppDispatch } from "../../shared/types/reducers/root-state.type";
+// Utils
+import ShowToast from "../../utils/toastUtils";
 
 interface LoginFormData {
     email: string;
@@ -50,7 +53,7 @@ export default function LoginScreen({ navigation } : LoginScreenProps)  {
         return state.auth.loadingAuth;
     });
     const [loading, setLoading] = useState(false);
-    const dispatch = useDispatch();
+    const dispatch: AppDispatch = useDispatch();
     const onSubmit = async (payload: PayloadLogin) => {
         try {
             setLoading(true);
@@ -60,8 +63,8 @@ export default function LoginScreen({ navigation } : LoginScreenProps)  {
             await AsyncStorage.setItem("access_token", data.access_token);
             const jsonValue = JSON.stringify(data.user);
             await AsyncStorage.setItem("user", jsonValue);
-            dispatch(setUserAction(data.user));
-            dispatch(setIsAuthAction(true));
+            dispatch(setUser(data.user));
+            dispatch(setIsAuth(true));
         } catch (error) {
             if (typeof error === 'string') {
                 ShowToast(`Error: ${error}`);
@@ -72,8 +75,8 @@ export default function LoginScreen({ navigation } : LoginScreenProps)  {
                 ShowToast('Unknown error');
             }
             setLoading(false);
-            dispatch(setUserAction(null));
-            dispatch(setIsAuthAction(false));
+            dispatch(setUser(null));
+            dispatch(setIsAuth(false));
             Errors(error);
         }
     };

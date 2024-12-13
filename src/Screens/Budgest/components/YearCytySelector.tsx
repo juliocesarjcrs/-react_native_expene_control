@@ -1,4 +1,3 @@
-// YearCitySelector.tsx
 import React, { useState } from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import DropDownPicker from 'react-native-dropdown-picker';
@@ -29,6 +28,7 @@ const YearCitySelector: React.FC<YearCitySelectorProps> = ({
           items={[
             { label: '2023', value: '2023' },
             { label: '2024', value: '2024' },
+            { label: '2025', value: '2025' },
             // Agrega más elementos según sea necesario
           ]}
           setOpen={setOpenYear}

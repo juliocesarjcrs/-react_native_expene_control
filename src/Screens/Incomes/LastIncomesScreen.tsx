@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { FlatList, SafeAreaView, StyleSheet, Text, View } from 'react-native';
 import { Errors } from '../../utils/Errors';
 import { getLastIncomesWithPaginate } from '../../services/incomes';
@@ -7,16 +7,17 @@ import RenderItem from './components/RenderItem';
 
 import { useDispatch, useSelector } from 'react-redux';
 import usePrevious from '../../customHooks/usePrevious';
-import { setQueryAction } from '../../actions/SearchActions';
 import { handlerDataSearch } from '../../utils/Helpers';
 import { IncomeModel, IncomeStackParamList } from '../../shared/types';
 import { StackNavigationProp } from '@react-navigation/stack';
+import { setQuery } from '../../features/searchExpenses/searchExpensesSlice';
 
 // Components
 import { BarSearch } from '../../components/search';
 import MyLoading from '../../components/loading/MyLoading';
 import { RootState } from '../../shared/types/reducers';
 import { RouteProp } from '@react-navigation/native';
+import { AppDispatch } from '../../shared/types/reducers/root-state.type';
 
 type LastIncomesScreenNavigationProp = StackNavigationProp<IncomeStackParamList, 'lastIncomes'>;
 type LastIncomesScreenRouteProp = RouteProp<IncomeStackParamList, 'lastIncomes'>;
@@ -34,13 +35,13 @@ export default function LastIncomesScreen({ navigation, route }: LastIncomesScre
   const [page, setPage] = useState(1);
   const [stopeFetch, setStopeFetch] = useState(false);
   // PARA EL BUSCADOR
-  const dispatch = useDispatch();
+  const dispatch: AppDispatch = useDispatch();
   const query = useSelector((state: RootState) => state.search.query);
   const prevQuery = usePrevious(query);
-  const [isMounted, setIsMounted] = useState(true);
+  // const [isMounted, setIsMounted] = useState(true);
   // Cuando viene de editar
   // console.log('1----------paramsEdictedIncome', paramsEdictedIncome);
-  const [edictedIncome, setEdictedIncome] = useState(null);
+  // const [edictedIncome, setEdictedIncome] = useState(null);
   if (paramsEdictedIncome) {
     // console.log('1------------ ',paramsEdictedIncome.id, route);
   } else {
@@ -72,7 +73,7 @@ export default function LastIncomesScreen({ navigation, route }: LastIncomesScre
   // };
   // la primera vez resetea el buscador
   useEffect(() => {
-    dispatch(setQueryAction(null));
+    dispatch(setQuery(null));
   }, []);
 
   useEffect(() => {

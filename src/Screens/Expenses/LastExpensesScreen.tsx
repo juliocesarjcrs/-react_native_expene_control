@@ -6,7 +6,7 @@ import { MUTED } from "../../styles/colors";
 import RenderItem from "./components/RenderItem";
 import { useDispatch, useSelector } from "react-redux";
 import usePrevious from "../../customHooks/usePrevious";
-import { setQueryAction } from "../../actions/SearchActions";
+import { setQuery } from "../../features/searchExpenses/searchExpensesSlice";
 
 // Services
 import { getLastExpensesWithPaginate } from "../../services/expenses";
@@ -16,13 +16,15 @@ import MyLoading from "../../components/loading/MyLoading";
 import { BarSearch } from "../../components/search";
 
 // Types
-import { ExpenseModel, ExpenseStackParamList } from "../../shared/types";
+import { ExpenseStackParamList } from "../../shared/types";
 import { RootState } from "../../shared/types/reducers";
 
 // Utils
 import { handlerDataSearch } from "../../utils/Helpers";
+import { ExtendedExpenseModel } from "../../shared/types/models/expense.type";
+import { AppDispatch } from "../../shared/types/reducers/root-state.type";
 
-type LastExpenseScreenNavigationProp = StackNavigationProp<ExpenseStackParamList, 'lastExpenses'>;
+export type LastExpenseScreenNavigationProp = StackNavigationProp<ExpenseStackParamList, 'lastExpenses'>;
 
 interface LastExpenseScreenProps {
   navigation: LastExpenseScreenNavigationProp;
@@ -30,18 +32,18 @@ interface LastExpenseScreenProps {
 
 
 export default function LastExpensesScreen({ navigation } : LastExpenseScreenProps) {
-    const [lastExpenses, setLastExpenses] = useState<ExpenseModel[]>([]);
+    const [lastExpenses, setLastExpenses] = useState<ExtendedExpenseModel[]>([]);
     const [loading, setLoading] = useState(false);
     const [loadingFooter, setLoadingFotter] = useState(false);
     const [page, setPage] = useState(1);
     const [stopeFetch, setStopeFetch] = useState(false);
     // PARA EL BUSCADOR
-    const dispatch = useDispatch();
+    const dispatch: AppDispatch = useDispatch();
     const query = useSelector((state: RootState) => state.search.query);
     const prevQuery = usePrevious(query);
     // la primera vez resetea el buscador
     useEffect(() => {
-        dispatch(setQueryAction(null));
+        dispatch(setQuery(null));
     }, []);
 
     useEffect(() => {
@@ -74,7 +76,7 @@ export default function LastExpensesScreen({ navigation } : LastExpenseScreenPro
             if (data.data.length <= 0) {
                 setStopeFetch(true);
             }
-            const concatPages = handlerDataSearch(
+            const concatPages: ExtendedExpenseModel[] = handlerDataSearch(
                 data.data,
                 lastExpenses,
                 params.query,

@@ -10,7 +10,7 @@ import AuthStackNavigator from './AuthStack';
 // import { setUserAction, setAuthAction } from "~/actions/authActions";
 
 // Redux
-import {setIsAuthAction, setLoadingAuthAction, setUserAction} from '../actions/authActions';
+import { setIsAuth, setLoadingAuth, setUser } from "../features/auth/authSlice";
 import Routes from './stackRoutes'
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import {Icon} from 'react-native-elements'
@@ -21,10 +21,11 @@ import { BalanceStackParamList, ExpenseStackParamList, IncomeStackParamList, Mai
 import { getUser } from "../services/users";
 
 // Types
-import { AuthState, RootState } from "../shared/types/reducers";
+import { RootState } from "../shared/types/reducers";
+import { AppDispatch } from "../shared/types/reducers/root-state.type";
 
 export default function MyStack() {
-  const dispatch = useDispatch();
+  const dispatch: AppDispatch = useDispatch();
   const isAuth = useSelector((state: RootState) => state.auth.isAuth);
   useEffect(()=>{
     getData()
@@ -32,18 +33,18 @@ export default function MyStack() {
 
   const getData = async () => {
     try {
-      dispatch(setLoadingAuthAction(true));
+      dispatch(setLoadingAuth(true));
       const jsonValue = await AsyncStorage.getItem('user')
       const user: UserModel| null = jsonValue != null ? JSON.parse(jsonValue) : null;
       if(user && user.id){
         const {data} = await getUser(user.id)
-        dispatch(setLoadingAuthAction(false));
-        dispatch(setUserAction(data.user));
-        dispatch(setIsAuthAction(true));
+        dispatch(setLoadingAuth(false));
+        dispatch(setUser(data.user));
+        dispatch(setIsAuth(true));
       }
-      dispatch(setLoadingAuthAction(false));
+      dispatch(setLoadingAuth(false));
     } catch(e) {
-      dispatch(setLoadingAuthAction(false));
+      dispatch(setLoadingAuth(false));
       Errors(e)
     }
   }

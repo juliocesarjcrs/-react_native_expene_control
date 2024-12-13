@@ -7,17 +7,26 @@ import { Icon } from "react-native-elements";
 import Popover from 'react-native-popover-view';
 import {Errors} from '../../../utils/Errors';
 import {deleteExpense} from '../../../services/expenses';
-import ShowToast from '../../../components/toast/ShowToast';
+import { ExtendedExpenseModel } from "../../../shared/types/models/expense.type";
+import { StackNavigationProp } from "@react-navigation/stack";
+import { ExpenseStackParamList } from "../../../shared/types";
+import ShowToast from "../../../utils/toastUtils";
 
+type RenderItemNavigationProp = StackNavigationProp<ExpenseStackParamList, 'lastExpenses'>;
+interface RenderItemProps {
+  item: ExtendedExpenseModel;
+  navigation: RenderItemNavigationProp;
+  updateList: () => void;
+}
 
-const RenderItem = ({item, navigation, updateList})  => {
+const RenderItem: React.FC<RenderItemProps> = ({ item, navigation, updateList }) => {
 
   const [showPopover, setShowPopover] = useState(false);
-  const sendEditExpenceScreenn = (objectExpense)=>{
+  const sendEditExpenceScreenn = (objectExpense: typeof item)=>{
     setShowPopover(false);
     navigation.navigate("editExpense", { objectExpense });
   }
-  const deleteItem = async (idExpense) => {
+  const deleteItem = async (idExpense: number) => {
     try {
       await deleteExpense(idExpense);
       ShowToast();
@@ -26,7 +35,7 @@ const RenderItem = ({item, navigation, updateList})  => {
       Errors(e);
     }
   };
-  const createTwoButtonAlert = (expenseDelete) => {
+  const createTwoButtonAlert = (expenseDelete: typeof item) => {
     setShowPopover(false);
     return ( Alert.alert("Eliminar", `¿Desea eliminar gasto de ${expenseDelete.subcategory} por ${NumberFormat(expenseDelete.cost)} ? `, [
       {
@@ -125,6 +134,14 @@ const styles = StyleSheet.create({
   },
   iconHeader: {
     paddingHorizontal: 10,
+  },
+  title: {
+    fontWeight: 'bold'
+  },
+  icon: {
+    borderRadius: 100,
+    padding: 2,
+    marginTop: 10
   },
 });
 export default  RenderItem;

@@ -1,12 +1,31 @@
 import React, { useEffect, useState } from "react";
-import {StyleSheet, Text, View} from 'react-native';
-import ChangePasswordScreen from '../Users/ChangePasswordScreen';
-import MyButton from "~/components/MyButton";
-import { Errors } from "../../utils/Errors";
+import {StyleSheet, View} from 'react-native';
+import { StackNavigationProp } from "@react-navigation/stack";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import {getUser} from '~/services/users';
-export default function SettingsScreen ({navigation}) {
-  const [userLoggued, setUserLoggued] = useState({});
+import { RouteProp } from "@react-navigation/native";
+
+import { Errors } from "../../utils/Errors";
+
+// Services
+import { getUser } from "../../services/users";
+
+// Components
+import MyButton from "../../components/MyButton";
+
+// Types
+import { SettingsStackParamList, UserModel } from "../../shared/types";
+
+type SettingsScreenNavigationProp = StackNavigationProp<SettingsStackParamList>;
+type SettingsScreenRouteProp = RouteProp<SettingsStackParamList>;
+
+// Define las props del componente
+interface SettingsScreenProps {
+  navigation: SettingsScreenNavigationProp;
+  route: SettingsScreenRouteProp;
+}
+
+export default function SettingsScreen ({ navigation }: SettingsScreenProps) {
+  const [userLoggued, setUserLoggued] = useState<UserModel>();
   useEffect(() => {
     fetchDataUserLogued();
     return navigation.addListener("focus", () => {
@@ -53,9 +72,9 @@ export default function SettingsScreen ({navigation}) {
   return (
     <View style={styles.container}>
       <View>
-          {userLoggued.role==1 && <MyButton onPress={sendEditUserScreen} title="Editar perfil" />}
+          {userLoggued?.role==1 && <MyButton onPress={sendEditUserScreen} title="Editar perfil" />}
           <MyButton onPress={sendchangePasswordScreen} title="Cambiar contraseña" />
-          {userLoggued.role==1 && <MyButton onPress={sendCreateUserScreen} title="Crear Usuario" /> }
+          {userLoggued?.role==1 && <MyButton onPress={sendCreateUserScreen} title="Crear Usuario" /> }
           <MyButton onPress={sendcCalculeProductsScreen} title="Calcuar productos" />
           <MyButton onPress={sendCreateLoanScreen} title="Crear préstamo" />
           <MyButton onPress={sendExportExpenseScreen} title="Expotar datos" />

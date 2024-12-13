@@ -11,7 +11,7 @@ import { Errors } from '../../utils/Errors';
 
 import { URL_BASE } from '@env';
 import { StackNavigationProp } from '@react-navigation/stack';
-import { setIsAuthAction } from '../../actions/authActions';
+import { setIsAuth } from '../../features/auth/authSlice';
 
 // Services
 import { getUser } from '../../services/users';
@@ -21,9 +21,10 @@ import { getAllExpensesByMonth } from '../../services/categories';
 // Types
 import { ExpenseStackParamList, UserModel } from '../../shared/types';
 import { RootState } from '../../shared/types/reducers';
+import { AppDispatch } from '../../shared/types/reducers/root-state.type';
 
 // Components
-import CardLastExpenses from './components/CardLastExpenses';
+import CardLastExpenses, { CardLastExpensesNavigationProp } from './components/CardLastExpenses';
 import MyMonthPicker from '../../components/datePicker/MyMonthPicker';
 import MyLoading from '../../components/loading/MyLoading';
 import MyButton from '../../components/MyButton';
@@ -33,10 +34,19 @@ type MainScreenNavigationProp = StackNavigationProp<ExpenseStackParamList, 'main
 interface MainScreenProps {
   navigation: MainScreenNavigationProp;
 }
+
+type CategoryDataFormat = {
+  name: string;
+  population: number;
+  color: string;
+  legendFontColor: string;
+  legendFontSize: number;
+};
+
 export default function MainScreen({ navigation }: MainScreenProps) {
   const month = useSelector((state: RootState) => state.date.month);
-  const dispatch = useDispatch();
-  const [categories, setCategories] = useState([]);
+  const dispatch: AppDispatch = useDispatch();
+  const [categories, setCategories] = useState<CategoryDataFormat[]>([]);
   const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(false);
   const [userLoggued, setUserLoggued] = useState<null | UserModel>();
@@ -83,7 +93,7 @@ export default function MainScreen({ navigation }: MainScreenProps) {
     try {
       await AsyncStorage.removeItem('access_token');
       await AsyncStorage.removeItem('user');
-      dispatch(setIsAuthAction(false));
+      dispatch(setIsAuth(false));
     } catch (error) {
       Errors(error);
     }
@@ -158,7 +168,10 @@ export default function MainScreen({ navigation }: MainScreenProps) {
         ) : (
           <Text style={styles.textMuted}>No se registran gastos en este mes</Text>
         )}
-        <CardLastExpenses navigation={navigation} />
+        {/* <CardLastExpenses navigation={navigation} /> */}
+        <CardLastExpenses navigation={navigation as CardLastExpensesNavigationProp} />
+
+
       </ScrollView>
     </View>
   );

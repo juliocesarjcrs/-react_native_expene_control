@@ -22,7 +22,7 @@ import { DateFormat, NumberFormat } from '../../../utils/Helpers';
 import { ICON, MUTED } from '../../../styles/colors';
 import { MEDIUM, SMALL } from '../../../styles/fonts';
 
-type CardLastExpensesNavigationProp = StackNavigationProp<ExpenseStackParamList, 'lastExpenses'>;
+export type CardLastExpensesNavigationProp = StackNavigationProp<ExpenseStackParamList, 'lastExpenses'>;
 
 interface CardLastExpensesProps {
   navigation: CardLastExpensesNavigationProp;

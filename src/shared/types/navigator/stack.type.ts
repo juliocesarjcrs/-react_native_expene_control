@@ -1,3 +1,5 @@
+import { ExtendedExpenseModel } from "../models/expense.type";
+
 export type MainTabParamList = {
   Gastos: undefined;
   Ingresos: undefined;
@@ -46,7 +48,7 @@ export type ExpenseStackParamList = {
   createCategory: undefined;
   editCategory: undefined;
   lastExpenses: undefined;
-  editExpense: undefined;
+  editExpense: { objectExpense: ExtendedExpenseModel };
   editSubcategory: EditSubcategoryScreenRouteParams;
 };
 

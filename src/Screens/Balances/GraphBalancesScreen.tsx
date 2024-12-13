@@ -1,9 +1,16 @@
 import React from "react";
-import { StyleSheet, Text, View, ScrollView } from "react-native";
-import GraphBySubcategory from "~/Screens/Balances/components/GraphBySubcategory";
-import GraphIncomesByCategory from "./components/GraphIncomesByCategory";
+import { StyleSheet, View, ScrollView } from "react-native";
 
-export default function GraphBalancesScreen({ navigation }) {
+// Components
+import GraphIncomesByCategory from "./components/GraphIncomesByCategory";
+import GraphBySubcategory from "./components/GraphBySubcategory";
+
+interface GraphBalancesScreenProps {
+    navigation: any;
+  }
+
+
+export default function GraphBalancesScreen({ navigation } : GraphBalancesScreenProps) {
     return (
         <View style={styles.container}>
             <ScrollView>

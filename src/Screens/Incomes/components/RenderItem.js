@@ -7,7 +7,7 @@ import { Icon } from "react-native-elements";
 import Popover from 'react-native-popover-view';
 import {Errors} from '../../../utils/Errors';
 import {deleteIncome} from '../../../services/incomes';
-import ShowToast from '../../../components/toast/ShowToast';
+import ShowToast from "../../../utils/toastUtils";
 
 
 const RenderItem = ({item, navigation, updateList})  => {

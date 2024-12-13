@@ -67,7 +67,7 @@ export default function App() {
     if (!msg) return 'Sin definir general';
     const isArray = Array.isArray(msg);
     if (isArray) {
-      let msgSend = msg[0];
+      const msgSend = msg[0];
       // msg.forEach(element => {
       //   msgSend += element;
       // });

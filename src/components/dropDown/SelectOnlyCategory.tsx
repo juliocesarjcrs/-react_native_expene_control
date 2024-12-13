@@ -133,6 +133,7 @@ const SelectOnlyCategory = forwardRef(
     );
   }
 );
+SelectOnlyCategory.displayName = 'SelectOnlyCategory';
 const styles = StyleSheet.create({
   container: {
     // flex: 1,

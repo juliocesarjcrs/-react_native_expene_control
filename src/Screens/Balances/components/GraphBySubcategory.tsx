@@ -1,34 +1,49 @@
 import React, { useEffect, useState, useRef } from "react";
-import { View, Text, Dimensions, StyleSheet } from "react-native";
+import { View, Text, Dimensions } from "react-native";
 import { LineChart } from "react-native-chart-kit";
-import SelectJoinCategory from "~/components/dropDown/SelectJoinCategory";
+import { StackNavigationProp } from "@react-navigation/stack";
+
 import {
     findLastMonthsFromOnlyCategory,
     getExpensesLastMonthsFromSubcategory,
 } from "../../../services/expenses";
-import { Errors } from "../../../utils/Errors";
-import { NumberFormat } from "../../../utils/Helpers";
+import { cutText, NumberFormat } from "../../../utils/Helpers";
 import { Rect, Text as TextSVG, Svg } from "react-native-svg";
 import { BIG } from "../../../styles/fonts";
 
-import MyLoading from "~/components/loading/MyLoading";
-import { cutText } from "~/utils/Helpers";
-import CheckBoxOptions from "../../../components/checbox/CheckBoxOptions";
+// Utils
+import { Errors } from "../../../utils/Errors";
 
-export default function GraphBySubcategory({ navigation }) {
+
+// Components
+import SelectJoinCategory from "../../../components/dropDown/SelectJoinCategory";
+import CheckBoxOptions from "../../../components/checbox/CheckBoxOptions";
+import MyLoading from "../../../components/loading/MyLoading";
+
+// Types
+import { BalanceStackParamList } from "../../../shared/types";
+import { DropDownSelectJoinCategoryFormat, DropDownSelectJoinCategoryFormat2 } from "../../../shared/types/components/dropDown/SelectOnlyCategory.type";
+
+type GraphBySubcategoryNavigationProp = StackNavigationProp<BalanceStackParamList, 'cashFlow'>;
+
+interface GraphBySubcategoryProps {
+  navigation: GraphBySubcategoryNavigationProp;
+}
+
+export default function GraphBySubcategory({ navigation }: GraphBySubcategoryProps) {
     const selectJoinCategoryRef = useRef();
-    const [dataExpenses, setDataExpenses] = useState([0]);
+    const [dataExpenses, setDataExpenses] = useState<number[]>([0]);
     const [labels, setLabels] = useState([""]);
     const [title, setTitle] = useState([""]);
     const [loading, setLoading] = useState(false);
     const screenWidth = Dimensions.get("window").width;
-    let [tooltipPos, setTooltipPos] = useState({
+    const [tooltipPos, setTooltipPos] = useState({
         x: 0,
         y: 0,
         visible: false,
         value: 0,
     });
-    const [dataCategory, setDataCategory] = useState();
+    const [dataCategory, setDataCategory] = useState<DropDownSelectJoinCategoryFormat2>();
 
     const [numMonths, setNumMonths] = useState(3);
 
@@ -45,7 +60,7 @@ export default function GraphBySubcategory({ navigation }) {
         useShadowColorFromDataset: false, // optional
     };
 
-    const fetchExpensesSubcategory = async (foundSubcategory) => {
+    const fetchExpensesSubcategory = async (foundSubcategory: DropDownSelectJoinCategoryFormat) => {
         try {
             setTooltipPos({ x: 0, y: 0, visible: false, value: 0 });
             setLoading(true);
@@ -58,10 +73,9 @@ export default function GraphBySubcategory({ navigation }) {
             );
             setLoading(false);
             setLabels(data.labels);
-            setTitle(
-                `${foundSubcategory.label} PROM: ${NumberFormat(
+            setTitle([`${foundSubcategory.label} PROM: ${NumberFormat(
                     data.average
-                )} SUM: ${NumberFormat(data.sum)}`
+                )} SUM: ${NumberFormat(data.sum)}`]
             );
             const len = data.graph.length;
             if (len > 0) {
@@ -87,7 +101,7 @@ export default function GraphBySubcategory({ navigation }) {
         // return unsubscribe;
     }, [dataCategory, numMonths]);
 
-    const fetchExpensesOnlyCategory = async (foundCategory) => {
+    const fetchExpensesOnlyCategory = async (foundCategory: DropDownSelectJoinCategoryFormat2) => {
         setDataCategory(foundCategory);
     };
 
@@ -104,10 +118,9 @@ export default function GraphBySubcategory({ navigation }) {
             );
             setLoading(false);
             setLabels(data.labels);
-            setTitle(
-                `${cutText(dataCategory.label, 18)} PROM Actu: ${NumberFormat(
+            setTitle([`${cutText(dataCategory?.label, 18)} PROM Actu: ${NumberFormat(
                     data.average
-                )} Prev: ${NumberFormat(data.previosAverage)}`
+                )} Prev: ${NumberFormat(data.previosAverage)}`]
             );
             const len = data.graph.length;
             if (len > 0) {
@@ -121,8 +134,10 @@ export default function GraphBySubcategory({ navigation }) {
         }
     };
 
-    const updateNum = (val) => {
-        selectJoinCategoryRef.current.resetSubcategory();
+    const updateNum = (val:number) => {
+        if(selectJoinCategoryRef.current){
+            selectJoinCategoryRef.current.resetSubcategory();
+        }
         setNumMonths(val);
     };
     return (
@@ -169,7 +184,7 @@ export default function GraphBySubcategory({ navigation }) {
                                 strokeWidth: 2, // optional
                             },
                         ],
-                        legend: [title], // optional
+                        legend: title, // optional
                     }}
                     width={screenWidth}
                     height={280}
@@ -204,24 +219,22 @@ export default function GraphBySubcategory({ navigation }) {
                         ) : null;
                     }}
                     onDataPointClick={(data) => {
-                        let isSamePoint =
-                            tooltipPos.x === data.x && tooltipPos.y === data.y;
-
-                        isSamePoint
-                            ? setTooltipPos((previousState) => {
-                                  return {
-                                      ...previousState,
-                                      value: data.value,
-                                      visible: !previousState.visible,
-                                  };
-                              })
-                            : setTooltipPos({
-                                  x: data.x,
-                                  value: data.value,
-                                  y: data.y,
-                                  visible: true,
-                              });
-                    }}
+                        const isSamePoint = tooltipPos.x === data.x && tooltipPos.y === data.y;
+                        if (isSamePoint) {
+                          setTooltipPos((previousState) => ({
+                            ...previousState,
+                            value: data.value,
+                            visible: !previousState.visible
+                          }));
+                        } else {
+                          setTooltipPos({
+                            x: data.x,
+                            value: data.value,
+                            y: data.y,
+                            visible: true
+                          });
+                        }
+                      }}
                 />
             )}
         </View>

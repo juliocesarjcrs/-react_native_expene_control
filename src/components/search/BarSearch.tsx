@@ -39,17 +39,19 @@ const styles = StyleSheet.create({
   content: {
     backgroundColor: '#fff',
     alignItems: 'center',
-    justifyContent: 'center',
-    flexDirection: 'row'
+    justifyContent: 'space-between', // Espacio entre los hijos
+    flexDirection: 'row',
+    paddingHorizontal: 10,
   },
   input: {
     height: 40,
-    margin: 12,
     borderWidth: 1,
     padding: 10,
     borderRadius: 25,
     borderColor: '#333',
-    backgroundColor: '#fff'
+    backgroundColor: '#fff',
+    flex: 1, // Hace que el input ocupe todo el espacio disponible
+    marginRight: 10, // Espaciado entre el input y el botón
   }
 });
 export default BarSearch;

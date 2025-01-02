@@ -63,6 +63,7 @@ export default function VirtualBudgetScreen({ navigation }: VirtualBudgetScreenP
         city: selectedCity
       };
       const { data } = await getBudgets(query);
+      // console.log('Budget', data.data)
       setLoading(false);
       setBudgetValues(data.data);
     } catch (e) {
@@ -73,7 +74,6 @@ export default function VirtualBudgetScreen({ navigation }: VirtualBudgetScreenP
 
   const handleBudgetChange = (categoryId: number, subcategoryId: number | null, text: string) => {
     const value = text !== '' ? parseFloat(text) : 0; // Tratar la cadena vacía como 0 o ajustar según tus necesidades
-
     const updatedBudgets = [...budgetValues];
     const existingBudgetIndex = updatedBudgets.findIndex(
       (budget) => budget.categoryId === categoryId && budget.subcategoryId === subcategoryId
@@ -81,7 +81,9 @@ export default function VirtualBudgetScreen({ navigation }: VirtualBudgetScreenP
     if (existingBudgetIndex !== -1) {
       // Si ya existe un presupuesto para esta categoría y subcategoría, actualiza su valor
       updatedBudgets[existingBudgetIndex].budget = value;
+      console.log(':::Existe entonces actualiza:::', updatedBudgets)
     } else {
+      console.log(':::NO Existe entonces NUEVO:::', value)
       // Si no existe, agrega un nuevo presupuesto
       updatedBudgets.push({
         budget: value,
@@ -104,9 +106,8 @@ export default function VirtualBudgetScreen({ navigation }: VirtualBudgetScreenP
   };
 
   const handleSaveBudget = async () => {
-    console.log('Budget Values:', budgetValues);
-    console.log('Total Budget:', calculateTotal());
     await fetchSaveBudget();
+    await fetchGetBudgets();
   };
 
   const fetchSaveBudget = async () => {
@@ -205,7 +206,7 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: 'white',
-    padding: 20
+    paddingHorizontal: 20,
   },
   categoryContainer: {
     marginBottom: 10,

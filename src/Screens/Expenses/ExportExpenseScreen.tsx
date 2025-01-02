@@ -1,7 +1,8 @@
+import React, { useState } from "react";
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { BIG } from '../../styles/fonts';
 import { StackNavigationProp } from '@react-navigation/stack';
-import { useState } from 'react';
+
 import { Errors } from '../../utils/Errors';
 
 // Services
@@ -69,7 +70,7 @@ export default function ExportExpenseScreen({ navigation }: ExportExpenseScreenP
         setIsEmptyData(false);
         setTableHead(data.tableHead);
         const dataFormated = data.rows.map((row) => {
-          return row.map((value, index) => {
+          return row.map((value) => {
             if (typeof value === 'number') {
               return NumberFormat(value);
             } else {

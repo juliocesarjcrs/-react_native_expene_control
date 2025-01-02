@@ -1,16 +1,27 @@
 import React, { useState } from "react";
 import { StyleSheet, Text, TouchableOpacity, View, Alert } from "react-native";
-import {ICON, MUTED} from '../../../styles/colors';
-import {MEDIUM, SMALL} from '../../../styles/fonts';
-import {DateFormat, NumberFormat} from '../../../utils/Helpers';
 import { Icon } from "react-native-elements";
 import Popover from 'react-native-popover-view';
-import {Errors} from '../../../utils/Errors';
-import {deleteExpense} from '../../../services/expenses';
-import { ExtendedExpenseModel } from "../../../shared/types/models/expense.type";
 import { StackNavigationProp } from "@react-navigation/stack";
+
+// Services
+import {deleteExpense} from '../../../services/expenses';
+
+// Components
+
+// Types
+import { ExtendedExpenseModel } from "../../../shared/types/models/expense.type";
 import { ExpenseStackParamList } from "../../../shared/types";
+
+// Utils
 import ShowToast from "../../../utils/toastUtils";
+import {Errors} from '../../../utils/Errors';
+import {DateFormat, NumberFormat} from '../../../utils/Helpers';
+
+// styles
+import {ICON, MUTED} from '../../../styles/colors';
+import {MEDIUM, SMALL} from '../../../styles/fonts';
+import { FONT_WEIGHTS } from "../../../styles/fontWeight";
 
 type RenderItemNavigationProp = StackNavigationProp<ExpenseStackParamList, 'lastExpenses'>;
 interface RenderItemProps {
@@ -56,7 +67,7 @@ const RenderItem: React.FC<RenderItemProps> = ({ item, navigation, updateList })
         color={ICON}
       />
       <View style={styles.containerText}>
-        <Text style={styles.title}>{item.subcategory}</Text>
+        <Text style={styles.subcategoryTitle}>{item.subcategory}</Text>
         <Text style={styles.commentary}>{item.commentary}</Text>
       </View>
       <View style={styles.cardDate}>
@@ -135,8 +146,8 @@ const styles = StyleSheet.create({
   iconHeader: {
     paddingHorizontal: 10,
   },
-  title: {
-    fontWeight: 'bold'
+  subcategoryTitle: {
+    fontWeight: FONT_WEIGHTS.semiBold
   },
   icon: {
     borderRadius: 100,

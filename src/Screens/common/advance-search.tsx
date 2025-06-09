@@ -1,13 +1,13 @@
 import React, { useRef, useState } from 'react';
 import { FlatList, ScrollView, StyleSheet, Text, View } from 'react-native';
-import { StackNavigationProp } from '@react-navigation/stack';
+// import { StackNavigationProp } from '@react-navigation/stack';
 
 // Services
 import { getSubategoriesByCategory } from '../../services/subcategories';
 import { findIncomesByCategoryId } from '../../services/incomes';
 
 // Types
-import { SettingsStackParamList, SubcategoryModel } from '../../shared/types';
+import { SubcategoryModel } from '../../shared/types';
 import { DropDownSelectFormat } from '../../shared/types/components';
 import { Checkbox } from 'react-native-paper';
 import { Errors } from '../../utils/Errors';
@@ -30,13 +30,7 @@ import { NumberFormat } from '../../utils/Helpers';
 import { ExpenseSearchOptionsQuery } from '../../shared/types/services/expense-service.type';
 import { findExpensesBySubcategories } from '../../services/expenses';
 
-type AdvancedSearchNavigationProp = StackNavigationProp<SettingsStackParamList, 'exportData'>;
-
-interface AdvancedSearchProps {
-  navigation: AdvancedSearchNavigationProp;
-}
-
-export default function AdvancedSearchScreen({ navigation }: AdvancedSearchProps) {
+  export default function AdvancedSearchScreen() {
   const selectOnlyCategoryRef = useRef();
   const [selectedCategory, setSelectedCategory] = useState<DropDownSelectFormat | null>(null);
   const [subcategories, setSubcategories] = useState<SubcategoryModel[]>([]);
@@ -56,6 +50,7 @@ export default function AdvancedSearchScreen({ navigation }: AdvancedSearchProps
       const { data } = await getSubategoriesByCategory(categoryId, { withExpenses: false });
       setSubcategories(data as SubcategoryModel[]);
       setSelectedCategory(categorySelectFormat);
+      setSelectedSubcategories([]);
     } catch (error) {
       Errors(error);
     }
@@ -93,6 +88,7 @@ export default function AdvancedSearchScreen({ navigation }: AdvancedSearchProps
           searchValue: text,
           orderBy: 'date'
         };
+
         const { data } = await findExpensesBySubcategories(queryParams);
         const dataResultSearchFormated: ListResultSearchProps[] = data.expenses.map((e) => {
           return {
@@ -105,6 +101,7 @@ export default function AdvancedSearchScreen({ navigation }: AdvancedSearchProps
             createdAt: e.createdAt
           };
         });
+
         setResultSearch(dataResultSearchFormated);
         setSumResultSearch(data.sum);
       }

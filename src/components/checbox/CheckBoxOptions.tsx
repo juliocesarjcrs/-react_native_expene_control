@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import DateTimePicker from '@react-native-community/datetimepicker';
 
 import { View, StyleSheet, TouchableOpacity } from "react-native";
 import { CheckBox, Icon } from "react-native-elements";
@@ -8,6 +9,7 @@ import { Errors } from "../../utils/Errors";
 import { DateFormat, GetInitialMonth } from "../../utils/Helpers";
 import {ICON} from '../../styles/colors';
 import { StackNavigationProp } from "@react-navigation/stack";
+import { ParamListBase } from '@react-navigation/native';
 
 type CheckboxOption = {
     id: number;
@@ -15,11 +17,11 @@ type CheckboxOption = {
     checked: boolean;
     numMonths: number;
   }
-interface CheckBoxOptionsProps<T extends StackNavigationProp<any>> {
+interface CheckBoxOptionsProps<T extends StackNavigationProp<ParamListBase>> {
     navigation: T;
     updateNum: (numMonths: number) => void;
   }
-  function CheckBoxOptions<T extends StackNavigationProp<any>>({
+  function CheckBoxOptions<T extends StackNavigationProp<ParamListBase>>({
     navigation,
     updateNum,
   }: CheckBoxOptionsProps<T>) {
@@ -27,6 +29,8 @@ interface CheckBoxOptionsProps<T extends StackNavigationProp<any>> {
     // const [numMonths, setNumMonths] = useState(3);
     const [initialMonth, setInitialMonth] = useState(0);
     const [initialDateMonth, setInitialDateMonth] = useState<string>('');
+    const [showDatePicker, setShowDatePicker] = useState(false);
+    const [customDate, setCustomDate] = useState<Date | null>(null);
 
     useEffect(() => {
         fetchUserLogued();
@@ -84,19 +88,44 @@ interface CheckBoxOptionsProps<T extends StackNavigationProp<any>> {
             checked: false,
             numMonths: initialMonth,
         },
+        {
+            id: 5,
+            title: customDate ? `Personalizada (${DateFormat(customDate, "DD MMM YYYY")})` : 'Personalizada',
+            checked: false,
+            numMonths: customDate ? GetInitialMonth(customDate, 1) : 0,
+        },
     ]);
-    const toggleCheckbox = ( index: number) => {
+    const handleDateChange = (_event: unknown, selectedDate?: Date) => {
+        setShowDatePicker(false);
+        if (selectedDate) {
+            setCustomDate(selectedDate);
+            // Actualiza la opción personalizada
+            setCheckboxes(prev => prev.map((cb, idx) =>
+                idx === 4
+                    ? {
+                        ...cb,
+                        title: `Personalizada (${DateFormat(selectedDate, "DD MMM YYYY")})`,
+                        numMonths: GetInitialMonth(selectedDate, 1),
+                    }
+                    : cb
+            ));
+            updateNum(GetInitialMonth(selectedDate, 1));
+        }
+    };
+
+    const toggleCheckbox = (index: number) => {
         let checkboxData = [...checkboxes];
         const oldValue = checkboxData[index].checked;
-        checkboxData = checkboxData.map((e) => {
-            return { ...e, checked: false };
-        });
+        checkboxData = checkboxData.map((e) => ({ ...e, checked: false }));
         checkboxData[index].checked = true;
         setCheckboxes(checkboxData);
         if (!oldValue) {
-            const newNumMonths = checkboxData[index].numMonths;
-            // setNumMonths(newNumMonths);
-            updateNum(newNumMonths)
+            if (index === 4) {
+                setShowDatePicker(true);
+            } else {
+                const newNumMonths = checkboxData[index].numMonths;
+                updateNum(newNumMonths);
+            }
         }
     };
     return (
@@ -129,6 +158,15 @@ interface CheckBoxOptionsProps<T extends StackNavigationProp<any>> {
                             />
                         );
                     })}
+                    {showDatePicker && (
+                        <DateTimePicker
+                            value={customDate || new Date()}
+                            mode="date"
+                            display="default"
+                            onChange={handleDateChange}
+                            maximumDate={new Date()}
+                        />
+                    )}
                 </View>
             </Popover>
         </View>

@@ -8,9 +8,10 @@ import RenderItem from './components/RenderItem';
 import { useDispatch, useSelector } from 'react-redux';
 import usePrevious from '../../customHooks/usePrevious';
 import { handlerDataSearch } from '../../utils/Helpers';
-import { IncomeModel, IncomeStackParamList } from '../../shared/types';
+import { IncomeStackParamList } from '../../shared/types';
 import { StackNavigationProp } from '@react-navigation/stack';
 import { setQuery } from '../../features/searchExpenses/searchExpensesSlice';
+import { LastIncomes } from '../../shared/types/services/income-service.type';
 
 // Components
 import { BarSearch } from '../../components/search';
@@ -29,8 +30,7 @@ interface LastIncomesScreenProps {
 
 export default function LastIncomesScreen({ navigation, route }: LastIncomesScreenProps) {
   const paramsEdictedIncome = route.params ? route.params.data : null;
-  const [lastIncomes, setLastIncomes] = useState<IncomeModel[]>([]);
-  const [loading, setLoading] = useState(false);
+  const [lastIncomes, setLastIncomes] = useState<LastIncomes[]>([]);
   const [loadingFooter, setLoadingFotter] = useState(false);
   const [page, setPage] = useState(1);
   const [stopeFetch, setStopeFetch] = useState(false);
@@ -127,9 +127,6 @@ export default function LastIncomesScreen({ navigation, route }: LastIncomesScre
 
   return (
     <SafeAreaView style={styles.container}>
-      {loading ? (
-        <MyLoading />
-      ) : (
         <FlatList
           data={lastIncomes}
           renderItem={({ item }) => <RenderItem item={item} navigation={navigation} updateList={fetchData} />}
@@ -141,7 +138,6 @@ export default function LastIncomesScreen({ navigation, route }: LastIncomesScre
           ListHeaderComponent={BarSearch}
           ListFooterComponent={renderFooter}
         />
-      )}
     </SafeAreaView>
   );
 }

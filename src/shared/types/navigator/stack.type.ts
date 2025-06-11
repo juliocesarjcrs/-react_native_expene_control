@@ -1,4 +1,5 @@
 import { ExtendedExpenseModel } from "../models/expense.type";
+import { LastIncomes } from "../services/income-service.type";
 
 export type MainTabParamList = {
   Gastos: undefined;
@@ -70,7 +71,7 @@ export type IncomeStackParamList = {
   sumaryIncomes: undefined;
   createIncome: undefined;
   createCategory: undefined;
-  lastIncomes: { data?: any } | undefined;
+  lastIncomes: { data?: LastIncomes[] } | undefined;
   editIncome: EditIncomeScreenRouteParams;
 };
 

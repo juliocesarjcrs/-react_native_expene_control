@@ -38,11 +38,12 @@ export type GetLastIncomesWithPaginateQuery = {
 export type LastIncomes = {
   id: number;
   createdAt: string;
-  amount: number;
+  cost: number;
   commentary: string;
   date: string;
   dateFormat: string;
   category: string;
+  idCategory: number;
   iconCategory: string;
 };
 

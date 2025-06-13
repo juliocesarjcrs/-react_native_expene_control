@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import { FlatList, SafeAreaView, StyleSheet, Text, View } from 'react-native';
 import { Errors } from '../../utils/Errors';
 import { getLastIncomesWithPaginate } from '../../services/incomes';
@@ -20,7 +20,7 @@ import { RootState } from '../../shared/types/reducers';
 import { RouteProp } from '@react-navigation/native';
 import { AppDispatch } from '../../shared/types/reducers/root-state.type';
 
-type LastIncomesScreenNavigationProp = StackNavigationProp<IncomeStackParamList, 'lastIncomes'>;
+export type LastIncomesScreenNavigationProp = StackNavigationProp<IncomeStackParamList, 'lastIncomes'>;
 type LastIncomesScreenRouteProp = RouteProp<IncomeStackParamList, 'lastIncomes'>;
 
 interface LastIncomesScreenProps {
@@ -28,108 +28,100 @@ interface LastIncomesScreenProps {
   route: LastIncomesScreenRouteProp;
 }
 
-export default function LastIncomesScreen({ navigation, route }: LastIncomesScreenProps) {
-  const paramsEdictedIncome = route.params ? route.params.data : null;
+export default function LastIncomesScreen({ navigation }: LastIncomesScreenProps) {
   const [lastIncomes, setLastIncomes] = useState<LastIncomes[]>([]);
   const [loadingFooter, setLoadingFotter] = useState(false);
   const [page, setPage] = useState(1);
   const [stopeFetch, setStopeFetch] = useState(false);
-  // PARA EL BUSCADOR
   const dispatch: AppDispatch = useDispatch();
   const query = useSelector((state: RootState) => state.search.query);
   const prevQuery = usePrevious(query);
-  // const [isMounted, setIsMounted] = useState(true);
-  // Cuando viene de editar
-  // console.log('1----------paramsEdictedIncome', paramsEdictedIncome);
-  // const [edictedIncome, setEdictedIncome] = useState(null);
-  if (paramsEdictedIncome) {
-    // console.log('1------------ ',paramsEdictedIncome.id, route);
-  } else {
-    // console.log('else2----------');
-  }
-  // const updateWhenEdit = () => {
-  //     if (edictedIncome) {
-  //         console.log("----------Entró 1", lastIncomes);
-  //         const indexArray = lastIncomes.findIndex((e) => {
-  //             return e.id === edictedIncome.id;
-  //         });
-  //         if (indexArray >= 0) {
-  //             let temp = {
-  //                 cost: edictedIncome.amount,
-  //                 commentary: edictedIncome.commentary,
-  //                 dateFormat: edictedIncome.date,
-  //             };
-  //             let tempIncomes = lastIncomes;
-  //             tempIncomes[indexArray] = {
-  //                 ...tempIncomes[indexArray],
-  //                 ...temp,
-  //             };
-  //             setLastIncomes(tempIncomes);
-  //             // console.log('sigue aqui 22------concatPages:', concatPages);
-  //         }
-  //     } else {
-  //         console.log("ELSE----------");
-  //     }
-  // };
-  // la primera vez resetea el buscador
+  const isFirstRender = React.useRef(true);
+
+  // Resetear query solo al montar
   useEffect(() => {
+    console.log('[LastIncomesScreen] useEffect mount: dispatch setQuery(null)');
     dispatch(setQuery(null));
   }, []);
 
+  // Manejar cambios de búsqueda (query)
   useEffect(() => {
-    fetchData();
-    return navigation.addListener('focus', () => {
-      fetchData();
-    });
-  }, [page]);
-  /**Solo se lanza la primera vez cuando se contruye el component y al dar click boton buscar */
-  useEffect(() => {
+    if (isFirstRender.current) {
+      isFirstRender.current = false;
+      // Si el query es distinto de null, espera a que el reset lo limpie
+      if (query !== null) {
+        console.log('[LastIncomesScreen] useEffect [query]: Detenido porque query !== null:', query);
+        return;
+      }
+    }
+    console.log('[LastIncomesScreen] useEffect [query]: Reiniciando paginación y datos. Query:', query);
+    // Reinicia todos los flags de paginación y datos
     setLastIncomes([]);
     setPage(1);
     setStopeFetch(false);
-    if (page === 1 && query !== null) {
-      fetchData();
-    }
+    setLoadingFotter(false);
+    fetchData(1, true);
   }, [query]);
 
-  const fetchData = async () => {
+  // Manejar paginación (solo si no es búsqueda nueva)
+  useEffect(() => {
+    if (page > 1 && query !== null) {
+      console.log('[LastIncomesScreen] useEffect [page]: page > 1 y query !== null, fetchData', page, query);
+      fetchData(page, false); // false: no reset
+    } else if (page > 1 && query === null) {
+      console.log('[LastIncomesScreen] useEffect [page]: page > 1 y query === null, fetchData', page, query);
+      fetchData(page, false);
+    }
+  }, [page]);
+
+  // fetchData recibe page y reset flag
+  const fetchData = useCallback(async (pageToFetch: number, reset: boolean) => {
+    console.log('[LastIncomesScreen] fetchData called with', { pageToFetch, reset, query, lastIncomesLength: lastIncomes.length, stopeFetch });
     try {
-      // setLoading(true);
+      setLoadingFotter(true);
       const params = {
         take: 25,
-        page,
+        page: pageToFetch,
         query
       };
-      setLoadingFotter(true);
       const { data } = await getLastIncomesWithPaginate(params);
       setLoadingFotter(false);
       if (data.data.length <= 0) {
         setStopeFetch(true);
+        console.log('[LastIncomesScreen] fetchData: No más datos, stopeFetch=true');
       }
-      const concatPages = handlerDataSearch(data.data, lastIncomes, params.query, prevQuery, params.page);
-      setLastIncomes(concatPages);
+      let newList = [];
+      if (reset) {
+        newList = handlerDataSearch(data.data, [], params.query, prevQuery, params.page);
+      } else {
+        newList = handlerDataSearch(data.data, lastIncomes, params.query, prevQuery, params.page);
+      }
+      setLastIncomes(newList);
+      console.log('[LastIncomesScreen] fetchData: setLastIncomes, length:', newList.length);
     } catch (e) {
       setLoadingFotter(false);
       Errors(e);
     }
-  };
+  }, [query, lastIncomes, prevQuery, stopeFetch]);
+
+  // Paginador
   const loadMoreData = () => {
-    if (!stopeFetch) {
-      if (!loadingFooter) {
-        // si no esta cargando datos aumente la página
-        setPage(page + 1);
-      }
+    console.log('[LastIncomesScreen] loadMoreData: stopeFetch:', stopeFetch, 'loadingFooter:', loadingFooter, 'page:', page);
+    if (!stopeFetch && !loadingFooter) {
+      setPage((prev) => prev + 1);
     }
   };
+
   const renderFooter = () => {
-    return <View>{loadingFooter ? <MyLoading /> : null}</View>;
+    return <View>{loadingFooter ? <MyLoading testID="loading-footer" /> : null}</View>;
   };
 
   return (
     <SafeAreaView style={styles.container}>
         <FlatList
+          testID="flatlist-incomes"
           data={lastIncomes}
-          renderItem={({ item }) => <RenderItem item={item} navigation={navigation} updateList={fetchData} />}
+          renderItem={({ item }) => <RenderItem item={item} navigation={navigation} updateList={() => fetchData(1, true)} />}
           keyExtractor={(item) => item.id.toString()}
           ListEmptyComponent={() => <Text style={styles.textMuted}>No se registran últimos ingresos</Text>}
           initialNumToRender={10}

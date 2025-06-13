@@ -33,7 +33,6 @@ interface LastExpenseScreenProps {
 
 export default function LastExpensesScreen({ navigation } : LastExpenseScreenProps) {
     const [lastExpenses, setLastExpenses] = useState<ExtendedExpenseModel[]>([]);
-    const [loading, setLoading] = useState(false);
     const [loadingFooter, setLoadingFotter] = useState(false);
     const [page, setPage] = useState(1);
     const [stopeFetch, setStopeFetch] = useState(false);
@@ -41,26 +40,30 @@ export default function LastExpensesScreen({ navigation } : LastExpenseScreenPro
     const dispatch: AppDispatch = useDispatch();
     const query = useSelector((state: RootState) => state.search.query);
     const prevQuery = usePrevious(query);
+    const isFirstRender = React.useRef(true);
     // la primera vez resetea el buscador
     useEffect(() => {
-        dispatch(setQuery(null));
+        if (query !== null) {
+            dispatch(setQuery(null));
+        }
     }, []);
 
     useEffect(() => {
-        fetchData();
-        return navigation.addListener("focus", () => {
-            fetchData();
-        });
-    }, [page]);
-    /**Solo se lanza la primera vez cuando se contruye el component y al dar click boton buscar */
-    useEffect(() => {
+        if (isFirstRender.current) {
+            isFirstRender.current = false;
+            if (query !== null) return;
+        }
         setLastExpenses([]);
         setPage(1);
         setStopeFetch(false);
         if (page === 1 && query !== null) {
-            fetchData();
+            return; // No hacer fetch si el query aún no es null
         }
-    }, [query]);
+        fetchData();
+        return navigation.addListener("focus", () => {
+            fetchData();
+        });
+    }, [query, page]);
 
     const fetchData = async () => {
         try {
@@ -104,31 +107,28 @@ export default function LastExpensesScreen({ navigation } : LastExpenseScreenPro
 
     return (
         <SafeAreaView style={styles.container}>
-            {loading ? (
-                <MyLoading />
-            ) : (
-                <FlatList
-                    data={lastExpenses}
-                    renderItem={({ item }) => (
-                        <RenderItem
-                            item={item}
-                            navigation={navigation}
-                            updateList={fetchData}
-                        />
-                    )}
-                    keyExtractor={(item) => item.id.toString()}
-                    ListEmptyComponent={() => (
-                        <Text style={styles.textMuted}>
-                            No se registran últimos gastos
-                        </Text>
-                    )}
-                    initialNumToRender={10}
-                    onEndReached={loadMoreData}
-                    onEndReachedThreshold={0.1}
-                    ListHeaderComponent={BarSearch}
-                    ListFooterComponent={renderFooter}
-                />
-            )}
+            <FlatList
+                testID="flatlist-expenses"
+                data={lastExpenses}
+                renderItem={({ item }) => (
+                    <RenderItem
+                        item={item}
+                        navigation={navigation}
+                        updateList={fetchData}
+                    />
+                )}
+                keyExtractor={(item) => item.id.toString()}
+                ListEmptyComponent={() => (
+                    <Text style={styles.textMuted}>
+                        No se registran últimos gastos
+                    </Text>
+                )}
+                initialNumToRender={10}
+                onEndReached={loadMoreData}
+                onEndReachedThreshold={0.1}
+                ListHeaderComponent={BarSearch}
+                ListFooterComponent={renderFooter}
+            />
         </SafeAreaView>
     );
 }

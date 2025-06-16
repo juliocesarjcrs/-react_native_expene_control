@@ -78,6 +78,7 @@ function ExpenseStackScreen() {
        <ExpenseStack.Screen name="main" component={Routes.MainScreen} options={{ title: 'Resumen gastos del mes' }}/>
         <ExpenseStack.Screen name="sumary" component={Routes.SumaryExpenseScreen} options={{ title: 'Resumen' }}/>
         <ExpenseStack.Screen name="createExpense" component={Routes.CreateExpenseScreen} options={{ title: 'Ingresar gasto' }}  />
+        <ExpenseStack.Screen name="scanInvoiceExpense" component={Routes.CreateExpenseScreenV2} options={{ title: 'Scanear facturas' }}  />
         <ExpenseStack.Screen name="createSubcategory" component={Routes.CreateSubcategoryScreen} options={{ title: 'Crear Subcategoría' }}/>
         <ExpenseStack.Screen name="createCategory" component={Routes.CreateCategoryScreen} options={{ title: 'Crear Categoría' }} />
         <ExpenseStack.Screen name="editCategory" component={Routes.EditCategoryScreen} options={{ title: 'Editar Categoría' }}/>

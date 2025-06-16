@@ -8,6 +8,7 @@ import { MUTED, SECUNDARY } from '../../styles/colors';
 import { Button } from 'react-native-elements';
 import { BIG } from '../../styles/fonts';
 import { Errors } from '../../utils/Errors';
+import Constants from 'expo-constants';
 
 import { URL_BASE } from '@env';
 import { StackNavigationProp } from '@react-navigation/stack';
@@ -86,6 +87,9 @@ export default function MainScreen({ navigation }: MainScreenProps) {
   const sendcreateExpenseScreen = () => {
     navigation.navigate('createExpense');
   };
+  const sendScanInvoiceExpenseScreen = () => {
+    navigation.navigate('scanInvoiceExpense');
+  };
   const sendDetailsExpenseScreen = () => {
     navigation.navigate('sumary');
   };
@@ -137,6 +141,12 @@ export default function MainScreen({ navigation }: MainScreenProps) {
       Errors(error);
     }
   };
+
+  // Obtener versión de forma segura
+  const version =
+    Constants.expoConfig?.version ||
+    'Desconocida';
+
   return (
     <View style={styles.container}>
       <ScrollView>
@@ -153,6 +163,7 @@ export default function MainScreen({ navigation }: MainScreenProps) {
         <Text style={{ fontWeight: 'bold' }}>{userLoggued?.name ? userLoggued.name : '---'}</Text>
         <View style={styles.fixToText}>
           <MyButton onPress={sendcreateExpenseScreen} title="Ingresar gasto" />
+          <MyButton onPress={sendScanInvoiceExpenseScreen} title="Scanear" />
           <MyButton onPress={LogOut} title="Cerrar sesión" />
         </View>
         <Button
@@ -170,8 +181,11 @@ export default function MainScreen({ navigation }: MainScreenProps) {
         )}
         {/* <CardLastExpenses navigation={navigation} /> */}
         <CardLastExpenses navigation={navigation as CardLastExpensesNavigationProp} />
-
-
+        <View style={styles.versionBox}>
+          <Text style={styles.versionText}>
+            Versión: {version}
+          </Text>
+        </View>
       </ScrollView>
     </View>
   );
@@ -203,5 +217,18 @@ const styles = StyleSheet.create({
     marginTop: 5,
     width: 66,
     height: 58
+  },
+  versionBox: {
+    marginTop: 24,
+    alignItems: 'center',
+    padding: 8,
+    backgroundColor: '#f2f2f2',
+    borderRadius: 8,
+    marginBottom: 16
+  },
+  versionText: {
+    color: '#555',
+    fontWeight: 'bold',
+    fontSize: 14
   }
 });

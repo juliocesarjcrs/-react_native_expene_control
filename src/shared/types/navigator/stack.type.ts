@@ -45,6 +45,7 @@ export type ExpenseStackParamList = {
   main: undefined;
   sumary: undefined;
   createExpense: undefined;
+  scanInvoiceExpense: undefined;
   createSubcategory: CreateSubcategoryScreenRouteParams;
   createCategory: undefined;
   editCategory: undefined;

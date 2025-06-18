@@ -5,7 +5,6 @@ import { Errors } from "../../utils/Errors";
 import { MUTED } from "../../styles/colors";
 import RenderItem from "./components/RenderItem";
 import { useDispatch, useSelector } from "react-redux";
-import usePrevious from "../../customHooks/usePrevious";
 import { setQuery } from "../../features/searchExpenses/searchExpensesSlice";
 
 // Services
@@ -20,7 +19,6 @@ import { ExpenseStackParamList } from "../../shared/types";
 import { RootState } from "../../shared/types/reducers";
 
 // Utils
-import { handlerDataSearch } from "../../utils/Helpers";
 import { ExtendedExpenseModel } from "../../shared/types/models/expense.type";
 import { AppDispatch } from "../../shared/types/reducers/root-state.type";
 
@@ -36,18 +34,16 @@ export default function LastExpensesScreen({ navigation } : LastExpenseScreenPro
     const [loadingFooter, setLoadingFotter] = useState(false);
     const [page, setPage] = useState(1);
     const [stopeFetch, setStopeFetch] = useState(false);
-    // PARA EL BUSCADOR
     const dispatch: AppDispatch = useDispatch();
     const query = useSelector((state: RootState) => state.search.query);
-    const prevQuery = usePrevious(query);
     const isFirstRender = React.useRef(true);
-    // la primera vez resetea el buscador
+
+    // Resetear query solo al montar
     useEffect(() => {
-        if (query !== null) {
-            dispatch(setQuery(null));
-        }
+        dispatch(setQuery(null));
     }, []);
 
+    // Manejar cambios de búsqueda (query)
     useEffect(() => {
         if (isFirstRender.current) {
             isFirstRender.current = false;
@@ -56,48 +52,57 @@ export default function LastExpensesScreen({ navigation } : LastExpenseScreenPro
         setLastExpenses([]);
         setPage(1);
         setStopeFetch(false);
-        if (page === 1 && query !== null) {
-            return; // No hacer fetch si el query aún no es null
-        }
-        fetchData();
-        return navigation.addListener("focus", () => {
-            fetchData();
-        });
-    }, [query, page]);
+        setLoadingFotter(false);
+        fetchData(1, true);
+    }, [query]);
 
-    const fetchData = async () => {
+    // Manejar paginación (solo si no es búsqueda nueva)
+    useEffect(() => {
+        if (page > 1) {
+            fetchData(page, false);
+        }
+    }, [page]);
+
+    // fetchData recibe page y reset flag
+    const fetchData = async (pageToFetch: number, reset: boolean) => {
         try {
+            setLoadingFotter(true);
             const params = {
                 take: 15,
-                page,
+                page: pageToFetch,
                 query,
                 orderBy: "date",
             };
-            setLoadingFotter(true);
             const { data } = await getLastExpensesWithPaginate(params);
             setLoadingFotter(false);
             if (data.data.length <= 0) {
                 setStopeFetch(true);
             }
-            const concatPages: ExtendedExpenseModel[] = handlerDataSearch(
-                data.data,
-                lastExpenses,
-                params.query,
-                prevQuery,
-                params.page
-            );
-            setLastExpenses(concatPages);
+            let newList: ExtendedExpenseModel[] = [];
+            if (reset) {
+                newList = data.data.map(e => ({ ...e } as ExtendedExpenseModel));
+            } else {
+                newList = [
+                    ...lastExpenses,
+                    ...data.data.map(e => ({ ...e } as ExtendedExpenseModel))
+                ];
+            }
+            setLastExpenses(newList);
         } catch (e) {
             setLoadingFotter(false);
             Errors(e);
         }
     };
+
+    // Función para actualizar la lista desde RenderItem (siempre recarga la primera página)
+    const updateList = () => {
+        fetchData(1, true);
+    };
+
+    // Paginador
     const loadMoreData = () => {
-        if (!stopeFetch) {
-            if (!loadingFooter) {
-                // si no esta cargando datos aumente la página
-                setPage(page + 1);
-            }
+        if (!stopeFetch && !loadingFooter) {
+            setPage((prev) => prev + 1);
         }
     };
 
@@ -114,7 +119,7 @@ export default function LastExpensesScreen({ navigation } : LastExpenseScreenPro
                     <RenderItem
                         item={item}
                         navigation={navigation}
-                        updateList={fetchData}
+                        updateList={updateList}
                     />
                 )}
                 keyExtractor={(item) => item.id.toString()}

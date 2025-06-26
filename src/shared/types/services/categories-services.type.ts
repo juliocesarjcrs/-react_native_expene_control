@@ -1,4 +1,4 @@
-import { CategoryModel } from "../models";
+import { CategoryModel, IncomeModel } from "../models";
 
 export type AllExpensesByRangeDatesResponse  = {
   tableHead: string[]
@@ -38,9 +38,20 @@ export type Category = {
   subcategories: Subcategory[];
 }
 
+export type CategoryIncomesSumary = {
+  id: number;
+  name: string;
+  icon: string;
+  type: number;
+  budget: number;
+  userId: number;
+  total: number;
+  createdAt: string;
+  incomes: IncomeModel[];
+};
 // getCategoryTypeIncome
 export type GetCategoryTypeIncomeResponse  =  {
-  data: Category[];
+  data: CategoryIncomesSumary[];
   total: number;
 }
 

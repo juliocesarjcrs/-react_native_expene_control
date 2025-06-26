@@ -17,7 +17,7 @@ import { LastIncomes } from '../../shared/types/services/income-service.type';
 import { BarSearch } from '../../components/search';
 import MyLoading from '../../components/loading/MyLoading';
 import { RootState } from '../../shared/types/reducers';
-import { RouteProp } from '@react-navigation/native';
+import { RouteProp, useFocusEffect } from '@react-navigation/native';
 import { AppDispatch } from '../../shared/types/reducers/root-state.type';
 
 export type LastIncomesScreenNavigationProp = StackNavigationProp<IncomeStackParamList, 'lastIncomes'>;
@@ -38,6 +38,13 @@ export default function LastIncomesScreen({ navigation }: LastIncomesScreenProps
   const prevQuery = usePrevious(query);
   const isFirstRender = React.useRef(true);
 
+  useFocusEffect(
+    React.useCallback(() => {
+      // Refresca la lista cada vez que el screen gana foco
+      console.log('[LastIncomesScreen] useFocusEffect: dispatch setQuery(null)');
+      fetchData(1, true);
+    }, [query])
+  );
   // Resetear query solo al montar
   useEffect(() => {
     console.log('[LastIncomesScreen] useEffect mount: dispatch setQuery(null)');

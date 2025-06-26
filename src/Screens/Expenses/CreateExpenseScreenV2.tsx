@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, ScrollView } from 'react-native';
+import { View, Text, StyleSheet } from 'react-native';
 import ReceiptScanner from '../../components/ReceiptScanner';
 
 const CreateExpenseScreenV2: React.FC = () => {
@@ -15,17 +15,6 @@ const CreateExpenseScreenV2: React.FC = () => {
     <View style={styles.container}>
       <Text style={styles.title}>Crear Gasto (con OCR)</Text>
       <ReceiptScanner onExtractedData={setExtracted} />
-      {/* {extracted && (
-        <View style={styles.resultBox}>
-          <Text style={styles.label}>Precio detectado: <Text style={styles.value}>{extracted.price || 'No detectado'}</Text></Text>
-          <Text style={styles.label}>Categoría sugerida: <Text style={styles.value}>{extracted.category || 'No detectada'}</Text></Text>
-          <Text style={styles.label}>Subcategoría sugerida: <Text style={styles.value}>{extracted.subcategory || 'No detectada'}</Text></Text>
-          <Text style={styles.label}>Texto completo extraído:</Text>
-          <ScrollView style={styles.textScroll}>
-            <Text style={styles.text}>{extracted.rawText}</Text>
-          </ScrollView>
-        </View>
-      )} */}
     </View>
   );
 };

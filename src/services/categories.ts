@@ -1,3 +1,4 @@
+import { CategoryModel } from '~/shared/types';
 import axios from '../plugins/axiosConfig'
 import { AllExpensesByRangeDatesResponse, CreateCategoryPayload, EditCategoryPayload, GetAllExpensesByMonthResponse, GetAllSubcategoriesExpensesByMonthResponse, GetCategoriesParams, GetCategoriesResponse, GetCategoryTypeIncomeResponse, GetCategoryWithSubcategoriesResponse } from "../shared/types/services";
 import { AxiosResponse } from "axios";
@@ -5,7 +6,7 @@ const PREFIX = "categories";
 export const getCategories = async (params: GetCategoriesParams): Promise<AxiosResponse<GetCategoriesResponse>> => {
     return axios.get(PREFIX, { params });
 };
-export const getCategory = async (idCategory: number) => {
+export const getCategory = async (idCategory: number): Promise<AxiosResponse<CategoryModel>> => {
     return axios.get(`${PREFIX}/${idCategory}`);
 };
 export const CreateCategory = async (payload: CreateCategoryPayload) => {

@@ -22,7 +22,7 @@ import { Errors } from "../../../utils/Errors";
 import { ICON, MUTED } from "../../../styles/colors";
 import { MEDIUM, SMALL } from "../../../styles/fonts";
 
-type CardLastIncomesNavigationProp = StackNavigationProp<IncomeStackParamList, 'lastIncomes'>;
+export type CardLastIncomesNavigationProp = StackNavigationProp<IncomeStackParamList, 'lastIncomes'>;
 
 interface CardLastIncomesProps {
   navigation: CardLastIncomesNavigationProp;

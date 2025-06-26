@@ -48,7 +48,7 @@ export type ExpenseStackParamList = {
   scanInvoiceExpense: undefined;
   createSubcategory: CreateSubcategoryScreenRouteParams;
   createCategory: undefined;
-  editCategory: undefined;
+  editCategory: { idCategory: number };
   lastExpenses: undefined;
   editExpense: { objectExpense: ExtendedExpenseModel };
   editSubcategory: EditSubcategoryScreenRouteParams;
@@ -74,6 +74,7 @@ export type IncomeStackParamList = {
   createCategory: undefined;
   lastIncomes: { data?: IncomeModel } | undefined;
   editIncome: EditIncomeScreenRouteParams;
+  editCategory: { idCategory: number };
 };
 
 export type BalanceStackParamList = {

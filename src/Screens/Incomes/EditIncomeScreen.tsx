@@ -93,13 +93,14 @@ export default function EditIncomeScreen({ navigation, route }: EditIncomeScreen
         date: DateFormat(date, 'YYYY-MM-DD')
       };
       setLoading(true);
-      const { data } = await editIncome(idIncome, dataSend);
+      await editIncome(idIncome, dataSend);
       setLoading(false);
       ShowToast();
       reset();
       Keyboard.dismiss();
+      navigation.goBack();
       // navigation.navigate('lastIncomes');
-      navigation.navigate('lastIncomes', { data });
+      // navigation.navigate('lastIncomes', { data });
     } catch (error) {
       setLoading(false);
       Errors(error);

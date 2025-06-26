@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { View, Text, Button, Image, ActivityIndicator, StyleSheet, ScrollView } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
 import * as FileSystem from 'expo-file-system';
@@ -15,6 +15,30 @@ const ReceiptScanner: React.FC<ReceiptScannerProps> = ({ onExtractedData }) => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  const [csvRows, setCsvRows] = useState<number>(0);
+  // Llama al cargar el componente
+  useEffect(() => {
+    updateCsvRowCount();
+  }, []);
+  // Función para contar filas del CSV
+  const updateCsvRowCount = async () => {
+    try {
+      const fileUri = FileSystem.documentDirectory + 'extractions.csv';
+      const fileInfo = await FileSystem.getInfoAsync(fileUri);
+      if (fileInfo.exists) {
+        const content = await FileSystem.readAsStringAsync(fileUri, { encoding: FileSystem.EncodingType.UTF8 });
+        // Cuenta las filas (omite la cabecera)
+        const lines = content.trim().split('\n');
+        setCsvRows(lines.length > 1 ? lines.length - 1 : 0);
+      } else {
+        setCsvRows(0);
+      }
+    } catch (e) {
+      console.log('Error al contar filas del CSV:', e);
+      setCsvRows(0);
+    }
+  };
+
   // Configuración de compresión para OCR
   const OCR_IMAGE_MAX_WIDTH = 1000; // px
   const OCR_IMAGE_MAX_HEIGHT = 1000; // px
@@ -26,7 +50,7 @@ const ReceiptScanner: React.FC<ReceiptScannerProps> = ({ onExtractedData }) => {
       mediaTypes: ImagePicker.MediaTypeOptions.Images,
       allowsEditing: true,
       quality: OCR_IMAGE_QUALITY, // calidad inicial
-      base64: false, // primero obtenemos el uri
+      base64: false // primero obtenemos el uri
     });
     if (!result.canceled && result.assets && result.assets.length > 0) {
       const { uri } = result.assets[0];
@@ -58,9 +82,9 @@ const ReceiptScanner: React.FC<ReceiptScannerProps> = ({ onExtractedData }) => {
       const response = await fetch('https://api.ocr.space/parse/image', {
         method: 'POST',
         headers: {
-          'apikey': 'helloworld', // clave pública gratuita de OCR.space
+          apikey: 'helloworld' // clave pública gratuita de OCR.space
         },
-        body: formData,
+        body: formData
       });
       const data = await response.json();
       if (data && data.ParsedResults && data.ParsedResults[0]) {
@@ -93,11 +117,11 @@ const ReceiptScanner: React.FC<ReceiptScannerProps> = ({ onExtractedData }) => {
     const priceMatch = rawText.match(/\b\d{1,5}[.,]\d{2}\b/g);
     // Busca palabras clave para categorías (puedes mejorar esto)
     const categories = ['supermercado', 'restaurante', 'transporte', 'farmacia', 'ropa', 'tecnología'];
-    const foundCategory = categories.find(cat => rawText.toLowerCase().includes(cat));
+    const foundCategory = categories.find((cat) => rawText.toLowerCase().includes(cat));
     return {
       price: priceMatch ? priceMatch[0].replace(',', '.') : '',
       category: foundCategory,
-      subcategory: undefined,
+      subcategory: undefined
     };
   };
 
@@ -114,6 +138,7 @@ const ReceiptScanner: React.FC<ReceiptScannerProps> = ({ onExtractedData }) => {
         const prev = await FileSystem.readAsStringAsync(fileUri, { encoding: FileSystem.EncodingType.UTF8 });
         await FileSystem.writeAsStringAsync(fileUri, prev + line, { encoding: FileSystem.EncodingType.UTF8 });
       }
+      updateCsvRowCount();
     } catch (e) {
       console.log('Error guardando extracción en CSV:', e);
     }
@@ -139,6 +164,7 @@ const ReceiptScanner: React.FC<ReceiptScannerProps> = ({ onExtractedData }) => {
       <View style={styles.innerContainer}>
         <Button title="Seleccionar imagen de factura" onPress={pickImage} />
         <Button title="Compartir extracciones CSV" onPress={shareCSV} />
+        <Text style={{ marginTop: 8, marginBottom: 8 }}>Filas en CSV: {csvRows}</Text>
         {imageUri && <Image source={{ uri: imageUri }} style={styles.image} />}
         {loading && <ActivityIndicator size="large" color="#0000ff" />}
         {error && <Text style={styles.error}>{error}</Text>}
@@ -160,7 +186,7 @@ const styles = StyleSheet.create({
   error: { color: 'red', marginTop: 8 },
   resultBox: { marginTop: 16, backgroundColor: '#f2f2f2', borderRadius: 8, padding: 8 },
   label: { fontWeight: 'bold' },
-  text: { marginTop: 8 },
+  text: { marginTop: 8 }
 });
 
 export default ReceiptScanner;

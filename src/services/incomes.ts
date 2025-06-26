@@ -1,6 +1,7 @@
 import { AxiosResponse } from 'axios';
 import axios from '../plugins/axiosConfig'
 import { CreateIncomePayload, EditIncomePayload, FindIncomesByCategoryIdResponse, FindLastIncomesMonthsFromOnlyCategoryQuery, FindLastIncomesMonthsFromOnlyCategoryResponse, GetLastIncomesWithPaginateQuery, GetLastIncomesWithPaginateResponse, IncomeSearchOptionsQuery } from '../shared/types/services/income-service.type';
+import { IncomeModel } from '~/shared/types';
 const PREFIX = 'incomes'
 
 export const getIncomesByDate = async (month: string) => {
@@ -27,7 +28,7 @@ export const getLastIncomesWithPaginate = async (params: GetLastIncomesWithPagin
   return axios.get(`${PREFIX}/last`, { params });
 }
 
-export const editIncome = async (idIncome: number, payload: EditIncomePayload) => {
+export const editIncome = async (idIncome: number, payload: EditIncomePayload): Promise<AxiosResponse<IncomeModel>> => {
   return axios.put(`${PREFIX}/${idIncome}`, payload);
 }
 export const findLastIncomesMonthsFromOnlyCategory = async (idCategory: number, params: FindLastIncomesMonthsFromOnlyCategoryQuery): Promise<AxiosResponse<FindLastIncomesMonthsFromOnlyCategoryResponse>> => {

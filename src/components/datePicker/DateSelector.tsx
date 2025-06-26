@@ -9,10 +9,18 @@ interface DateSelectorProps {
   date: Date;
   showDatePicker: boolean;
   onPress: () => void;
-  onDateChange: (date: Date) => void;
+  onDateChange: (date?: Date) => void;
+  onCancel?: () => void;
 }
 
-export const DateSelector: React.FC<DateSelectorProps> = ({ label, date, showDatePicker, onPress, onDateChange }) => (
+export const DateSelector: React.FC<DateSelectorProps> = ({
+  label,
+  date,
+  showDatePicker,
+  onPress,
+  onDateChange,
+  onCancel
+}) => (
   <View style={styles.containerDate}>
     <Button
       icon={<Icon type="material-community" name="calendar" size={15} color="white" />}
@@ -27,38 +35,40 @@ export const DateSelector: React.FC<DateSelectorProps> = ({ label, date, showDat
       onPress={onPress}
     />
     {showDatePicker && (
-      <DateTimePicker value={date} mode="date" onChange={(event, selectedDate) => onDateChange(selectedDate || date)} />
+      <DateTimePicker
+        value={date}
+        mode="date"
+        display="default"
+        onChange={(event, selectedDate?: Date) => {
+          if (event.type === 'set') {
+            // Usuario seleccionó una fecha
+            onDateChange(selectedDate);
+          } else {
+            // Usuario canceló
+            if (onCancel) onCancel();
+          }
+        }}
+      />
     )}
   </View>
-  // <View style={styles.containerDate}>
-  //   <Button
-  //     icon={<Icon type="material-community" name="calendar" size={10} color="white" />}
-  //     title={` ${label}`}
-  //     onPress={onPress}
-  //   />
-  //   <Text style={styles.textDate}>{DateFormat(date, 'YYYY MMM DD')}</Text>
-  //   {showDatePicker && (
-  //     <DateTimePicker value={date} mode="date" onChange={(event, selectedDate) => onDateChange(selectedDate || date)} />
-  //   )}
-  // </View>
 );
 const styles = StyleSheet.create({
   containerDate: {
     display: 'flex',
     flexDirection: 'row',
     marginVertical: 5,
-    alignItems: 'center',
+    alignItems: 'center'
   },
   buttonLabel: {
     fontSize: 14,
-    color: 'white',
+    color: 'white'
   },
   buttonDate: {
     marginLeft: 5,
     paddingVertical: 5,
     paddingHorizontal: 5,
     color: 'white',
-    backgroundColor: '#c5c5c5',
+    backgroundColor: '#c5c5c5'
   },
   textDate: {
     paddingVertical: 10,

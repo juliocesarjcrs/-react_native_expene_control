@@ -102,9 +102,9 @@ export const getDateStartOfMonth =  (date) =>{
 export const handlerDataSearch = (
     newData,
     dataOldArray,
-    query,
-    prevQuery,
-    page
+    query: null | string,
+    prevQuery: undefined | string,
+    page: number
 ) => {
     let concatPages = [];
     const condition1 = query === null && prevQuery === undefined;

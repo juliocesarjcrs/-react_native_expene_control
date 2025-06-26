@@ -1,7 +1,7 @@
-import React, {useState } from 'react';
+import React, { useState } from 'react';
 import { Keyboard, StyleSheet, View } from 'react-native';
 import { Input, Button } from 'react-native-elements';
-import { useForm, Controller } from 'react-hook-form'
+import { useForm, Controller } from 'react-hook-form';
 import { StackNavigationProp } from '@react-navigation/stack';
 
 // Services
@@ -25,6 +25,7 @@ import { SECUNDARY } from '../../styles/colors';
 import { DateSelector } from '../../components/datePicker';
 import SelectOnlyCategory from '../../components/dropDown/SelectOnlyCategory';
 import { DropDownSelectFormat } from '../../shared/types/components';
+import { IncomesPayloadOnSubmit } from '~/shared/types/screens/incomes';
 
 type CreateIncomeScreenNavigationProp = StackNavigationProp<IncomeStackParamList, 'lastIncomes'>;
 
@@ -44,42 +45,38 @@ export default function CreateIncomeScreen({ navigation }: CreateIncomeScreenPro
   });
   const [categoryId, setCategoryId] = useState<number | null>(null);
   const [loading, setLoading] = useState(false);
-  const [dataCategory, setDataCategory] = useState<DropDownSelectFormat>();
-
 
   //   DATE pIKER ---------------  ///////////////
 
   const [date, setDate] = useState(new Date());
-  const today = DateFormat(new Date(), 'YYYY MMM DD');
-  const [dateString, setDateString] = useState(today);
   const [showDate, setShowDate] = useState(false);
 
-  const handleStartDateChange = (selectedDate: Date) => {
-    const currentDate = selectedDate || date;
-
-    // setShowDate(Platform.OS === 'ios');
-    let newDate = DateFormat(currentDate, 'YYYY MMM DD');
-    setDateString(newDate);
-    setDate(currentDate);
+  const handleStartDateChange = (selectedDate?: Date) => {
+    // const currentDate = selectedDate || date;
+ setShowDate(false); // Cierra el selector siempre
+  if (selectedDate) {
+    setDate(selectedDate);
+  }
   };
   const showStartDatePicker = () => {
     setShowDate(true);
   };
 
-
-
   const handleCategoryChange = async (foundCategory: DropDownSelectFormat) => {
-    setDataCategory(foundCategory);
     setCategoryId(foundCategory.id);
   };
 
-  const onSubmit = async (payload: any) => {
+  const onSubmit = async (payload: IncomesPayloadOnSubmit) => {
     try {
       if (!categoryId) {
         return;
       }
-      const dataSend: CreateIncomePayload = {
+      const payloadSend = {
         ...payload,
+        amount: parseInt(payload.amount)
+      };
+      const dataSend: CreateIncomePayload = {
+        ...payloadSend,
         categoryId,
         date: DateFormat(date, 'YYYY-MM-DD')
       };
@@ -148,7 +145,14 @@ export default function CreateIncomeScreen({ navigation }: CreateIncomeScreenPro
         defaultValue=""
       />
 
-      <DateSelector label="  Fecha " date={date} showDatePicker={showDate}  onPress={showStartDatePicker} onDateChange={handleStartDateChange}/>
+      <DateSelector
+        label="  Fecha "
+        date={date}
+        showDatePicker={showDate}
+        onPress={showStartDatePicker}
+        onDateChange={handleStartDateChange}
+        onCancel={() => setShowDate(false)}
+      />
       {loading ? (
         <MyLoading />
       ) : (

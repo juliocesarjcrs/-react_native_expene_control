@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Keyboard, StyleSheet, View } from 'react-native';
 import { useForm, Controller } from 'react-hook-form';
-import { Input, Button, Icon } from 'react-native-elements';
+import { Input, Button } from 'react-native-elements';
 import { RouteProp } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
 
@@ -18,6 +18,7 @@ import ShowToast from '../../utils/toastUtils';
 import { EditIncomePayload } from '../../shared/types/services/income-service.type';
 import { DropDownSelectFormat } from '../../shared/types/components';
 import { IncomeStackParamList } from '../../shared/types';
+import { IncomesPayloadOnSubmit } from '~/shared/types/screens/incomes';
 
 // Utils
 import { DateFormat } from '../../utils/Helpers';
@@ -37,11 +38,10 @@ interface EditIncomeScreenProps {
 export default function EditIncomeScreen({ navigation, route }: EditIncomeScreenProps) {
   const idIncome = route.params.objectIncome.id;
   const objectIncome = route.params.objectIncome;
-  const [initialCategoryId, setInitialCategoryId] = useState<number | null>(objectIncome.idCategory);
+  const [initialCategoryId] = useState<number | null>(objectIncome.idCategory);
   const [idCategory, setIdCategory] = useState<number | null>(null);
-  const selectedCategoryId = initialCategoryId !== null ? initialCategoryId : idCategory;
 
-  const [incomeEdit, setIncomeEdit] = useState({
+  const [incomeEdit] = useState({
     amount: objectIncome.cost.toString(),
     commentary: objectIncome.commentary
   });
@@ -55,29 +55,20 @@ export default function EditIncomeScreen({ navigation, route }: EditIncomeScreen
     defaultValues: incomeEdit
   });
 
-
   const [loading, setLoading] = useState(false);
-  // rpdawn
-  const [open, setOpen] = useState(false);
 
   //   DATE pIKER ---------------  ///////////////
-  let loadDate = new Date(objectIncome.date);
+  const loadDate = new Date(objectIncome.date);
   loadDate.setMinutes(loadDate.getMinutes() + loadDate.getTimezoneOffset());
-  const [date, setDate] = useState(loadDate);
-  const today = DateFormat(loadDate, 'YYYY MMM DD');
-  const [dateString, setDateString] = useState(today);
-  const [mode, setMode] = useState('date');
+  const [date, setDate] = useState<Date>(loadDate);
+
   const [showDate, setShowDate] = useState(false);
 
-
-
-  const handleStartDateChange = (selectedDate: Date) => {
-    const currentDate = selectedDate || date;
-
-    // setShowDate(Platform.OS === 'ios');
-    let newDate = DateFormat(currentDate, 'YYYY MMM DD');
-    setDateString(newDate);
-    setDate(currentDate);
+  const handleStartDateChange = (selectedDate?: Date) => {
+    setShowDate(false);
+    if (selectedDate) {
+      setDate(selectedDate);
+    }
   };
   const showStartDatePicker = () => {
     setShowDate(true);
@@ -87,13 +78,17 @@ export default function EditIncomeScreen({ navigation, route }: EditIncomeScreen
     setIdCategory(foundCategory.id);
   };
 
-  const onSubmit = async (payload: any) => {
+  const onSubmit = async (payload: IncomesPayloadOnSubmit) => {
     try {
       if (!idCategory) {
         return;
       }
-      const dataSend: EditIncomePayload = {
+      const payloadSend = {
         ...payload,
+        amount: parseInt(payload.amount)
+      };
+      const dataSend: EditIncomePayload = {
+        ...payloadSend,
         categoryId: idCategory,
         date: DateFormat(date, 'YYYY-MM-DD')
       };
@@ -103,8 +98,8 @@ export default function EditIncomeScreen({ navigation, route }: EditIncomeScreen
       ShowToast();
       reset();
       Keyboard.dismiss();
-      navigation.navigate('lastIncomes');
-      // navigation.navigate("lastIncomes",{ data });
+      // navigation.navigate('lastIncomes');
+      navigation.navigate('lastIncomes', { data });
     } catch (error) {
       setLoading(false);
       Errors(error);
@@ -170,6 +165,7 @@ export default function EditIncomeScreen({ navigation, route }: EditIncomeScreen
         showDatePicker={showDate}
         onPress={showStartDatePicker}
         onDateChange={handleStartDateChange}
+        onCancel={() => setShowDate(false)}
       />
       {loading ? (
         <MyLoading />

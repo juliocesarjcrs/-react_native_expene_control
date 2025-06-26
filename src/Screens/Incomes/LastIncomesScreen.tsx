@@ -92,6 +92,7 @@ export default function LastIncomesScreen({ navigation }: LastIncomesScreenProps
       }
       let newList = [];
       if (reset) {
+        console.log('[LastIncomesScreen] fetchData: Resetting lastIncomes', params.query, prevQuery, params.page);
         newList = handlerDataSearch(data.data, [], params.query, prevQuery, params.page);
       } else {
         newList = handlerDataSearch(data.data, lastIncomes, params.query, prevQuery, params.page);
@@ -111,7 +112,10 @@ export default function LastIncomesScreen({ navigation }: LastIncomesScreenProps
       setPage((prev) => prev + 1);
     }
   };
-
+  const updateList = () => {
+    console.log('[LastIncomesScreen] updateList called');
+        fetchData(1, true);
+    };
   const renderFooter = () => {
     return <View>{loadingFooter ? <MyLoading testID="loading-footer" /> : null}</View>;
   };
@@ -121,7 +125,7 @@ export default function LastIncomesScreen({ navigation }: LastIncomesScreenProps
         <FlatList
           testID="flatlist-incomes"
           data={lastIncomes}
-          renderItem={({ item }) => <RenderItem item={item} navigation={navigation} updateList={() => fetchData(1, true)} />}
+          renderItem={({ item }) => (<RenderItem item={item} navigation={navigation} updateList={updateList}/>)}
           keyExtractor={(item) => item.id.toString()}
           ListEmptyComponent={() => <Text style={styles.textMuted}>No se registran últimos ingresos</Text>}
           initialNumToRender={10}

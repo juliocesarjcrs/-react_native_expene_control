@@ -4,6 +4,11 @@ import * as ImagePicker from 'expo-image-picker';
 import * as FileSystem from 'expo-file-system';
 import * as ImageManipulator from 'expo-image-manipulator';
 import * as Sharing from 'expo-sharing';
+import EditProductsModal from './modal/EditProductModal';
+import { Product } from '~/shared/types/components/receipt-scanner.type';
+import { extractProducts } from '~/utils/ExtractProducsts';
+
+const fileName = 'extractions_v2.csv';
 
 interface ReceiptScannerProps {
   onExtractedData?: (data: { price: string; category?: string; subcategory?: string; rawText: string }) => void;
@@ -14,8 +19,10 @@ const ReceiptScanner: React.FC<ReceiptScannerProps> = ({ onExtractedData }) => {
   const [text, setText] = useState<string>('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-
   const [csvRows, setCsvRows] = useState<number>(0);
+  const [editModalVisible, setEditModalVisible] = useState(false);
+  const [editableProducts, setEditableProducts] = useState<Product[]>([]);
+  const [pendingRawText, setPendingRawText] = useState<string>('');
   // Llama al cargar el componente
   useEffect(() => {
     updateCsvRowCount();
@@ -23,7 +30,7 @@ const ReceiptScanner: React.FC<ReceiptScannerProps> = ({ onExtractedData }) => {
   // Función para contar filas del CSV
   const updateCsvRowCount = async () => {
     try {
-      const fileUri = FileSystem.documentDirectory + 'extractions.csv';
+      const fileUri = FileSystem.documentDirectory + fileName;
       const fileInfo = await FileSystem.getInfoAsync(fileUri);
       if (fileInfo.exists) {
         const content = await FileSystem.readAsStringAsync(fileUri, { encoding: FileSystem.EncodingType.UTF8 });
@@ -77,7 +84,7 @@ const ReceiptScanner: React.FC<ReceiptScannerProps> = ({ onExtractedData }) => {
       const formData = new FormData();
       formData.append('base64Image', `data:image/jpg;base64,${base64}`);
       formData.append('language', 'spa');
-      formData.append('isTable', 'false');
+      formData.append('isTable', 'true');
       formData.append('OCREngine', '2');
       const response = await fetch('https://api.ocr.space/parse/image', {
         method: 'POST',
@@ -89,9 +96,12 @@ const ReceiptScanner: React.FC<ReceiptScannerProps> = ({ onExtractedData }) => {
       const data = await response.json();
       if (data && data.ParsedResults && data.ParsedResults[0]) {
         const rawText = data.ParsedResults[0].ParsedText;
-        // console.log('OCR resultado:', rawText); // Log para depuración
         setText(rawText);
-        saveRawTextToCSV(rawText); // Guardar extracción en CSV
+        // Antes de guardar, mostrar modal de edición
+        const productos = extractProducts(rawText);
+        setEditableProducts(productos);
+        setPendingRawText(rawText);
+        setEditModalVisible(true);
         const extracted = extractData(rawText);
         if (onExtractedData) onExtractedData({ ...extracted, rawText });
       } else {
@@ -124,17 +134,31 @@ const ReceiptScanner: React.FC<ReceiptScannerProps> = ({ onExtractedData }) => {
       subcategory: undefined
     };
   };
+  const handleSaveEditedProducts = async () => {
+    await saveRawTextToCSV(pendingRawText, editableProducts);
+    setEditModalVisible(false);
+    setEditableProducts([]);
+    setPendingRawText('');
+  };
 
   // Guarda el texto extraído en un archivo CSV para entrenamiento futuro
-  const saveRawTextToCSV = async (rawText: string) => {
+  const saveRawTextToCSV = async (rawText: string, productosOverride?: Product[]) => {
     try {
-      const fileUri = FileSystem.documentDirectory + 'extractions.csv';
-      const line = `"${rawText.replace(/"/g, '""').replace(/\n/g, ' ')}"\n`;
+      const productos = productosOverride ?? extractProducts(rawText);
+      // Cambia las claves a inglés
+      const productosMapped = productos.map((p) => ({
+        description: p.description,
+        cost: p.price
+      }));
+      const productosJson = JSON.stringify(productosMapped);
+      const fileUri = FileSystem.documentDirectory + fileName;
+      const line = `"${rawText.replace(/"/g, '""').replace(/\n/g, ' ')}","${productosJson.replace(/"/g, '""')}"\n`;
       const fileInfo = await FileSystem.getInfoAsync(fileUri);
       if (!fileInfo.exists) {
-        await FileSystem.writeAsStringAsync(fileUri, 'raw_text\n' + line, { encoding: FileSystem.EncodingType.UTF8 });
+        await FileSystem.writeAsStringAsync(fileUri, 'raw_text,products\n' + line, {
+          encoding: FileSystem.EncodingType.UTF8
+        });
       } else {
-        // Leer el contenido actual y agregar la nueva línea
         const prev = await FileSystem.readAsStringAsync(fileUri, { encoding: FileSystem.EncodingType.UTF8 });
         await FileSystem.writeAsStringAsync(fileUri, prev + line, { encoding: FileSystem.EncodingType.UTF8 });
       }
@@ -147,7 +171,7 @@ const ReceiptScanner: React.FC<ReceiptScannerProps> = ({ onExtractedData }) => {
   // Función para compartir el archivo CSV
   const shareCSV = async () => {
     try {
-      const fileUri = FileSystem.documentDirectory + 'extractions.csv';
+      const fileUri = FileSystem.documentDirectory + fileName;
       const fileInfo = await FileSystem.getInfoAsync(fileUri);
       if (fileInfo.exists) {
         await Sharing.shareAsync(fileUri);
@@ -174,6 +198,13 @@ const ReceiptScanner: React.FC<ReceiptScannerProps> = ({ onExtractedData }) => {
             <Text style={styles.text}>{text}</Text>
           </View>
         ) : null}
+        <EditProductsModal
+          visible={editModalVisible}
+          products={editableProducts || []}
+          onChangeProducts={setEditableProducts}
+          onSave={handleSaveEditedProducts}
+          imageUri={imageUri}
+        />
       </View>
     </ScrollView>
   );

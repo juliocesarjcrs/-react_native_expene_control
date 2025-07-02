@@ -1,28 +1,42 @@
 import React, { useEffect, useState } from "react";
 import { Keyboard, StyleSheet, Text, View } from "react-native";
+import DateTimePicker from "@react-native-community/datetimepicker";
+import { useSelector } from "react-redux";
+import DropDownPicker from "react-native-dropdown-picker";
 import { useForm, Controller } from "react-hook-form";
-import { getAllSubcategoriesExpensesByMonth } from "../../services/categories";
 import { CheckBox, Input, Button, Icon,FAB } from "react-native-elements";
-import MyLoading from "~/components/loading/MyLoading";
 
+// Services
 import {
   CreateExpense,
   getExpensesFromSubcategory,
 } from "../../services/expenses";
-import { NumberFormat, DateFormat } from "../../utils/Helpers";
-import { Errors } from "../../utils/Errors";
-import FlatListData from "../../components/card/FlatListData";
-import ErrorText from "../../components/ErrorText";
-import ShowToast from '../../utils/toastUtils';
-import DateTimePicker from "@react-native-community/datetimepicker";
-import { useSelector } from "react-redux";
-import DropDownPicker from "react-native-dropdown-picker";
-import { ICON_DROPDOWN, COLOR_SEPARATOR_DROPDOWN, COLOR_TEXT_DROPDOWN } from "~/styles/colors";
-import { MEGA_BIG } from "~/styles/fonts";
+import { getAllSubcategoriesExpensesByMonth } from "../../services/categories";
 import {getExchangeCurrency} from '../../services/external';
 
-export default function CreateExpenseScreen() {
-  const month = useSelector((state) => state.date.month);
+// Components
+import FlatListData from "../../components/card/FlatListData";
+import ErrorText from "../../components/ErrorText";
+import MyLoading from "~/components/loading/MyLoading";
+
+// Types
+import { RootState } from "~/shared/types/reducers";
+import { ExpenseModel } from "~/shared/types";
+import { CategoryExpensesFormat, FormExpensesValues, SubcategoryExpensesFormat } from "~/shared/types/screens/expenses/create-expenses.type";
+import { CreateExpensePayload, GetExpensesFromSubcategoryResponse } from "~/shared/types/services/expense-service.type";
+import { Subcategory } from "~/shared/types/services";
+
+// Utils
+import { Errors } from "../../utils/Errors";
+import ShowToast from '../../utils/toastUtils';
+import { NumberFormat, DateFormat } from "../../utils/Helpers";
+
+// Styles
+import { ICON_DROPDOWN, COLOR_SEPARATOR_DROPDOWN, COLOR_TEXT_DROPDOWN } from "~/styles/colors";
+import { MEGA_BIG } from "~/styles/fonts";
+
+export default function CreateExpenseScreen(): React.JSX.Element {
+  const month  = useSelector((state: RootState) => state.date.month);
   const {
       handleSubmit,
       control,
@@ -34,16 +48,16 @@ export default function CreateExpenseScreen() {
   } = useForm({
     defaultValues: { cost: "", commentary: "" },
   });
-  const [categories, setCategories] = useState([]);
-  const [subcategories, setSubcategories] = useState([]);
-  const [subcategoryId, setSubcategoryId] = useState(null);
+  const [categories, setCategories] = useState<CategoryExpensesFormat[]>([]);
+  const [subcategories, setSubcategories] = useState<SubcategoryExpensesFormat[]>([]);
+  const [subcategoryId, setSubcategoryId] = useState<number | null>(null);
   const [sumCost, setSumCost] = useState(0);
-  const [expenses, setExpenses] = useState([]);
+  const [expenses, setExpenses] = useState<ExpenseModel[]>([]);
   const [loading, setLoading] = useState(false);
   const ITEM_HEIGHT = 42
   const [open, setOpen] = useState(false);
   const [open2, setOpen2] = useState(false);
-  const [idCategory, setIdCategory] = useState(null);
+  const [idCategory, setIdCategory] = useState<number | null>(null);
   useEffect(() => {
     sendFromDropDownPickerCategory(idCategory);
   }, [idCategory]);
@@ -56,48 +70,48 @@ export default function CreateExpenseScreen() {
   const [date, setDate] = useState(new Date());
   const today = DateFormat(new Date(), "YYYY MMM DD");
   const [dateString, setDateString] = useState(today);
-  const [mode, setMode] = useState("date");
+  const [mode, setMode] = useState<"date" | "time">("date");
   const [show, setShow] = useState(false);
   // convertidor de moneda
   const [currencySymbol, setcurrencySymbol] = useState('COP');
-  const [checkboxes, setCheckboxes] = useState([
-      {
-          id: 1,
-          title: "COP",
-          checked: true,
-          value: "COP",
-      },
-      {
-          id: 2,
-          title: "EUR",
-          checked: false,
-          value: "EUR",
-      },
-      {
-          id: 3,
-          title: "CHF",
-          checked: false,
-          value: "CHF",
-      },
-  ]);
-  const toggleCheckbox = (id, index) => {
-      let checkboxData = [...checkboxes];
-      const oldValue = checkboxData[index].checked;
-      checkboxData = checkboxData.map((e) => {
-          return { ...e, checked: false };
-      });
-      checkboxData[index].checked = true;
-      setCheckboxes(checkboxData);
-      if (!oldValue) {
-          const newvalue = checkboxData[index].value;
-          setcurrencySymbol(newvalue);
-      }
-  };
+  // const [checkboxes, setCheckboxes] = useState([
+  //     {
+  //         id: 1,
+  //         title: "COP",
+  //         checked: true,
+  //         value: "COP",
+  //     },
+  //     {
+  //         id: 2,
+  //         title: "EUR",
+  //         checked: false,
+  //         value: "EUR",
+  //     },
+  //     {
+  //         id: 3,
+  //         title: "CHF",
+  //         checked: false,
+  //         value: "CHF",
+  //     },
+  // ]);
+  // const toggleCheckbox = (id, index) => {
+  //     let checkboxData = [...checkboxes];
+  //     const oldValue = checkboxData[index].checked;
+  //     checkboxData = checkboxData.map((e) => {
+  //         return { ...e, checked: false };
+  //     });
+  //     checkboxData[index].checked = true;
+  //     setCheckboxes(checkboxData);
+  //     if (!oldValue) {
+  //         const newvalue = checkboxData[index].value;
+  //         setcurrencySymbol(newvalue);
+  //     }
+  // };
 
-  const onChange = (event, selectedDate) => {
+  const onChange = (_: any, selectedDate?: Date) => {
     const currentDate = selectedDate || date;
     setShow(Platform.OS === "ios");
-    let newDate = DateFormat(currentDate, "YYYY MMM DD");
+    const newDate = DateFormat(currentDate, "YYYY MMM DD");
     setDateString(newDate);
     setDate(currentDate);
   };
@@ -123,7 +137,7 @@ export default function CreateExpenseScreen() {
       const { data } = await getAllSubcategoriesExpensesByMonth(month);
       setLoading(false);
       const filter = data.data.filter((f) => f.subcategories.length > 0);
-      const dataFormat = filter.map((e) => {
+      const dataFormat:CategoryExpensesFormat[] = filter.map((e) => {
         return { label: e.name, value: e.id, subcategories: e.subcategories,
           icon: ()=>  <Icon
             type="font-awesome"
@@ -140,13 +154,14 @@ export default function CreateExpenseScreen() {
       Errors(error);
     }
   };
-  const defaultIdCategory = (categories) =>{
+  const defaultIdCategory = (categories: CategoryExpensesFormat[]) =>{
     if(categories.length > 0){
       setIdCategory(categories[0].value)
     }
   }
 
-  const sendDataSubcategory = (index) => {
+  const sendDataSubcategory = (index: number | null) => {
+    console.log('[sendDataSubcategory] index', index);
     if (!index || index == NaN) {
       setExpenses([]);
       setSumCost(0);
@@ -154,23 +169,24 @@ export default function CreateExpenseScreen() {
       fetchExpenses(index);
     }
   };
-  const fetchExpenses = async (idSubcategory) => {
+  const fetchExpenses = async (idSubcategory: number) => {
     const { data } = await getExpensesFromSubcategory(idSubcategory, month);
     setExpenses(data);
     calculateTotal(data);
   };
-  const calculateTotal = (data) => {
-    const total = data.reduce((acu, val) => {
-      return acu + parseFloat(val.cost);
+  const calculateTotal = (data: GetExpensesFromSubcategoryResponse) => {
+    const total = data.reduce((acu: number, val: ExpenseModel) => {
+      return acu + val.cost;
     }, 0);
     setSumCost(total);
   };
-  const formatOptionsSubcategories = (data) => {
+  const formatOptionsSubcategories = (data: Subcategory[]): SubcategoryExpensesFormat[]=> {
     return data.map((e) => {
       return { label: e.name, value: e.id };
     });
   };
-  const onSubmit = async (payload) => {
+  const onSubmit = async (payload: FormExpensesValues) => {
+   
 
     let newAmount = null;
     if(currencySymbol !== 'COP'){
@@ -191,8 +207,8 @@ export default function CreateExpenseScreen() {
       if (!subcategoryId) {
         return;
       }
-      const dataSend = {
-        ...payload,
+      const dataSend: CreateExpensePayload = {
+        ...payload, cost: parseInt(payload.cost),
         subcategoryId,
         date: DateFormat(date, "YYYY-MM-DD"),
       };
@@ -211,11 +227,14 @@ export default function CreateExpenseScreen() {
     }
   };
   const updateList = () => {
+    if (!subcategoryId) {
+      return;
+    }
     fetchExpenses(subcategoryId);
   };
 
 
-  const sendFromDropDownPickerCategory = (index) => {
+  const sendFromDropDownPickerCategory = (index: null | number) => {
     setExpenses([]);
     setSubcategoryId(null);
     setSumCost(0);
@@ -294,7 +313,7 @@ export default function CreateExpenseScreen() {
               zIndex={2000}
               zIndexInverse={1000}
               loading={loading}
-              ActivityIndicatorComponent={({ color, size }) => <MyLoading />}
+              ActivityIndicatorComponent={() => <MyLoading />}
               activityIndicatorColor="red"
               activityIndicatorSize={30}
               dropDownContainerStyle={{

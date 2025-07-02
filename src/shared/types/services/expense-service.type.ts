@@ -1,6 +1,6 @@
 import { ExpenseModel } from "../models";
 
-export type CreateExpensePayload = Omit<ExpenseModel, 'id'>;
+export type CreateExpensePayload = Omit<ExpenseModel, 'id' | 'createdAt' | 'userId'>;
 export type EditExpensePayload = Partial<ExpenseModel>;
 
 
@@ -68,3 +68,6 @@ export type LastExpense = {
 export type GetLastExpensesWithPaginateResponse = {
   data: LastExpense[];
 };
+
+export type GetExpensesFromSubcategoryResponse = ExpenseModel[];
+export type CreateExpenseResponse = ExpenseModel

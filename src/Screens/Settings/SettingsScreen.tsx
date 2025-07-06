@@ -77,7 +77,7 @@ export default function SettingsScreen ({ navigation }: SettingsScreenProps) {
           {userLoggued?.role==1 && <MyButton onPress={sendCreateUserScreen} title="Crear Usuario" /> }
           <MyButton onPress={sendcCalculeProductsScreen} title="Calcuar productos" />
           <MyButton onPress={sendCreateLoanScreen} title="Crear préstamo" />
-          <MyButton onPress={sendExportExpenseScreen} title="Expotar datos" />
+          <MyButton onPress={sendExportExpenseScreen} title="Gastos Rango fechas" />
           <MyButton onPress={sendAdvancedSearchScreen} title="Busqueda Avanzada" />
           <MyButton onPress={sendVirtualBudgetScreen} title="Presupuesto virtual" />
         </View>

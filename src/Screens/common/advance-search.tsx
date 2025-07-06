@@ -30,7 +30,7 @@ import { NumberFormat } from '../../utils/Helpers';
 import { ExpenseSearchOptionsQuery } from '../../shared/types/services/expense-service.type';
 import { findExpensesBySubcategories } from '../../services/expenses';
 
-  export default function AdvancedSearchScreen() {
+export default function AdvancedSearchScreen() {
   const selectOnlyCategoryRef = useRef();
   const [selectedCategory, setSelectedCategory] = useState<DropDownSelectFormat | null>(null);
   const [subcategories, setSubcategories] = useState<SubcategoryModel[]>([]);
@@ -43,6 +43,7 @@ import { findExpensesBySubcategories } from '../../services/expenses';
 
   const [resultSearch, setResultSearch] = useState<ListResultSearchProps[]>([]);
   const [sumResultSearch, setSumResultSearch] = useState(0);
+
 
   const handleCategoryChange = async (categorySelectFormat: DropDownSelectFormat) => {
     const categoryId = categorySelectFormat.id;
@@ -118,13 +119,19 @@ import { findExpensesBySubcategories } from '../../services/expenses';
     setShowEndDate(true);
   };
 
-  const handleStartDateChange = (selectedDate: Date) => {
+  const handleStartDateChange = (selectedDate?: Date) => {
     setShowStartDate(false);
+    if (!selectedDate) {
+      return;
+    }
     setStartDate(selectedDate);
   };
 
-  const handleEndDateChange = (selectedDate: Date) => {
+  const handleEndDateChange = (selectedDate?: Date) => {
     setShowEndDate(false);
+    if (!selectedDate) {
+      return;
+    }
     setEndDate(selectedDate);
   };
   const handleSearchTypeChange = (value: number) => {
@@ -177,6 +184,7 @@ import { findExpensesBySubcategories } from '../../services/expenses';
             showDatePicker={showStartDate}
             onPress={showStartDatePicker}
             onDateChange={handleStartDateChange}
+            onCancel={() => setShowStartDate(false)}
           />
           <DateSelector
             label="Fecha Fin"
@@ -184,6 +192,7 @@ import { findExpensesBySubcategories } from '../../services/expenses';
             showDatePicker={showEndDate}
             onPress={showEndDatePicker}
             onDateChange={handleEndDateChange}
+            onCancel={() => setShowEndDate(false)}
           />
         </View>
         <BarSearch shouldDispatch={false} onQueryChange={handleSearch} />

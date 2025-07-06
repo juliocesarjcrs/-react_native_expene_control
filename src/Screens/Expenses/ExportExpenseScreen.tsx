@@ -35,13 +35,19 @@ export default function ExportExpenseScreen({ navigation }: ExportExpenseScreenP
   const [showStartDate, setShowStartDate] = useState(false);
   const [showEndDate, setShowEndDate] = useState(false);
 
-  const handleStartDateChange = (selectedDate: Date) => {
+  const handleStartDateChange = (selectedDate?: Date) => {
     setShowStartDate(false);
+    if (!selectedDate) {
+      return;
+    }
     setStartDate(selectedDate);
   };
 
-  const handleEndDateChange = (selectedDate: Date) => {
+  const handleEndDateChange = (selectedDate?: Date) => {
     setShowEndDate(false);
+    if (!selectedDate) {
+      return;
+    }
     setEndDate(selectedDate);
   };
 
@@ -96,6 +102,7 @@ export default function ExportExpenseScreen({ navigation }: ExportExpenseScreenP
           showDatePicker={showStartDate}
           onPress={showStartDatePicker}
           onDateChange={handleStartDateChange}
+          onCancel={() => setShowStartDate(false)}
         />
         <DateSelector
           label="Fecha Fin"
@@ -103,6 +110,7 @@ export default function ExportExpenseScreen({ navigation }: ExportExpenseScreenP
           showDatePicker={showEndDate}
           onPress={showEndDatePicker}
           onDateChange={handleEndDateChange}
+          onCancel={() => setShowEndDate(false)}
         />
       </View>
       <ScrollView horizontal={true}>

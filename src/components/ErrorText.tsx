@@ -13,7 +13,7 @@ const styles = StyleSheet.create({
   errorText: {
     color: RED,
     fontSize: MEDIUM,
-    paddingTop: 10
+    paddingTop: 3
   }
 });
 

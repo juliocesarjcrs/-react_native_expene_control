@@ -74,13 +74,21 @@ export function extractProducts(ocr: string): Product[] {
         products.push({ description, price });
         continue;
       }
+      // const exitoInlineMatch = current.match(/(?:\d{6}\s)?([a-zA-ZáéíóúÁÉÍÓÚñÑ][a-zA-ZáéíóúÁÉÍÓÚñÑ0-9\s\-.,]{2,}?)\s+(\d{1,3}[.,]\d{3})[A-Z]?(?:\s|$)/);
+      // if (exitoInlineMatch) {
+      //   const description = exitoInlineMatch[1].trim();
+      //   const price = parseInt(exitoInlineMatch[2].replace(/[.,]/g, ''), 10);
+      //   products.push({ description, price });
+      //   console.log("products", products)
+      //   continue;
+      // }
     }
 
     // Heurística adicional para productos pesables de Carulla
     if (products.length === 0) {
+
       const regex = /\d+\s+[0-9.,\s]+\/KGM\s+x\s+[0-9.,\s]+\s+V\.\s+Ahorro\s+[0-9.,\s]+\s+(\d{3,6})\s+([A-Za-zÁÉÍÓÚÜÑñ().,/\- ]{3,})\s+(\d{1,3}(?:[.,]\s?\d{3}))/gi;
 
-      // const regex = /\d+\s+[0-9.,]+\/KGM\s+x\s+[0-9.,]+\s+V\.\s+Ahorro\s+[0-9.,]+\s+(\d{3,6})\s+([A-Za-zÁÉÍÓÚÜÑñ().,/\- ]{3,})\s+(\d{1,3}(?:[.,]\d{3}))/gi;
 
       while ((match = regex.exec(joined)) !== null) {
         const [, , descriptionRaw, priceRaw] = match;
@@ -114,3 +122,142 @@ export function extractProducts(ocr: string): Product[] {
   console.log(`✅ Total productos detectados: ${products.length}`);
   return products;
 }
+
+
+export const extractProducts2 = (text: string): Product[] => {
+  // Normalizar el texto: eliminar múltiples espacios, tabs y normalizar saltos de línea
+  const normalizedText = text
+    .replace(/\t/g, ' ') // Reemplazar tabs por espacios
+    .replace(/\s+/g, ' ') // Múltiples espacios por uno solo
+    .replace(/,/g, '.') // Normalizar decimales
+    .trim();
+
+  if (isCarullaReceipt(normalizedText)) {
+    return parseCarullaReceipt(normalizedText);
+  } else if (isD1Receipt(normalizedText)) {
+    return parseD1Receipt(normalizedText);
+  }
+  return [];
+};
+
+// Detectar recibos de Carulla
+const isCarullaReceipt = (text: string): boolean => {
+  return text.includes('PLU') || text.includes('DETALLE');
+  // return /PLU\s+DETALLE\s+PRECIO/i.test(text) || 
+  //        /DETALLE\s+PRECIO\s+PLU/i.test(text) ||
+  //        /PRECIO\s+PLU\s+DETALLE/i.test(text) ||
+  //        /Total Item\s*:\s*\d+/i.test(text);
+};
+
+// Detectar recibos de D1
+const isD1Receipt = (text: string): boolean => {
+  return text.includes('CAN') || text.includes('DESCRIPCION');
+  // return /CAN\s+UM\s+VALOR\s+U/i.test(text) || 
+  //        /CODIGO\s+DESCRIPCION\s+VALOR/i.test(text) ||
+  //        /VALOR\s+U\s+CODIGO/i.test(text);
+};
+
+// Parsear recibos de Carulla
+const parseCarullaReceipt = (text: string): Product[] => {
+  const lines = text.split('\n');
+  const items: Product[] = [];
+
+  // Expresiones regulares para diferentes formatos de Carulla
+  const regexPatterns = [
+    // Formato 1: "1/u x 4.578 V . Ahorro 229 647588 GALLETA WAFER SI 4.349A"
+    /(?:\d+\s+)?(?:\d+\/u\sx\s[\d.]+\sV\s?\.?\s?Ahorro\s[\d.]+\s)?(?:\d+\s+)?([A-Z][A-Za-z\sÁÉÍÓÚÑ]+?)\s+(\d{1,3}(?:\.\d{3})*(?:\.\d{1,2})?)\s*A?$/i,
+
+    // Formato 2: "1/u x 16.900 V. Ahorro 3.000 13.900 3616630 Protectores Diar"
+    /(?:\d+\/u\sx\s[\d.]+\sV\s?\.?\s?Ahorro\s[\d.]+\s)?(\d{1,3}(?:\.\d{3})*(?:\.\d{1,2})?)\s+(?:\d+\s+)?([A-Z][A-Za-z\sÁÉÍÓÚÑ]+?)\s*$/i,
+
+    // Formato 3 (tipo factura): "172836 Huevo Napoles De 23.000"
+    /(?:\d+\s+)?([A-Z][A-Za-z\sÁÉÍÓÚÑ]+?)\s+(\d{1,3}(?:\.\d{3})*(?:\.\d{1,2})?)\s*$/i
+  ];
+
+  for (const line of lines) {
+    if (!line.trim() || line.includes('Total Item') || line.includes('PLU') ||
+      line.includes('DETALLE') || line.includes('PRECIO') || line.includes('SUBTOTAL')) {
+      continue;
+    }
+
+    for (const pattern of regexPatterns) {
+      const match = line.match(pattern);
+      if (match) {
+        let description, priceStr;
+
+        if (match.length === 3) {
+          // Patrones donde la descripción viene primero
+          description = match[1].trim();
+          priceStr = match[2];
+        } else {
+          // Patrones donde el precio viene primero
+          description = match[2].trim();
+          priceStr = match[1];
+        }
+
+        const price = parseFloat(priceStr.replace(/\./g, ''));
+
+        if (!isNaN(price) && description && !description.match(/^\d/)) {
+          items.push({ description, price });
+          break; // Si encontramos un patrón que coincide, pasamos a la siguiente línea
+        }
+      }
+    }
+  }
+
+  return items;
+};
+
+// Parsear recibos de D1
+const parseD1Receipt = (text: string): Product[] => {
+  const lines = text.split('\n');
+  const items: Product[] = [];
+
+  // Expresiones regulares para diferentes formatos de D1
+  const regexPatterns = [
+    // Formato 1: "10 1 IN 2300 7700304378074 CREMA DE LECH —2:300"
+    /(?:\d+\s+)?(?:[^\w]*)([A-ZÁÉÍÓÚÑ][A-Za-zÁÉÍÓÚÑ\s\/\-]+?)\s*[—\-]\s*(\d{1,3}(?:[:\.]\d{3})*(?:\.\d{1,2})?)\s*$/i,
+
+    // Formato 2 (tipo factura): "1 UN 2,300 7700304378074 CREMA DE LECH 2,300"
+    /(?:\d+\s+UN\s+)?(\d{1,3}(?:\.\d{3})*(?:\.\d{1,2})?)\s+[\d.]+\s+([A-ZÁÉÍÓÚÑ][A-Za-zÁÉÍÓÚÑ\s\/\-]+?)\s+(\d{1,3}(?:\.\d{3})*(?:\.\d{1,2})?)\s*[A-Z]?$/i,
+
+    // Formato 3: "4,300 7700304509423 INFUSION FRUT 4,300 A"
+    /(\d{1,3}(?:\.\d{3})*(?:\.\d{1,2})?)\s+[\d.]+\s+([A-ZÁÉÍÓÚÑ][A-Za-zÁÉÍÓÚÑ\s\/\-]+?)\s+(\d{1,3}(?:\.\d{3})*(?:\.\d{1,2})?)\s*[A-Z]?$/i
+  ];
+
+  for (const line of lines) {
+    if (!line.trim() || line.includes('TOTAL') || line.includes('CODIGO') ||
+      line.includes('DESCRIPCION') || line.includes('VALOR U')) {
+      continue;
+    }
+
+    for (const pattern of regexPatterns) {
+      const match = line.match(pattern);
+      if (match) {
+        let description, priceStr;
+
+        if (match.length === 2) {
+          // Solo precio (no debería ocurrir)
+          continue;
+        } else if (match.length === 3) {
+          // Formato con descripción y precio
+          description = match[1].trim();
+          priceStr = match[2];
+        } else {
+          // Formatos con precio, código, descripción y precio final
+          description = match[2].trim();
+          priceStr = match[3] || match[1]; // Tomar el último precio o el primero
+        }
+
+        const price = parseFloat(priceStr.replace(/[:\.]/g, ''));
+
+        if (!isNaN(price) && description && !description.match(/^\d/)) {
+          items.push({ description, price });
+          break; // Si encontramos un patrón que coincide, pasamos a la siguiente línea
+        }
+      }
+    }
+  }
+
+  return items;
+};

@@ -56,12 +56,13 @@ const styles = StyleSheet.create({
   containerDate: {
     display: 'flex',
     flexDirection: 'row',
-    marginVertical: 5,
+    marginBottom: 5,
     alignItems: 'center'
   },
   buttonLabel: {
     fontSize: 14,
-    color: 'white'
+    color: 'white',
+    fontWeight: '600'
   },
   buttonDate: {
     marginLeft: 5,
@@ -74,7 +75,8 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
     paddingHorizontal: 10,
     color: 'white',
-    backgroundColor: '#c5c5c5'
+    backgroundColor: '#c5c5c5',
+    fontWeight: '600'
   }
 });
 

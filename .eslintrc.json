@@ -16,6 +16,7 @@
     "@typescript-eslint/no-unused-vars": ["warn"],
     "prettier/prettier": "error",
     "no-useless-constructor": "off",
-    "no-console": ["error", { "allow": ["time", "timeEnd"] }]
+    "no-console": ["error", { "allow": ["time", "timeEnd"] }],
+    "react/prop-types": "off"
   }
 }

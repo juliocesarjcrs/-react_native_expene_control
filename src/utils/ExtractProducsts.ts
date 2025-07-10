@@ -20,16 +20,28 @@ export function extractProducts(ocr: string): Product[] {
 
   if (isD1) {
     console.log("📄 Procesando como tipo D1...");
-    const regex = /(\d{1,3}(?:[.,]\d{3}))\s+(\d{13})\s+([A-ZÁÉÍÓÚÑ/\- ]{3,})(?:\s+(\d{1,3}(?:[.,]\d{3})))?/gi;
+    const regex = /(\d{1,3}(?:[.,]\d{3})*(?:[.,]\d{1,3})?)\s+(\d{8,13})\s+([A-ZÁÉÍÓÚÑ/\- ]{3,})(?:\s+(\d{1,3}(?:[.,]\d{3})*(?:[.,]\d{1,3})?))?(?:\s+[A-Z]\s*\.)?/gi;
 
     while ((match = regex.exec(joined)) !== null) {
-      const [, price1, , descriptionRaw, price2] = match;
-      const description = descriptionRaw.trim().replace(/\s{2,}/g, ' ');
-      const price = parseInt((price2 || price1).replace(/[.,]/g, ''), 10);
+        const [, price1, code, descriptionRaw, price2] = match;
+        const description = descriptionRaw.trim().replace(/\s{2,}/g, ' ');
+        // Prefer price2 if exists, otherwise use price1
+        let priceString = (price2 || price1).replace(/[.,]/g, '');
 
-      if (!products.find(p => p.description === description && p.price === price)) {
-        products.push({ description, price });
-      }
+        // Special handling for cases where the price appears before the code
+        if (parseInt(priceString, 10) < 10 && code && code.length >= 8) {
+            const altPriceMatch = joined.match(new RegExp(`${code}\\s+([\\d.,]+)`));
+            if (altPriceMatch && altPriceMatch[1]) {
+                priceString = altPriceMatch[1].replace(/[.,]/g, '');
+            }
+        }
+        const price = parseInt(priceString, 10);
+
+        if (!isNaN(price)) {
+            if (!products.find(p => p.description === description && p.price === price)) {
+                products.push({ description, price });
+            }
+        }
     }
 
   } else if (isCarulla) {
@@ -74,14 +86,6 @@ export function extractProducts(ocr: string): Product[] {
         products.push({ description, price });
         continue;
       }
-      // const exitoInlineMatch = current.match(/(?:\d{6}\s)?([a-zA-ZáéíóúÁÉÍÓÚñÑ][a-zA-ZáéíóúÁÉÍÓÚñÑ0-9\s\-.,]{2,}?)\s+(\d{1,3}[.,]\d{3})[A-Z]?(?:\s|$)/);
-      // if (exitoInlineMatch) {
-      //   const description = exitoInlineMatch[1].trim();
-      //   const price = parseInt(exitoInlineMatch[2].replace(/[.,]/g, ''), 10);
-      //   products.push({ description, price });
-      //   console.log("products", products)
-      //   continue;
-      // }
     }
 
     // Heurística adicional para productos pesables de Carulla

@@ -1,20 +1,43 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, Button, Image, ActivityIndicator, StyleSheet, ScrollView } from 'react-native';
+import {
+  View,
+  Text,
+  Button,
+  Image,
+  ActivityIndicator,
+  StyleSheet,
+  ScrollView,
+  Alert,
+  TouchableOpacity,
+  TextInput
+} from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
 import * as FileSystem from 'expo-file-system';
 import * as ImageManipulator from 'expo-image-manipulator';
 import * as Sharing from 'expo-sharing';
-import EditProductsModal from './modal/EditProductModal';
 import { Product } from '~/shared/types/components/receipt-scanner.type';
 import { extractProducts } from '~/utils/ExtractProducsts';
+import MultiExpenseModal from './modal/MultiExpenseModal';
+import { callOCRSpaceAPI, mockOCRSpaceAPI } from '~/services/ocrService';
+import { CreateMultipleExpense } from '~/services/expenses';
+import { CreateExpensePayload } from '~/shared/types/services/expense-service.type';
 
-const fileName = 'extractions_v2.csv';
+const fileName = 'extractions_v3.csv';
+const RECEIPT_TYPES = ['D1', 'Carulla', 'Exito', 'DollarCity', 'Otros'];
+
+type OcrAccuracy =
+  | '0' // Falló completamente
+  | '1' // Mala calidad (menos del 50% de texto correcto)
+  | '2' // Calidad regular (50-80% de texto correcto)
+  | '3' // Buena calidad (80-95% de texto correcto)
+  | '4' // Excelente calidad (95-100% de texto correcto)
+  | 'unverified'; // Por defecto
 
 interface ReceiptScannerProps {
   onExtractedData?: (data: { price: string; category?: string; subcategory?: string; rawText: string }) => void;
 }
 
-const ReceiptScanner: React.FC<ReceiptScannerProps> = ({ onExtractedData }) => {
+const ReceiptScanner: React.FC<ReceiptScannerProps> = () => {
   const [imageUri, setImageUri] = useState<string | null>(null);
   const [text, setText] = useState<string>('');
   const [loading, setLoading] = useState(false);
@@ -23,6 +46,9 @@ const ReceiptScanner: React.FC<ReceiptScannerProps> = ({ onExtractedData }) => {
   const [editModalVisible, setEditModalVisible] = useState(false);
   const [editableProducts, setEditableProducts] = useState<Product[]>([]);
   const [pendingRawText, setPendingRawText] = useState<string>('');
+  const [ocrAccuracy, setOcrAccuracy] = useState<OcrAccuracy | ''>('');
+  const [receiptType, setReceiptType] = useState<string>('');
+  const [customReceiptType, setCustomReceiptType] = useState<string>('');
   // Llama al cargar el componente
   useEffect(() => {
     updateCsvRowCount();
@@ -76,36 +102,38 @@ const ReceiptScanner: React.FC<ReceiptScannerProps> = ({ onExtractedData }) => {
     }
   };
 
-  const processImage = async (base64: string) => {
+  const processImage = async (base64: string, mock: boolean = false) => {
     setLoading(true);
     setText('');
+    setError('');
+
     try {
-      // Llama a la API gratuita de OCR.space
-      const formData = new FormData();
-      formData.append('base64Image', `data:image/jpg;base64,${base64}`);
-      formData.append('language', 'spa');
-      formData.append('isTable', 'true');
-      formData.append('OCREngine', '2');
-      const response = await fetch('https://api.ocr.space/parse/image', {
-        method: 'POST',
-        headers: {
-          apikey: 'helloworld' // clave pública gratuita de OCR.space
-        },
-        body: formData
-      });
-      const data = await response.json();
-      if (data && data.ParsedResults && data.ParsedResults[0]) {
+      if (mock) {
+        // Modo mock - Datos de prueba
+        const data = await mockOCRSpaceAPI();
+
         const rawText = data.ParsedResults[0].ParsedText;
+        await new Promise((resolve) => setTimeout(resolve, 1000)); // Simula delay de red
         setText(rawText);
-        // Antes de guardar, mostrar modal de edición
         const productos = extractProducts(rawText);
         setEditableProducts(productos);
         setPendingRawText(rawText);
         setEditModalVisible(true);
-        const extracted = extractData(rawText);
-        if (onExtractedData) onExtractedData({ ...extracted, rawText });
+        return;
+      }
+
+      const data = await callOCRSpaceAPI({
+        base64Image: base64
+      });
+      if (data?.ParsedResults?.[0]) {
+        const rawText = data.ParsedResults[0].ParsedText;
+        setText(rawText);
+        const productos = extractProducts(rawText);
+        setEditableProducts(productos);
+        setPendingRawText(rawText);
+        setEditModalVisible(true);
       } else {
-        console.log('Respuesta completa de OCR.space:', data); // Log para depuración
+        console.log('Respuesta completa de OCR.space:', data);
         let apiError = '';
         if (data.IsErroredOnProcessing && data.ErrorMessage) {
           apiError = Array.isArray(data.ErrorMessage) ? data.ErrorMessage.join(' ') : data.ErrorMessage;
@@ -121,50 +149,73 @@ const ReceiptScanner: React.FC<ReceiptScannerProps> = ({ onExtractedData }) => {
     }
   };
 
-  // Simple extraction logic for price and category
-  const extractData = (rawText: string) => {
-    // Busca el precio (número con decimales o coma)
-    const priceMatch = rawText.match(/\b\d{1,5}[.,]\d{2}\b/g);
-    // Busca palabras clave para categorías (puedes mejorar esto)
-    const categories = ['supermercado', 'restaurante', 'transporte', 'farmacia', 'ropa', 'tecnología'];
-    const foundCategory = categories.find((cat) => rawText.toLowerCase().includes(cat));
-    return {
-      price: priceMatch ? priceMatch[0].replace(',', '.') : '',
-      category: foundCategory,
-      subcategory: undefined
-    };
-  };
-  const handleSaveEditedProducts = async () => {
-    await saveRawTextToCSV(pendingRawText, editableProducts);
-    setEditModalVisible(false);
-    setEditableProducts([]);
-    setPendingRawText('');
+  const handleSaveExpenses = async (expenses: CreateExpensePayload[]) => {
+    try {
+      const formattedExpenses = expenses.map((expense) => ({
+        description: expense.commentary || '',
+        price: expense.cost
+      }));
+      await CreateMultipleExpense(expenses);
+      setEditModalVisible(false);
+      setEditableProducts(formattedExpenses);
+      Alert.alert('Éxito', 'Gastos guardados correctamente');
+    } catch (error) {
+      console.error('Error al guardar gastos:', error, { expenses });
+      Alert.alert('Error', 'No se pudieron guardar los gastos');
+    }
   };
 
-  // Guarda el texto extraído en un archivo CSV para entrenamiento futuro
-  const saveRawTextToCSV = async (rawText: string, productosOverride?: Product[]) => {
+  const saveToCSV = async () => {
+    console.log('saving to CSV', { pendingRawText, ocrAccuracy, receiptType, customReceiptType, editableProducts });
+    if (!pendingRawText || !ocrAccuracy || !receiptType || editableProducts.length === 0) {
+      Alert.alert('Datos incompletos', 'Por favor evalúa la precisión del OCR y selecciona el tipo de factura');
+      return;
+    }
+
     try {
-      const productos = productosOverride ?? extractProducts(rawText);
-      // Cambia las claves a inglés
-      const productosMapped = productos.map((p) => ({
-        description: p.description,
-        cost: p.price
-      }));
-      const productosJson = JSON.stringify(productosMapped);
+      const selectedReceiptType = receiptType === 'Otros' ? customReceiptType : receiptType;
       const fileUri = FileSystem.documentDirectory + fileName;
-      const line = `"${rawText.replace(/"/g, '""').replace(/\n/g, ' ')}","${productosJson.replace(/"/g, '""')}"\n`;
+
+      const csvRow = {
+        rawText: pendingRawText.replace(/"/g, '""').replace(/\n/g, ' '),
+        products: JSON.stringify(editableProducts),
+        ocrAccuracy,
+        receiptType: selectedReceiptType,
+        timestamp: new Date().toISOString()
+      };
+
+      const line = `"${csvRow.rawText}","${csvRow.products}","${csvRow.ocrAccuracy}","${csvRow.receiptType}","${csvRow.timestamp}"\n`;
+
       const fileInfo = await FileSystem.getInfoAsync(fileUri);
-      if (!fileInfo.exists) {
-        await FileSystem.writeAsStringAsync(fileUri, 'raw_text,products\n' + line, {
-          encoding: FileSystem.EncodingType.UTF8
-        });
-      } else {
-        const prev = await FileSystem.readAsStringAsync(fileUri, { encoding: FileSystem.EncodingType.UTF8 });
-        await FileSystem.writeAsStringAsync(fileUri, prev + line, { encoding: FileSystem.EncodingType.UTF8 });
-      }
+      const content = fileInfo.exists
+        ? (await FileSystem.readAsStringAsync(fileUri, { encoding: FileSystem.EncodingType.UTF8 })) + line
+        : 'raw_text,products,ocr_accuracy,receipt_type,timestamp\n' + line;
+
+      await FileSystem.writeAsStringAsync(fileUri, content, {
+        encoding: FileSystem.EncodingType.UTF8
+      });
+
       updateCsvRowCount();
-    } catch (e) {
-      console.log('Error guardando extracción en CSV:', e);
+      Alert.alert('Guardado exitoso', '¿Qué deseas hacer ahora?', [
+        {
+          text: 'Nuevo escaneo',
+          onPress: () => {
+            setPendingRawText('');
+            setOcrAccuracy('');
+            setReceiptType('');
+            setCustomReceiptType('');
+            setText('');
+            setImageUri(null);
+          }
+        },
+        {
+          text: 'Ver datos',
+          style: 'cancel'
+        }
+      ]);
+    } catch (error) {
+      console.log('Error guardando CSV:', error);
+      Alert.alert('Error', 'No se pudo guardar el CSV');
     }
   };
 
@@ -184,26 +235,84 @@ const ReceiptScanner: React.FC<ReceiptScannerProps> = ({ onExtractedData }) => {
   };
 
   return (
-    <ScrollView contentContainerStyle={styles.scrollContainer} keyboardShouldPersistTaps="handled">
+    <ScrollView contentContainerStyle={styles.scrollContainer}>
       <View style={styles.innerContainer}>
         <Button title="Seleccionar imagen de factura" onPress={pickImage} />
-        <Button title="Compartir extracciones CSV" onPress={shareCSV} />
-        <Text style={{ marginTop: 8, marginBottom: 8 }}>Filas en CSV: {csvRows}</Text>
-        {imageUri && <Image source={{ uri: imageUri }} style={styles.image} />}
+        <Button title="Compartir CSV" onPress={shareCSV} />
+        <Text style={styles.csvCounter}>Registros en CSV: {csvRows}</Text>
+
+        {imageUri && <Image source={{ uri: imageUri }} style={styles.image} resizeMode="contain" />}
+
         {loading && <ActivityIndicator size="large" color="#0000ff" />}
+
         {error && <Text style={styles.error}>{error}</Text>}
+
         {text ? (
-          <View style={styles.resultBox}>
-            <Text style={styles.label}>Texto extraído:</Text>
-            <Text style={styles.text}>{text}</Text>
-          </View>
+          <>
+            <View style={styles.resultBox}>
+              <Text style={styles.label}>Texto extraído:</Text>
+              <Text style={styles.text}>{text}</Text>
+            </View>
+
+            <View style={styles.evaluationSection}>
+              <View style={styles.accuracyButtons}>
+                <Text style={styles.sectionTitle}>Precisión del OCR (0-4):</Text>
+                <View style={styles.buttonRow}>
+                  {[0, 1, 2, 3, 4].map((score) => (
+                    <TouchableOpacity
+                      key={score}
+                      style={[styles.accuracyButton, ocrAccuracy === String(score) && styles.selectedAccuracy]}
+                      onPress={() => setOcrAccuracy(String(score) as OcrAccuracy)}
+                    >
+                      <Text>{score}</Text>
+                    </TouchableOpacity>
+                  ))}
+                </View>
+                <Text style={styles.accuracyLegend}>0=Falló | 1=Malo | 2=Regular | 3=Bueno | 4=Excelente</Text>
+              </View>
+
+              <Text style={styles.sectionTitle}>Tipo de Factura</Text>
+              <View style={styles.receiptTypeContainer}>
+                {RECEIPT_TYPES.map((type) => (
+                  <TouchableOpacity
+                    key={type}
+                    style={[styles.receiptTypeButton, receiptType === type && styles.selectedReceiptType]}
+                    onPress={() => setReceiptType(type)}
+                  >
+                    <Text>{type}</Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+
+              {receiptType === 'Otros' && (
+                <TextInput
+                  style={styles.input}
+                  placeholder="Especificar tipo de factura"
+                  value={customReceiptType}
+                  onChangeText={setCustomReceiptType}
+                />
+              )}
+            </View>
+
+            <View style={styles.actionButtons}>
+              <Button title="Guardar en CSV" onPress={saveToCSV} disabled={!ocrAccuracy || !receiptType} />
+            </View>
+
+            <Text style={styles.csvCounter}>Registros en CSV: {csvRows}</Text>
+          </>
         ) : null}
-        <EditProductsModal
-          visible={editModalVisible}
-          products={editableProducts || []}
-          onChangeProducts={setEditableProducts}
-          onSave={handleSaveEditedProducts}
+
+        <MultiExpenseModal
           imageUri={imageUri}
+          visible={editModalVisible}
+          initialExpenses={editableProducts.map((exp) => ({
+            description: exp.description,
+            cost: exp.price,
+            categoryId: null,
+            subcategoryId: null
+          }))}
+          onClose={() => setEditModalVisible(false)}
+          onSave={handleSaveExpenses}
         />
       </View>
     </ScrollView>
@@ -211,13 +320,127 @@ const ReceiptScanner: React.FC<ReceiptScannerProps> = ({ onExtractedData }) => {
 };
 
 const styles = StyleSheet.create({
-  scrollContainer: { flexGrow: 1, padding: 16, backgroundColor: '#fff' },
-  innerContainer: { flex: 1 },
-  image: { width: 250, height: 250, marginVertical: 16, alignSelf: 'center' },
-  error: { color: 'red', marginTop: 8 },
-  resultBox: { marginTop: 16, backgroundColor: '#f2f2f2', borderRadius: 8, padding: 8 },
-  label: { fontWeight: 'bold' },
-  text: { marginTop: 8 }
+  scrollContainer: {
+    flexGrow: 1,
+    padding: 16,
+    backgroundColor: '#fff'
+  },
+  innerContainer: {
+    flex: 1,
+    alignItems: 'center'
+  },
+  image: {
+    width: '90%',
+    height: 250,
+    marginVertical: 16,
+    borderRadius: 8,
+    backgroundColor: '#f5f5f5'
+  },
+  error: {
+    color: 'red',
+    marginVertical: 8,
+    textAlign: 'center'
+  },
+  resultBox: {
+    width: '90%',
+    marginTop: 16,
+    padding: 12,
+    backgroundColor: '#f8f9fa',
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#e9ecef'
+  },
+  label: {
+    fontWeight: 'bold',
+    marginBottom: 8
+  },
+  text: {
+    fontSize: 14,
+    lineHeight: 20
+  },
+  csvCounter: {
+    marginVertical: 12,
+    fontWeight: '600',
+    color: '#495057'
+  },
+  evaluationSection: {
+    width: '90%',
+    marginTop: 20,
+    padding: 15,
+    backgroundColor: '#f8f9fa',
+    borderRadius: 8
+  },
+  sectionTitle: {
+    fontWeight: 'bold',
+    marginBottom: 10,
+    fontSize: 16
+  },
+  buttonGroup: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    marginBottom: 20
+  },
+  receiptTypeContainer: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'space-between',
+    marginBottom: 10
+  },
+  receiptTypeButton: {
+    padding: 10,
+    margin: 5,
+    borderWidth: 1,
+    borderColor: '#ddd',
+    borderRadius: 5,
+    minWidth: '30%',
+    alignItems: 'center'
+  },
+  selectedReceiptType: {
+    backgroundColor: '#e3f2fd',
+    borderColor: '#2196f3'
+  },
+  input: {
+    height: 40,
+    borderColor: 'gray',
+    borderWidth: 1,
+    padding: 10,
+    borderRadius: 5,
+    marginTop: 10
+  },
+  actionButtons: {
+    width: '90%',
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    marginTop: 20
+  },
+  accuracyButtons: {
+    marginVertical: 15,
+    width: '100%'
+  },
+  buttonRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginTop: 8
+  },
+  accuracyButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: '#ddd',
+    justifyContent: 'center',
+    alignItems: 'center'
+  },
+  selectedAccuracy: {
+    backgroundColor: '#e3f2fd',
+    borderColor: '#2196f3'
+  },
+  accuracyLegend: {
+    fontSize: 12,
+    color: '#666',
+    marginTop: 5,
+    textAlign: 'center'
+  }
 });
 
 export default ReceiptScanner;

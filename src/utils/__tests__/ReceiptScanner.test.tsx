@@ -1,7 +1,7 @@
 import { extractProducts } from '../ExtractProducsts';
 describe('extractProducts', () => {
   describe('Carulla receipts', () => {
-    it.skip('should parse multiple products from Carulla receipt', () => {
+    it('should parse multiple products from Carulla receipt', () => {
       const carullaText = `
           PLU DETALLE PRECIO
           1 1/u x 4.578 V . Ahorro 229 647588 GALLETA WAFER SI 4.349A
@@ -53,7 +53,7 @@ describe('extractProducts', () => {
         expect(extractProducts(ocr)).toEqual([{ description: 'GALLETA WAFER SI', price: 4349 }]);
       });
 
-      it.skip('should parse single product from Carulla receipt', () => {
+      it('should parse single product from Carulla receipt', () => {
         const carullaText = `
           PLU DETALLE PRECIO
           1 1/u x 4.578 V . Ahorro 229 647588 GALLETA WAFER SI 4.349A
@@ -88,5 +88,36 @@ describe('extractProducts', () => {
         { description: 'CAFE INSTAN/L', price: 9990 }
       ]);
     });
+    it('should handle from invoice type D1 Case 3', () => {
+      const ocr =
+        `Gereac in: 206/07/9 0.:32:26
+        HI CAN CH VALOR U 000:00        DESCRTPOLON VALOR 1DI
+        2, 10 70842579 JABON VELIEADO   2,00 A.
+        2. UN   10 72176429 ICLA CD 2,00.
+        3 10    6 260 72970876 PANEZLA RACI 6,206
+        41 1 , 14,290 7040812 PAPE. HIGENI 4.280 A
+        AlICI.  VACTAS`;
+      expect(extractProducts(ocr)).toEqual([
+        { description: 'JABON VELIEADO', price: 200 },
+        { description: 'ICLA CD', price: 200 },
+        { description: 'PANEZLA RACI', price: 6206 },
+        { description: 'PAPE. HIGENI', price: 4280 }
+      ]);
+    });
+    // it('should handle from invoice type D1 Case 4', () => {
+    //   const ocr =
+    //     `HI CAN CH VALOR U 000:00        DESCRIPCION VALOR 1DI
+    //     2, 10 70842579 JABON VELIEADO   2,00 A.
+    //     2. UN   10 72176429 ICLA CD 2,00.
+    //     3 10    6 260 72970876 PANEZLA RACI 6,206
+    //     41 1 , 14,290 7040812 PAPE. HIGENI 4.280 A
+    //     AlICI. VACTAS`;
+    //   expect(extractProducts(ocr)).toEqual([
+    //     { description: 'JABON VELIEADO', price: 200 },
+    //     { description: 'ICLA CD', price: 200 },
+    //     { description: 'PANEZLA RACI', price: 6206 },
+    //     { description: 'PAPE. HIGENI', price: 4280 }
+    //   ]);
+    // });
   });
 });

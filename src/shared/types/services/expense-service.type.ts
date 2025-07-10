@@ -1,6 +1,7 @@
 import { ExpenseModel } from "../models";
 
-export type CreateExpensePayload = Omit<ExpenseModel, 'id' | 'createdAt' | 'userId'>;
+export type CreateExpensePayload = Omit<ExpenseModel, 'id' | 'createdAt' | 'userId'> &
+  Partial<Pick<ExpenseModel, 'commentary'>>;
 export type EditExpensePayload = Partial<ExpenseModel>;
 
 

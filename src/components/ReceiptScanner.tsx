@@ -67,30 +67,40 @@ const ReceiptScanner: React.FC<ReceiptScannerProps> = () => {
 
   // Configuración de compresión para OCR
   const OCR_IMAGE_MAX_WIDTH = 1000; // px
-  const OCR_IMAGE_MAX_HEIGHT = 1000; // px
-  const OCR_IMAGE_QUALITY = 0.7; // 0 a 1
 
   const pickImage = async () => {
     setError(null);
     const result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ImagePicker.MediaTypeOptions.Images,
       allowsEditing: true,
-      quality: OCR_IMAGE_QUALITY, // calidad inicial
-      base64: false // primero obtenemos el uri
+      quality: 1, // Máxima calidad inicial
+      base64: true // Obtener directamente en base64
     });
+
     if (!result.canceled && result.assets && result.assets.length > 0) {
-      const { uri } = result.assets[0];
-      setImageUri(uri);
-      // Comprimir/redimensionar imagen antes de convertir a base64
-      const manipResult = await ImageManipulator.manipulateAsync(
-        uri,
-        [{ resize: { width: OCR_IMAGE_MAX_WIDTH, height: OCR_IMAGE_MAX_HEIGHT } }],
-        { compress: OCR_IMAGE_QUALITY, format: ImageManipulator.SaveFormat.JPEG, base64: true }
-      );
-      if (manipResult.base64) {
-        processImage(manipResult.base64);
+      const { base64 } = result.assets[0];
+      if (base64) {
+        // Verificar tamaño antes de enviar
+        const sizeInBytes = (base64.length * 3) / 4; // Aproximación del tamaño
+        if (sizeInBytes <= 1000000) {
+          // 1MB
+          console.log('Procesando imagen en base64 directamente');
+          processImage(base64);
+        } else {
+          // Redimensionar solo si es necesario
+          const manipResult = await ImageManipulator.manipulateAsync(
+            result.assets[0].uri,
+            [{ resize: { width: OCR_IMAGE_MAX_WIDTH } }], // Solo ancho, mantener proporción
+            { compress: 0.8, format: ImageManipulator.SaveFormat.PNG, base64: true }
+          );
+          if (manipResult.base64) {
+            processImage(manipResult.base64);
+          } else {
+            setError('No se pudo procesar la imagen.');
+          }
+        }
       } else {
-        setError('No se pudo obtener la imagen comprimida en base64.');
+        setError('No se pudo obtener la imagen en base64.');
       }
     }
   };

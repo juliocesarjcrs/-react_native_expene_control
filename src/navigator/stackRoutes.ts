@@ -31,6 +31,7 @@ import EditIncomeScreen from '~/Screens/Incomes/EditIncomeScreen';
 // others
 import CalculeProductsScreen from '~/Screens/Others/CalculeProductsScreen';
 import ExportExpenseScreen from '~/Screens/Expenses/ExportExpenseScreen';
+import ManageCSVsScreen from '~/Screens/Others/ManageCsvScreen';
 // loans
 import CreateLoanScreen from '~/Screens/Loans/CreateLoanScreen';
 import AdvancedSearchScreen from '../Screens/common/advance-search';
@@ -68,6 +69,7 @@ export interface StackRoutesType {
   AdvancedSearchScreen: typeof AdvancedSearchScreen;
   CreateLoanScreen: typeof CreateLoanScreen;
   VirtualBudgetScreen: typeof VirtualBudgetScreen;
+  ManageCSVsScreen: typeof ManageCSVsScreen;
 }
 
 const stackRoutes: StackRoutesType = {
@@ -101,6 +103,7 @@ const stackRoutes: StackRoutesType = {
   AdvancedSearchScreen,
   CreateLoanScreen,
   VirtualBudgetScreen,
+  ManageCSVsScreen
 };
 
 export default stackRoutes;

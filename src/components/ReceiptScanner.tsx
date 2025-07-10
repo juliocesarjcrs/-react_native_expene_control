@@ -15,23 +15,16 @@ import * as ImagePicker from 'expo-image-picker';
 import * as FileSystem from 'expo-file-system';
 import * as ImageManipulator from 'expo-image-manipulator';
 import * as Sharing from 'expo-sharing';
-import { Product } from '~/shared/types/components/receipt-scanner.type';
+import { OcrAccuracy, Product, ReceiptType } from '~/shared/types/components/receipt-scanner.type';
 import { extractProducts } from '~/utils/ExtractProducsts';
 import MultiExpenseModal from './modal/MultiExpenseModal';
 import { callOCRSpaceAPI, mockOCRSpaceAPI } from '~/services/ocrService';
 import { CreateMultipleExpense } from '~/services/expenses';
 import { CreateExpensePayload } from '~/shared/types/services/expense-service.type';
+import { buildCsvData, generateCsvLine } from '~/utils/csvUtils';
 
 const fileName = 'extractions_v3.csv';
-const RECEIPT_TYPES = ['D1', 'Carulla', 'Exito', 'DollarCity', 'Otros'];
-
-type OcrAccuracy =
-  | '0' // Falló completamente
-  | '1' // Mala calidad (menos del 50% de texto correcto)
-  | '2' // Calidad regular (50-80% de texto correcto)
-  | '3' // Buena calidad (80-95% de texto correcto)
-  | '4' // Excelente calidad (95-100% de texto correcto)
-  | 'unverified'; // Por defecto
+const RECEIPT_TYPES: ReceiptType[] = ['D1', 'Carulla', 'Exito', 'DollarCity', 'Otros'];
 
 interface ReceiptScannerProps {
   onExtractedData?: (data: { price: string; category?: string; subcategory?: string; rawText: string }) => void;
@@ -47,7 +40,7 @@ const ReceiptScanner: React.FC<ReceiptScannerProps> = () => {
   const [editableProducts, setEditableProducts] = useState<Product[]>([]);
   const [pendingRawText, setPendingRawText] = useState<string>('');
   const [ocrAccuracy, setOcrAccuracy] = useState<OcrAccuracy | ''>('');
-  const [receiptType, setReceiptType] = useState<string>('');
+  const [receiptType, setReceiptType] = useState<ReceiptType | ''>('');
   const [customReceiptType, setCustomReceiptType] = useState<string>('');
   // Llama al cargar el componente
   useEffect(() => {
@@ -166,57 +159,83 @@ const ReceiptScanner: React.FC<ReceiptScannerProps> = () => {
   };
 
   const saveToCSV = async () => {
-    console.log('saving to CSV', { pendingRawText, ocrAccuracy, receiptType, customReceiptType, editableProducts });
-    if (!pendingRawText || !ocrAccuracy || !receiptType || editableProducts.length === 0) {
-      Alert.alert('Datos incompletos', 'Por favor evalúa la precisión del OCR y selecciona el tipo de factura');
+    console.log('Guardando datos para entrenamiento...');
+    if (!ocrAccuracy || !receiptType || editableProducts.length === 0) {
+      Alert.alert('Datos incompletos', 'Complete todos los campos requeridos');
       return;
     }
 
     try {
-      const selectedReceiptType = receiptType === 'Otros' ? customReceiptType : receiptType;
-      const fileUri = FileSystem.documentDirectory + fileName;
-
-      const csvRow = {
-        rawText: pendingRawText.replace(/"/g, '""').replace(/\n/g, ' '),
-        products: JSON.stringify(editableProducts),
+      const csvData = buildCsvData({
+        pendingRawText,
         ocrAccuracy,
-        receiptType: selectedReceiptType,
-        timestamp: new Date().toISOString()
-      };
+        receiptType,
+        customReceiptType,
+        editableProducts
+      });
 
-      const line = `"${csvRow.rawText}","${csvRow.products}","${csvRow.ocrAccuracy}","${csvRow.receiptType}","${csvRow.timestamp}"\n`;
+      const fileUri = FileSystem.documentDirectory + fileName;
+      const csvLine = generateCsvLine(csvData);
+      console.log('::: CSV Line:', csvLine);
+
+      // Encabezados que coinciden con CsvData
+      const headers = [
+        'raw_text',
+        'extracted_data',
+        'ocr_quality',
+        'receipt_type',
+        'evaluation_date',
+        'evaluator_id',
+        'model_version'
+      ].join(',');
 
       const fileInfo = await FileSystem.getInfoAsync(fileUri);
       const content = fileInfo.exists
-        ? (await FileSystem.readAsStringAsync(fileUri, { encoding: FileSystem.EncodingType.UTF8 })) + line
-        : 'raw_text,products,ocr_accuracy,receipt_type,timestamp\n' + line;
+        ? (await FileSystem.readAsStringAsync(fileUri)) + csvLine
+        : headers + '\n' + csvLine;
 
-      await FileSystem.writeAsStringAsync(fileUri, content, {
-        encoding: FileSystem.EncodingType.UTF8
-      });
-
+      await FileSystem.writeAsStringAsync(fileUri, content);
       updateCsvRowCount();
-      Alert.alert('Guardado exitoso', '¿Qué deseas hacer ahora?', [
-        {
-          text: 'Nuevo escaneo',
-          onPress: () => {
-            setPendingRawText('');
-            setOcrAccuracy('');
-            setReceiptType('');
-            setCustomReceiptType('');
-            setText('');
-            setImageUri(null);
+
+      Alert.alert(
+        'Dataset actualizado',
+        `Datos guardados para entrenamiento:\n\n` +
+          `- Precisión: ${csvData.ocr_quality}/4\n` +
+          `- Tipo: ${csvData.receipt_type}\n` +
+          `- Productos: ${JSON.parse(csvData.extracted_data).length} items\n` +
+          `¿Qué deseas hacer ahora?`,
+        [
+          {
+            text: 'Nuevo escaneo',
+            onPress: () => {
+              resetForm();
+            }
+          },
+          {
+            text: 'Ver datos',
+            style: 'cancel'
           }
-        },
-        {
-          text: 'Ver datos',
-          style: 'cancel'
-        }
-      ]);
+        ]
+      );
     } catch (error) {
-      console.log('Error guardando CSV:', error);
-      Alert.alert('Error', 'No se pudo guardar el CSV');
+      handleSaveError(
+        error instanceof Error ? error : new Error(typeof error === 'string' ? error : JSON.stringify(error))
+      );
     }
+  };
+  const resetForm = (): void => {
+    setPendingRawText('');
+    setOcrAccuracy('');
+    setReceiptType('');
+    setCustomReceiptType('');
+    setText('');
+    setImageUri(null);
+    setEditableProducts([]);
+  };
+
+  const handleSaveError = (error: Error) => {
+    console.error('Save error:', error);
+    Alert.alert('Error al guardar', `Detalles: ${error.message}`, [{ text: 'Entendido' }]);
   };
 
   // Función para compartir el archivo CSV
@@ -295,7 +314,11 @@ const ReceiptScanner: React.FC<ReceiptScannerProps> = () => {
             </View>
 
             <View style={styles.actionButtons}>
-              <Button title="Guardar en CSV" onPress={saveToCSV} disabled={!ocrAccuracy || !receiptType} />
+              <Button
+                title={`Guardar para entrenamiento (${editableProducts.length} productos)`}
+                onPress={saveToCSV}
+                disabled={!ocrAccuracy || !receiptType || !pendingRawText || editableProducts.length === 0}
+              />
             </View>
 
             <Text style={styles.csvCounter}>Registros en CSV: {csvRows}</Text>

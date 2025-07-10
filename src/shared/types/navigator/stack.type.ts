@@ -92,4 +92,5 @@ export type SettingsStackParamList = {
   exportData: undefined;
   advancedSearch: undefined;
   virtualBudget: undefined;
+  manageCSV: undefined;
 };

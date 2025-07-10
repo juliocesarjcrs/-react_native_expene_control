@@ -1,13 +1,9 @@
 import { createStackNavigator } from "@react-navigation/stack";
-// import { createDrawerNavigator } from '@react-navigation/drawer';
 import {NavigationContainer} from '@react-navigation/native';
 import AsyncStorage from "@react-native-async-storage/async-storage";
-// import { getUser } from '~/services/users';
 import React, { useEffect } from "react";
 import { useSelector, useDispatch } from 'react-redux'
-// import MainStackNavigator from './MainStack';
 import AuthStackNavigator from './AuthStack';
-// import { setUserAction, setAuthAction } from "~/actions/authActions";
 
 // Redux
 import { setIsAuth, setLoadingAuth, setUser } from "../features/auth/authSlice";
@@ -15,7 +11,7 @@ import Routes from './stackRoutes'
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import {Icon} from 'react-native-elements'
 import {Errors} from '../utils/Errors';
-import { BalanceStackParamList, ExpenseStackParamList, IncomeStackParamList, MainTabParamList, SettingsStackParamList, UserModel } from "../shared/types";
+import { BalanceStackParamList, ExpenseStackParamList, IncomeStackParamList, SettingsStackParamList, UserModel } from "../shared/types";
 
 // Services
 import { getUser } from "../services/users";
@@ -49,23 +45,8 @@ export default function MyStack() {
     }
   }
   const Stack = createStackNavigator();
-  // const Stack =  createDrawerNavigator();
-//   return (
-//     <NavigationContainer>
-//       <Stack.Navigator>
-//       {
-//         auth ?  <Stack.Screen name={'MainStack'} component={MainStackNavigator} options={{ title: 'App Control gastos' }} />  :
-//             <Stack.Screen name={'AuthStack'} component={AuthStackNavigator} />
-//       }
-//       </Stack.Navigator>
-//     </NavigationContainer>
-//   );
 
 
-
-
-
-const MainStack = createStackNavigator<MainTabParamList>();
 const ExpenseStack = createStackNavigator<ExpenseStackParamList>();
 const IncomeStack = createStackNavigator<IncomeStackParamList>();
 const BalanceStack = createStackNavigator<BalanceStackParamList>();
@@ -124,6 +105,7 @@ function SettingsStackScreen() {
             <SettingsStack.Screen name="exportData" component={Routes.ExportExpenseScreen} options={{ title: 'Gastos rango fechas' }}/>
             <SettingsStack.Screen name="advancedSearch" component={Routes.AdvancedSearchScreen} options={{ title: 'Busqueda avanzada' }}/>
             <SettingsStack.Screen name="virtualBudget" component={Routes.VirtualBudgetScreen} options={{ title: 'Presupuesto virtual' }}/>
+            <SettingsStack.Screen name="manageCSV" component={Routes.ManageCSVsScreen} options={{ title: 'Gestionar Csv' }}/>
     </SettingsStack.Navigator>
   );
 }

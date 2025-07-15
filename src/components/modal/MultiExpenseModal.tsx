@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import {
   Modal,
   View,
@@ -23,7 +23,7 @@ import {
   MultiExpenseModalProps
 } from '~/shared/types/components/modal/MultiExpenseModal.type';
 import ProductsHeader from './components/ProductsHeader';
-import { DateFormat } from '~/utils/Helpers';
+import { DateFormat, NumberFormat } from '~/utils/Helpers';
 
 const CACHE_KEY = 'expense_categories_cache';
 const CACHE_EXPIRATION = 24 * 60 * 60 * 1000; // 24 horas
@@ -39,6 +39,11 @@ const MultiExpenseModal: React.FC<MultiExpenseModalProps> = ({
   const [categories, setCategories] = useState<CategoryDropdown[]>([]);
   const [loading, setLoading] = useState(false);
   const [isDropdownOpen, setIsDropdownOpen] = useState<number | null>(null);
+
+  // Calcula el total usando useMemo para optimización
+  const totalAmount = useMemo(() => {
+    return expenses.reduce((sum, expense) => sum + (expense.cost || 0), 0);
+  }, [expenses]);
 
   const transformCategories = useCallback((apiCategories: Category[]): CategoryDropdown[] => {
     return apiCategories.map((category) => ({
@@ -146,6 +151,7 @@ const MultiExpenseModal: React.FC<MultiExpenseModalProps> = ({
         <View style={styles.modalContainer}>
           <View style={styles.modalContent}>
             <ProductsHeader title="Registrar Gastos" count={expenses.length} onClose={onClose} imageUri={imageUri} />
+            <Text style={styles.total}>Total:{NumberFormat(totalAmount)}</Text>
 
             {loading ? (
               <View style={styles.loadingContainer}>
@@ -277,6 +283,13 @@ const styles = StyleSheet.create({
   saveButtonText: {
     color: '#fff',
     fontWeight: 'bold'
+  },
+  total: {
+    paddingHorizontal: 10,
+    paddingBottom: 2,
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#2e7d32'
   }
 });
 

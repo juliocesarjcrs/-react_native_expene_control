@@ -78,7 +78,10 @@ const ReceiptScanner: React.FC<ReceiptScannerProps> = () => {
     });
 
     if (!result.canceled && result.assets && result.assets.length > 0) {
+      const { uri } = result.assets[0]; // Usar uri en lugar de base64
+      setImageUri(uri);
       const { base64 } = result.assets[0];
+
       if (base64) {
         // Verificar tamaño antes de enviar
         const sizeInBytes = (base64.length * 3) / 4; // Aproximación del tamaño
@@ -91,9 +94,11 @@ const ReceiptScanner: React.FC<ReceiptScannerProps> = () => {
           const manipResult = await ImageManipulator.manipulateAsync(
             result.assets[0].uri,
             [{ resize: { width: OCR_IMAGE_MAX_WIDTH } }], // Solo ancho, mantener proporción
-            { compress: 0.8, format: ImageManipulator.SaveFormat.PNG, base64: true }
+            { compress: 0.7, format: ImageManipulator.SaveFormat.JPEG, base64: true }
           );
           if (manipResult.base64) {
+            const newSize = (manipResult.base64.length * 3) / 4;
+            console.log(`Tamaño reducido de ${sizeInBytes} bytes a ${newSize} bytes`);
             processImage(manipResult.base64);
           } else {
             setError('No se pudo procesar la imagen.');

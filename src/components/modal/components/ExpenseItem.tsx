@@ -3,6 +3,7 @@ import { View, Text, TextInput, TouchableOpacity, StyleSheet } from 'react-nativ
 import { Icon } from 'react-native-elements';
 import DropDownPicker from 'react-native-dropdown-picker';
 import { ExpenseItemProps } from '~/shared/types/components/modal/MultiExpenseModal.type';
+import { categorizeExpense } from '~/utils';
 
 const ExpenseItem: React.FC<ExpenseItemProps> = ({ item, index, categories, onRemove, onUpdate }) => {
   // 1. Primero, añade estados locales para cada picker
@@ -10,16 +11,39 @@ const ExpenseItem: React.FC<ExpenseItemProps> = ({ item, index, categories, onRe
   const [subcategoryValue, setSubcategoryValue] = useState<number | null>(item.subcategoryId);
   const [isCategoryOpen, setIsCategoryOpen] = useState(false);
   const [isSubcategoryOpen, setIsSubcategoryOpen] = useState(false);
+  const [initialDescriptionProcessed, setInitialDescriptionProcessed] = useState(false);
 
   // 2. Actualiza los estados cuando el item cambie
   useEffect(() => {
-    if (item.categoryId !== categoryValue) {
-      setCategoryValue(item.categoryId);
+    if (item.description && !initialDescriptionProcessed && !item.categoryId) {
+      const { categoryId, subcategoryId } = categorizeExpense(item.description, categories);
+
+      if (categoryId) {
+        onUpdate(index, 'categoryId', categoryId);
+        setCategoryValue(categoryId);
+      }
+      if (subcategoryId) {
+        onUpdate(index, 'subcategoryId', subcategoryId);
+        setSubcategoryValue(subcategoryId);
+      }
+
+      setInitialDescriptionProcessed(true);
     }
-    if (item.subcategoryId !== subcategoryValue) {
-      setSubcategoryValue(item.subcategoryId);
+  }, [item.description, item.categoryId, categories, index, onUpdate, initialDescriptionProcessed]);
+
+  // Efecto adicional para sincronizar el valor de subcategoría cuando la categoría cambia
+  useEffect(() => {
+    if (categoryValue && subcategoryValue) {
+      // Verificamos que la subcategoría pertenezca a la categoría actual
+      const currentCategory = categories.find((c) => c.value === categoryValue);
+      const isValidSubcategory = currentCategory?.subcategories?.some((s) => s.value === subcategoryValue);
+
+      if (!isValidSubcategory) {
+        setSubcategoryValue(null);
+        onUpdate(index, 'subcategoryId', null);
+      }
     }
-  }, [item.categoryId, item.subcategoryId]);
+  }, [categoryValue, subcategoryValue, categories, index, onUpdate]);
   // Memoize categories transformation to prevent unnecessary recalculations
   const transformedCategories = useMemo(() => {
     return categories.map((cat) => ({
@@ -47,7 +71,10 @@ const ExpenseItem: React.FC<ExpenseItemProps> = ({ item, index, categories, onRe
   // Stable callback for category changes
   const handleCategoryChange = useCallback(
     (value: number | null) => {
-      setSubcategoryValue(null);
+      if (initialDescriptionProcessed) {
+        // si ya procesó por descripction
+        setSubcategoryValue(null);
+      }
       onUpdate(index, 'categoryId', value);
       onUpdate(index, 'subcategoryId', null);
     },
@@ -83,6 +110,13 @@ const ExpenseItem: React.FC<ExpenseItemProps> = ({ item, index, categories, onRe
     [isSubcategoryOpen]
   );
 
+  const handleDescriptionChange = useCallback(
+    (text: string) => {
+      onUpdate(index, 'description', text);
+    },
+    [index, onUpdate]
+  );
+
   return (
     <View style={styles.expenseItem}>
       <View style={styles.expenseHeader}>
@@ -96,7 +130,7 @@ const ExpenseItem: React.FC<ExpenseItemProps> = ({ item, index, categories, onRe
         style={styles.input}
         placeholder="Descripción *"
         value={item.description || ''}
-        onChangeText={(text) => onUpdate(index, 'description', text)}
+        onChangeText={handleDescriptionChange}
       />
 
       <TextInput

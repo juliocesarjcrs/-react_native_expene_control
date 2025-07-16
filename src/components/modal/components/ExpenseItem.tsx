@@ -7,8 +7,6 @@ import { categorizeExpense } from '~/utils';
 
 const ExpenseItem: React.FC<ExpenseItemProps> = ({ item, index, categories, onRemove, onUpdate }) => {
   // 1. Primero, añade estados locales para cada picker
-  const [categoryValue, setCategoryValue] = useState<number | null>(item.categoryId);
-  const [subcategoryValue, setSubcategoryValue] = useState<number | null>(item.subcategoryId);
   const [isCategoryOpen, setIsCategoryOpen] = useState(false);
   const [isSubcategoryOpen, setIsSubcategoryOpen] = useState(false);
   const [initialDescriptionProcessed, setInitialDescriptionProcessed] = useState(false);
@@ -20,11 +18,9 @@ const ExpenseItem: React.FC<ExpenseItemProps> = ({ item, index, categories, onRe
 
       if (categoryId) {
         onUpdate(index, 'categoryId', categoryId);
-        setCategoryValue(categoryId);
       }
       if (subcategoryId) {
         onUpdate(index, 'subcategoryId', subcategoryId);
-        setSubcategoryValue(subcategoryId);
       }
 
       setInitialDescriptionProcessed(true);
@@ -33,17 +29,15 @@ const ExpenseItem: React.FC<ExpenseItemProps> = ({ item, index, categories, onRe
 
   // Efecto adicional para sincronizar el valor de subcategoría cuando la categoría cambia
   useEffect(() => {
-    if (categoryValue && subcategoryValue) {
-      // Verificamos que la subcategoría pertenezca a la categoría actual
-      const currentCategory = categories.find((c) => c.value === categoryValue);
-      const isValidSubcategory = currentCategory?.subcategories?.some((s) => s.value === subcategoryValue);
-
+    if (item.categoryId && item.subcategoryId) {
+      const currentCategory = categories.find((c) => c.value === item.categoryId);
+      const isValidSubcategory = currentCategory?.subcategories?.some((s) => s.value === item.subcategoryId);
       if (!isValidSubcategory) {
-        setSubcategoryValue(null);
         onUpdate(index, 'subcategoryId', null);
       }
     }
-  }, [categoryValue, subcategoryValue, categories, index, onUpdate]);
+  }, [item.categoryId, item.subcategoryId, categories, index, onUpdate]);
+
   // Memoize categories transformation to prevent unnecessary recalculations
   const transformedCategories = useMemo(() => {
     return categories.map((cat) => ({
@@ -67,19 +61,6 @@ const ExpenseItem: React.FC<ExpenseItemProps> = ({ item, index, categories, onRe
     const category = categories.find((c) => c.value === item.categoryId);
     return category?.subcategories || [];
   }, [item.categoryId, categories]);
-
-  // Stable callback for category changes
-  const handleCategoryChange = useCallback(
-    (value: number | null) => {
-      if (initialDescriptionProcessed) {
-        // si ya procesó por descripction
-        setSubcategoryValue(null);
-      }
-      onUpdate(index, 'categoryId', value);
-      onUpdate(index, 'subcategoryId', null);
-    },
-    [index, onUpdate]
-  );
 
   // Stable callback for subcategory changes
   const handleSubcategoryChange = useCallback(
@@ -146,12 +127,12 @@ const ExpenseItem: React.FC<ExpenseItemProps> = ({ item, index, categories, onRe
 
       <DropDownPicker
         open={isCategoryOpen}
-        value={categoryValue}
+        value={item.categoryId}
         items={transformedCategories}
         setOpen={handleCategoryToggle}
-        setValue={setCategoryValue}
-        onChangeValue={(value) => {
-          handleCategoryChange(value);
+        setValue={(valOrFn) => {
+          const value = typeof valOrFn === 'function' ? valOrFn(item.categoryId) : valOrFn;
+          onUpdate(index, 'categoryId', value);
         }}
         setItems={() => {}}
         placeholder="Selecciona categoría *"
@@ -166,10 +147,13 @@ const ExpenseItem: React.FC<ExpenseItemProps> = ({ item, index, categories, onRe
       {item.categoryId && (
         <DropDownPicker
           open={isSubcategoryOpen && item.categoryId !== null}
-          value={subcategoryValue}
+          value={item.subcategoryId}
           items={subcategories}
           setOpen={handleSubcategoryToggle}
-          setValue={setSubcategoryValue}
+          setValue={(valOrFn) => {
+            const value = typeof valOrFn === 'function' ? valOrFn(item.subcategoryId) : valOrFn;
+            onUpdate(index, 'subcategoryId', value);
+          }}
           onChangeValue={(value) => {
             handleSubcategoryChange(value);
           }}

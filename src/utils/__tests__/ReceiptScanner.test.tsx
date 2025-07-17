@@ -1,4 +1,6 @@
-import { extractProducts } from '../ExtractProducsts';
+import { extractProducts } from "../parsers";
+
+// import { extractProducts } from '../ExtractProducsts';
 describe('extractProducts', () => {
   describe('Carulla receipts', () => {
     it('should parse multiple products from Carulla receipt', () => {
@@ -43,6 +45,31 @@ describe('extractProducts', () => {
         { description: 'Zanahoria A Gran', price: 2397 },
         { description: 'Platano Maduro', price: 3015 },
         { description: 'Yuca Fresca', price: 6032 }
+      ]);
+    });
+     it('should handle multiple products from invoice type Carulla with broken header case 6', () => {
+      const ocr = `PLU	DETALLE
+        1 0. 345/KGM x 10.480 V. Ahorro 1.085	PRECIO
+        1137	HABICHUELA A GRA
+        2	1/u x 7.500 V. Ahorro 2.250	2.531
+        1443	Champi#%n Tajado
+        3	0.945/KGM * 2.040 V. Ahorro 578	5.250
+        394644 PEPINO COHOMBRO	1.350
+        4 1. 065/KGM x 5.700 V. Ahorro 1.821
+        1141	Zanahoria A Gran	4.250
+        5	1.560/KGM x 4.700 V. Ahorro 2.200
+        1260	Yuca fresca	5.132
+        6 0.480/KGM x 7.180 V. Ahorro 1.034
+        1290	Lechuga	Batavia	2.412
+        Total Item :6`;
+      expect(extractProducts(ocr)).toEqual([
+        { description: 'ABICHUELA A GRA', price: 2531 },
+        { description: 'Champi#%n Tajado', price: 5250 },
+        { description: 'PEPINO COHOMBRO', price: 1350 },
+        { description: 'Zanahoria A Gran', price: 4250 },
+        { description: 'Yuca Fresca', price: 5132 },
+        { description: 'Lechuga	Batavia', price: 2412 },
+
       ]);
     });
 

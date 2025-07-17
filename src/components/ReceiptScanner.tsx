@@ -16,12 +16,12 @@ import * as FileSystem from 'expo-file-system';
 import * as ImageManipulator from 'expo-image-manipulator';
 import * as Sharing from 'expo-sharing';
 import { OcrAccuracy, Product, ReceiptType } from '~/shared/types/components/receipt-scanner.type';
-import { extractProducts } from '~/utils/ExtractProducsts';
 import MultiExpenseModal from './modal/MultiExpenseModal';
 import { callOCRSpaceAPI, mockOCRSpaceAPI } from '~/services/ocrService';
 import { CreateMultipleExpense } from '~/services/expenses';
 import { CreateExpensePayload } from '~/shared/types/services/expense-service.type';
 import { buildCsvData, generateCsvLine } from '~/utils/csvUtils';
+import { extractProducts } from '~/utils/parsers';
 
 const fileName = 'extractions_v3.csv';
 const RECEIPT_TYPES: ReceiptType[] = ['D1', 'Carulla', 'Exito', 'DollarCity', 'Otros'];

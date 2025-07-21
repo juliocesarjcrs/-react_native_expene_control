@@ -11,7 +11,7 @@ export type OcrAccuracy =
   | '4' // Excelente calidad (95-100% de texto correcto)
   | 'unverified'; // Por defecto
 
-export type ReceiptType = 'D1' | 'Carulla' | 'Exito' | 'DollarCity' | 'Otros';
+export type ReceiptType = 'D1' | 'Carulla' | 'Exito' | 'DollarCity' | 'Ara' | 'Otros';
 
 export type CsvData = {
   raw_text: string;

@@ -40,6 +40,9 @@ const MultiExpenseModal: React.FC<MultiExpenseModalProps> = ({
   const [loading, setLoading] = useState(false);
   const [isDropdownOpen, setIsDropdownOpen] = useState<number | null>(null);
 
+  const handleBack = useCallback(() => {
+    onClose(expenses); // Pasa los productos editados al cerrar
+  }, [expenses, onClose]);
   // Calcula el total usando useMemo para optimización
   const totalAmount = useMemo(() => {
     return expenses.reduce((sum, expense) => sum + (expense.cost || 0), 0);
@@ -150,7 +153,7 @@ const MultiExpenseModal: React.FC<MultiExpenseModalProps> = ({
       <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={styles.keyboardAvoidingView}>
         <View style={styles.modalContainer}>
           <View style={styles.modalContent}>
-            <ProductsHeader title="Registrar Gastos" count={expenses.length} onClose={onClose} imageUri={imageUri} />
+            <ProductsHeader title="Registrar Gastos" count={expenses.length} onClose={handleBack} imageUri={imageUri} />
             <Text style={styles.total}>Total:{NumberFormat(totalAmount)}</Text>
 
             {loading ? (

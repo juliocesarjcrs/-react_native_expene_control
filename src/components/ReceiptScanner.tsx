@@ -24,7 +24,7 @@ import { buildCsvData, generateCsvLine } from '~/utils/csvUtils';
 import { extractProducts } from '~/utils/parsers';
 
 const fileName = 'extractions_v3.csv';
-const RECEIPT_TYPES: ReceiptType[] = ['D1', 'Carulla', 'Exito', 'DollarCity', 'Otros'];
+const RECEIPT_TYPES: ReceiptType[] = ['D1', 'Carulla', 'Exito', 'DollarCity', 'Ara', 'Otros'];
 
 interface ReceiptScannerProps {
   onExtractedData?: (data: { price: string; category?: string; subcategory?: string; rawText: string }) => void;
@@ -284,7 +284,7 @@ const ReceiptScanner: React.FC<ReceiptScannerProps> = () => {
         {text ? (
           <>
             <View style={styles.resultBox}>
-              <Text style={styles.label}>Texto extraído:</Text>
+              <Text style={styles.label}>Texto extraído({editableProducts.length}):</Text>
               <Text style={styles.text}>{text}</Text>
             </View>
 
@@ -349,7 +349,17 @@ const ReceiptScanner: React.FC<ReceiptScannerProps> = () => {
             categoryId: null,
             subcategoryId: null
           }))}
-          onClose={() => setEditModalVisible(false)}
+          onClose={(updatedProducts) => {
+            if (updatedProducts) {
+              setEditableProducts(
+                updatedProducts.map((prod) => ({
+                  description: prod.description || '',
+                  price: prod.cost
+                }))
+              );
+            }
+            setEditModalVisible(false);
+          }}
           onSave={handleSaveExpenses}
         />
       </View>

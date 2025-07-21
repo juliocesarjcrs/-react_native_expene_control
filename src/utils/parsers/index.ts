@@ -3,6 +3,7 @@ import { parseCarulla } from "./carulla";
 import { parseD1 } from "./d1";
 import { parseGeneric } from "./parseGeneric";
 import { parseDollarCity } from "./dollarCity";
+import { parseAra } from "./ara";
 
 export function extractProducts(ocr: string): Product[] {
   const lines = ocr
@@ -14,6 +15,7 @@ export function extractProducts(ocr: string): Product[] {
   const isD1 = ocr.includes('CAN ') || ocr.includes('DESCRIPCION');
   const isCarulla = ocr.includes('PLU') || ocr.includes('DETALLE');
   const isDollarCity = ocr.includes('@');
+  const isAra = ocr.includes('Artículo');
 
   console.log("🧾 OCR:", joined.slice(0, 300));
 
@@ -26,6 +28,9 @@ export function extractProducts(ocr: string): Product[] {
   } else if (isDollarCity) {
     console.log("🔍 isDollarCity:", isDollarCity);
     return parseDollarCity(lines);
+  } else if (isAra) {
+    console.log("🔍 isAra:", isAra);
+    return parseAra(lines);
   } else {
     return parseGeneric(lines, joined);
   }

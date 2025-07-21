@@ -111,48 +111,69 @@ function processCarullaCase6(lines: string[], joined: string): Product[] {
   const expectedItems = totalItemMatch ? parseInt(totalItemMatch[1], 10) : null;
 
   // Patrón mejorado que maneja:
-  // 1. Líneas que comienzan con número (PLU)
-  // 2. Seguidas de descripción (hasta el precio)
-  // 3. Y terminan con precio (con o sin tabulación)
-  const productPattern = /^\d+\s+([^\d]+?)\s+(\d{1,3}(?:[.,]\d{3}))\s*$/;
+  // 1. Líneas con código PLU seguido de descripción y precio
+  const productPattern = /^\d+\s+([A-Z][A-Za-záéíóúñü&\s().]+?)\s*(\d{1,3}[.,]\s?\d{2,3})[A-Z]?$/;
 
-  // Alternativa para líneas con formato diferente
-  const altProductPattern = /^\d+\s+\d+\.\d+\/KGM.*?\s+(\d{1,3}(?:[.,]\d{3}))\s*$/;
-  const descPattern = /^\d+\s+([A-Za-zÁÉÍÓÚÜÑñ].+)/;
+  // 2. Líneas con descripción y precio en líneas separadas
+  const descPattern = /^\d+\s+(\d{6,})\s+([A-Z].+)/;
+  const pricePattern = /^(\d{1,3}[.,]\d{3})[A-Z]?$/;
 
-  let lastDescription = '';
+  // 3. Patrón para líneas con medidas (ej: 1/u x 7.830)
+  const measurePattern = /^\d+\s+[\d.,]+\/[KGMu].*[\d.,]+\s+V\.\s*Ahorro/;
 
   for (let i = 0; i < lines.length; i++) {
     const line = lines[i].trim();
 
-    // Intenta hacer match con el patrón principal
+    // Intenta hacer match con el patrón principal (PLU + Descripción + Precio)
     const match = line.match(productPattern);
     if (match) {
-      const description = match[1].trim();
-      const price = parseInt(match[2].replace(/[.,]/g, ''), 10);
+      const description = formatDescription(match[1].replace(/\.$/, '')); // Elimina el punto final si existe
+      // const price = parseInt(match[2].replace(/[.,]/g, ''), 10);
+      const price = parseInt(match[2].replace(/[.,\s]/g, ''), 10); // Elimina puntos, comas y espacios
 
-      products.push({
-        description: formatDescription(description),
-        price
-      });
+      products.push({ description, price });
       continue;
+
     }
 
-    // Intenta hacer match con el patrón alternativo (para líneas con medidas)
-    const altMatch = line.match(altProductPattern);
+    // Intenta hacer match con descripción primero
     const descMatch = line.match(descPattern);
-
     if (descMatch) {
-      lastDescription = descMatch[1].trim();
-    }
-    else if (altMatch && lastDescription) {
-      const price = parseInt(altMatch[1].replace(/[.,]/g, ''), 10);
+      const description = descMatch[2].trim();
 
-      products.push({
-        description: formatDescription(lastDescription),
-        price
-      });
-      lastDescription = '';
+      // Buscar precio en la siguiente línea
+      if (i + 1 < lines.length) {
+        const nextLine = lines[i + 1].trim();
+        const priceMatch = nextLine.match(pricePattern);
+
+        if (priceMatch) {
+          products.push({
+            description: formatDescription(description),
+            price: parseInt(priceMatch[1].replace(/[.,]/g, ''), 10)
+          });
+          i++; // Saltar la línea del precio
+          continue;
+        }
+      }
+    }
+
+    // Si es una línea de medida, buscar descripción y precio en líneas siguientes
+    if (line.match(measurePattern)) {
+      if (i + 2 < lines.length) {
+        const descLine = lines[i + 1].trim();
+        const priceLine = lines[i + 2].trim();
+
+        const descMatch = descLine.match(/^(\d{6,})\s+([A-Z].+)/);
+        const priceMatch = priceLine.match(pricePattern);
+
+        if (descMatch && priceMatch) {
+          products.push({
+            description: formatDescription(descMatch[2]),
+            price: parseInt(priceMatch[1].replace(/[.,]/g, ''), 10)
+          });
+          i += 2; // Saltar las líneas de descripción y precio
+        }
+      }
     }
   }
 

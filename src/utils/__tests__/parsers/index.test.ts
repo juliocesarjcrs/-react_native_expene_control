@@ -32,14 +32,14 @@ describe('extractProducts', () => {
       expect(extractProducts(ocr)).toEqual([
         { description: 'Remolacha A Gran', price: 1995 },
         { description: 'Ahuyama Entera', price: 1606 },
-        { description: 'Cebolla Roja.', price: 3696 },
+        { description: 'Cebolla Roja', price: 3696 },
         { description: 'Chocolo Tierno(M', price: 3239 },
         { description: 'Papaya Comun', price: 5139 },
         { description: 'Acelga', price: 2271 },
         { description: 'Pepino Zukini', price: 2700 },
         { description: 'Tomate Chonto (A', price: 3600 },
         { description: 'Zanahoria A Gran', price: 2397 },
-        { description: 'Platano Maduro 3. 015', price: 2584 },
+        { description: 'Platano Maduro', price: 3015 },
         { description: 'Yuca Fresca', price: 6032 }
       ]);
     });
@@ -77,6 +77,41 @@ describe('extractProducts', () => {
       expect(extractProducts(ocr)).toEqual([
         { description: 'Carne Asar Freir', price: 7049 },
         { description: 'Aguacate Und', price: 3780 }
+      ]);
+    });
+    it('should handle Carulla (case 7)', () => {
+      const ocr = `PLU	DETALLE	PRECIO
+        1 1/u x 12.500 V. Ahorro 1.875
+        449804 SIXPACK COLA&POL	10.625A
+        IMP. CONS. LICORES	: 840
+        2 1/u x 7.830 V. Ahorro 4.698
+        857582 Galletas antojos	3.132A
+        1/u x 7,830 V. Ahorro 4.698
+        857582 Galletas antojos	3.132A
+        4 1.085/KGM x 19.900 V. Ahorro 3.239
+        3618617 Pechuga Blanca M	18.353
+        5 1/u x 11,600 V. Ahorro 6.960
+        1546100 Galletas Yogurt	4.640A
+        6 1/u x 7.210 V. Ahorro 0
+        3531022 Salsa Sabor Ajo	7.210A
+        7 0.555/KGM x 6.280 V. Ahorro 0
+        1166	Cebolla Blanca S	3.485
+        8	1/u x 6.600 V. Ahorro 1, 980
+        3578929 Chorizo Santarro	4.620A
+        Impuesto ICUI 20% $665
+        9 1/u x 15.350 V. Ahorro 9.210
+        3649296 Choco Cookies Ch	6. 140A
+        Total Item :9`;
+      expect(extractProducts(ocr)).toEqual([
+        { description: 'Sixpack Cola&Pol', price: 10625 },
+        { description: 'Galletas Antojos', price: 3132 },
+        { description: 'Galletas Antojos', price: 3132 },
+        { description: 'Pechuga Blanca M', price: 18353 },
+        { description: 'Galletas Yogurt', price: 4640 },
+        { description: 'Salsa Sabor Ajo', price: 7210 },
+        { description: 'Cebolla Blanca S', price: 3485 },
+        { description: 'Chorizo Santarro', price: 4620 },
+        { description: 'Choco Cookies Ch', price: 6140 },
       ]);
     });
   });
@@ -189,6 +224,19 @@ describe('extractProducts', () => {
         { description: 'Torta Envinada Octavo', price: 25000 }
         // { description: 'Alfajor Caja X 8 Un', price: 10000 }
       ]);
+    });
+  });
+
+  describe('Ara receipts', () => {
+    it('should handle Ara receipsts (case 1)', () => {
+      const ocr = "Jeronimo Martins Colombia S. A. S.\t\r\nNIT: 900. 480. 569-1\t\r\nComprobante de entrega\t\r\nArtículo\tDescripción\tValor\t\r\n07704269659070 CEPIL DENTAL\t4.490 G\t\r\n07704269131675 REMOV BEBEAU\t5. 490 G\t\r\n07704269474024 ROD DESM B. B\t3. 150 G\t\r\n17704269613539 TOAL HUME BB\t7. 680 G\t\r\n2 UN X\t3. 840\t\r\n07704269374454 LIMP AGENTEX\t2. 250 G\t\r\n07706261000072 PANDERO MINI\t5. 990 D\t\r\nTotal\t\r\n29. 050\t\r\nEfectivo\t50. 000\t\r\nCambio:\t20. 950$\t\r\nArticulos Vendidos: 7\t\r\n";
+      expect(extractProducts(ocr)).toEqual([
+        { description: 'Cepil Dental', price: 4490 },
+        { description: 'Remov Bebeau', price: 5490 },
+        { description: 'Rod Desm B B', price: 3150 },
+        { description: 'Toal Hume Bb', price: 7680 },
+        { description: 'Limp Agentex', price: 2250 },
+        { description: 'Pandero Mini', price: 5990 }]);
     });
   });
 });

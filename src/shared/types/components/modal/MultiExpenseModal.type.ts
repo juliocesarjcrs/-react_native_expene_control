@@ -25,7 +25,7 @@ export type MultiExpenseModalProps = {
   imageUri?: string | null;
   visible: boolean;
   onSave: (expenses: CreateExpensePayload[]) => void;
-  onClose: () => void;
+  onClose: (updatedProducts?: ExpenseModal[]) => void;
   initialExpenses?: ExpenseModal[];
 }
 

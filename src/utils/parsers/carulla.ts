@@ -18,7 +18,7 @@ export function parseCarulla(lines: string[], joined: string): Product[] {
     return processExitoFormat(lines);
   }
 
-  // 3. Caso Carulla con header roto (caso 5) y entró 3
+  // 3. Caso Carulla con header roto (caso 3, 5 y 8)
   if (isCarullaCase5(joined)) {
     console.log("🛠️ Procesando como caso especial Carulla 5");
     return processCarullaCase5(lines, joined);
@@ -30,7 +30,7 @@ export function parseCarulla(lines: string[], joined: string): Product[] {
   //   return processStandardCarulla(lines, joined);
   // }
 
-  // 5. Caso Carulla con precios en línea (caso 6 y 4)
+  // 5. Caso Carulla con precios en línea (caso 4, 6 y 7)
   if (isCarullaCase6(joined)) {
     console.log("🛠️ Procesando como caso especial Carulla 6");
     return processCarullaCase6(lines, joined);
@@ -105,7 +105,7 @@ function processExitoFormat(lines: string[]): Product[] {
 
 function processCarullaCase6(lines: string[], joined: string): Product[] {
   const products: Product[] = [];
-  console.log("🛠️ Procesando como caso Carulla con precios en línea");
+  console.log("🛠️ Procesando como caso 6 Carulla con precios en línea");
 
   const totalItemMatch = joined.match(/Total Item\s*:\s*(\d+)/);
   const expectedItems = totalItemMatch ? parseInt(totalItemMatch[1], 10) : null;
@@ -186,14 +186,15 @@ function processCarullaCase6(lines: string[], joined: string): Product[] {
 
 function processCarullaCase5(lines: string[], joined: string): Product[] {
   const products: Product[] = [];
-  console.log("🛠️ Procesando como caso especial Carulla 6");
 
   const totalItemMatch = joined.match(/Total Item\s*:\s*(\d+)/);
   const expectedItems = totalItemMatch ? parseInt(totalItemMatch[1], 10) : null;
 
   // Nuevo patrón mejorado para descripciones
-  const descriptionPattern = /^\d+\s+([A-Za-zÁÉÍÓÚÜÑñ#%().,\/\- ]+?)(?:\s+\d+[.,]\d{3})?$/i;
-  const pricePattern = /(\d{1,3}(?:[.,]\d{3}))\s*$/;
+  // const descriptionPattern = /^\d+\s+([A-Za-zÁÉÍÓÚÜÑñ#%().,\/\- ]+?)(?:\s+\d+[.,]\d{3})?$/i;
+  const descriptionPattern = /^\d+\s+([A-Za-zÁÉÍÓÚÜÑñ#%().,\/\- ]+?)(?:\s+\d+[.,]?\d*[A-Za-z]*)?$/i;
+  // const pricePattern = /(\d{1,3}(?:[.,]\d{3}))\s*$/;
+  const pricePattern = /(\d+[.,]?\d*[A-Za-z]?)\s*$/;
 
   for (let i = 0; i < lines.length; i++) {
     const line = lines[i].trim();

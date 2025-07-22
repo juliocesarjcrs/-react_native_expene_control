@@ -114,6 +114,19 @@ describe('extractProducts', () => {
         { description: 'Choco Cookies Ch', price: 6140 },
       ]);
     });
+    it('should handle Carulla (case 8)', () => {
+      const ocr = `PRECIO
+        PLU	DETALLE
+        1 1/u x 7.440 V. Ahorro 0
+        3354234 Esparcible	7.440A
+        2 1/u x 5.450 V. Ahorro	273	5.177
+        337695 Queso D/Crema	7
+        Total Item :2`;
+      expect(extractProducts(ocr)).toEqual([
+        { description: 'Esparcible', price: 7440 },
+        { description: 'Queso D/Crema', price: 7 }
+      ]);
+    });
   });
 
   describe('invoice type Exito', () => {

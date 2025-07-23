@@ -18,7 +18,7 @@ export function parseCarulla(lines: string[], joined: string): Product[] {
     return processExitoFormat(lines);
   }
 
-  // 3. Caso Carulla con header roto (caso 3, 5 y 8)
+  // 3. Caso Carulla con header roto (caso 3, 5, 8, 9, 10)
   if (isCarullaCase5(joined)) {
     console.log("🛠️ Procesando como caso especial Carulla 5");
     return processCarullaCase5(lines, joined);
@@ -63,7 +63,7 @@ function isCarullaCase5(joined: string): boolean {
     joined.includes('PLU\tDETALLE\n')) &&
     !joined.includes('PLU\tDETALLE\tPRECIO') &&
     !joined.includes('PLU DETALLE PRECIO') && // Nueva condición
-    joined.includes('Total Item :');
+    (joined.includes('Total Item :') || joined.includes('Total Item'));
 }
 
 // function isStandardCarulla(joined: string): boolean {
@@ -191,9 +191,8 @@ function processCarullaCase5(lines: string[], joined: string): Product[] {
   const expectedItems = totalItemMatch ? parseInt(totalItemMatch[1], 10) : null;
 
   // Nuevo patrón mejorado para descripciones
-  // const descriptionPattern = /^\d+\s+([A-Za-zÁÉÍÓÚÜÑñ#%().,\/\- ]+?)(?:\s+\d+[.,]\d{3})?$/i;
-  const descriptionPattern = /^\d+\s+([A-Za-zÁÉÍÓÚÜÑñ#%().,\/\- ]+?)(?:\s+\d+[.,]?\d*[A-Za-z]*)?$/i;
-  // const pricePattern = /(\d{1,3}(?:[.,]\d{3}))\s*$/;
+  // const descriptionPattern = /^\d+\s+([A-Za-zÁÉÍÓÚÜÑñ#%().,\/\- ]+?)(?:\s+\d+[.,]?\d*[A-Za-z]*)?$/i;
+  const descriptionPattern = /^\d+\s+([A-Za-zÁÉÍÓÚÜÑñ#%().,\/\- ]+?)(?:\s+\d+[.,]?\s*\d*[A-Za-z]*)?$/i;
   const pricePattern = /(\d+[.,]?\d*[A-Za-z]?)\s*$/;
 
   for (let i = 0; i < lines.length; i++) {

@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { View, Text, StyleSheet } from 'react-native';
-import ReceiptScanner from '../../components/ReceiptScanner';
+import ReceiptScanner from '../../components/ocr/ReceiptScanner';
 
 const CreateExpenseScreenV2: React.FC = () => {
   const [extracted, setExtracted] = useState<{

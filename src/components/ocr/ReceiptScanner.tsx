@@ -3,28 +3,27 @@ import {
   View,
   Text,
   Button,
-  Image,
   ActivityIndicator,
   StyleSheet,
   ScrollView,
   Alert,
-  TouchableOpacity,
-  TextInput
+
 } from 'react-native';
-import * as ImagePicker from 'expo-image-picker';
+// import * as ImagePicker from 'expo-image-picker';
 import * as FileSystem from 'expo-file-system';
-import * as ImageManipulator from 'expo-image-manipulator';
+// import * as ImageManipulator from 'expo-image-manipulator';
 import * as Sharing from 'expo-sharing';
 import { OcrAccuracy, Product, ReceiptType } from '~/shared/types/components/receipt-scanner.type';
-import MultiExpenseModal from './modal/MultiExpenseModal';
+import MultiExpenseModal from '../modal/MultiExpenseModal';
 import { callOCRSpaceAPI, mockOCRSpaceAPI } from '~/services/ocrService';
 import { CreateMultipleExpense } from '~/services/expenses';
 import { CreateExpensePayload } from '~/shared/types/services/expense-service.type';
 import { buildCsvData, generateCsvLine } from '~/utils/csvUtils';
 import { extractProducts } from '~/utils/parsers';
+import ImagePickerComponent from '../image/ImagePicker';
+import OcrEvaluationSection from './OcrEvaluationSection';
 
 const fileName = 'extractions_v3.csv';
-const RECEIPT_TYPES: ReceiptType[] = ['D1', 'Carulla', 'Exito', 'DollarCity', 'Ara', 'Otros'];
 
 interface ReceiptScannerProps {
   onExtractedData?: (data: { price: string; category?: string; subcategory?: string; rawText: string }) => void;
@@ -65,74 +64,15 @@ const ReceiptScanner: React.FC<ReceiptScannerProps> = () => {
     }
   };
 
-  // Configuración de compresión para OCR
-  const OCR_IMAGE_MAX_WIDTH = 1000; // px
 
-  const pickImage = async () => {
-    setError(null);
-    const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.Images,
-      allowsEditing: true,
-      quality: 1, // Máxima calidad inicial
-      base64: true // Obtener directamente en base64
-    });
-
-    if (!result.canceled && result.assets && result.assets.length > 0) {
-      const { uri } = result.assets[0]; // Usar uri en lugar de base64
-      setImageUri(uri);
-      const { base64 } = result.assets[0];
-
-      if (base64) {
-        // Verificar tamaño antes de enviar
-        const sizeInBytes = (base64.length * 3) / 4; // Aproximación del tamaño
-        if (sizeInBytes <= 1000000) {
-          // 1MB
-          console.log('Procesando imagen en base64 directamente');
-          processImage(base64);
-        } else {
-          // Redimensionar solo si es necesario
-          const manipResult = await ImageManipulator.manipulateAsync(
-            result.assets[0].uri,
-            [{ resize: { width: OCR_IMAGE_MAX_WIDTH } }], // Solo ancho, mantener proporción
-            { compress: 0.7, format: ImageManipulator.SaveFormat.JPEG, base64: true }
-          );
-          if (manipResult.base64) {
-            const newSize = (manipResult.base64.length * 3) / 4;
-            console.log(`Tamaño reducido de ${sizeInBytes} bytes a ${newSize} bytes`);
-            processImage(manipResult.base64);
-          } else {
-            setError('No se pudo procesar la imagen.');
-          }
-        }
-      } else {
-        setError('No se pudo obtener la imagen en base64.');
-      }
-    }
-  };
-
-  const processImage = async (base64: string, mock: boolean = false) => {
+   const processImage = async (base64: string, mock: boolean = false) => {
     setLoading(true);
     setText('');
     setError('');
 
     try {
-      if (mock) {
-        // Modo mock - Datos de prueba
-        const data = await mockOCRSpaceAPI();
-
-        const rawText = data.ParsedResults[0].ParsedText;
-        await new Promise((resolve) => setTimeout(resolve, 1000)); // Simula delay de red
-        setText(rawText);
-        const productos = extractProducts(rawText);
-        setEditableProducts(productos);
-        setPendingRawText(rawText);
-        setEditModalVisible(true);
-        return;
-      }
-
-      const data = await callOCRSpaceAPI({
-        base64Image: base64
-      });
+      const data = mock ? await mockOCRSpaceAPI() : await callOCRSpaceAPI({ base64Image: base64 });
+      
       if (data?.ParsedResults?.[0]) {
         const rawText = data.ParsedResults[0].ParsedText;
         setText(rawText);
@@ -141,20 +81,24 @@ const ReceiptScanner: React.FC<ReceiptScannerProps> = () => {
         setPendingRawText(rawText);
         setEditModalVisible(true);
       } else {
-        console.log('Respuesta completa de OCR.space:', data);
-        let apiError = '';
-        if (data.IsErroredOnProcessing && data.ErrorMessage) {
-          apiError = Array.isArray(data.ErrorMessage) ? data.ErrorMessage.join(' ') : data.ErrorMessage;
-        } else if (data.ErrorDetails) {
-          apiError = data.ErrorDetails;
-        }
-        setError('No se pudo extraer texto de la imagen.' + (apiError ? `\nDetalle: ${apiError}` : ''));
+        handleOcrError(data);
       }
     } catch (e: unknown) {
       setError('Error al procesar la imagen: ' + (e instanceof Error ? e.message : JSON.stringify(e)));
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleOcrError = (data: any) => {
+    console.error('OCR Error:', data);
+    let apiError = '';
+    if (data.IsErroredOnProcessing && data.ErrorMessage) {
+      apiError = Array.isArray(data.ErrorMessage) ? data.ErrorMessage.join(' ') : data.ErrorMessage;
+    } else if (data.ErrorDetails) {
+      apiError = data.ErrorDetails;
+    }
+    setError('No se pudo extraer texto de la imagen.' + (apiError ? `\nDetalle: ${apiError}` : ''));
   };
 
   const handleSaveExpenses = async (expenses: CreateExpensePayload[]) => {
@@ -246,6 +190,7 @@ const ReceiptScanner: React.FC<ReceiptScannerProps> = () => {
     setText('');
     setImageUri(null);
     setEditableProducts([]);
+    setError(null);
   };
 
   const handleSaveError = (error: Error) => {
@@ -271,62 +216,37 @@ const ReceiptScanner: React.FC<ReceiptScannerProps> = () => {
   return (
     <ScrollView contentContainerStyle={styles.scrollContainer}>
       <View style={styles.innerContainer}>
-        <Button title="Seleccionar imagen de factura" onPress={pickImage} />
+        <ImagePickerComponent
+          onImageSelected={(base64, uri) => {
+            setImageUri(uri);
+            processImage(base64);
+          }}
+          onError={setError}
+          resetTrigger={!imageUri && !text}
+        />
+
         <Button title="Compartir CSV" onPress={shareCSV} />
         <Text style={styles.csvCounter}>Registros en CSV: {csvRows}</Text>
 
-        {imageUri && <Image source={{ uri: imageUri }} style={styles.image} resizeMode="contain" />}
-
         {loading && <ActivityIndicator size="large" color="#0000ff" />}
-
         {error && <Text style={styles.error}>{error}</Text>}
 
-        {text ? (
+        {text && (
           <>
             <View style={styles.resultBox}>
-              <Text style={styles.label}>Texto extraído({editableProducts.length}):</Text>
+              <Text style={styles.label}>Texto extraído ({editableProducts.length}):</Text>
               <Text style={styles.text}>{text}</Text>
             </View>
 
-            <View style={styles.evaluationSection}>
-              <View style={styles.accuracyButtons}>
-                <Text style={styles.sectionTitle}>Precisión del OCR (0-4):</Text>
-                <View style={styles.buttonRow}>
-                  {[0, 1, 2, 3, 4].map((score) => (
-                    <TouchableOpacity
-                      key={score}
-                      style={[styles.accuracyButton, ocrAccuracy === String(score) && styles.selectedAccuracy]}
-                      onPress={() => setOcrAccuracy(String(score) as OcrAccuracy)}
-                    >
-                      <Text>{score}</Text>
-                    </TouchableOpacity>
-                  ))}
-                </View>
-                <Text style={styles.accuracyLegend}>0=Falló | 1=Malo | 2=Regular | 3=Bueno | 4=Excelente</Text>
-              </View>
-
-              <Text style={styles.sectionTitle}>Tipo de Factura</Text>
-              <View style={styles.receiptTypeContainer}>
-                {RECEIPT_TYPES.map((type) => (
-                  <TouchableOpacity
-                    key={type}
-                    style={[styles.receiptTypeButton, receiptType === type && styles.selectedReceiptType]}
-                    onPress={() => setReceiptType(type)}
-                  >
-                    <Text>{type}</Text>
-                  </TouchableOpacity>
-                ))}
-              </View>
-
-              {receiptType === 'Otros' && (
-                <TextInput
-                  style={styles.input}
-                  placeholder="Especificar tipo de factura"
-                  value={customReceiptType}
-                  onChangeText={setCustomReceiptType}
-                />
-              )}
-            </View>
+            <OcrEvaluationSection
+              ocrAccuracy={ocrAccuracy}
+              setOcrAccuracy={setOcrAccuracy}
+              receiptType={receiptType}
+              setReceiptType={setReceiptType}
+              customReceiptType={customReceiptType}
+              setCustomReceiptType={setCustomReceiptType}
+              productCount={editableProducts.length}
+            />
 
             <View style={styles.actionButtons}>
               <Button
@@ -335,13 +255,10 @@ const ReceiptScanner: React.FC<ReceiptScannerProps> = () => {
                 disabled={!ocrAccuracy || !receiptType || !pendingRawText || editableProducts.length === 0}
               />
             </View>
-
-            <Text style={styles.csvCounter}>Registros en CSV: {csvRows}</Text>
           </>
-        ) : null}
+        )}
 
         <MultiExpenseModal
-          imageUri={imageUri}
           visible={editModalVisible}
           initialExpenses={editableProducts.map((exp) => ({
             description: exp.description,
@@ -361,6 +278,7 @@ const ReceiptScanner: React.FC<ReceiptScannerProps> = () => {
             setEditModalVisible(false);
           }}
           onSave={handleSaveExpenses}
+          imageUri={imageUri}
         />
       </View>
     </ScrollView>
@@ -418,58 +336,58 @@ const styles = StyleSheet.create({
     backgroundColor: '#f8f9fa',
     borderRadius: 8
   },
-  sectionTitle: {
-    fontWeight: 'bold',
-    marginBottom: 10,
-    fontSize: 16
-  },
-  buttonGroup: {
-    flexDirection: 'row',
-    justifyContent: 'space-around',
-    marginBottom: 20
-  },
-  receiptTypeContainer: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    justifyContent: 'space-between',
-    marginBottom: 10
-  },
-  receiptTypeButton: {
-    padding: 10,
-    margin: 5,
-    borderWidth: 1,
-    borderColor: '#ddd',
-    borderRadius: 5,
-    minWidth: '30%',
-    alignItems: 'center'
-  },
-  selectedReceiptType: {
-    backgroundColor: '#e3f2fd',
-    borderColor: '#2196f3'
-  },
-  input: {
-    height: 40,
-    borderColor: 'gray',
-    borderWidth: 1,
-    padding: 10,
-    borderRadius: 5,
-    marginTop: 10
-  },
+  // sectionTitle: {
+  //   fontWeight: 'bold',
+  //   marginBottom: 10,
+  //   fontSize: 16
+  // },
+  // buttonGroup: {
+  //   flexDirection: 'row',
+  //   justifyContent: 'space-around',
+  //   marginBottom: 20
+  // },
+  // receiptTypeContainer: {
+  //   flexDirection: 'row',
+  //   flexWrap: 'wrap',
+  //   justifyContent: 'space-between',
+  //   marginBottom: 10
+  // },
+  // receiptTypeButton: {
+  //   padding: 10,
+  //   margin: 5,
+  //   borderWidth: 1,
+  //   borderColor: '#ddd',
+  //   borderRadius: 5,
+  //   minWidth: '30%',
+  //   alignItems: 'center'
+  // },
+  // selectedReceiptType: {
+  //   backgroundColor: '#e3f2fd',
+  //   borderColor: '#2196f3'
+  // },
+  // input: {
+  //   height: 40,
+  //   borderColor: 'gray',
+  //   borderWidth: 1,
+  //   padding: 10,
+  //   borderRadius: 5,
+  //   marginTop: 10
+  // },
   actionButtons: {
     width: '90%',
     flexDirection: 'row',
     justifyContent: 'space-around',
     marginTop: 20
   },
-  accuracyButtons: {
-    marginVertical: 15,
-    width: '100%'
-  },
-  buttonRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginTop: 8
-  },
+  // accuracyButtons: {
+  //   marginVertical: 15,
+  //   width: '100%'
+  // },
+  // buttonRow: {
+  //   flexDirection: 'row',
+  //   justifyContent: 'space-between',
+  //   marginTop: 8
+  // },
   accuracyButton: {
     width: 40,
     height: 40,
@@ -479,16 +397,16 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center'
   },
-  selectedAccuracy: {
-    backgroundColor: '#e3f2fd',
-    borderColor: '#2196f3'
-  },
-  accuracyLegend: {
-    fontSize: 12,
-    color: '#666',
-    marginTop: 5,
-    textAlign: 'center'
-  }
+  // selectedAccuracy: {
+  //   backgroundColor: '#e3f2fd',
+  //   borderColor: '#2196f3'
+  // },
+  // accuracyLegend: {
+  //   fontSize: 12,
+  //   color: '#666',
+  //   marginTop: 5,
+  //   textAlign: 'center'
+  // }
 });
 
 export default ReceiptScanner;

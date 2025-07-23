@@ -127,6 +127,32 @@ describe('extractProducts', () => {
         { description: 'Queso D/Crema', price: 7 }
       ]);
     });
+    it('should handle Carulla (case 9)', () => {
+      const ocr = `PRECIO
+        PLU	DETALLE
+        1 1/u x 7,440 V. Ahorro 0	7.440A
+        3354234 Esparcible
+        2 1/u x 5,450 V. Ahorro	273
+        337695 Queso D/Crema	5.177
+        Total Item 12	`;
+      expect(extractProducts(ocr)).toEqual([
+        { description: 'Esparcible', price: 273 },
+        { description: 'Queso D/Crema', price: 5177 }
+      ]);
+    });
+    it('should handle Carulla (case 10)', () => {
+      const ocr = `PRECIO
+        PLU	DETALLE
+        1 1/u x 7.440 V. Ahorro 0
+        3354234 Esparcible	7. 440A
+        2 1/u x 5,450 V. Ahorro	273	5.177
+        337695 Queso D/Crema
+        Total Item :2`;
+      expect(extractProducts(ocr)).toEqual([
+        { description: 'Esparcible', price: 440 },
+        { description: 'Queso D/Crema', price: 2 }
+      ]);
+    });
   });
 
   describe('invoice type Exito', () => {

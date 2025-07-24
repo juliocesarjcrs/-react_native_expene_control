@@ -30,3 +30,45 @@ export type ScannerState = {
   customReceiptType: string;
   editableProducts: Product[];
 }
+
+export type Word = {
+  WordText: string;
+  Left: number;
+  Top: number;
+  Height: number;
+  Width: number;
+}
+
+export type Line = {
+  Words: Word[];
+  MaxHeight: number;
+  MinTop: number;
+}
+
+export type TextOverlay = {
+  Lines: Line[];
+  HasOverlay: boolean;
+  Message: string | null;
+}
+
+export type ParsedResult = {
+  TextOverlay: TextOverlay | null;
+  FileParseExitCode: number; // 0, 1, -10, -20, -30, -99
+  ParsedText: string | null;
+  ErrorMessage: string | null;
+  ErrorDetails: string | null;
+}
+
+export type OcrApiResponse = {
+  ParsedResults: ParsedResult[];
+  OCRExitCode: number; // 1, 2, 3, 4
+  IsErroredOnProcessing: boolean;
+  ErrorMessage: string | null;
+  ErrorDetails: string | null;
+  SearchablePDFURL: string | null;
+  ProcessingTimeInMilliseconds: string;
+}
+
+// Tipos auxiliares para códigos de estado
+export type OcrExitCode = 1 | 2 | 3 | 4;
+export type FileParseExitCode = 0 | 1 | -10 | -20 | -30 | -99;

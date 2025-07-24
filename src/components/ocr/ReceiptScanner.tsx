@@ -13,7 +13,7 @@ import {
 import * as FileSystem from 'expo-file-system';
 // import * as ImageManipulator from 'expo-image-manipulator';
 import * as Sharing from 'expo-sharing';
-import { OcrAccuracy, Product, ReceiptType } from '~/shared/types/components/receipt-scanner.type';
+import { OcrAccuracy, OcrApiResponse, Product, ReceiptType } from '~/shared/types/components/receipt-scanner.type';
 import MultiExpenseModal from '../modal/MultiExpenseModal';
 import { callOCRSpaceAPI, mockOCRSpaceAPI } from '~/services/ocrService';
 import { CreateMultipleExpense } from '~/services/expenses';
@@ -90,7 +90,7 @@ const ReceiptScanner: React.FC<ReceiptScannerProps> = () => {
     }
   };
 
-  const handleOcrError = (data: any) => {
+  const handleOcrError = (data: OcrApiResponse) => {
     console.error('OCR Error:', data);
     let apiError = '';
     if (data.IsErroredOnProcessing && data.ErrorMessage) {

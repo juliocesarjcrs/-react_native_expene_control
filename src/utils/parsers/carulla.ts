@@ -2,6 +2,10 @@
 import { Product } from "~/shared/types/components/receipt-scanner.type";
 import { formatDescription } from "./formatDescription";
 
+const PRODUCT_PATTERN = /^\d+\s+([A-Za-zÁÉÍÓÚÜÑñáéíóúü#%().,\/&\s*\-]+?(?:\s*\/\s*[A-Za-zÁÉÍÓÚÜÑñáéíóúü#%().,\/&\s*\-]+?)*)(?:\s+(\d{1,3}(?:[.,]\s?\d{2,3})?)[A-Za-z]*)?$/i;
+
+const PRICE_PATTERN = /(\d+[.,]?\d*[A-Za-z]?)\s*$/;
+
 export function parseCarulla(lines: string[], joined: string): Product[] {
   console.log("📄 Procesando como tipo Carulla...");
 
@@ -10,7 +14,6 @@ export function parseCarulla(lines: string[], joined: string): Product[] {
     console.log("🔄 Procesando como Carulla alternativo (caso 2)");
     return processAltCarulla(lines);
   }
-
 
   // 2. Verificar Éxito caso 1 entró
   if (isExitoFormat(joined)) {
@@ -24,13 +27,7 @@ export function parseCarulla(lines: string[], joined: string): Product[] {
     return processCarullaCase5(lines, joined);
   }
 
-  // 4. Caso estándar (caso  4) No entró
-  // if (isStandardCarulla(joined)) {
-  //   console.log("🏷️ Procesando como Carulla estándar");
-  //   return processStandardCarulla(lines, joined);
-  // }
-
-  // 5. Caso Carulla con precios en línea (caso 4, 6 y 7)
+  // 5. Caso Carulla con precios en línea (caso 4, 6 y 7, 11 12)
   if (isCarullaCase6(joined)) {
     console.log("🛠️ Procesando como caso especial Carulla 6");
     return processCarullaCase6(lines, joined);
@@ -66,16 +63,6 @@ function isCarullaCase5(joined: string): boolean {
     (joined.includes('Total Item :') || joined.includes('Total Item'));
 }
 
-// function isStandardCarulla(joined: string): boolean {
-//   return (
-//     (joined.includes('PLU DETALLE PRECIO') ||
-//       joined.includes('PLU\tDETALLE\tPRECIO') ||
-//       (joined.includes('PLU DETALLE') && joined.includes('PRECIO'))) && // Condición mejorada
-//     joined.includes('Total Item :') &&
-//     // !isCarullaCase5(joined) &&
-//     !isCarullaCase6(joined)
-//   );
-// }
 
 function isAltCarulla(joined: string): boolean {
   // Para el caso 2 que tiene DETALLE PRECIO primero
@@ -112,25 +99,24 @@ function processCarullaCase6(lines: string[], joined: string): Product[] {
 
   // Patrón mejorado que maneja:
   // 1. Líneas con código PLU seguido de descripción y precio
-  const productPattern = /^\d+\s+([A-Z][A-Za-záéíóúñü&\s().]+?)\s*(\d{1,3}[.,]\s?\d{2,3})[A-Z]?$/;
-
   // 2. Líneas con descripción y precio en líneas separadas
   const descPattern = /^\d+\s+(\d{6,})\s+([A-Z].+)/;
   const pricePattern = /^(\d{1,3}[.,]\d{3})[A-Z]?$/;
 
   // 3. Patrón para líneas con medidas (ej: 1/u x 7.830)
-  const measurePattern = /^\d+\s+[\d.,]+\/[KGMu].*[\d.,]+\s+V\.\s*Ahorro/;
+  // const measurePattern = /^\d+\s+[\d.,]+\/[KGMu].*[\d.,]+\s+V\.\s*Ahorro/;
 
   for (let i = 0; i < lines.length; i++) {
     const line = lines[i].trim();
 
     // Intenta hacer match con el patrón principal (PLU + Descripción + Precio)
-    const match = line.match(productPattern);
+    const match = line.match(PRODUCT_PATTERN);
     if (match) {
       const description = formatDescription(match[1].replace(/\.$/, '')); // Elimina el punto final si existe
-      // const price = parseInt(match[2].replace(/[.,]/g, ''), 10);
-      const price = parseInt(match[2].replace(/[.,\s]/g, ''), 10); // Elimina puntos, comas y espacios
-
+      let price = 0;
+      if (match[2]) {
+        price = parseInt(match[2].replace(/[.,\s]/g, ''), 10);
+      }
       products.push({ description, price });
       continue;
 
@@ -158,23 +144,23 @@ function processCarullaCase6(lines: string[], joined: string): Product[] {
     }
 
     // Si es una línea de medida, buscar descripción y precio en líneas siguientes
-    if (line.match(measurePattern)) {
-      if (i + 2 < lines.length) {
-        const descLine = lines[i + 1].trim();
-        const priceLine = lines[i + 2].trim();
+    // if (line.match(measurePattern)) {
+    //   if (i + 2 < lines.length) {
+    //     const descLine = lines[i + 1].trim();
+    //     const priceLine = lines[i + 2].trim();
 
-        const descMatch = descLine.match(/^(\d{6,})\s+([A-Z].+)/);
-        const priceMatch = priceLine.match(pricePattern);
+    //     const descMatch = descLine.match(/^(\d{6,})\s+([A-Z].+)/);
+    //     const priceMatch = priceLine.match(pricePattern);
 
-        if (descMatch && priceMatch) {
-          products.push({
-            description: formatDescription(descMatch[2]),
-            price: parseInt(priceMatch[1].replace(/[.,]/g, ''), 10)
-          });
-          i += 2; // Saltar las líneas de descripción y precio
-        }
-      }
-    }
+    //     if (descMatch && priceMatch) {
+    //       products.push({
+    //         description: formatDescription(descMatch[2]),
+    //         price: parseInt(priceMatch[1].replace(/[.,]/g, ''), 10)
+    //       });
+    //       i += 2; // Saltar las líneas de descripción y precio
+    //     }
+    //   }
+    // }
   }
 
   if (expectedItems && products.length >= expectedItems) {
@@ -191,24 +177,20 @@ function processCarullaCase5(lines: string[], joined: string): Product[] {
   const expectedItems = totalItemMatch ? parseInt(totalItemMatch[1], 10) : null;
 
   // Nuevo patrón mejorado para descripciones
-  // const descriptionPattern = /^\d+\s+([A-Za-zÁÉÍÓÚÜÑñ#%().,\/\- ]+?)(?:\s+\d+[.,]?\d*[A-Za-z]*)?$/i;
-  const descriptionPattern = /^\d+\s+([A-Za-zÁÉÍÓÚÜÑñ#%().,\/\- ]+?)(?:\s+\d+[.,]?\s*\d*[A-Za-z]*)?$/i;
-  const pricePattern = /(\d+[.,]?\d*[A-Za-z]?)\s*$/;
-
   for (let i = 0; i < lines.length; i++) {
     const line = lines[i].trim();
 
     // Extraer descripción (excluyendo precios al final si existen)
-    const descMatch = line.match(descriptionPattern);
+    const descMatch = line.match(PRODUCT_PATTERN);
     if (descMatch) {
       const description = descMatch[1].trim();
 
       // Buscar precio en la línea actual o siguiente
-      let priceMatch = line.match(pricePattern);
+      let priceMatch = line.match(PRICE_PATTERN);
       let priceLine = i;
 
       if (!priceMatch && i < lines.length - 1) {
-        priceMatch = lines[i + 1].match(pricePattern);
+        priceMatch = lines[i + 1].match(PRICE_PATTERN);
         if (priceMatch) priceLine = i + 1;
       }
 
@@ -233,72 +215,6 @@ function processCarullaCase5(lines: string[], joined: string): Product[] {
   return products.length > 0 ? products : [];
 }
 
-// function processStandardCarulla(lines: string[], joined: string): Product[] {
-//   const products: Product[] = [];
-//   // Resto de la lógica original para otros formatos...
-//   for (let i = 0; i < lines.length; i++) {
-//     const current = lines[i];
-//     const next = lines[i + 1]?.trim();
-
-//     const unitLineMatch = current.match(/1\/u.*?(\d{1,3}(?:[.,]\d{3})).*?(\d{1,3}(?:[.,]\d{3}))$/);
-//     const descLineMatch = next?.match(/^(\d{6,})\s+(.+)/);
-
-//     if (unitLineMatch && descLineMatch) {
-//       const price = parseInt(unitLineMatch[2].replace(/[.,]/g, ''), 10);
-//       const description = descLineMatch[2].trim();
-//       products.push({ description: formatDescription(description), price });
-//       i++;
-//       continue;
-//     }
-
-//     const inlineMatch = current.match(/^(\d{6,})\s+(.+?)\s+(\d{1,3}(?:[.,]\d{3}))$/);
-//     if (inlineMatch) {
-//       const description = inlineMatch[2].trim();
-//       const price = parseInt(inlineMatch[3].replace(/[.,]/g, ''), 10);
-//       products.push({ description: formatDescription(description), price });
-//       continue;
-//     }
-
-//     const splitDescMatch = current.match(/^(\d{6,})\s+(.+)$/);
-//     const nextPriceMatch = next?.match(/^(\d{1,3}(?:[.,]\d{3}))$/);
-//     if (splitDescMatch && nextPriceMatch) {
-//       const description = splitDescMatch[2].trim();
-//       const price = parseInt(nextPriceMatch[1].replace(/[.,]/g, ''), 10);
-//       products.push({ description: formatDescription(description), price });
-//       i++;
-//       continue;
-//     }
-//     const exitoInlineMatch = current.match(/^(\d{6,})\s+(.+?)\s+(\d{1,3}[.,]\d{3})[A-Z]?$/);
-//     if (exitoInlineMatch) {
-//       const description = exitoInlineMatch[2].trim();
-//       const price = parseInt(exitoInlineMatch[3].replace(/[.,]/g, ''), 10);
-//       products.push({ description: formatDescription(description), price });
-//       continue;
-//     }
-//   }
-
-//   const carullaInlineRegex = /\d+\s+1\/u\s+x\s+[\d.,]+\s+V\s*\.?\s*Ahorro\s+\d+\s+(\d{6,})\s+([A-ZÁÉÍÓÚÑa-záéíóúñ().,/\- ]{3,})\s+(\d{1,3}(?:[.,]\d{3}))[A-Z]?/g;
-//   let matchInline;
-//   while ((matchInline = carullaInlineRegex.exec(joined)) !== null) {
-//     const [, , descriptionRaw, priceRaw] = matchInline;
-//     const description = descriptionRaw.trim().replace(/\s{2,}/g, ' ');
-//     const price = parseInt(priceRaw.replace(/[.,]/g, ''), 10);
-//     if (!products.find(p => p.description === description && p.price === price)) {
-//       products.push({ description: formatDescription(description), price });
-//     }
-//   }
-//   let match;
-//   if (products.length === 0) {
-//     const regex = /\d+\s+[0-9.,\s]+\/KGM\s+x\s+[0-9.,\s]+\s+V\.\s+Ahorro\s+[0-9.,\s]+\s+(\d{3,6})\s+([A-Za-zÁÉÍÓÚÜÑñ().,/\- ]{3,})\s+(\d{1,3}(?:[.,]\s?\d{3}))/gi;
-//     while ((match = regex.exec(joined)) !== null) {
-//       const [, , descriptionRaw, priceRaw] = match;
-//       const description = descriptionRaw.trim().replace(/\s{2,}/g, ' ');
-//       const price = parseInt(priceRaw.replace(/[.,\s]/g, ''), 10);
-//       products.push({ description: formatDescription(description), price });
-//     }
-//   }
-//   return products;
-// }
 
 function processAltCarulla(lines: string[]): Product[] {
   const products: Product[] = [];

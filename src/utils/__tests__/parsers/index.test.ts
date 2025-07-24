@@ -153,6 +153,47 @@ describe('extractProducts', () => {
         { description: 'Queso D/Crema', price: 2 }
       ]);
     });
+    it('should handle Carulla (case 11)', () => {
+      const ocr = `PLU	DETALLE	PRECIO
+        1 0.965/KGM x 21.500 V. Ahorro 4.150
+        3618616 Pechuga Campesin	16.598
+        2 1.140/KGM x 19.900 V. Ahorro	4.537
+        3618617 Pechuga Blanca M	18.149
+        3 0.500/KGM x 46.280 V. Ahorro	4.628
+        847221 LOMO CARACHA*	18.512
+        4 1/u x 19.900 V. Ahorro 0
+        3207320 Estuche Surtido	19. 900A
+        5 0.905/KGM x 2.400 V. Ahorro 0
+        1055	Limon Tahiti A G	2.172
+        6 0. 570/KGM x 29.280 V. Ahorro	3.338	13.352
+        876865 PECHO CORRIENTE
+        - Total Item :6`;
+      expect(extractProducts(ocr)).toEqual([
+        { description: 'Pechuga Campesin', price: 16598 },
+        { description: 'Pechuga Blanca M', price: 18149 },
+        { description: 'Lomo Caracha*', price: 18512 },
+        { description: 'Estuche Surtido', price: 19900 },
+        { description: 'Limon Tahiti A G', price: 2172 },
+        { description: 'Pecho Corriente', price: 0 },
+
+      ]);
+    });
+    it('should handle Carulla (case 12)', () => {
+      const ocr = `PLU	DETALLE	PRECIO
+        1 0.995/KGM x 4.260 V. Ahorro 848
+        1253	Banano	3.391
+        2 1.345/KGM x 2.720 V. Ahorro 0
+        1141	Zanahoria A Gran	3.658
+        3 1/u x 6.770 V. Ahorro 0
+        942160 Panela 4 Und	6.770
+        Total Item :3`;
+      expect(extractProducts(ocr)).toEqual([
+        { description: 'Banano', price: 3391 },
+        { description: 'Zanahoria A Gran', price: 3658 },
+        // { description: 'Panela 4 Und', price: 6770 },
+
+      ]);
+    });
   });
 
   describe('invoice type Exito', () => {

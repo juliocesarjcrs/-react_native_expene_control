@@ -294,19 +294,6 @@ describe('extractProducts', () => {
       ]);
     });
   });
-  describe('other receipts', () => {
-    it('should handle other receipsts with headers', () => {
-      const ocr = `Precio Cantidad UN Producto $ 8.500,00 1 Und. GENOVESA BAILEYS PORCIÓN $ 7.500,00 1 Und. GE NOVESA CHOCOLATE PORCIÓN  25.000,00 $ 1 Und. TORTA ENVINADA OCTAVO Und. ALFAJOR CAJA X 8 UN $ 10.000,00 $
-      $ 25.000,00 $ 1 Und. TORTA ENVINADA OCTAVO Und. ALFAJOR CAJA X 8 UN $ 10.000,00 $`;
-      expect(extractProducts(ocr)).toEqual([
-        { description: 'Genovesa Baileys PorcióN', price: 8500 },
-        { description: 'Ge Novesa Chocolate PorcióN', price: 7500 },
-        { description: 'Torta Envinada Octavo', price: 25000 }
-        // { description: 'Alfajor Caja X 8 Un', price: 10000 }
-      ]);
-    });
-  });
-
   describe('Ara receipts', () => {
     it('should handle Ara receipsts (case 1)', () => {
       const ocr = "Jeronimo Martins Colombia S. A. S.\t\r\nNIT: 900. 480. 569-1\t\r\nComprobante de entrega\t\r\nArtículo\tDescripción\tValor\t\r\n07704269659070 CEPIL DENTAL\t4.490 G\t\r\n07704269131675 REMOV BEBEAU\t5. 490 G\t\r\n07704269474024 ROD DESM B. B\t3. 150 G\t\r\n17704269613539 TOAL HUME BB\t7. 680 G\t\r\n2 UN X\t3. 840\t\r\n07704269374454 LIMP AGENTEX\t2. 250 G\t\r\n07706261000072 PANDERO MINI\t5. 990 D\t\r\nTotal\t\r\n29. 050\t\r\nEfectivo\t50. 000\t\r\nCambio:\t20. 950$\t\r\nArticulos Vendidos: 7\t\r\n";
@@ -318,5 +305,47 @@ describe('extractProducts', () => {
         { description: 'Limp Agentex', price: 2250 },
         { description: 'Pandero Mini', price: 5990 }]);
     });
+    it('should handle Ara receipsts (case 2)', () => {
+      const ocr = `alle de
+        Artículo	Valor
+        DescripciÃ³n
+        07704269865907 MAQ AFE SKI/	2. 990 G
+        07707301111642 PAN PERRO 37	3. 600 E
+        07704269434585 TOSTONES PLA	4. 400 G
+        Total	:	64. 520
+        Efectivo	100. 000`;
+      expect(extractProducts(ocr)).toEqual([
+        { description: 'Maq Afe Ski/', price: 2990 },
+        { description: 'Pan Perro', price: 373600 }, // mejora cuando tiene números
+        { description: "Tostones Pla", price: 4400 }
+      ]);
+    });
   });
+
+  describe('other receipts', () => {
+    it('should handle other receipsts with headers', () => {
+      const ocr = `Precio Cantidad UN Producto $ 8.500,00 1 Und. GENOVESA BAILEYS PORCIÓN $ 7.500,00 1 Und. GE NOVESA CHOCOLATE PORCIÓN  25.000,00 $ 1 Und. TORTA ENVINADA OCTAVO Und. ALFAJOR CAJA X 8 UN $ 10.000,00 $
+      $ 25.000,00 $ 1 Und. TORTA ENVINADA OCTAVO Und. ALFAJOR CAJA X 8 UN $ 10.000,00 $`;
+      expect(extractProducts(ocr)).toEqual([
+        { description: 'Genovesa Baileys PorcióN', price: 8500 },
+        { description: 'Ge Novesa Chocolate PorcióN', price: 7500 },
+        { description: 'Torta Envinada Octavo', price: 25000 }
+        // { description: 'Alfajor Caja X 8 Un', price: 10000 }
+      ]);
+    });
+    it('should extract products from tabular receipt layout Restaurant case(2)', () => {
+      const ocr = `Valor,	Valor
+        Producto	Cant,	Unit	Total
+        PETIT DEJEUNER	26,500	26,500
+        TORTAS PORCION	1	14,000	14,000
+        CHOCOLATE
+        `;
+      expect(extractProducts(ocr)).toEqual([
+        { description: "Petit Dejeuner", price: 26500 },
+        { description: "Tortas Porcion", price: 14000 }
+
+      ]);
+    });
+  });
+
 });

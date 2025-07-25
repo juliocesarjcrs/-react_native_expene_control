@@ -6,7 +6,7 @@ export function parseAra(lines: string[]): Product[] {
   console.log("📄 Procesando como tipo Ara...");
 
   const products: Product[] = [];
-  const productLineRegex = /^\d+\s+([A-Z\s\.]+)\s+([\d\s\.]+)\s+[A-Z]$/;
+  const productLineRegex = /^\d+\s+([A-Z\s\.*\/()]+)\s+([\d\s\.]+)\s+[A-Z]$/;
 
   for (const line of lines) {
     const match = line.match(productLineRegex);

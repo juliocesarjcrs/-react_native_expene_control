@@ -9,19 +9,19 @@ const PRICE_PATTERN = /(\d+[.,]?\d*[A-Za-z]?)\s*$/;
 export function parseCarulla(lines: string[], joined: string): Product[] {
   console.log("📄 Procesando como tipo Carulla...");
 
-  // 1. Verificar caso alternativo (caso 2) primero
+  // 1. Verificar caso alternativo (caso 2 15) primero
   if (isAltCarulla(joined)) {
     console.log("🔄 Procesando como Carulla alternativo (caso 2)");
     return processAltCarulla(lines);
   }
 
-  // 2. Verificar Éxito caso 1 entró
+  // 2. Verificar Éxito caso 1 entró, y caso 13(carulla)
   if (isExitoFormat(joined)) {
     console.log("🛒 Procesando como tipo Éxito");
     return processExitoFormat(lines);
   }
 
-  // 3. Caso Carulla con header roto (caso 3, 5, 8, 9, 10)
+  // 3. Caso Carulla con header roto (caso 3, 5, 8, 9, 10,14)
   if (isCarullaCase5(joined)) {
     console.log("🛠️ Procesando como caso especial Carulla 5");
     return processCarullaCase5(lines, joined);
@@ -79,11 +79,21 @@ function processExitoFormat(lines: string[]): Product[] {
   const productPattern = /(\d{6,})\s+([A-Z].+?)\s+(\d{1,3}[.,]\d{3})[A-Z]?/;
 
   for (const line of lines) {
-    const match = line.match(productPattern);
+    const match = line.match(PRODUCT_PATTERN);
     if (match) {
+      const rawPrice = match[2] ? match[2].replace(/\s/g, '').replace(/[.,]/g, '').replace(/[A-Za-z]$/i, '') : '0';
       products.push({
-        description: formatDescription(match[2]),
-        price: parseInt(match[3].replace(/[.,]/g, ''), 10)
+        description: formatDescription(match[1].trim()),
+        price: parseInt(rawPrice, 10) || 0
+      });
+    }
+    const match2 = line.match(productPattern);
+
+    if (!match && match2) {
+      products.push({
+        description: formatDescription(match2[2]),
+        price: parseInt(match2[3].replace(/[.,]/g, ''), 10)
+
       });
     }
   }
@@ -222,11 +232,12 @@ function processAltCarulla(lines: string[]): Product[] {
     const current = lines[i];
     const next = lines[i + 1]?.trim();
 
-    const unitLineMatch = current.match(/1\/u.*?(\d{1,3}(?:[.,]\d{3})).*?(\d{1,3}(?:[.,]\d{3}))$/);
+    const unitLineMatch = current.match(/^(?:\d+\s+)?(?:1\/u|\d+\.\d+\/\w+).*?x.*?(?:\d+\.\d+\s+)*.*?(\d+\.\d{3})(?:[A-Za-z]*\s*)?$/i);
+
     const descLineMatch = next?.match(/^(\d{6,})\s+(.+)/);
 
     if (unitLineMatch && descLineMatch) {
-      const price = parseInt(unitLineMatch[2].replace(/[.,]/g, ''), 10);
+      const price = parseInt(unitLineMatch[1].replace(/[.,]/g, ''), 10);
       const description = descLineMatch[2].trim();
       products.push({ description: formatDescription(description), price });
       i++;

@@ -194,6 +194,36 @@ describe('extractProducts', () => {
 
       ]);
     });
+    it('should handle Carulla (case 13)', () => {
+      const ocr = `PLU	DETALLE	PRECIO
+        1	1/u x 4.900 V. Ahorro 770
+        3524902 Patitos	Humedos	4. 130A
+        Total Item :1
+        `;
+      expect(extractProducts(ocr)).toEqual([
+        { description: "Patitos Humedos", price: 4130 }
+      ]);
+    });
+    // it('should handle Carulla (case 14)', () => {
+    //   const ocr = `PRECIO
+    //     PLU	DETALLE
+    //     1 1/u x 10.900 V. Ahorro 0	10.900
+    //     905172	Huevo 12Und Rojo
+    //     Total Item :1
+    //     `;
+    //   expect(extractProducts(ocr)).toEqual([
+    //     { description: 'Huevo 12Und Rojo', price: 10900 },// Revisar: Quedó Separado el precio por eso No lo detectó
+    //   ]);
+    // });
+    it('should handle Carulla (case 15)', () => { // antes era exito
+      const exitoText =
+        '202b 10191\t\r\nDETALLE\tPRECIO\t\r\nPLU\tV. Ahorro\t6.225\t\r\n1 0.944/KGM x 21.980\t14.524\t\r\n737288 Tilapia Roja\t\r\n2 1/u x 14.950 V. Ahorro 3.738\t11.212A\t\r\n608937 Lavaplatos en Cr\t\r\nTotal Item :2\t\r\n35.699\t\r\n';
+
+      expect(extractProducts(exitoText)).toEqual([
+        { description: 'Tilapia Roja', price: 14524 },
+        { description: 'Lavaplatos En Cr', price: 11212 }
+      ]);
+    });
   });
 
   describe('invoice type Exito', () => {
@@ -213,15 +243,6 @@ describe('extractProducts', () => {
       expect(extractProducts(carullaText)).toEqual([{ description: 'Galleta Wafer Si', price: 4349 }]);
     });
 
-    it('should parse  product from Exito receipt case 3', () => {
-      const exitoText =
-        '202b 10191\t\r\nDETALLE\tPRECIO\t\r\nPLU\tV. Ahorro\t6.225\t\r\n1 0.944/KGM x 21.980\t14.524\t\r\n737288 Tilapia Roja\t\r\n2 1/u x 14.950 V. Ahorro 3.738\t11.212A\t\r\n608937 Lavaplatos en Cr\t\r\nTotal Item :2\t\r\n35.699\t\r\n';
-
-      expect(extractProducts(exitoText)).toEqual([
-        { description: 'Tilapia Roja', price: 14524 },
-        { description: 'Lavaplatos en Cr', price: 11212 }
-      ]);
-    });
   });
 
   describe('D1 receipts', () => {

@@ -149,8 +149,8 @@ describe('categorizeExpense', () => {
 
   it('debería usar la primera categoría principal cuando no hay coincidencia', () => {
     const result = categorizeExpense('descripción desconocida', mockCategories);
-    // La primera categoría principal es Alimentación (414) y su primera subcategoría es Desayunos y cenas (1)
-    expect(result).toEqual({ categoryId: 414, subcategoryId: 1 });
+    // La primera categoría principal es Alimentación (414) y su segunda subcategoría es Mercados (2)
+    expect(result).toEqual({ categoryId: 414, subcategoryId: 2 });
   });
 
   it('debería usar la primera categoría disponible cuando no hay categorías principales', () => {

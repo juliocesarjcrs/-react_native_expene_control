@@ -1,4 +1,3 @@
-// categorizeExpense.ts
 import { CategoryDropdown } from '~/shared/types/components/modal/MultiExpenseModal.type';
 // import { Category, Subcategory, ExpenseItem } from './types';
 
@@ -36,12 +35,12 @@ export const categorizeExpense = (
   if (alimentacion) {
     // Subcategorías de alimentación con palabras clave
     const alimentacionSubcategories: { keywords: string[]; subcategory: string }[] = [
-      { keywords: ['desayuno', 'cena', 'pan', 'huevo', 'leche', 'queso', 'café', 'integral'], subcategory: 'Desayunos y cenas' },
-      { keywords: ['mercado', 'aguacate', 'fruta', 'verdura', 'arroz', 'papa', 'cebolla', 'tomate', 'zanahoria'], subcategory: 'Mercado' },
+      { keywords: ['desayuno', 'cena', 'pan', 'huevo', 'leche', 'queso', 'café', 'integral', 'atun', 'harina'], subcategory: 'Desayunos y cenas' },
+      { keywords: ['mercado', 'aguacate', 'fruta', 'verdura', 'arroz', 'papa', 'cebolla', 'tomate', 'zanahoria', 'pepino', 'coliflor', 'brocoli', 'spacghetti'], subcategory: 'Mercado' },
       { keywords: ['proteína', 'carne', 'pollo', 'pescado', 'pechuga', 'res', 'tilapia'], subcategory: 'Proteinas' },
       { keywords: ['gaseosa', 'refresco', 'pony', 'coca', 'pepsi'], subcategory: 'Gaseosas' },
-      { keywords: ['chuchería', 'galleta', 'chocolate', 'dulce', 'snack', 'papas'], subcategory: 'Chucherias' },
-      { keywords: ['licor', 'cerveza', 'vino', 'ron', 'whisky'], subcategory: 'Licores' },
+      { keywords: ['chuchería', 'galleta', 'chocolate', 'dulce', 'snack', 'papas', 'chocorramo'], subcategory: 'Chucherias' },
+      { keywords: ['licor', 'cerveza', 'vino', 'ron', 'whisky', 'cola', 'pola'], subcategory: 'Licores' },
       { keywords: ['onces', 'bocadillo', 'pastel'], subcategory: 'Onces' }
     ];
 
@@ -97,9 +96,9 @@ export const categorizeExpense = (
     }
   }
 
-  // Si no encontramos coincidencia, usamos la primera categoría principal y su primera subcategoría
+  // Si no encontramos coincidencia, usamos la primera categoría principal y su segunda subcategoría8(Mercados)
   return {
     categoryId: mainCategories[0]?.value || null,
-    subcategoryId: mainCategories[0]?.subcategories?.[0]?.value || null
+    subcategoryId: mainCategories[0]?.subcategories?.[1]?.value || null
   };
 };

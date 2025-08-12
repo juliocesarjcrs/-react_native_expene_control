@@ -83,7 +83,7 @@ export const categorizeExpense = (
     const aseoSubcategories: { keywords: string[]; subcategory: string }[] = [
       { keywords: ['peluquería', 'corte', 'cabello', 'peinado'], subcategory: 'Peluquería' },
       { keywords: ['manicure', 'pedicure', 'uñas', 'esmalte'], subcategory: 'Manicure y pedicure' },
-      { keywords: ['aseo', 'jabón', 'shampoo', 'crema', 'desodorante', 'papel higiénico', 'toalla'], subcategory: 'Artículos aseo personal' }
+      { keywords: ['aseo', 'jabón', 'shampoo', 'crema', 'desodorante', 'papel higiénico', 'toalla', 'higieni'], subcategory: 'Artículos aseo personal' }
     ];
 
     for (const sub of aseoSubcategories) {

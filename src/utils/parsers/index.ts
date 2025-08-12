@@ -4,6 +4,7 @@ import { parseD1 } from "./d1";
 import { parseGeneric } from "./parseGeneric";
 import { parseDollarCity } from "./dollarCity";
 import { parseAra } from "./ara";
+import { parseCruzVerde } from "./cruzVerde";
 
 export function extractProducts(ocr: string): Product[] {
   const lines = ocr
@@ -16,10 +17,14 @@ export function extractProducts(ocr: string): Product[] {
   const isCarulla = ocr.includes('PLU') || ocr.includes('DETALLE');
   const isDollarCity = ocr.includes('@');
   const isAra = ocr.includes('Artículo');
+  const isCruzVerde = ocr.includes('TARIFA') && ocr.includes('IVA')
 
   console.log("🧾 OCR:", joined.slice(0, 300));
 
-  if (isCarulla) {
+  if (isCruzVerde) {
+    console.log("🔍 isCruzVerde:", isCruzVerde);
+    return parseCruzVerde(lines)
+  } else if (isCarulla) {
     console.log("🔍 isCarulla:", isCarulla);
     return parseCarulla(lines, joined);
   } else if (isD1) {

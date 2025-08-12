@@ -342,7 +342,40 @@ describe('extractProducts', () => {
       ]);
     });
   });
-
+  describe('drogueries', () => {
+    it('cruz verde case(1)', () => {
+      const ocr = `DETALLE DE VENTA
+          DESCRIPCION	CANT	TARIFA IVA VALOR
+          DAGYNFIL (2+2) % CTX20GR	0%	71.400
+          TUBO
+          ***13_AC FARMA AGOSTO	-8. 500
+          TOTAL AHORRO	-8. 500
+          TOTAL SIN REDONDEO	62. 900
+          REDONDEO
+          TOTAL FACTURA	62. 900
+        `;
+      expect(extractProducts(ocr)).toEqual([
+        { description: "Dagynfil (2+2) % Ctx20gr 0%", price: 62900 }
+      ]);
+    });
+    it('cruz verde case(2)', () => {
+      const ocr = `DETALLE DE VENTA
+        DESCRIPCION	CANT	TARIFA IVA VALOR
+        137.30
+        AMOXIDAL 1000MG TAB	7	0%
+        0
+        CJX28	CAJA	-13.730
+        ***15_MIERCOLES DE MEDICAMENTOS CLU
+        TOTAL AHORRO	-13. 730
+        TOTAL SIN REDONDEO	123. 570
+        REDONDEO
+        TOTAL FACTURA	73541
+        `;
+      expect(extractProducts(ocr)).toEqual([
+        { description: "Amoxidal 1000mg Tab 7 0%", price: 123570 }
+      ]);
+    });
+  });
   describe('other receipts', () => {
     it('should handle other receipsts with headers', () => {
       const ocr = `Precio Cantidad UN Producto $ 8.500,00 1 Und. GENOVESA BAILEYS PORCIÓN $ 7.500,00 1 Und. GE NOVESA CHOCOLATE PORCIÓN  25.000,00 $ 1 Und. TORTA ENVINADA OCTAVO Und. ALFAJOR CAJA X 8 UN $ 10.000,00 $

@@ -2,7 +2,7 @@ import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, TextInput } from 'react-native';
 import { OcrAccuracy, ReceiptType } from '~/shared/types/components/receipt-scanner.type';
 
-const RECEIPT_TYPES: ReceiptType[] = ['D1', 'Carulla', 'Exito', 'DollarCity', 'Ara', 'Otros'];
+const RECEIPT_TYPES: ReceiptType[] = ['D1', 'Carulla', 'Exito', 'DollarCity', 'Ara', 'Falabella', 'CruzVerde', 'Otros'];
 
 interface OcrEvaluationSectionProps {
   ocrAccuracy: OcrAccuracy | '';

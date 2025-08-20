@@ -341,6 +341,52 @@ describe('extractProducts', () => {
         { description: "Tostones Pla", price: 4400 }
       ]);
     });
+    it('should handle Ara receipsts (case 3)', () => {
+      const ocr = `TUNIN UL TOUC
+          # Articulo	Descripcion	Valor Imp.
+          1 7704269114289 FUSILLI ARRI	3. 990 D
+          1 UN	X	3. 990
+          2 7707597576149 VELAS MEDITA	18. 990 G
+          1 UN	18. 990
+          3 7704269691636 QUESO SABANE	9. 990 B
+          1 UN	X	9. 990
+          4 7704269459830 QUESO HOLAND	8. 300 G
+          1 UN	8.300
+          5 7704269415195 MAIZ DUCLE	X	5. 990 G
+          1 UN	5. '	990
+          6 7704269100701 LENTEJA DL	3. 190 E
+          1 UN	X	3. 190
+          44. 946
+          SUB TOTAL:	44. 946
+          TATAI.`;
+      expect(extractProducts(ocr)).toEqual([
+
+        { description: "Fusilli Arri", price: 3990 },
+        { description: "Velas Medita", price: 18990 },
+        { description: "Queso Sabane", price: 9990 },
+        { description: "Queso Holand", price: 8300 },
+        { description: "Maiz Ducle X", price: 5990 },
+        { description: "Lenteja Dl", price: 3190 }
+
+      ]);
+    });
+
+    it('should handle Ara receipsts (case 4)', () => {
+      const ocr = `Articulo	Descripcion
+        7704269113343 LECHE DESL	Valor Imp	2. 890	B
+        2	1 UN	X	2. 890
+        7702047040058 COLADA VAINI	3. 500 G
+        2 UN	X	1. 750
+        SUB TOTAL:	5, 831
+        Ð¢Ð¾Ñ‚Ð»Ñ– .
+        `;
+      expect(extractProducts(ocr)).toEqual([
+
+        { description: "Leche Desl Valor Imp", price: 2890 },
+        { description: "Colada Vaini", price: 3500 }
+
+      ]);
+    });
   });
   describe('drogueries', () => {
     it('cruz verde case(1)', () => {

@@ -16,7 +16,7 @@ export function extractProducts(ocr: string): Product[] {
   const isD1 = ocr.includes('CAN ') || ocr.includes('DESCRIPCION');
   const isCarulla = ocr.includes('PLU') || ocr.includes('DETALLE');
   const isDollarCity = ocr.includes('@');
-  const isAra = ocr.includes('Artículo');
+  const isAra = ocr.includes('Artículo') || ocr.includes('Articulo');;
   const isCruzVerde = ocr.includes('TARIFA') && ocr.includes('IVA')
 
   console.log("🧾 OCR:", joined.slice(0, 300));

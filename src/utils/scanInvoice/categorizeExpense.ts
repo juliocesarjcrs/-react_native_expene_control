@@ -36,8 +36,8 @@ export const categorizeExpense = (
     // Subcategorías de alimentación con palabras clave
     const alimentacionSubcategories: { keywords: string[]; subcategory: string }[] = [
       { keywords: ['desayuno', 'cena', 'pan', 'huevo', 'leche', 'queso', 'café', 'integral', 'atun', 'harina'], subcategory: 'Desayunos y cenas' },
-      { keywords: ['mercado', 'aguacate', 'fruta', 'verdura', 'arroz', 'papa', 'cebolla', 'tomate', 'zanahoria', 'pepino', 'coliflor', 'brocoli', 'spacghetti'], subcategory: 'Mercado' },
       { keywords: ['proteína', 'carne', 'pollo', 'pescado', 'pechuga', 'res', 'tilapia', 'res*', 'pecho'], subcategory: 'Proteinas' },
+      { keywords: ['mercado', 'aguacate', 'fruta', 'verdura', 'arroz', 'papa', 'cebolla', 'tomate', 'zanahoria', 'pepino', 'coliflor', 'brocoli', 'spacghetti'], subcategory: 'Mercado' },
       { keywords: ['gaseosa', 'refresco', 'pony', 'coca', 'pepsi'], subcategory: 'Gaseosas' },
       { keywords: ['chuchería', 'galleta', 'chocolate', 'dulce', 'snack', 'papas', 'chocorramo'], subcategory: 'Chucherias' },
       { keywords: ['licor', 'cerveza', 'vino', 'ron', 'whisky', 'cola', 'pola'], subcategory: 'Licores' },

@@ -30,17 +30,17 @@ describe('extractProducts', () => {
     it('should handle multiple(11) products from invoice type Carulla (case 4)', () => {
       const ocr = `PLU\tDETALLE\tPRECIO\t\r\n1 0.305/KGM x 9.340 V. Ahorro 854\t\r\n1138\tRemolacha A Gran\t1.995\t\r\n2 0.750/KGM x 3.060 V. Ahorro 689\t\r\n1862\tAHUYAMA ENTERA\t1.606\t\r\n3 0.800/KGM x 6.600 V. Ahorro 1.584\t\r\n1279\tCebolla Roja.\t3.696\t\r\n4 1.140/KGM x 4.060 V. Ahorro 1.389\t\r\n1025\tChocolo Tierno(M\t3.239\t\r\n5 2. 415/KGM x 3.040 V. Ahorro 2.203\t\r\n1179\tPapaya Comun\t5.139\t\r\n6 0. 435/KGM x 7.460 V. Ahorro 974\t\r\n1002\tAcelga\t2.271\t\r\n7 0.475/KGM x 8.120 V. Ahorro 1.157\t\r\n1188\tPepino Zukini\t2.700\t\r\n8 0.860/KGM x 5.980 V. Ahorro 1.543\t\r\n1098\tTomate Chonto (A\t3.600\t\r\n9\t0.860/KGM x 3.980 V. Ahorro 1.026\t\r\n1141\tZanahoria A Gran\t2,397\t\r\n10 1.455/KGM x 2.960 V. Ahorro 1.292\t\r\n1161\tPlatano Maduro\t3. 015\t\r\n11 1.795/KGM x 4.800 V. Ahorro 2.584\t\r\n1260\tYuca fresca\t6.032\t\r\nTotal Item :11\t\r\nSUBTOTAL\t50.985\t\r\nDESCUENTO\t15.295\t\r\nAHORRO\t15.295\t\r\nVALOR TOTAL\t35.690\t\r\n`;
       expect(extractProducts(ocr)).toEqual([
-        { description: 'Remolacha A Gran', price: 1995 },
-        { description: 'Ahuyama Entera', price: 1606 },
-        { description: 'Cebolla Roja', price: 3696 },
-        { description: 'Chocolo Tierno(M', price: 3239 },
-        { description: 'Papaya Comun', price: 5139 },
-        { description: 'Acelga', price: 2271 },
-        { description: 'Pepino Zukini', price: 2700 },
-        { description: 'Tomate Chonto (A', price: 3600 },
-        { description: 'Zanahoria A Gran', price: 2397 },
-        { description: 'Platano Maduro', price: 3015 },
-        { description: 'Yuca Fresca', price: 6032 }
+        { description: 'Remolacha A Gran — 0.305 kg (Precio original: $9.340/kg) con 30% de descuento Precio final: $6.540/kg', price: 1995 },
+        { description: 'Ahuyama Entera — 0.750 kg (Precio original: $3.060/kg) con 30% de descuento Precio final: $2.141/kg', price: 1606 },
+        { description: 'Cebolla Roja — 0.800 kg (Precio original: $6.600/kg) con 30% de descuento Precio final: $4.620/kg', price: 3696 },
+        { description: 'Chocolo Tierno(M — 1.140 kg (Precio original: $4.060/kg) con 30% de descuento Precio final: $2.842/kg', price: 3239 },
+        { description: 'Papaya Comun — 2.415 kg (Precio original: $3.040/kg) con 30% de descuento Precio final: $2.128/kg', price: 5139 },
+        { description: "Acelga — 0.435 kg (Precio original: $7.460/kg) con 30% de descuento Precio final: $5.221/kg", price: 2271 },
+        { description: 'Pepino Zukini — 0.475 kg (Precio original: $8.120/kg) con 30% de descuento Precio final: $5.684/kg', price: 2700 },
+        { description: 'Tomate Chonto (A — 0.860 kg (Precio original: $5.980/kg) con 30% de descuento Precio final: $4.186/kg', price: 3600 },
+        { description: 'Zanahoria A Gran — 0.860 kg (Precio original: $3.980/kg) con 30% de descuento Precio final: $2.787/kg', price: 2397 },
+        { description: 'Platano Maduro — 1.455 kg (Precio original: $2.960/kg) con 30% de descuento Precio final: $2.072/kg', price: 3015 },
+        { description: 'Yuca Fresca — 1.795 kg (Precio original: $4.800/kg) con 30% de descuento Precio final: $3.360/kg', price: 6032 }
       ]);
     });
     it('should handle invoice type Carulla with broken header (case 5)', () => {
@@ -59,12 +59,12 @@ describe('extractProducts', () => {
         1290	Lechuga	Batavia	2.412
         Total Item :6`;
       expect(extractProducts(ocr)).toEqual([
-        { description: 'Habichuela A Gra', price: 2531 },
+        { description: 'Habichuela A Gra — 0.345 kg (Precio original: $10.480/kg) con 30% de descuento Precio final: $7.335/kg', price: 2531 },
         { description: 'Champi#%N Tajado', price: 5250 },
-        { description: 'Pepino Cohombro', price: 1350 },
-        { description: 'Zanahoria A Gran', price: 4250 },
-        { description: 'Yuca Fresca', price: 5132 },
-        { description: 'Lechuga Batavia', price: 2412 }
+        { description: 'Pepino Cohombro — 0.945 kg (Precio original: $2.040/kg) con 30% de descuento Precio final: $1.428/kg', price: 1350 },
+        { description: 'Zanahoria A Gran — 1.065 kg (Precio original: $5.700/kg) con 30% de descuento Precio final: $3.990/kg', price: 4250 },
+        { description: 'Yuca Fresca — 1.560 kg (Precio original: $4.700/kg) con 30% de descuento Precio final: $3.290/kg', price: 5132 },
+        { description: 'Lechuga Batavia — 0.480 kg (Precio original: $7.180/kg) con 30% de descuento Precio final: $5.026/kg', price: 2412 }
       ]);
     });
     it('should handle Carulla (case 6)', () => {
@@ -75,7 +75,7 @@ describe('extractProducts', () => {
         1486	Aguacate Und	3.780
         Total Item :26`;
       expect(extractProducts(ocr)).toEqual([
-        { description: 'Carne Asar Freir', price: 7049 },
+        { description: 'Carne Asar Freir — 0.265 kg (Precio original: $26.600/kg) con 0% de descuento.', price: 7049 },
         { description: 'Aguacate Und', price: 3780 }
       ]);
     });
@@ -103,15 +103,16 @@ describe('extractProducts', () => {
         3649296 Choco Cookies Ch	6. 140A
         Total Item :9`;
       expect(extractProducts(ocr)).toEqual([
-        { description: 'Sixpack Cola&Pol', price: 10625 },
-        { description: 'Galletas Antojos', price: 3132 },
-        { description: 'Galletas Antojos', price: 3132 },
-        { description: 'Pechuga Blanca M', price: 18353 },
-        { description: 'Galletas Yogurt', price: 4640 },
-        { description: 'Salsa Sabor Ajo', price: 7210 },
-        { description: 'Cebolla Blanca S', price: 3485 },
-        { description: 'Chorizo Santarro', price: 4620 },
-        { description: 'Choco Cookies Ch', price: 6140 },
+        { description: "Sixpack Cola&Pol", price: 10625 },
+        { description: "Galletas Antojos", price: 3132 },
+        { description: "Galletas Antojos", price: 3132 },
+        { description: "Pechuga Blanca M — 1.085 kg (Precio original: $19.900/kg) con 15% de descuento Precio final: $16.915/kg", price: 18353 },
+        { description: "Galletas Yogurt", price: 4640 },
+        { description: "Salsa Sabor Ajo", price: 7210 },
+        { description: "Cebolla Blanca S — 0.555 kg (Precio original: $6.280/kg) con 0% de descuento.", price: 3485 },
+        { description: "Chorizo Santarro", price: 4620 },
+        { description: "Choco Cookies Ch", price: 6140 },
+
       ]);
     });
     it('should handle Carulla (case 8)', () => {
@@ -169,14 +170,13 @@ describe('extractProducts', () => {
         876865 PECHO CORRIENTE
         - Total Item :6`;
       expect(extractProducts(ocr)).toEqual([
-        { description: 'Pechuga Campesin', price: 16598 },
-        { description: 'Pechuga Blanca M', price: 18149 },
-        { description: 'Lomo Caracha*', price: 18512 },
+        { description: 'Pechuga Campesin — 0.965 kg (Precio original: $21.500/kg) con 20% de descuento Precio final: $17.199/kg', price: 16598 },
+        { description: 'Pechuga Blanca M — 1.140 kg (Precio original: $19.900/kg) con 20% de descuento Precio final: $15.920/kg', price: 18149 },
+        { description: 'Lomo Caracha* — 0.500 kg (Precio original: $46.280/kg) con 20% de descuento Precio final: $37.024/kg', price: 18512 },
         { description: 'Estuche Surtido', price: 19900 },
-        { description: 'Limon Tahiti A G', price: 2172 },
-        { description: 'Pecho Corriente', price: 0 },
-
-      ]);
+        { description: 'Limon Tahiti A G — 0.905 kg (Precio original: $2.400/kg) con 0% de descuento.', price: 2172 },
+        { description: 'Pecho Corriente — 0.570 kg (Precio original: $29.280/kg) con 20% de descuento Precio final: $23.424/kg', price: 0 },
+      ])
     });
     it('should handle Carulla (case 12)', () => {
       const ocr = `PLU	DETALLE	PRECIO
@@ -188,8 +188,8 @@ describe('extractProducts', () => {
         942160 Panela 4 Und	6.770
         Total Item :3`;
       expect(extractProducts(ocr)).toEqual([
-        { description: 'Banano', price: 3391 },
-        { description: 'Zanahoria A Gran', price: 3658 },
+        { description: "Banano — 0.995 kg (Precio original: $4.260/kg) con 20% de descuento Precio final: $3.408/kg", price: 3391 },
+        { description: "Zanahoria A Gran — 1.345 kg (Precio original: $2.720/kg) con 0% de descuento.", price: 3658 },
         // { description: 'Panela 4 Und', price: 6770 },
 
       ]);
@@ -222,6 +222,25 @@ describe('extractProducts', () => {
       expect(extractProducts(exitoText)).toEqual([
         { description: 'Tilapia Roja', price: 14524 },
         { description: 'Lavaplatos En Cr', price: 11212 }
+      ]);
+    });
+    it('should handle Carulla (case 16)', () => {
+      const ocr = `PLU	DETALLE	PRECIO
+        1 1.990/KGM x 19,900 V. Ahorro 7.920
+        3618617 Pechuga Blanca M	31.581
+        2 0.590/KGM * 21.640 V. Ahorro 638
+        353067 PEPINO RES*	12.130
+        3 0. 500/KGM * 21.640 V. Ahorro	541
+        353067 PEPINO RES*	10.279	1.347
+        4 0.920/KGM x 29.280 V. Ahorro
+        876865 PECHO CORRIENTE	25.591
+        Total Item :4
+       `;
+
+      expect(extractProducts(ocr)).toEqual([
+        { description: 'Pechuga Blanca M — 1.990 kg (Precio original: $19.900/kg) con 20% de descuento Precio final: $15.920/kg', price: 31581 },
+        { description: 'Pepino Res* — 0.590 kg (Precio original: $21.640/kg) con 5% de descuento Precio final: $20.559/kg', price: 12130 },
+        { description: 'Pecho Corriente', price: 25591 },
       ]);
     });
   });

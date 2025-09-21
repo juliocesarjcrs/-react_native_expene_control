@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { View, Text, FlatList, Alert, StyleSheet } from 'react-native';
-import * as FileSystem from 'expo-file-system';
+import { Directory, File, Paths } from 'expo-file-system';
 import * as Sharing from 'expo-sharing';
 import { Icon } from 'react-native-elements';
 
@@ -15,8 +15,12 @@ export default function ManageCSVsScreen(): React.JSX.Element {
   const fetchCsvFiles = async () => {
     setLoading(true);
     try {
-      const files = await FileSystem.readDirectoryAsync(FileSystem.documentDirectory || '');
-      const csvs = files.filter((f) => f.endsWith('.csv'));
+      const documentDir = new Directory(Paths.document);
+      const files = await documentDir.list();
+      const csvs = files
+        .filter((item) => item instanceof File) // Solo archivos, no directorios
+        .map((file) => file.name) // Obtener el nombre del archivo
+        .filter((name) => name.endsWith('.csv'));
       setCsvFiles(csvs);
     } catch (error: unknown) {
       console.log('Error fetching CSV files:', error);
@@ -33,7 +37,8 @@ export default function ManageCSVsScreen(): React.JSX.Element {
         style: 'destructive',
         onPress: async () => {
           try {
-            await FileSystem.deleteAsync(FileSystem.documentDirectory + fileName);
+            const file = new File(Paths.document, fileName);
+            await file.delete();
             fetchCsvFiles();
           } catch (error) {
             console.log('Error deleted CSV files:', error);
@@ -46,7 +51,8 @@ export default function ManageCSVsScreen(): React.JSX.Element {
 
   const handleShare = async (fileName: string) => {
     try {
-      await Sharing.shareAsync(FileSystem.documentDirectory + fileName);
+      const file = new File(Paths.document, fileName);
+      await Sharing.shareAsync(file.uri);
     } catch (e) {
       console.log('Error sharing CSV file:', e);
       Alert.alert('Error', 'No se pudo compartir el archivo');

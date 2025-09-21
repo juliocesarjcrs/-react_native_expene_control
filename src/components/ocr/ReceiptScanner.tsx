@@ -1,16 +1,7 @@
 import React, { useEffect, useState } from 'react';
-import {
-  View,
-  Text,
-  Button,
-  ActivityIndicator,
-  StyleSheet,
-  ScrollView,
-  Alert,
-
-} from 'react-native';
+import { View, Text, Button, ActivityIndicator, StyleSheet, ScrollView, Alert } from 'react-native';
 // import * as ImagePicker from 'expo-image-picker';
-import * as FileSystem from 'expo-file-system';
+import { File, Paths } from 'expo-file-system';
 // import * as ImageManipulator from 'expo-image-manipulator';
 import * as Sharing from 'expo-sharing';
 import { OcrAccuracy, OcrApiResponse, Product, ReceiptType } from '~/shared/types/components/receipt-scanner.type';
@@ -48,11 +39,9 @@ const ReceiptScanner: React.FC<ReceiptScannerProps> = () => {
   // Función para contar filas del CSV
   const updateCsvRowCount = async () => {
     try {
-      const fileUri = FileSystem.documentDirectory + fileName;
-      const fileInfo = await FileSystem.getInfoAsync(fileUri);
-      if (fileInfo.exists) {
-        const content = await FileSystem.readAsStringAsync(fileUri, { encoding: FileSystem.EncodingType.UTF8 });
-        // Cuenta las filas (omite la cabecera)
+      const file = new File(Paths.document, fileName);
+      if (file.exists) {
+        const content = await file.text();
         const lines = content.trim().split('\n');
         setCsvRows(lines.length > 1 ? lines.length - 1 : 0);
       } else {
@@ -64,15 +53,14 @@ const ReceiptScanner: React.FC<ReceiptScannerProps> = () => {
     }
   };
 
-
-   const processImage = async (base64: string, mock: boolean = false) => {
+  const processImage = async (base64: string, mock: boolean = false) => {
     setLoading(true);
     setText('');
     setError('');
 
     try {
       const data = mock ? await mockOCRSpaceAPI() : await callOCRSpaceAPI({ base64Image: base64 });
-      
+
       if (data?.ParsedResults?.[0]) {
         const rawText = data.ParsedResults[0].ParsedText;
         setText(rawText);
@@ -132,8 +120,7 @@ const ReceiptScanner: React.FC<ReceiptScannerProps> = () => {
         customReceiptType,
         editableProducts
       });
-
-      const fileUri = FileSystem.documentDirectory + fileName;
+      const file = new File(Paths.document, fileName);
       const csvLine = generateCsvLine(csvData);
       console.log('::: CSV Line:', csvLine);
 
@@ -148,12 +135,9 @@ const ReceiptScanner: React.FC<ReceiptScannerProps> = () => {
         'model_version'
       ].join(',');
 
-      const fileInfo = await FileSystem.getInfoAsync(fileUri);
-      const content = fileInfo.exists
-        ? (await FileSystem.readAsStringAsync(fileUri)) + csvLine
-        : headers + '\n' + csvLine;
+      const content = file.exists ? (await file.text()) + csvLine : headers + '\n' + csvLine;
 
-      await FileSystem.writeAsStringAsync(fileUri, content);
+      await file.write(content);
       updateCsvRowCount();
 
       Alert.alert(
@@ -201,10 +185,9 @@ const ReceiptScanner: React.FC<ReceiptScannerProps> = () => {
   // Función para compartir el archivo CSV
   const shareCSV = async () => {
     try {
-      const fileUri = FileSystem.documentDirectory + fileName;
-      const fileInfo = await FileSystem.getInfoAsync(fileUri);
-      if (fileInfo.exists) {
-        await Sharing.shareAsync(fileUri);
+      const file = new File(Paths.document, fileName);
+      if (file.exists) {
+        await Sharing.shareAsync(file.uri);
       } else {
         setError('No hay archivo CSV para compartir.');
       }
@@ -396,7 +379,7 @@ const styles = StyleSheet.create({
     borderColor: '#ddd',
     justifyContent: 'center',
     alignItems: 'center'
-  },
+  }
   // selectedAccuracy: {
   //   backgroundColor: '#e3f2fd',
   //   borderColor: '#2196f3'

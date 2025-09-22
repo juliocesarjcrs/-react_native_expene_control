@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import { Keyboard, StyleSheet, Text, View } from "react-native";
 import { RadioButton } from "react-native-paper";
 import { useForm, Controller } from "react-hook-form";
-import { useMutation, useQuery } from "@apollo/client";
+import { useMutation, useQuery } from '@apollo/client/react';
 import { FAB, Input } from "react-native-elements";
 
 // Graphql

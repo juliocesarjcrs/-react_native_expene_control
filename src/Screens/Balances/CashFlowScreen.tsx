@@ -12,8 +12,7 @@ import { Errors } from '../../utils/Errors';
 import { useSelector } from 'react-redux';
 import { LineChart } from 'react-native-chart-kit';
 import { FAB, Icon } from 'react-native-elements';
-import { useQuery } from '@apollo/client';
-
+import { useQuery } from '@apollo/client/react';
 import CheckBoxOptions from '../../components/checbox/CheckBoxOptions';
 import { getSavingsByUser, getUpdateAllSavingsByUser } from '../../services/savings';
 import { ICON } from '../../styles/colors';

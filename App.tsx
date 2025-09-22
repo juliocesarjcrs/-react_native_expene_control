@@ -9,7 +9,7 @@ import axiosInstance from './src/plugins/axiosConfig';
 import MyStack from './src/navigator/stack';
 import { AxiosError } from 'axios';
 
-import { ApolloProvider } from '@apollo/client';
+import { ApolloProvider } from '@apollo/client/react';
 import client from './src/plugins/ApolloClient';
 
 export type ApiError = {

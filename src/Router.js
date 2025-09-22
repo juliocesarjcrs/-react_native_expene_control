@@ -1,26 +1,20 @@
 import React from "react";
-import { StatusBar, SafeAreaView } from "react-native";
+import { StatusBar } from "react-native";
 import Navigation from "@navigation";
-import { connect } from "react-redux";
+import {SafeAreaView} from 'react-native-safe-area-context';
 
-class Router extends React.PureComponent {
-  render() {
-    return (
-      <>
-        <StatusBar barStyle="dark-content" />
-        <SafeAreaView style={{ backgroundColor: "#fff", flex: 1 }}>
-          <Navigation />
-        </SafeAreaView>
-      </>
-    );
-  }
-}
+const Router = () => {
+  // const sessionId = useSelector(state => state.user.session_id);
+  // const network = useSelector(state => state.network);
 
-const mapStateToProps = (state) => {
-  return {
-    // session_id: state.user.session_id,
-    // network: state.network,
-  };
+  return (
+    <>
+      <StatusBar barStyle="dark-content" />
+      <SafeAreaView style={{ backgroundColor: "#fff", flex: 1 }}>
+        <Navigation />
+      </SafeAreaView>
+    </>
+  );
 };
 
-export default connect(mapStateToProps)(Router);
+export default Router;

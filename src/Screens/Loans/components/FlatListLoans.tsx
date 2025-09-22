@@ -2,7 +2,7 @@ import React from 'react';
 
 import { Alert, FlatList, Modal, StyleSheet, Text, View } from 'react-native';
 import { Icon, Tooltip, TooltipProps } from 'react-native-elements';
-import { useMutation } from '@apollo/client';
+import { useMutation } from '@apollo/client/react';
 
 // Graphql
 import { DELETE_LOAN } from '../../../graphql/mutations';

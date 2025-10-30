@@ -1,6 +1,14 @@
 import { CategoryDropdown } from '~/shared/types/components/modal/MultiExpenseModal.type';
 // import { Category, Subcategory, ExpenseItem } from './types';
 
+// Agregar esta función auxiliar al inicio del archivo
+const normalizeText = (text: string): string => {
+  return text
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "");
+};
+
 /**
  * Función para identificar la categoría y subcategoría de un gasto basado en su descripción
  * @param description Descripción del gasto
@@ -15,7 +23,7 @@ export const categorizeExpense = (
     return { categoryId: null, subcategoryId: null };
   }
 
-  const descLower = description.toLowerCase();
+  const descNormalized = normalizeText(description);
 
   // Primero buscamos en las 3 categorías principales
   const mainCategories = categories
@@ -36,16 +44,16 @@ export const categorizeExpense = (
     // Subcategorías de alimentación con palabras clave
     const alimentacionSubcategories: { keywords: string[]; subcategory: string }[] = [
       { keywords: ['desayuno', 'cena', 'pan', 'huevo', 'leche', 'queso', 'café', 'integral', 'atun', 'harina'], subcategory: 'Desayunos y cenas' },
-      { keywords: ['proteína', 'carne', 'pollo', 'pescado', 'pechuga', 'res', 'tilapia', 'res*', 'pecho'], subcategory: 'Proteinas' },
+      { keywords: ['proteína', 'carne', 'pollo', 'pescado', 'pechuga', 'res', 'tilapia', 'res*', 'pecho', 'lomo', 'trucha', 'contramuslo'], subcategory: 'Proteinas' },
       { keywords: ['mercado', 'aguacate', 'fruta', 'verdura', 'arroz', 'papa', 'cebolla', 'tomate', 'zanahoria', 'pepino', 'coliflor', 'brocoli', 'spacghetti'], subcategory: 'Mercado' },
-      { keywords: ['gaseosa', 'refresco', 'pony', 'coca', 'pepsi'], subcategory: 'Gaseosas' },
-      { keywords: ['chuchería', 'galleta', 'chocolate', 'dulce', 'snack', 'papas', 'chocorramo'], subcategory: 'Chucherias' },
+      { keywords: ['gaseosa', 'refresco', 'pony', 'coca', 'pepsi', 'inn', 'manz'], subcategory: 'Gaseosas' },
+      { keywords: ['chuchería', 'galleta', 'chocolate', 'dulce', 'snack', 'papas', 'chocorramo', 'chocolatina'], subcategory: 'Chucherias' },
       { keywords: ['licor', 'cerveza', 'vino', 'ron', 'whisky', 'cola', 'pola'], subcategory: 'Licores' },
       { keywords: ['onces', 'bocadillo', 'pastel'], subcategory: 'Onces' }
     ];
 
     for (const sub of alimentacionSubcategories) {
-      if (sub.keywords.some(keyword => descLower.includes(keyword))) {
+      if (sub.keywords.some(keyword => descNormalized.includes(normalizeText(keyword)))) {
         const foundSub = alimentacion.subcategories?.find(s => s.label === sub.subcategory);
         if (foundSub) {
           return { categoryId: alimentacion.value, subcategoryId: foundSub.value };
@@ -59,16 +67,17 @@ export const categorizeExpense = (
   if (vivienda) {
     const viviendaSubcategories: { keywords: string[]; subcategory: string }[] = [
       { keywords: ['arriendo', 'renta', 'alquiler'], subcategory: 'Arriendo' },
-      { keywords: ['agua', 'acueducto'], subcategory: 'Agua (Día 25)' },
+      { keywords: ['acueducto'], subcategory: 'Agua (Día 25)' },
       { keywords: ['luz', 'energía', 'electricidad'], subcategory: 'Luz (Día 20)' },
       { keywords: ['gas', 'gas natural', 'gasodoméstico'], subcategory: 'Gas(Día 10)' },
       { keywords: ['internet', 'wifi', 'banda ancha'], subcategory: 'Internet Hogar (Día 6)' },
-      { keywords: ['limpieza', 'detergente', 'jabón', 'blanqueador', 'toalla'], subcategory: 'Artículos limpieza hogar' },
-      { keywords: ['mueble', 'electrodoméstico', 'reparación', 'silicona', 'alfombra'], subcategory: 'Muebles y aparatos de casa+ reparaciones' }
+      { keywords: ['limpieza', 'limp', 'detergente', 'det', 'jabón', 'blanqueador', 'toalla', 'esponja'], subcategory: 'Artículos limpieza hogar' },
+      { keywords: ['mueble', 'electrodoméstico', 'reparación', 'silicona', 'alfombra'], subcategory: 'Muebles y aparatos de casa+ reparaciones' },
+      { keywords: ['bolsa'], subcategory: 'Utensilios domésticos' }
     ];
 
     for (const sub of viviendaSubcategories) {
-      if (sub.keywords.some(keyword => descLower.includes(keyword))) {
+      if (sub.keywords.some(keyword => descNormalized.includes(normalizeText(keyword)))) {
         const foundSub = vivienda.subcategories?.find(s => s.label === sub.subcategory);
         if (foundSub) {
           return { categoryId: vivienda.value, subcategoryId: foundSub.value };
@@ -82,12 +91,12 @@ export const categorizeExpense = (
   if (aseo) {
     const aseoSubcategories: { keywords: string[]; subcategory: string }[] = [
       { keywords: ['peluquería', 'corte', 'cabello', 'peinado'], subcategory: 'Peluquería' },
-      { keywords: ['manicure', 'pedicure', 'uñas', 'esmalte'], subcategory: 'Manicure y pedicure' },
-      { keywords: ['aseo', 'jabón', 'shampoo', 'crema', 'desodorante', 'papel higiénico', 'toalla', 'higieni'], subcategory: 'Artículos aseo personal' }
+      { keywords: ['manicure', 'pedicure', 'uñas', 'esmalte', 'remov'], subcategory: 'Manicure y pedicure' },
+      { keywords: ['aseo', 'jabón', 'shampoo', 'crema', 'desodorante', 'papel higiénico', 'toalla', 'higieni', 'cepillo', 'algodon', 'hume', 'toal', 'dental', 'talco'], subcategory: 'Artículos aseo personal' }
     ];
 
     for (const sub of aseoSubcategories) {
-      if (sub.keywords.some(keyword => descLower.includes(keyword))) {
+      if (sub.keywords.some(keyword => descNormalized.includes(normalizeText(keyword)))) {
         const foundSub = aseo.subcategories?.find(s => s.label === sub.subcategory);
         if (foundSub) {
           return { categoryId: aseo.value, subcategoryId: foundSub.value };

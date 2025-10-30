@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, Button, ActivityIndicator, StyleSheet, ScrollView, Alert } from 'react-native';
+import { View, Text, Button, ActivityIndicator, StyleSheet, ScrollView, Alert, TouchableOpacity } from 'react-native';
 // import * as ImagePicker from 'expo-image-picker';
 import { File, Paths } from 'expo-file-system';
 // import * as ImageManipulator from 'expo-image-manipulator';
@@ -13,6 +13,7 @@ import { buildCsvData, generateCsvLine } from '~/utils/csvUtils';
 import { extractProducts } from '~/utils/parsers';
 import ImagePickerComponent from '../image/ImagePicker';
 import OcrEvaluationSection from './OcrEvaluationSection';
+import { Colors } from '~/styles';
 
 const fileName = 'extractions_v3.csv';
 
@@ -230,14 +231,19 @@ const ReceiptScanner: React.FC<ReceiptScannerProps> = () => {
               setCustomReceiptType={setCustomReceiptType}
               productCount={editableProducts.length}
             />
-
-            <View style={styles.actionButtons}>
-              <Button
-                title={`Guardar para entrenamiento (${editableProducts.length} productos)`}
-                onPress={saveToCSV}
-                disabled={!ocrAccuracy || !receiptType || !pendingRawText || editableProducts.length === 0}
-              />
-            </View>
+            <TouchableOpacity
+              style={[
+                styles.saveButton,
+                (!ocrAccuracy || !receiptType || !pendingRawText || editableProducts.length === 0) &&
+                  styles.disabledButton
+              ]}
+              onPress={saveToCSV}
+              disabled={!ocrAccuracy || !receiptType || !pendingRawText || editableProducts.length === 0}
+            >
+              <Text style={styles.saveButtonText}>
+                Guardar para entrenamiento ({editableProducts.length} productos)
+              </Text>
+            </TouchableOpacity>
           </>
         )}
 
@@ -319,58 +325,6 @@ const styles = StyleSheet.create({
     backgroundColor: '#f8f9fa',
     borderRadius: 8
   },
-  // sectionTitle: {
-  //   fontWeight: 'bold',
-  //   marginBottom: 10,
-  //   fontSize: 16
-  // },
-  // buttonGroup: {
-  //   flexDirection: 'row',
-  //   justifyContent: 'space-around',
-  //   marginBottom: 20
-  // },
-  // receiptTypeContainer: {
-  //   flexDirection: 'row',
-  //   flexWrap: 'wrap',
-  //   justifyContent: 'space-between',
-  //   marginBottom: 10
-  // },
-  // receiptTypeButton: {
-  //   padding: 10,
-  //   margin: 5,
-  //   borderWidth: 1,
-  //   borderColor: '#ddd',
-  //   borderRadius: 5,
-  //   minWidth: '30%',
-  //   alignItems: 'center'
-  // },
-  // selectedReceiptType: {
-  //   backgroundColor: '#e3f2fd',
-  //   borderColor: '#2196f3'
-  // },
-  // input: {
-  //   height: 40,
-  //   borderColor: 'gray',
-  //   borderWidth: 1,
-  //   padding: 10,
-  //   borderRadius: 5,
-  //   marginTop: 10
-  // },
-  actionButtons: {
-    width: '90%',
-    flexDirection: 'row',
-    justifyContent: 'space-around',
-    marginTop: 20
-  },
-  // accuracyButtons: {
-  //   marginVertical: 15,
-  //   width: '100%'
-  // },
-  // buttonRow: {
-  //   flexDirection: 'row',
-  //   justifyContent: 'space-between',
-  //   marginTop: 8
-  // },
   accuracyButton: {
     width: 40,
     height: 40,
@@ -379,17 +333,23 @@ const styles = StyleSheet.create({
     borderColor: '#ddd',
     justifyContent: 'center',
     alignItems: 'center'
+  },
+  saveButton: {
+    backgroundColor: Colors.PRIMARY,
+    paddingVertical: 14,
+    paddingHorizontal: 20,
+    borderRadius: 8,
+    alignItems: 'center',
+    width: '100%'
+  },
+  disabledButton: {
+    backgroundColor: '#B0BEC5' // gris suave cuando está deshabilitado
+  },
+  saveButtonText: {
+    color: 'white',
+    fontWeight: 'bold',
+    fontSize: 16
   }
-  // selectedAccuracy: {
-  //   backgroundColor: '#e3f2fd',
-  //   borderColor: '#2196f3'
-  // },
-  // accuracyLegend: {
-  //   fontSize: 12,
-  //   color: '#666',
-  //   marginTop: 5,
-  //   textAlign: 'center'
-  // }
 });
 
 export default ReceiptScanner;

@@ -2,6 +2,7 @@ import React from 'react';
 import { TouchableOpacity, Text, View, StyleSheet, Image } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
 import * as ImageManipulator from 'expo-image-manipulator';
+import { Colors } from '~/styles';
 
 interface ImagePickerComponentProps {
   onImageSelected: (base64: string, uri: string) => void;
@@ -52,11 +53,12 @@ const ImagePickerComponent: React.FC<ImagePickerComponentProps> = ({ onImageSele
 
   const pickImage = async () => {
     const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.Images,
-      allowsEditing: true,
+      mediaTypes: ['images'],
+      allowsEditing: false,
       aspect: undefined,
       quality: 1,
-      base64: true
+      base64: true,
+      // presentationStyle: ImagePicker.UIImagePickerPresentationStyle.FULL_SCREEN,
     });
     await processImageResult(result);
   };
@@ -69,8 +71,8 @@ const ImagePickerComponent: React.FC<ImagePickerComponentProps> = ({ onImageSele
     }
 
     const result = await ImagePicker.launchCameraAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.Images,
-      allowsEditing: true,
+      mediaTypes: ['images'],
+      allowsEditing: false,
       aspect: undefined,
       quality: 1,
       base64: true
@@ -107,7 +109,7 @@ const styles = StyleSheet.create({
     marginBottom: 10
   },
   actionButton: {
-    backgroundColor: '#2196F3',
+    backgroundColor: Colors.PRIMARY,
     padding: 15,
     borderRadius: 8,
     minWidth: '45%',

@@ -19,6 +19,7 @@ import { getUser } from "../services/users";
 // Types
 import { RootState } from "../shared/types/reducers";
 import { AppDispatch } from "../shared/types/reducers/root-state.type";
+import { FeatureFlagsProvider } from "~/contexts/FeatureFlagsContext";
 
 export default function MyStack() {
   const dispatch: AppDispatch = useDispatch();
@@ -106,56 +107,49 @@ function SettingsStackScreen() {
             <SettingsStack.Screen name="advancedSearch" component={Routes.AdvancedSearchScreen} options={{ title: 'Busqueda avanzada' }}/>
             <SettingsStack.Screen name="virtualBudget" component={Routes.VirtualBudgetScreen} options={{ title: 'Presupuesto virtual' }}/>
             <SettingsStack.Screen name="manageCSV" component={Routes.ManageCSVsScreen} options={{ title: 'Gestionar Csv' }}/>
+            <SettingsStack.Screen name="manageFeatureFlags" component={Routes.ManageFeatureFlagsScreen} options={{ title: 'Gestionar Funcionalidades' }}/>
     </SettingsStack.Navigator>
   );
 }
 const Tab = createBottomTabNavigator();
 return (
-  <NavigationContainer>
-      {
-        isAuth ?
-    <Tab.Navigator
-    screenOptions={({ route }) => ({
-      tabBarIcon: ({ focused, color, size }) => {
-        let iconName = 'home';
+  <FeatureFlagsProvider>
+    <NavigationContainer>
+      {isAuth ? (
+        <Tab.Navigator
+          screenOptions={({ route }) => ({
+            tabBarIcon: ({ focused, color, size }) => {
+              let iconName = 'home';
 
-        if (route.name === 'Gastos') {
-          iconName = focused ? 'cash' : 'cash-multiple';
-        } else if (route.name === 'Ingresos') {
-          iconName = focused ? 'account-cash' : 'account-cash-outline';
-        }
-        else if (route.name === 'Balance') {
-          iconName = focused ? 'scale-balance' : 'scale-balance';
-        }
-        else if (route.name === 'Ajustes') {
-          iconName = focused ? 'cog' : 'cog-outline';
-        }
+              if (route.name === 'Gastos') {
+                iconName = focused ? 'cash' : 'cash-multiple';
+              } else if (route.name === 'Ingresos') {
+                iconName = focused ? 'account-cash' : 'account-cash-outline';
+              } else if (route.name === 'Balance') {
+                iconName = focused ? 'scale-balance' : 'scale-balance';
+              } else if (route.name === 'Ajustes') {
+                iconName = focused ? 'cog' : 'cog-outline';
+              }
 
-        // You can return any component that you like here!
-        return <Icon
-        type="material-community"
-        color={color}
-        name={iconName}
-        size={size}
-
-      />
-      },
-      tabBarActiveTintColor: "tomato",
-      tabBarInactiveTintColor: "gray",
-    })}
-    >
-      <Tab.Screen name="Gastos" component={ExpenseStackScreen} />
-      <Tab.Screen name="Ingresos" component={IncomeStackScreen} />
-      <Tab.Screen name="Balance" component={BalanceStackScreen} />
-      <Tab.Screen name="Ajustes" component={SettingsStackScreen} />
-    </Tab.Navigator>
-    :
-      <Stack.Navigator>
-            <Stack.Screen name={'AuthStack'} component={AuthStackNavigator} />
-      </Stack.Navigator>
-      }
-  </NavigationContainer>
-
+              // You can return any component that you like here!
+              return <Icon type="material-community" color={color} name={iconName} size={size} />;
+            },
+            tabBarActiveTintColor: 'tomato',
+            tabBarInactiveTintColor: 'gray'
+          })}
+        >
+          <Tab.Screen name="Gastos" component={ExpenseStackScreen} />
+          <Tab.Screen name="Ingresos" component={IncomeStackScreen} />
+          <Tab.Screen name="Balance" component={BalanceStackScreen} />
+          <Tab.Screen name="Ajustes" component={SettingsStackScreen} />
+        </Tab.Navigator>
+      ) : (
+        <Stack.Navigator>
+          <Stack.Screen name={'AuthStack'} component={AuthStackNavigator} />
+        </Stack.Navigator>
+      )}
+    </NavigationContainer>
+  </FeatureFlagsProvider>
 );
 }
 

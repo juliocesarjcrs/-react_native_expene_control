@@ -37,6 +37,8 @@ import CreateLoanScreen from '~/Screens/Loans/CreateLoanScreen';
 import AdvancedSearchScreen from '../Screens/common/advance-search';
 // budgets
 import VirtualBudgetScreen from '../Screens/Budgest/VirtualBudgetScreen';
+// Settings
+import ManageFeatureFlagsScreen from '~/Screens/Settings/ManageFeatureFlagsScreen';
 
 export interface StackRoutesType {
   LoginScreen: typeof LoginScreen;
@@ -70,6 +72,7 @@ export interface StackRoutesType {
   CreateLoanScreen: typeof CreateLoanScreen;
   VirtualBudgetScreen: typeof VirtualBudgetScreen;
   ManageCSVsScreen: typeof ManageCSVsScreen;
+  ManageFeatureFlagsScreen: typeof ManageFeatureFlagsScreen;
 }
 
 const stackRoutes: StackRoutesType = {
@@ -103,7 +106,8 @@ const stackRoutes: StackRoutesType = {
   AdvancedSearchScreen,
   CreateLoanScreen,
   VirtualBudgetScreen,
-  ManageCSVsScreen
+  ManageCSVsScreen,
+  ManageFeatureFlagsScreen,
 };
 
 export default stackRoutes;

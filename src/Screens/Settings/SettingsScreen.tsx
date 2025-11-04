@@ -71,6 +71,9 @@ export default function SettingsScreen({ navigation }: SettingsScreenProps) {
   const sendManageCSVsScreen = () => {
     navigation.navigate('manageCSV');
   };
+  const sendManageFeatureFlagsScreen = () => {
+  navigation.navigate('manageFeatureFlags');
+};
   return (
     <View style={styles.container}>
       <View>
@@ -83,6 +86,7 @@ export default function SettingsScreen({ navigation }: SettingsScreenProps) {
         <MyButton onPress={sendAdvancedSearchScreen} title="Busqueda Avanzada" />
         <MyButton onPress={sendVirtualBudgetScreen} title="Presupuesto virtual" />
         {userLoggued?.role == 1 && <MyButton onPress={sendManageCSVsScreen} title="Gestonar Csv" />}
+        {userLoggued?.role == 1 && <MyButton onPress={sendManageFeatureFlagsScreen} title="Gestionar Funcionalidades" />}
       </View>
       {/* <Text>Configuraciones</Text> */}
       {/* <EditUserScreen navigation={navigation}></EditUserScreen> */}

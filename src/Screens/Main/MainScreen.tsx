@@ -32,6 +32,7 @@ import MyButton from '../../components/MyButton';
 
 // Screens
 import { ChatScreen } from '../../Screens/common/ChatScreen';
+import { useFeatureFlag } from '~/customHooks/useFeatureFlag';
 
 type MainScreenNavigationProp = StackNavigationProp<ExpenseStackParamList, 'main'>;
 
@@ -55,6 +56,7 @@ export default function MainScreen({ navigation }: MainScreenProps) {
   const [loading, setLoading] = useState(false);
   const [userLoggued, setUserLoggued] = useState<null | UserModel>();
   const [userImgSigned, setUserImgSigned] = useState(null);
+  const { isEnabled } = useFeatureFlag('chatbot');
 
   useEffect(() => {
     fetchData();
@@ -190,7 +192,7 @@ export default function MainScreen({ navigation }: MainScreenProps) {
           </Text>
         </View>
       </ScrollView>
-      <ChatScreen />
+      {isEnabled && <ChatScreen />}
     </View>
   );
 }

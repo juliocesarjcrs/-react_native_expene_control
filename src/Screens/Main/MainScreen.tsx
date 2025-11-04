@@ -30,6 +30,9 @@ import MyMonthPicker from '../../components/datePicker/MyMonthPicker';
 import MyLoading from '../../components/loading/MyLoading';
 import MyButton from '../../components/MyButton';
 
+// Screens
+import { ChatScreen } from '../../Screens/common/ChatScreen';
+
 type MainScreenNavigationProp = StackNavigationProp<ExpenseStackParamList, 'main'>;
 
 interface MainScreenProps {
@@ -187,6 +190,7 @@ export default function MainScreen({ navigation }: MainScreenProps) {
           </Text>
         </View>
       </ScrollView>
+      <ChatScreen />
     </View>
   );
 }

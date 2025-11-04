@@ -3,6 +3,7 @@ import React from 'react';
 import store from './src/store/store';
 import { Provider } from 'react-redux';
 import { userSignOut } from './src/actions/authActions';
+import { ChatProvider } from './src/features/chat/ChatContext';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { ToastAndroid } from 'react-native';
 import axiosInstance from './src/plugins/axiosConfig';
@@ -83,7 +84,9 @@ export default function App() {
   return (
     <ApolloProvider client={client}>
       <Provider store={store}>
-        <MyStack />
+        <ChatProvider>
+          <MyStack />
+        </ChatProvider>
       </Provider>
     </ApolloProvider>
   );

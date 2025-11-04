@@ -18,11 +18,22 @@ export const COLOR_SEPARATOR_DROPDOWN =  '#F4EBEC';
 export const COLOR_TEXT_DROPDOWN =  '#82709B';
 
 // Progressbar
-export const COMPLETE_COLOR_PROGRESS_BAR =  '#5DC25A';
-export const MISSING_COLOR_PROGRESS_BAR =  '#DCDCDC';
 
-// tolltip
-export const BACKGROUND_TOOLTIP =  '#A16CF8';
+// Progress bar colors
+export const COMPLETE_COLOR_PROGRESS_BAR = '#5DC25A';
+export const MISSING_COLOR_PROGRESS_BAR = '#DCDCDC';
+
+// Tooltip colors
+export const BACKGROUND_TOOLTIP = '#A16CF8';
+
+// Chat colors
+export const WHITE = '#FFFFFF';
+export const LIGHT_GRAY = '#F5F5F5';
+export const CHAT_SECONDARY = '#673AB7'; // Color complementario para mensajes del asistente
+export const ERROR_RED = '#c62828';
+export const ERROR_BACKGROUND = '#ffebee';
+export const DANGER= '#dc3545'
+
 
 
 

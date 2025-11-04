@@ -15,3 +15,10 @@ eas build --local // doesn't work
 
 //-------------------------------------------------------
 npx npm-check-updates
+//-------------------------------------------------
+Refresh .env
+Limpia la caché de Metro bundler
+
+Ejecuta este comando para asegurarte de que no esté guardando valores viejos:
+
+npm run clear:cache

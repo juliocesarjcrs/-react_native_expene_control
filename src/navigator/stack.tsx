@@ -108,6 +108,7 @@ function SettingsStackScreen() {
             <SettingsStack.Screen name="virtualBudget" component={Routes.VirtualBudgetScreen} options={{ title: 'Presupuesto virtual' }}/>
             <SettingsStack.Screen name="manageCSV" component={Routes.ManageCSVsScreen} options={{ title: 'Gestionar Csv' }}/>
             <SettingsStack.Screen name="manageFeatureFlags" component={Routes.ManageFeatureFlagsScreen} options={{ title: 'Gestionar Funcionalidades' }}/>
+            <SettingsStack.Screen name="chatbotConfig" component={Routes.ChatbotConfigScreen} options={{ title: 'Configurar Chatbot' }}/>
     </SettingsStack.Navigator>
   );
 }

@@ -94,4 +94,5 @@ export type SettingsStackParamList = {
   virtualBudget: undefined;
   manageCSV: undefined;
   manageFeatureFlags: undefined;
+  chatbotConfig: undefined;
 };

@@ -1,4 +1,4 @@
-export const PRIMARY = '#9c27b0'
+// export const PRIMARY = '#9c27b0'
 export const PRIMARY_BLACK = '#6d1b7b'
 export const SECUNDARY = '#f50057'
 export const GREEN_BLUE = '#8DE6EF'
@@ -37,7 +37,23 @@ export const DANGER= '#dc3545'
 
 
 
+// Paleta moderna y consistente
 
+export const PRIMARY = '#2196f3' //'#4F46E5';       // Indigo sofisticado azul '#2196f3',
+export const PRIMARY_DARK = '#3730A3';
+export const SECONDARY = '#EC4899';     // Rosa moderno
+export const SECONDARY_DARK = '#BE185D';
+export const CANCEL = '#6B7280';
+
+export const SUCCESS = '#10B981';       // Verde correcto
+export const WARNING = '#F59E0B';       // Amarillo alerta
+export const ERROR = '#EF4444';         // Rojo error
+
+export const TEXT_PRIMARY = '#111827';  // Gris oscuro
+export const TEXT_SECONDARY = '#6B7280';
+
+export const BG_LIGHT = '#F9FAFB';      // Fondo claro neutro
+export const BG_DARK = '#1F2937';       // Fondo oscuro
 
 
 

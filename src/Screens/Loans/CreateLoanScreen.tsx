@@ -3,7 +3,7 @@ import { Keyboard, StyleSheet, Text, View } from "react-native";
 import { RadioButton } from "react-native-paper";
 import { useForm, Controller } from "react-hook-form";
 import { useMutation, useQuery } from '@apollo/client/react';
-import { FAB, Input } from "react-native-elements";
+import { Input } from "react-native-elements";
 
 // Graphql
 import { GET_LOANS } from "../../graphql/queries";
@@ -12,13 +12,14 @@ import { CREATE_LOAN } from "../../graphql/mutations";
 // Components
 import FlatListLoans from "./components/FlatListLoans";
 import MyLoading from "../../components/loading/MyLoading";
-
+import MyButton from "~/components/MyButton";
 
 // Utils
 import { Errors } from "../../utils/Errors";
 
 // Types
 import { GetLoanResult } from "../../shared/types/graphql";
+
 export default function CreateLoanScreen() {
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [type, setType] = useState(0);
@@ -137,10 +138,7 @@ export default function CreateLoanScreen() {
             {loading || isSubmitting  ? (
                 <MyLoading />
             ) : (
-                <FAB
-                    title="Guardar prestamo"
-                    onPress={handleSubmit(onSubmit)}
-                />
+                 <MyButton title="Guardar prestamo" onPress={handleSubmit(onSubmit)} variant="primary" />
             )}
             <FlatListLoans loans={data?.loans} updateList={updateList} />
         </View>

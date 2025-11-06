@@ -10,13 +10,15 @@ import {
 } from 'react-native';
 import { StackNavigationProp } from '@react-navigation/stack';
 import { RouteProp } from '@react-navigation/native';
-import { Icon } from 'react-native-elements';
 
-import { Errors } from '../../utils/Errors';
-import { getAllThemes, activateTheme, deleteTheme } from '../../services/themeConfigService';
+import { getAllThemes, activateTheme } from '../../services/themeConfigService';
+import { useTheme } from '../../contexts/ThemeContext';
+
+// Types
 import { SettingsStackParamList } from '../../shared/types';
-import { useTheme } from '~/contexts/ThemeContext';
 import { ThemeConfig } from '~/shared/types/models/theme-config.type';
+import MyButton from '~/components/MyButton';
+import { showError } from '~/utils/showError';
 
 type ManageThemesScreenNavigationProp = StackNavigationProp<SettingsStackParamList>;
 type ManageThemesScreenRouteProp = RouteProp<SettingsStackParamList>;
@@ -30,11 +32,13 @@ export default function ManageThemesScreen({ navigation }: ManageThemesScreenPro
   const [themes, setThemes] = useState<ThemeConfig[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [activating, setActivating] = useState<string | null>(null);
-  const { refreshTheme, colors } = useTheme();
+  const { refreshTheme } = useTheme();
 
   useEffect(() => {
     fetchThemes();
-    return navigation.addListener('focus', () => fetchThemes());
+    return navigation.addListener('focus', () => {
+      fetchThemes();
+    });
   }, []);
 
   const fetchThemes = async () => {
@@ -43,7 +47,7 @@ export default function ManageThemesScreen({ navigation }: ManageThemesScreenPro
       const data = await getAllThemes();
       setThemes(data);
     } catch (error) {
-      Errors(error);
+      showError(error);
     } finally {
       setLoading(false);
     }
@@ -55,146 +59,212 @@ export default function ManageThemesScreen({ navigation }: ManageThemesScreenPro
 
       await activateTheme({ themeName });
 
-      setThemes(prev =>
-        prev.map(t => ({ ...t, isActive: t.themeName === themeName ? 1 : 0 }))
+      // Actualizar lista local
+      setThemes((prev) =>
+        prev.map((t) => ({
+          ...t,
+          isActive: t.themeName === themeName ? 1 : 0,
+        }))
       );
 
+      // Refrescar tema global
       await refreshTheme();
 
       Alert.alert('Éxito', `Tema "${themeName}" activado correctamente`);
     } catch (error) {
-      Errors(error);
+      showError(error);
     } finally {
       setActivating(null);
     }
   };
 
-  const handleDeleteTheme = (themeName: string) => {
-    Alert.alert(
-      'Confirmar eliminación',
-      `¿Estás seguro de eliminar el tema "${themeName}"? Esta acción no se puede deshacer.`,
-      [
-        { text: 'Cancelar', style: 'cancel' },
-        {
-          text: 'Eliminar',
-          style: 'destructive',
-          onPress: async () => {
-            try {
-              await deleteTheme(themeName);
-              setThemes(prev => prev.filter(t => t.themeName !== themeName));
-            } catch (error) {
-              Errors(error);
-            }
-          },
-        },
-      ]
-    );
+  const navigateToEditTheme = (themeName: string) => {
+    navigation.navigate('editTheme', { themeName });
   };
 
-  if (loading) return <ActivityIndicator style={{ marginTop: 50 }} />;
+  if (loading) {
+    return (
+      <View style={styles.centerContainer}>
+        <ActivityIndicator size="large" color="#9c27b0" />
+        <Text style={styles.loadingText}>Cargando temas...</Text>
+      </View>
+    );
+  }
 
   return (
-    <View style={[styles.container, { backgroundColor: colors.BACKGROUND }]}>
-      <TouchableOpacity
-        style={[styles.createButton, { backgroundColor: colors.PRIMARY }]}
-        // onPress={() => navigation.navigate('CreateThemeScreen')}
-      >
-        <Icon name="add" color="#fff" />
-        <Text style={styles.createButtonText}>Crear nuevo tema</Text>
-      </TouchableOpacity>
+    <ScrollView style={styles.container}>
+      <View style={styles.header}>
+        <Text style={styles.headerTitle}>Gestión de Temas</Text>
+        <Text style={styles.headerSubtitle}>Selecciona el tema del sistema</Text>
+      </View>
 
-      <ScrollView contentContainerStyle={{ paddingBottom: 40 }}>
-        {themes.map((theme) => (
-          <View
-            key={theme.themeName}
-            style={[styles.card, { borderColor: theme.isActive ? colors.PRIMARY : colors.BORDER }]}
-          >
-            <View style={styles.cardHeader}>
-              <Text style={[styles.themeName, theme.isActive ? { color: colors.PRIMARY } : {}]}>
-                {theme.themeName}
-              </Text>
-
+      {themes.map((theme) => (
+        <View key={theme.id} style={styles.themeCard}>
+          <View style={styles.themeHeader}>
+            <View style={styles.themeTitleContainer}>
+              <Text style={styles.themeName}>{theme.themeName}</Text>
               {theme.isActive === 1 && (
-                <View style={[styles.badge, { backgroundColor: colors.SUCCESS }]}>
-                  <Text style={styles.badgeText}>ACTIVO</Text>
+                <View style={styles.activeBadge}>
+                  <Text style={styles.activeBadgeText}>✓ ACTIVO</Text>
                 </View>
               )}
             </View>
-
-            <View style={styles.buttonRow}>
-
-              <TouchableOpacity
-                style={[styles.btn, { borderColor: colors.INFO }]}
-                // onPress={() => navigation.navigate('EditThemeScreen', { themeName: theme.themeName })}
-              >
-                <Icon name="edit" size={18} color={colors.INFO} />
-                <Text style={[styles.btnText, { color: colors.INFO }]}>Editar</Text>
-              </TouchableOpacity>
-
-              {theme.isActive === 0 ? (
-                <TouchableOpacity
-                  style={[styles.btn, { borderColor: colors.PRIMARY }]}
-                  onPress={() => handleActivateTheme(theme.themeName)}
-                >
-                  {activating === theme.themeName ? (
-                    <ActivityIndicator size="small" />
-                  ) : (
-                    <>
-                      <Icon name="check-circle" size={18} color={colors.PRIMARY} />
-                      <Text style={[styles.btnText, { color: colors.PRIMARY }]}>Activar</Text>
-                    </>
-                  )}
-                </TouchableOpacity>
-              ) : null}
-
-              <TouchableOpacity
-                style={[styles.btn, { borderColor: colors.ERROR }]}
-                onPress={() => handleDeleteTheme(theme.themeName)}
-              >
-                <Icon name="delete" size={18} color={colors.ERROR} />
-                <Text style={[styles.btnText, { color: colors.ERROR }]}>Eliminar</Text>
-              </TouchableOpacity>
-
-            </View>
           </View>
-        ))}
-      </ScrollView>
-    </View>
+
+          {/* Preview de colores principales */}
+          <View style={styles.colorPreview}>
+            <View style={[styles.colorBox, { backgroundColor: theme.colors.PRIMARY }]} />
+            <View style={[styles.colorBox, { backgroundColor: theme.colors.SECONDARY }]} />
+            <View style={[styles.colorBox, { backgroundColor: theme.colors.SUCCESS }]} />
+            <View style={[styles.colorBox, { backgroundColor: theme.colors.WARNING }]} />
+            <View style={[styles.colorBox, { backgroundColor: theme.colors.INFO }]} />
+          </View>
+
+          {/* Botones */}
+          <View style={styles.buttonContainer}>
+            {theme.isActive === 0 && (
+              <TouchableOpacity
+                style={styles.activateButton}
+                onPress={() => handleActivateTheme(theme.themeName)}
+                disabled={activating === theme.themeName}
+              >
+                {activating === theme.themeName ? (
+                  <ActivityIndicator size="small" color="white" />
+                ) : (
+                  <Text style={styles.activateButtonText}>Activar</Text>
+                )}
+              </TouchableOpacity>
+            )}
+             <MyButton onPress={() => navigateToEditTheme(theme.themeName)} title="Editar Colores" />
+          </View>
+        </View>
+      ))}
+
+      {themes.length === 0 && (
+        <View style={styles.emptyState}>
+          <Text style={styles.emptyText}>No hay temas configurados</Text>
+        </View>
+      )}
+    </ScrollView>
   );
 }
 
-
 const styles = StyleSheet.create({
-  container: { flex: 1, padding: 16 },
-  createButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    padding: 12,
-    borderRadius: 8,
-    marginBottom: 15,
+  container: {
+    flex: 1,
+    backgroundColor: '#f5f5f5',
   },
-  createButtonText: { color: '#fff', fontSize: 16, marginLeft: 8 },
-  card: {
-    borderWidth: 1,
-    borderRadius: 10,
-    padding: 14,
-    marginBottom: 12,
-  },
-  cardHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-  themeName: { fontSize: 18, fontWeight: 'bold' },
-  badge: { paddingHorizontal: 10, paddingVertical: 3, borderRadius: 6 },
-  badgeText: { color: '#fff', fontSize: 12 },
-  buttonRow: { flexDirection: 'row', marginTop: 12, justifyContent: 'space-between' },
-  btn: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    borderWidth: 1,
-    paddingVertical: 6,
-    paddingHorizontal: 10,
-    borderRadius: 6,
+  centerContainer: {
     flex: 1,
     justifyContent: 'center',
-    marginHorizontal: 4,
+    alignItems: 'center',
+    backgroundColor: '#f5f5f5',
   },
-  btnText: { marginLeft: 6 },
+  loadingText: {
+    marginTop: 10,
+    fontSize: 16,
+    color: '#666',
+  },
+  header: {
+    backgroundColor: '#9c27b0',
+    padding: 20,
+    marginBottom: 10,
+  },
+  headerTitle: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: 'white',
+    marginBottom: 5,
+  },
+  headerSubtitle: {
+    fontSize: 14,
+    color: 'white',
+    opacity: 0.9,
+  },
+  themeCard: {
+    backgroundColor: 'white',
+    marginHorizontal: 10,
+    marginVertical: 5,
+    padding: 15,
+    borderRadius: 10,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  themeHeader: {
+    marginBottom: 15,
+  },
+  themeTitleContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  themeName: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: '#333',
+    textTransform: 'capitalize',
+  },
+  activeBadge: {
+    backgroundColor: '#4caf50',
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderRadius: 5,
+  },
+  activeBadgeText: {
+    fontSize: 12,
+    fontWeight: 'bold',
+    color: 'white',
+  },
+  colorPreview: {
+    flexDirection: 'row',
+    marginBottom: 15,
+  },
+  colorBox: {
+    width: 50,
+    height: 50,
+    marginRight: 8,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#e0e0e0',
+  },
+  buttonContainer: {
+    flexDirection: 'row',
+    gap: 10,
+  },
+  activateButton: {
+    flex: 1,
+    backgroundColor: '#9c27b0',
+    paddingVertical: 12,
+    borderRadius: 8,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  activateButtonText: {
+    color: 'white',
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
+  editButton: {
+    flex: 1,
+    backgroundColor: '#2196f3',
+    paddingVertical: 12,
+    borderRadius: 8,
+    alignItems: 'center',
+  },
+  editButtonText: {
+    color: 'white',
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
+  emptyState: {
+    padding: 40,
+    alignItems: 'center',
+  },
+  emptyText: {
+    fontSize: 16,
+    color: '#999',
+  },
 });

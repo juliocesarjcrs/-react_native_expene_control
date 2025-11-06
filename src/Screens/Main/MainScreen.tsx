@@ -33,6 +33,8 @@ import MyButton from '../../components/MyButton';
 // Screens
 import { ChatScreen } from '../../Screens/common/ChatScreen';
 import { useFeatureFlag } from '~/customHooks/useFeatureFlag';
+import OptionsGrid from './components/OptionsGrid';
+import MyDonutChart from '~/components/charts/MyDonutChart';
 
 type MainScreenNavigationProp = StackNavigationProp<ExpenseStackParamList, 'main'>;
 
@@ -148,93 +150,130 @@ export default function MainScreen({ navigation }: MainScreenProps) {
   };
 
   // Obtener versión de forma segura
-  const version =
-    Constants.expoConfig?.version ||
-    'Desconocida';
+  const version = Constants.expoConfig?.version || 'Desconocida';
 
   return (
     <View style={styles.container}>
-      <ScrollView>
-        <MyMonthPicker />
-        {userLoggued?.image && userImgSigned && (
-          <Image
-            style={styles.logo}
-            source={{
-              uri: userImgSigned
-            }}
-          />
-        )}
-        <Text style={{ fontWeight: 'bold' }}>{URL_BASE}</Text>
-        <Text style={{ fontWeight: 'bold' }}>{userLoggued?.name ? userLoggued.name : '---'}</Text>
-        <View style={styles.fixToText}>
-          <MyButton onPress={sendcreateExpenseScreen} title="Ingresar gasto" />
-          <MyButton onPress={sendScanInvoiceExpenseScreen} title="Scanear" />
-          <MyButton onPress={LogOut} title="Cerrar sesión" />
+      <ScrollView contentContainerStyle={styles.scrollContent}>
+        {/* HEADER */}
+        <View style={styles.header}>
+          {userLoggued?.image && userImgSigned && <Image source={{ uri: userImgSigned }} style={styles.avatar} />}
+          <View style={{ flex: 1 }}>
+            <Text style={styles.name}>{userLoggued?.name ?? 'Usuario'}</Text>
+            <Text style={styles.env}>{URL_BASE}</Text>
+          </View>
         </View>
-        <Button
-          title="Detallar gastos"
-          buttonStyle={{ backgroundColor: SECUNDARY }}
-          onPress={sendDetailsExpenseScreen}
-        />
-        <Text style={styles.text}>Total: {NumberFormat(total)}</Text>
-        {loading ? (
-          <MyLoading />
-        ) : total > 0 ? (
-          <MyPieChart data={categories} />
-        ) : (
-          <Text style={styles.textMuted}>No se registran gastos en este mes</Text>
-        )}
-        {/* <CardLastExpenses navigation={navigation} /> */}
-        <CardLastExpenses navigation={navigation as CardLastExpensesNavigationProp} />
-        <View style={styles.versionBox}>
-          <Text style={styles.versionText}>
-            Versión: {version}
-          </Text>
+
+        {/* MES */}
+        <View style={styles.section}>
+          <MyMonthPicker />
         </View>
+
+        {/* ACCIONES */}
+        <View style={styles.section}>
+          <View style={styles.actionCard}>
+            <OptionsGrid
+              actions={[
+                { title: 'Ingresar gasto', onPress: sendcreateExpenseScreen },
+                { title: 'Scanear factura', onPress: sendScanInvoiceExpenseScreen }
+              ]}
+            />
+          </View>
+        </View>
+
+        {/* TOTAL */}
+        <View style={styles.totalBox}>
+          <Text style={styles.totalLabel}>Total gastado este mes</Text>
+          <Text style={styles.total}>{NumberFormat(total)}</Text>
+        </View>
+
+        {/* CHART */}
+        <View style={styles.section}>
+          {loading ? (
+            <MyLoading />
+          ) : total > 0 ? (
+            // <MyDonutChart data={categories} total={total} />
+            <MyPieChart data={categories} />
+          ) : (
+            <Text style={styles.textMuted}>No se registran gastos en este mes</Text>
+          )}
+        </View>
+
+        <MyButton onPress={sendDetailsExpenseScreen} title="Detallar gastos" />
+
+        {/* ÚLTIMOS GASTOS */}
+        <View style={styles.section}>
+          <CardLastExpenses navigation={navigation as CardLastExpensesNavigationProp} />
+        </View>
+        <MyButton onPress={LogOut} title="Cerrar sesión" variant="cancel" />
+        {/* VERSION */}
+        <Text style={styles.versionText}>Versión: {version}</Text>
       </ScrollView>
+
       {isEnabled && <ChatScreen />}
     </View>
   );
 }
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: 'white'
-  },
-  fixToText: {
-    // backgroundColor: 'pink',
-    marginTop: 0,
-    paddingTop: 0,
+  container: { flex: 1, backgroundColor: '#FFF' },
+  scrollContent: { padding: 16 },
+
+  header: {
     flexDirection: 'row',
-    justifyContent: 'space-between'
+    alignItems: 'center',
+    marginBottom: 2
   },
-  text: {
-    textAlign: 'center',
-    fontWeight: 'bold',
-    fontSize: BIG,
-    marginTop: 5
+  avatar: {
+    width: 68,
+    height: 68,
+    borderRadius: 34,
+    marginRight: 12
   },
+  name: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#222'
+  },
+  env: {
+    fontSize: 12,
+    color: '#888'
+  },
+
+  section: { marginTop: 4 },
+
+  totalBox: {
+    marginTop: 16,
+    alignItems: 'center'
+  },
+  totalLabel: {
+    fontSize: 14,
+    color: '#666'
+  },
+  total: {
+    fontSize: 32,
+    fontWeight: '700',
+    marginTop: 4,
+    color: '#111'
+  },
+
   textMuted: {
     textAlign: 'center',
-    color: MUTED
+    color: '#999',
+    marginTop: 16
   },
-  logo: {
-    marginLeft: 10,
-    marginTop: 5,
-    width: 66,
-    height: 58
-  },
-  versionBox: {
-    marginTop: 24,
-    alignItems: 'center',
-    padding: 8,
-    backgroundColor: '#f2f2f2',
-    borderRadius: 8,
-    marginBottom: 16
-  },
+
   versionText: {
-    color: '#555',
-    fontWeight: 'bold',
-    fontSize: 14
+    textAlign: 'center',
+    marginTop: 10,
+    marginBottom: 20,
+    color: '#888',
+    fontSize: 13
+  },
+  actionCard: {
+    backgroundColor: '#FAFAFA',
+    padding: 5,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: '#EEE'
   }
 });

@@ -10,6 +10,7 @@ import { createBudgets, getBudgets } from '../../services/budgets';
 
 // Components
 import MyLoading from '../../components/loading/MyLoading';
+import MyButton from '~/components/MyButton';
 
 // Types
 import { SettingsStackParamList } from '../../shared/types';
@@ -19,7 +20,7 @@ import { Category, CreateBudgetPayload } from '../../shared/types/services';
 import { NumberFormat } from '../../utils/Helpers';
 import ShowToast from '../../utils/toastUtils';
 import YearCitySelector from './components/YearCytySelector';
-import { FAB } from 'react-native-elements';
+
 
 type VirtualBudgetScreenNavigationProp = StackNavigationProp<SettingsStackParamList, 'exportData'>;
 
@@ -162,8 +163,8 @@ export default function VirtualBudgetScreen({ navigation }: VirtualBudgetScreenP
         setSelectedCity={setSelectedCity}
       />
       <View style={styles.buttons}>
-        <FAB title="Consultar" onPress={fetchData} />
-        <FAB title="Guardar" onPress={handleSaveBudget} />
+        <MyButton title="Consultar" onPress={fetchData} variant="secondary" />
+        <MyButton title="Guardar" onPress={handleSaveBudget} variant="primary" />
       </View>
       <Text style={styles.totalText}>Total presupuesto: {calculateTotal()}</Text>
       {loading ? (

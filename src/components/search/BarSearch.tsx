@@ -1,10 +1,10 @@
 import React, { useState } from 'react';
 import { View, TextInput, StyleSheet } from 'react-native';
-import { FAB } from 'react-native-elements';
 import { useDispatch } from 'react-redux';
 import { setQuery } from '../../features/searchExpenses/searchExpensesSlice';
 // Types
 import { AppDispatch } from '../../shared/types/reducers/root-state.type';
+import MyButton from '../MyButton';
 interface BarSearchProps {
   shouldDispatch?: boolean;
   onQueryChange?: (query: string) => void;
@@ -31,7 +31,7 @@ export const BarSearch: React.FC<BarSearchProps> = ({ shouldDispatch = true, onQ
   return (
     <View style={styles.content}>
       <TextInput style={styles.input} onChangeText={handleSearch} value={queryState} placeholder="Buscador ..." />
-      <FAB title="Buscar" onPress={handleSubmit} />
+      <MyButton title="Buscar" onPress={handleSubmit} variant="primary"/>
     </View>
   );
 };

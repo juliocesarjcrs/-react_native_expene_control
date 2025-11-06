@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { View, Text, ScrollView, StyleSheet } from 'react-native';
 import { useSelector } from 'react-redux';
-import { FAB } from 'react-native-elements';
 import { RouteProp } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
 
@@ -12,6 +11,7 @@ import { getCategoryTypeIncome } from '../../services/categories';
 import MyAcordeonIncome from './components/MyAcordeonIncome';
 import MyLoading from '~/components/loading/MyLoading';
 import CardLastIncomes, { CardLastIncomesNavigationProp } from '../Main/components/CardLastIncomes';
+import MyButton from '~/components/MyButton';
 
 // Types
 import { RootState } from '~/shared/types/reducers';
@@ -73,7 +73,7 @@ export default function SumaryIncomesScreen({ navigation }: SumaryIncomesScreenP
 
   return (
     <View style={styles.container}>
-      <FAB title="Agregar ingreso" onPress={sendAddIncomeScrenn} />
+       <MyButton title="Agregar ingreso" onPress={sendAddIncomeScrenn} variant="primary"/>
       <Text
         style={{
           fontSize: BIG,
@@ -94,7 +94,7 @@ export default function SumaryIncomesScreen({ navigation }: SumaryIncomesScreenP
         </ScrollView>
       )}
       <ScrollView>
-        <FAB title="Nueva categoría" onPress={sendCreteCategoryScrenn} />
+        <MyButton title="Nueva categoría" onPress={sendCreteCategoryScrenn} variant="primary"/>
         <CardLastIncomes navigation={navigation as CardLastIncomesNavigationProp} />
       </ScrollView>
     </View>

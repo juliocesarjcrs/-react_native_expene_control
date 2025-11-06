@@ -2,7 +2,7 @@ import React, { useRef, useState } from 'react';
 import { Keyboard, StyleSheet, Text, View } from 'react-native';
 import { useSelector } from 'react-redux';
 import { useForm, Controller } from 'react-hook-form';
-import { Input, FAB } from 'react-native-elements';
+import { Input } from 'react-native-elements';
 
 // Services
 import { CreateExpense, getExpensesFromSubcategory } from '../../services/expenses';
@@ -26,6 +26,7 @@ import { Errors } from '../../utils/Errors';
 import ShowToast from '../../utils/toastUtils';
 import { NumberFormat, DateFormat } from '../../utils/Helpers';
 import { DateSelector } from '~/components/datePicker';
+import MyButton from '~/components/MyButton';
 
 // Styles
 
@@ -227,7 +228,7 @@ export default function CreateExpenseScreen(): React.JSX.Element {
         {loading ? (
           <MyLoading />
         ) : (
-          <FAB title="Guardar gasto" onPress={handleSubmit(onSubmit)} style={styles.saveButton} />
+          <MyButton title="Guardar gasto" onPress={handleSubmit(onSubmit)} variant="primary"/>
         )}
 
         <Text style={styles.totalText}>Total: {NumberFormat(sumCost)}</Text>

@@ -19,6 +19,7 @@ import {
   invalidateConfigCache
 } from '~/services/chatbotConfigService';
 import { ChatbotConfig, ChatbotConfigHistory } from '~/shared/types/models/chatbot-config.type';
+import { showError } from '~/utils/showError';
 
 export const ChatbotConfigScreen = () => {
   const [configs, setConfigs] = useState<ChatbotConfig[]>([]);
@@ -45,8 +46,7 @@ export const ChatbotConfigScreen = () => {
       const data = await getAllChatbotConfigs(false);
       setConfigs(data);
     } catch (error) {
-      Alert.alert('Error', 'No se pudieron cargar las configuraciones');
-      console.error(error);
+      showError(error, 'No se pudieron cargar las configuraciones');
     } finally {
       setLoading(false);
     }
@@ -57,7 +57,7 @@ export const ChatbotConfigScreen = () => {
       const data = await getChatbotConfigHistory(configKey, 10);
       setHistory(data);
     } catch (error) {
-      console.error('Error loading history:', error);
+      showError(error, 'Error loading history');
     }
   };
 
@@ -78,11 +78,10 @@ export const ChatbotConfigScreen = () => {
       await invalidateConfigCache();
     } catch (error: any) {
       if (error.message.includes('JSON')) {
-        Alert.alert('Error', 'El JSON ingresado no es válido');
+        showError(error, 'El JSON ingresado no es válido');
       } else {
-        Alert.alert('Error', 'No se pudo guardar la configuración');
+        showError(error, 'No se pudo guardar la configuración');
       }
-      console.error(error);
     } finally {
       setLoading(false);
     }

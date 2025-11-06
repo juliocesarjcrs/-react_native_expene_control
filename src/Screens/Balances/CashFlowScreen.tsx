@@ -11,7 +11,7 @@ import {
 import { Errors } from '../../utils/Errors';
 import { useSelector } from 'react-redux';
 import { LineChart } from 'react-native-chart-kit';
-import { FAB, Icon } from 'react-native-elements';
+import { Icon } from 'react-native-elements';
 import { useQuery } from '@apollo/client/react';
 import CheckBoxOptions from '../../components/checbox/CheckBoxOptions';
 import { getSavingsByUser, getUpdateAllSavingsByUser } from '../../services/savings';
@@ -34,6 +34,7 @@ import MyLoading from '../../components/loading/MyLoading';
 import MyTable from '../../components/tables/MyTable';
 import LabelPopover from './components/label-popover';
 import SimplePopover from './components/simple-popover';
+import MyButton from '~/components/MyButton';
 
 type ExportExpenseScreenNavigationProp = StackNavigationProp<BalanceStackParamList, 'cashFlow'>;
 
@@ -381,7 +382,7 @@ export default function CashFlowScreen({ navigation }: CashFlowScreenProps) {
           verticalLabelRotation={40}
         />
         <MyTable navigation={navigation} tableHead={tableHead} tableData={tableData} />
-        {!loading && <FAB title="Gráficas de balance" onPress={sendGraphBalancesScreen} />}
+        {!loading && <MyButton title="Gráficas de balance" onPress={sendGraphBalancesScreen} variant="primary"/> }
       </ScrollView>
     </View>
   );

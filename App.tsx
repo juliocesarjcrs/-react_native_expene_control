@@ -33,6 +33,11 @@ export default function App() {
         // console.log('----ERROR, INTERCEPT ---- ',error, );
         // console.log(error.response);
         const { status } = error.response;
+        // Si el servidor respondió pero no cae en 400/401/403:
+        if (![400, 401, 403].includes(error.response.status)) {
+          const msg = error.response.data?.message || 'Error en el servidor';
+          ToastAndroid.show(msg, ToastAndroid.SHORT);
+        }
         if (status === 401) {
           dispatch(userSignOut());
           await AsyncStorage.removeItem('access_token');

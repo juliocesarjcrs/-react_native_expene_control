@@ -96,4 +96,5 @@ export type SettingsStackParamList = {
   manageFeatureFlags: undefined;
   chatbotConfig: undefined;
   manageThemes: undefined;
+  editTheme: { themeName: string };
 };

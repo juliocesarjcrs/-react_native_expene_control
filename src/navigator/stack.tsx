@@ -111,6 +111,7 @@ function SettingsStackScreen() {
             <SettingsStack.Screen name="manageFeatureFlags" component={Routes.ManageFeatureFlagsScreen} options={{ title: 'Gestionar Funcionalidades' }}/>
             <SettingsStack.Screen name="chatbotConfig" component={Routes.ChatbotConfigScreen} options={{ title: 'Configurar Chatbot' }}/>
             <SettingsStack.Screen name="manageThemes" component={Routes.ManageThemesScreen} options={{ title: 'Gestionar Temas' }}/>
+            <SettingsStack.Screen name="editTheme" component={Routes.EditThemeScreen} options={{ title: 'Editar Tema' }}/>
 
     </SettingsStack.Navigator>
   );

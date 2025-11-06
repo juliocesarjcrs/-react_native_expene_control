@@ -95,4 +95,5 @@ export type SettingsStackParamList = {
   manageCSV: undefined;
   manageFeatureFlags: undefined;
   chatbotConfig: undefined;
+  manageThemes: undefined;
 };

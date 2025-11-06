@@ -20,6 +20,7 @@ import { getUser } from "../services/users";
 import { RootState } from "../shared/types/reducers";
 import { AppDispatch } from "../shared/types/reducers/root-state.type";
 import { FeatureFlagsProvider } from "~/contexts/FeatureFlagsContext";
+import { ThemeProvider } from "~/contexts/ThemeContext";
 
 export default function MyStack() {
   const dispatch: AppDispatch = useDispatch();
@@ -109,48 +110,52 @@ function SettingsStackScreen() {
             <SettingsStack.Screen name="manageCSV" component={Routes.ManageCSVsScreen} options={{ title: 'Gestionar Csv' }}/>
             <SettingsStack.Screen name="manageFeatureFlags" component={Routes.ManageFeatureFlagsScreen} options={{ title: 'Gestionar Funcionalidades' }}/>
             <SettingsStack.Screen name="chatbotConfig" component={Routes.ChatbotConfigScreen} options={{ title: 'Configurar Chatbot' }}/>
+            <SettingsStack.Screen name="manageThemes" component={Routes.ManageThemesScreen} options={{ title: 'Gestionar Temas' }}/>
+
     </SettingsStack.Navigator>
   );
 }
 const Tab = createBottomTabNavigator();
 return (
-  <FeatureFlagsProvider>
-    <NavigationContainer>
-      {isAuth ? (
-        <Tab.Navigator
-          screenOptions={({ route }) => ({
-            tabBarIcon: ({ focused, color, size }) => {
-              let iconName = 'home';
+  <ThemeProvider>
+    <FeatureFlagsProvider>
+      <NavigationContainer>
+        {isAuth ? (
+          <Tab.Navigator
+            screenOptions={({ route }) => ({
+              tabBarIcon: ({ focused, color, size }) => {
+                let iconName = 'home';
 
-              if (route.name === 'Gastos') {
-                iconName = focused ? 'cash' : 'cash-multiple';
-              } else if (route.name === 'Ingresos') {
-                iconName = focused ? 'account-cash' : 'account-cash-outline';
-              } else if (route.name === 'Balance') {
-                iconName = focused ? 'scale-balance' : 'scale-balance';
-              } else if (route.name === 'Ajustes') {
-                iconName = focused ? 'cog' : 'cog-outline';
-              }
+                if (route.name === 'Gastos') {
+                  iconName = focused ? 'cash' : 'cash-multiple';
+                } else if (route.name === 'Ingresos') {
+                  iconName = focused ? 'account-cash' : 'account-cash-outline';
+                } else if (route.name === 'Balance') {
+                  iconName = focused ? 'scale-balance' : 'scale-balance';
+                } else if (route.name === 'Ajustes') {
+                  iconName = focused ? 'cog' : 'cog-outline';
+                }
 
-              // You can return any component that you like here!
-              return <Icon type="material-community" color={color} name={iconName} size={size} />;
-            },
-            tabBarActiveTintColor: 'tomato',
-            tabBarInactiveTintColor: 'gray'
-          })}
-        >
-          <Tab.Screen name="Gastos" component={ExpenseStackScreen} />
-          <Tab.Screen name="Ingresos" component={IncomeStackScreen} />
-          <Tab.Screen name="Balance" component={BalanceStackScreen} />
-          <Tab.Screen name="Ajustes" component={SettingsStackScreen} />
-        </Tab.Navigator>
-      ) : (
-        <Stack.Navigator>
-          <Stack.Screen name={'AuthStack'} component={AuthStackNavigator} />
-        </Stack.Navigator>
-      )}
-    </NavigationContainer>
-  </FeatureFlagsProvider>
+                // You can return any component that you like here!
+                return <Icon type="material-community" color={color} name={iconName} size={size} />;
+              },
+              tabBarActiveTintColor: 'tomato',
+              tabBarInactiveTintColor: 'gray'
+            })}
+          >
+            <Tab.Screen name="Gastos" component={ExpenseStackScreen} />
+            <Tab.Screen name="Ingresos" component={IncomeStackScreen} />
+            <Tab.Screen name="Balance" component={BalanceStackScreen} />
+            <Tab.Screen name="Ajustes" component={SettingsStackScreen} />
+          </Tab.Navigator>
+        ) : (
+          <Stack.Navigator>
+            <Stack.Screen name={'AuthStack'} component={AuthStackNavigator} />
+          </Stack.Navigator>
+        )}
+      </NavigationContainer>
+    </FeatureFlagsProvider>
+  </ThemeProvider>
 );
 }
 

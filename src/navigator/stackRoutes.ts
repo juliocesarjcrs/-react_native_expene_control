@@ -40,6 +40,7 @@ import VirtualBudgetScreen from '../Screens/Budgest/VirtualBudgetScreen';
 // Settings
 import ManageFeatureFlagsScreen from '~/Screens/Settings/ManageFeatureFlagsScreen';
 import { ChatbotConfigScreen } from '~/Screens/Settings/ChatbotConfigScreen';
+import ManageThemesScreen from '~/Screens/Settings/ManageThemesScreen';
 
 export interface StackRoutesType {
   LoginScreen: typeof LoginScreen;
@@ -75,6 +76,7 @@ export interface StackRoutesType {
   ManageCSVsScreen: typeof ManageCSVsScreen;
   ManageFeatureFlagsScreen: typeof ManageFeatureFlagsScreen;
   ChatbotConfigScreen: typeof ChatbotConfigScreen;
+  ManageThemesScreen: typeof ManageThemesScreen;
 }
 
 const stackRoutes: StackRoutesType = {
@@ -111,6 +113,7 @@ const stackRoutes: StackRoutesType = {
   ManageCSVsScreen,
   ManageFeatureFlagsScreen,
   ChatbotConfigScreen,
+  ManageThemesScreen,
 };
 
 export default stackRoutes;

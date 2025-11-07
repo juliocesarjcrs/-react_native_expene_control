@@ -216,7 +216,7 @@ export default function MainScreen({ navigation }: MainScreenProps) {
 }
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#FFF' },
-  scrollContent: { padding: 16 },
+  scrollContent: { padding: 2 },
 
   header: {
     flexDirection: 'row',
@@ -242,7 +242,7 @@ const styles = StyleSheet.create({
   section: { marginTop: 4 },
 
   totalBox: {
-    marginTop: 16,
+    marginTop: 10,
     alignItems: 'center'
   },
   totalLabel: {

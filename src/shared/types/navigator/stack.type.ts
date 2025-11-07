@@ -97,4 +97,5 @@ export type SettingsStackParamList = {
   chatbotConfig: undefined;
   manageThemes: undefined;
   editTheme: { themeName: string };
+  adminDashboard: undefined;
 };

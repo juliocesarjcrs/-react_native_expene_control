@@ -199,7 +199,7 @@ export const ChatbotConfigScreen = () => {
                     setEditMode(false);
                     setEditedValue(JSON.stringify(selectedConfig.config_value, null, 2));
                   }}
-                />{' '}
+                />
               </View>
             </View>
           ) : (

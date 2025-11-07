@@ -1,8 +1,8 @@
 import { AxiosResponse } from 'axios';
 import axios from '../plugins/axiosConfig'
-import { getAllModelsResponse, getCurrentModelResponse, getModelsHealthResponse } from '~/shared/types/services/ai-config-service.type';
+import { getAllModelsResponse, getCurrentModelResponse, GetInteractionLogsResponse, GetModelErrorsResponse, getModelsHealthResponse } from '~/shared/types/services/ai-config-service.type';
 const PREFIX = 'chatbot/models'
-
+const ANALYTICS_PREFIX = 'chatbot/analytics';
 export const getCurrentModel = async (): Promise<getCurrentModelResponse> => {
   const response: AxiosResponse<getCurrentModelResponse> = await axios.get(`${PREFIX}/current`);
   return response.data;
@@ -20,5 +20,17 @@ export const getAllModels = async (): Promise<getAllModelsResponse> => {
 
 export const reloadModels = async (): Promise<{ message: string }> => {
   const response = await axios.post(`${PREFIX}/reload`);
+  return response.data;
+};
+
+export const getModelErrors = async (
+  limit: number = 20
+): Promise<GetModelErrorsResponse> => {
+  const response = await axios.get(`${PREFIX}/errors?limit=${limit}`);
+  return response.data;
+};
+
+export const getInteractionLogs = async (limit: number = 50): Promise<GetInteractionLogsResponse> => {
+  const response = await axios.get(`${ANALYTICS_PREFIX}/interactions?limit=${limit}`);
   return response.data;
 };

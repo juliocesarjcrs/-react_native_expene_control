@@ -42,6 +42,7 @@ import ManageFeatureFlagsScreen from '~/Screens/Settings/ManageFeatureFlagsScree
 import { ChatbotConfigScreen } from '~/Screens/Settings/ChatbotConfigScreen';
 import ManageThemesScreen from '~/Screens/Settings/ManageThemesScreen';
 import EditThemeScreen from '~/Screens/Settings/ManageThemes/EditThemeScreen';
+import AdminDashboardScreen from '~/Screens/Settings/AdminDashboard/AdminDashboardScreen';
 
 export interface StackRoutesType {
   LoginScreen: typeof LoginScreen;
@@ -79,6 +80,7 @@ export interface StackRoutesType {
   ChatbotConfigScreen: typeof ChatbotConfigScreen;
   ManageThemesScreen: typeof ManageThemesScreen;
   EditThemeScreen: typeof EditThemeScreen;
+  AdminDashboardScreen: typeof AdminDashboardScreen;
 }
 
 const stackRoutes: StackRoutesType = {
@@ -116,7 +118,8 @@ const stackRoutes: StackRoutesType = {
   ManageFeatureFlagsScreen,
   ChatbotConfigScreen,
   ManageThemesScreen,
-  EditThemeScreen ,
+  EditThemeScreen,
+  AdminDashboardScreen,
 };
 
 export default stackRoutes;

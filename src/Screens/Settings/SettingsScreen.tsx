@@ -68,6 +68,7 @@ export default function SettingsScreen({ navigation }: SettingsScreenProps) {
           <MenuCardButton title="Gestionar Funcionalidades" onPress={go('manageFeatureFlags')} color="#009688" />
           <MenuCardButton title="Configurar Chatbot" onPress={go('chatbotConfig')} color="#009688" />
           <MenuCardButton title="Gestionar Temas" onPress={go('manageThemes')} color="#009688" />
+          <MenuCardButton title="Panel de Administración" onPress={go('adminDashboard')} color="#009688" />
         </View>
       )}
 

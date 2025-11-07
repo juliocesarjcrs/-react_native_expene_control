@@ -10,7 +10,7 @@ export function ChatScreen() {
     <ChatProvider>
       <View style={{ flex: 1 }}>
         {/* Your existing screen content */}
-        
+
         <Modal
           visible={isChatVisible}
           animationType="slide"

@@ -6,7 +6,7 @@ export type EditExpensePayload = Partial<ExpenseModel>;
 
 
 export type ExpenseSearchOptionsQuery = {
-  subcategoriesId: number[]
+  subcategoriesId: string;
   startDate?: Date;
   endDate?: Date;
   searchValue?: string;

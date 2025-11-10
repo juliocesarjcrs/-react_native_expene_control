@@ -24,7 +24,7 @@ export type ChatbotConfig = {
  */
 export type ChatbotConfigHistory = {
   id: number;
-  created_at: string;
+  createdAt: string;
   config_id: number;
   config_key: string;
   previous_value: any;

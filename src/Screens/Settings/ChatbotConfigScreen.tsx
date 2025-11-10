@@ -19,6 +19,7 @@ import {
   invalidateConfigCache
 } from '~/services/chatbotConfigService';
 import { ChatbotConfig, ChatbotConfigHistory } from '~/shared/types/models/chatbot-config.type';
+import { DateFormat } from '~/utils/Helpers';
 import { showError } from '~/utils/showError';
 
 export const ChatbotConfigScreen = () => {
@@ -104,16 +105,6 @@ export const ChatbotConfigScreen = () => {
     setShowHistory(false);
   };
 
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleString('es-ES', {
-      day: '2-digit',
-      month: '2-digit',
-      year: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
-    });
-  };
-
   if (loading && configs.length === 0) {
     return (
       <View style={styles.centerContainer}>
@@ -143,7 +134,7 @@ export const ChatbotConfigScreen = () => {
               <Text style={styles.configKey}>{config.config_key}</Text>
               {config.description && <Text style={styles.configDescription}>{config.description}</Text>}
               <Text style={styles.configMeta}>
-                Versión: {config.version} | {formatDate(config.updated_at)}
+                Versión: {config.version} | {DateFormat(config.updated_at, "DD MMM YYYY hh:mm a")}
               </Text>
             </View>
             <Switch
@@ -173,7 +164,7 @@ export const ChatbotConfigScreen = () => {
               ) : (
                 history.map((item) => (
                   <View key={item.id} style={styles.historyItem}>
-                    <Text style={styles.historyDate}>{formatDate(item.created_at)}</Text>
+                    <Text style={styles.historyDate}>{DateFormat(item.createdAt, "DD MMM YYYY hh:mm a")}</Text>
                     {item.changedByUser && <Text style={styles.historyUser}>por {item.changedByUser.name}</Text>}
                     {item.change_reason && <Text style={styles.historyReason}>{item.change_reason}</Text>}
                   </View>

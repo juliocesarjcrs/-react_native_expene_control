@@ -30,9 +30,9 @@ export type ExpenseModelWithSubcategories = {
   cost: number;
   commentary: string | null;
   date: string;
-  userId: number;
-  subcategoryId: number;
-  subcategories: SubcategoryShortModel;
+  // userId: number;
+  // subcategoryId: number;
+  subcategory: SubcategoryShortModel;
 };
 
 export type SubcategoryShortModel = {

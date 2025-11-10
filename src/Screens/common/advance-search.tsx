@@ -94,13 +94,12 @@ export default function AdvancedSearchScreen() {
           searchValue: searchText,
           orderBy: 'date'
         };
-
         const { data } = await findExpensesBySubcategories(queryParams);
         const dataResultSearchFormated: ListResultSearchProps[] = data.expenses.map((e) => {
           return {
             id: e.id,
             iconCategory: selectedCategory.iconName,
-            subcategory: e.subcategories.name,
+            subcategory: e.subcategory.name,
             commentary: e.commentary,
             amount: e.cost,
             dateFormat: e.date,

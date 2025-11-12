@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
-  TextInput,
   ScrollView,
   TouchableOpacity,
   Switch,
@@ -11,6 +10,8 @@ import {
   StyleSheet
 } from 'react-native';
 import MyButton from '~/components/MyButton';
+import { useThemeColors } from '~/customHooks/useThemeColors';
+import { ConfigEditor } from '~/components/chatbot-config/ConfigEditor';
 import {
   getAllChatbotConfigs,
   updateChatbotConfig,
@@ -23,11 +24,13 @@ import { DateFormat } from '~/utils/Helpers';
 import { showError } from '~/utils/showError';
 
 export const ChatbotConfigScreen = () => {
+  const colors = useThemeColors();
+
   const [configs, setConfigs] = useState<ChatbotConfig[]>([]);
   const [selectedConfig, setSelectedConfig] = useState<ChatbotConfig | null>(null);
-  const [editMode, setEditMode] = useState(false);
-  const [editedValue, setEditedValue] = useState('');
+  const [showEditor, setShowEditor] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [reloading, setReloading] = useState(false);
   const [history, setHistory] = useState<ChatbotConfigHistory[]>([]);
   const [showHistory, setShowHistory] = useState(false);
 
@@ -47,7 +50,7 @@ export const ChatbotConfigScreen = () => {
       const data = await getAllChatbotConfigs(false);
       setConfigs(data);
     } catch (error) {
-      showError(error, 'No se pudieron cargar las configuraciones');
+      showError(error);
     } finally {
       setLoading(false);
     }
@@ -58,31 +61,37 @@ export const ChatbotConfigScreen = () => {
       const data = await getChatbotConfigHistory(configKey, 10);
       setHistory(data);
     } catch (error) {
-      showError(error, 'Error loading history');
+      showError(error);
     }
   };
 
-  const handleSave = async () => {
+  const handleReloadCache = async () => {
+    try {
+      setReloading(true);
+      await invalidateConfigCache();
+      Alert.alert('Éxito', 'Configuración recargada correctamente');
+    } catch (error) {
+      showError(error);
+    } finally {
+      setReloading(false);
+    }
+  };
+
+  const handleSave = async (newValue: any) => {
     if (!selectedConfig) return;
 
     try {
       setLoading(true);
-      const parsedValue = JSON.parse(editedValue);
-
-      await updateChatbotConfig(selectedConfig.config_key, parsedValue, 'Ajuste desde admin panel');
-
+      await updateChatbotConfig(
+        selectedConfig.config_key,
+        newValue,
+        'Ajuste desde admin panel'
+      );
       Alert.alert('Éxito', 'Configuración actualizada correctamente');
-      setEditMode(false);
       await loadConfigs();
-
-      // Invalidar cache para que los cambios se apliquen inmediatamente
       await invalidateConfigCache();
-    } catch (error: any) {
-      if (error.message.includes('JSON')) {
-        showError(error, 'El JSON ingresado no es válido');
-      } else {
-        showError(error, 'No se pudo guardar la configuración');
-      }
+    } catch (error) {
+      showError(error);
     } finally {
       setLoading(false);
     }
@@ -94,114 +103,168 @@ export const ChatbotConfigScreen = () => {
       await loadConfigs();
       Alert.alert('Éxito', `Configuración ${value ? 'activada' : 'desactivada'}`);
     } catch (error) {
-      Alert.alert('Error', 'No se pudo cambiar el estado');
-      console.error(error);
+      showError(error);
     }
   };
 
   const handleSelectConfig = (config: ChatbotConfig) => {
     setSelectedConfig(config);
-    setEditedValue(JSON.stringify(config.config_value, null, 2));
     setShowHistory(false);
   };
 
   if (loading && configs.length === 0) {
     return (
-      <View style={styles.centerContainer}>
-        <ActivityIndicator size="large" color="#2196f3" />
-        <Text style={styles.loadingText}>Cargando configuraciones...</Text>
+      <View style={[styles.centerContainer, { backgroundColor: colors.BACKGROUND }]}>
+        <ActivityIndicator size="large" color={colors.PRIMARY} />
+        <Text style={[styles.loadingText, { color: colors.TEXT_SECONDARY }]}>
+          Cargando configuraciones...
+        </Text>
       </View>
     );
   }
 
   return (
-    <ScrollView style={styles.container}>
-      <View style={styles.header}>
-        <Text style={styles.title}>Configuración del Chatbot</Text>
-        <Text style={styles.subtitle}>Gestiona prompts, herramientas y comportamiento del asistente</Text>
+    <ScrollView style={[styles.container, { backgroundColor: colors.BACKGROUND }]}>
+      <View style={[styles.header, { backgroundColor: colors.CARD_BACKGROUND, borderBottomColor: colors.BORDER }]}>
+        <Text style={[styles.title, { color: colors.TEXT_PRIMARY }]}>Configuración del Chatbot</Text>
+        <Text style={[styles.subtitle, { color: colors.TEXT_SECONDARY }]}>
+          Gestiona prompts, herramientas y comportamiento del asistente
+        </Text>
+      </View>
+
+      {/* Botón de recarga global */}
+      <View style={[styles.reloadSection, { backgroundColor: colors.CARD_BACKGROUND }]}>
+        <MyButton
+          title="🔄 Recargar Cache"
+          onPress={handleReloadCache}
+          loading={reloading}
+          variant="secondary"
+        />
+        <Text style={[styles.reloadHint, { color: colors.TEXT_SECONDARY }]}>
+          Aplica los cambios guardados sin reiniciar el servidor
+        </Text>
       </View>
 
       {/* Lista de configuraciones */}
-      <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Configuraciones disponibles</Text>
+      <View style={[styles.section, { backgroundColor: colors.CARD_BACKGROUND }]}>
+        <Text style={[styles.sectionTitle, { color: colors.TEXT_PRIMARY }]}>
+          Configuraciones disponibles
+        </Text>
         {configs.map((config) => (
           <TouchableOpacity
             key={config.id}
             onPress={() => handleSelectConfig(config)}
-            style={[styles.configCard, selectedConfig?.id === config.id && styles.configCardSelected]}
+            style={[
+              styles.configCard,
+              {
+                backgroundColor: colors.BACKGROUND,
+                borderColor: selectedConfig?.id === config.id ? colors.PRIMARY : 'transparent'
+              }
+            ]}
           >
             <View style={styles.configInfo}>
-              <Text style={styles.configKey}>{config.config_key}</Text>
-              {config.description && <Text style={styles.configDescription}>{config.description}</Text>}
-              <Text style={styles.configMeta}>
-                Versión: {config.version} | {DateFormat(config.updated_at, "DD MMM YYYY hh:mm a")}
+              <Text style={[styles.configKey, { color: colors.TEXT_PRIMARY }]}>
+                {config.config_key}
+              </Text>
+              {config.description && (
+                <Text style={[styles.configDescription, { color: colors.TEXT_SECONDARY }]}>
+                  {config.description}
+                </Text>
+              )}
+              <Text style={[styles.configMeta, { color: colors.TEXT_SECONDARY }]}>
+                Versión: {config.version} | {DateFormat(config.updated_at, 'DD MMM YYYY hh:mm a')}
               </Text>
             </View>
             <Switch
               value={config.is_active}
               onValueChange={(value) => handleToggle(config, value)}
-              trackColor={{ false: '#767577', true: '#81b0ff' }}
-              thumbColor={config.is_active ? '#2196f3' : '#f4f3f4'}
+              trackColor={{ false: colors.GRAY, true: colors.PRIMARY }}
+              thumbColor={config.is_active ? colors.PRIMARY : colors.LIGHT_GRAY}
             />
           </TouchableOpacity>
         ))}
       </View>
 
-      {/* Editor de configuración */}
+      {/* Sección de vista/edición */}
       {selectedConfig && (
-        <View style={styles.section}>
+        <View style={[styles.section, { backgroundColor: colors.CARD_BACKGROUND }]}>
           <View style={styles.editorHeader}>
-            <Text style={styles.sectionTitle}>Editor: {selectedConfig.config_key}</Text>
-            <TouchableOpacity onPress={() => setShowHistory(!showHistory)} style={styles.historyButton}>
-              <Text style={styles.historyButtonText}>{showHistory ? 'Ocultar' : 'Ver'} Historial</Text>
+            <Text style={[styles.sectionTitle, { color: colors.TEXT_PRIMARY }]}>
+              {selectedConfig.config_key}
+            </Text>
+            <TouchableOpacity
+              onPress={() => setShowHistory(!showHistory)}
+              style={[styles.historyButton, { backgroundColor: colors.BACKGROUND }]}
+            >
+              <Text style={[styles.historyButtonText, { color: colors.TEXT_PRIMARY }]}>
+                {showHistory ? 'Ocultar' : 'Ver'} Historial
+              </Text>
             </TouchableOpacity>
           </View>
 
           {showHistory ? (
             <View style={styles.historyContainer}>
               {history.length === 0 ? (
-                <Text style={styles.emptyText}>Sin cambios registrados</Text>
+                <Text style={[styles.emptyText, { color: colors.TEXT_SECONDARY }]}>
+                  Sin cambios registrados
+                </Text>
               ) : (
                 history.map((item) => (
-                  <View key={item.id} style={styles.historyItem}>
-                    <Text style={styles.historyDate}>{DateFormat(item.createdAt, "DD MMM YYYY hh:mm a")}</Text>
-                    {item.changedByUser && <Text style={styles.historyUser}>por {item.changedByUser.name}</Text>}
-                    {item.change_reason && <Text style={styles.historyReason}>{item.change_reason}</Text>}
+                  <View
+                    key={item.id}
+                    style={[
+                      styles.historyItem,
+                      { backgroundColor: colors.BACKGROUND, borderLeftColor: colors.PRIMARY }
+                    ]}
+                  >
+                    <Text style={[styles.historyDate, { color: colors.TEXT_PRIMARY }]}>
+                      {DateFormat(item.createdAt, 'DD MMM YYYY hh:mm a')}
+                    </Text>
+                    {item.changedByUser && (
+                      <Text style={[styles.historyUser, { color: colors.TEXT_SECONDARY }]}>
+                        por {item.changedByUser.name}
+                      </Text>
+                    )}
+                    {item.change_reason && (
+                      <Text style={[styles.historyReason, { color: colors.TEXT_SECONDARY }]}>
+                        {item.change_reason}
+                      </Text>
+                    )}
                   </View>
                 ))
               )}
             </View>
-          ) : editMode ? (
-            <View style={styles.editorContainer}>
-              <TextInput
-                value={editedValue}
-                onChangeText={setEditedValue}
-                multiline
-                style={styles.textEditor}
-                placeholder="Ingresa el JSON de configuración..."
-                placeholderTextColor="#999"
-              />
-              <View style={styles.editorActions}>
-                <MyButton title="Guardar" loading={loading} onPress={handleSave} />
-                <MyButton
-                  title="Cancelar"
-                  variant="cancel"
-                  onPress={() => {
-                    setEditMode(false);
-                    setEditedValue(JSON.stringify(selectedConfig.config_value, null, 2));
-                  }}
-                />
-              </View>
-            </View>
           ) : (
             <View style={styles.viewerContainer}>
-              <ScrollView style={styles.codeViewer}>
-                <Text style={styles.codeText}>{editedValue}</Text>
+              <ScrollView
+                style={[
+                  styles.codeViewer,
+                  { borderColor: colors.BORDER, backgroundColor: colors.BACKGROUND }
+                ]}
+              >
+                <Text style={[styles.codeText, { color: colors.TEXT_PRIMARY }]}>
+                  {JSON.stringify(selectedConfig.config_value, null, 2)}
+                </Text>
               </ScrollView>
-              <MyButton title="Editar Configuración" onPress={() => setEditMode(true)} />
+              <MyButton title="Editar Configuración" onPress={() => setShowEditor(true)} />
             </View>
           )}
         </View>
+      )}
+
+      {/* Modal Editor */}
+      {selectedConfig && (
+        <ConfigEditor
+          visible={showEditor}
+          configKey={selectedConfig.config_key}
+          configValue={selectedConfig.config_value}
+          onSave={async (newValue) => {
+            await handleSave(newValue);
+            setShowEditor(false);
+          }}
+          onCancel={() => setShowEditor(false)}
+          loading={loading}
+        />
       )}
     </ScrollView>
   );
@@ -209,45 +272,49 @@ export const ChatbotConfigScreen = () => {
 
 const styles = StyleSheet.create({
   container: {
-    flex: 1,
-    backgroundColor: '#f5f5f5'
+    flex: 1
   },
   centerContainer: {
     flex: 1,
     justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: '#f5f5f5'
+    alignItems: 'center'
   },
   loadingText: {
     marginTop: 12,
-    fontSize: 14,
-    color: '#666'
+    fontSize: 14
   },
   header: {
     padding: 20,
-    backgroundColor: '#fff',
-    borderBottomWidth: 1,
-    borderBottomColor: '#e0e0e0'
+    borderBottomWidth: 1
   },
   title: {
     fontSize: 24,
     fontWeight: 'bold',
-    color: '#333',
     marginBottom: 4
   },
   subtitle: {
-    fontSize: 14,
-    color: '#666'
+    fontSize: 14
+  },
+  reloadSection: {
+    marginTop: 16,
+    padding: 16,
+    marginHorizontal: 16,
+    borderRadius: 8
+  },
+  reloadHint: {
+    fontSize: 12,
+    marginTop: 8,
+    textAlign: 'center'
   },
   section: {
     marginTop: 16,
+    marginHorizontal: 16,
     padding: 16,
-    backgroundColor: '#fff'
+    borderRadius: 8
   },
   sectionTitle: {
     fontSize: 18,
     fontWeight: '600',
-    color: '#333',
     marginBottom: 12
   },
   configCard: {
@@ -255,15 +322,9 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     padding: 16,
-    backgroundColor: '#f9f9f9',
     borderRadius: 8,
     marginBottom: 8,
-    borderWidth: 2,
-    borderColor: 'transparent'
-  },
-  configCardSelected: {
-    borderColor: '#2196f3',
-    backgroundColor: '#e3f2fd'
+    borderWidth: 2
   },
   configInfo: {
     flex: 1,
@@ -272,17 +333,14 @@ const styles = StyleSheet.create({
   configKey: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#333',
     marginBottom: 4
   },
   configDescription: {
     fontSize: 12,
-    color: '#666',
     marginBottom: 4
   },
   configMeta: {
-    fontSize: 11,
-    color: '#999'
+    fontSize: 11
   },
   editorHeader: {
     flexDirection: 'row',
@@ -293,36 +351,10 @@ const styles = StyleSheet.create({
   historyButton: {
     paddingHorizontal: 12,
     paddingVertical: 6,
-    backgroundColor: '#e0e0e0',
     borderRadius: 4
   },
   historyButtonText: {
     fontSize: 12,
-    color: '#333',
-    fontWeight: '600'
-  },
-  editorContainer: {
-    marginTop: 8
-  },
-  textEditor: {
-    borderWidth: 1,
-    borderColor: '#ccc',
-    borderRadius: 8,
-    padding: 12,
-    minHeight: 300,
-    fontFamily: 'monospace',
-    fontSize: 12,
-    backgroundColor: '#fff',
-    textAlignVertical: 'top'
-  },
-  editorActions: {
-    flexDirection: 'row',
-    gap: 8,
-    marginTop: 12
-  },
-  buttonText: {
-    color: '#fff',
-    fontSize: 14,
     fontWeight: '600'
   },
   viewerContainer: {
@@ -331,15 +363,13 @@ const styles = StyleSheet.create({
   codeViewer: {
     maxHeight: 300,
     borderWidth: 1,
-    borderColor: '#e0e0e0',
     borderRadius: 8,
     padding: 12,
-    backgroundColor: '#fafafa'
+    marginBottom: 16
   },
   codeText: {
     fontFamily: 'monospace',
-    fontSize: 11,
-    color: '#333'
+    fontSize: 11
   },
   historyContainer: {
     marginTop: 8,
@@ -347,31 +377,25 @@ const styles = StyleSheet.create({
   },
   historyItem: {
     padding: 12,
-    backgroundColor: '#f9f9f9',
     borderRadius: 6,
     marginBottom: 8,
-    borderLeftWidth: 3,
-    borderLeftColor: '#2196f3'
+    borderLeftWidth: 3
   },
   historyDate: {
     fontSize: 12,
     fontWeight: '600',
-    color: '#333',
     marginBottom: 2
   },
   historyUser: {
     fontSize: 11,
-    color: '#666',
     marginBottom: 4
   },
   historyReason: {
     fontSize: 11,
-    color: '#999',
     fontStyle: 'italic'
   },
   emptyText: {
     textAlign: 'center',
-    color: '#999',
     fontSize: 14,
     padding: 20
   }

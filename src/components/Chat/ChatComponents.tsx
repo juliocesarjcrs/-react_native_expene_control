@@ -90,7 +90,7 @@ export function ChatWindow({ onClose }: { onClose: () => void }) {
               placeholder="Escriba su mensaje..."
               placeholderTextColor={colors.TEXT_SECONDARY}
               multiline
-              maxLength={500}
+              maxLength={1000}
               editable={!isLoading}
             />
             <TouchableOpacity onPress={handleSend} style={styles.sendButton} disabled={isLoading || !inputText.trim()}>

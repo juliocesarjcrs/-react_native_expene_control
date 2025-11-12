@@ -36,6 +36,9 @@ const markdownStyles = StyleSheet.create({
   body: {
     color: Colors.WHITE,
     fontSize: 16,
+    flexShrink: 1,
+    flexWrap: 'wrap',
+    width: '100%',
   },
   strong: {
     fontWeight: 'bold',
@@ -55,6 +58,8 @@ const styles = StyleSheet.create({
     padding: 12,
     borderRadius: 16,
     marginVertical: 4,
+    flexShrink: 1,
+    flexWrap: 'wrap'
   },
   userMessage: {
     alignSelf: 'flex-end',

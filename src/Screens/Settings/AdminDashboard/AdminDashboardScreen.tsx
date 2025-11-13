@@ -10,6 +10,7 @@ import {
   Alert,
 } from 'react-native';
 import { Icon } from 'react-native-elements';
+import ConversationGroup from '~/components/admin/ConversationGroup';
 import MyButton from '~/components/MyButton';
 import { useThemeColors } from '~/customHooks/useThemeColors';
 import { getCurrentModel, getInteractionLogs, getModelErrors, getModelsHealth, reloadModels } from '~/services/aiConfigService';
@@ -318,7 +319,7 @@ function ModelsHealthView() {
 // ============================================
 function ToolCallsView() {
   const colors = useThemeColors();
-  const [toolCalls, setToolCalls] = useState<ConversationLogModel[]>([]);
+  const [interactions, setInteractions] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -328,8 +329,8 @@ function ToolCallsView() {
   const loadData = async () => {
     try {
       setLoading(true);
-      const data = await getInteractionLogs(20);
-      setToolCalls(data);
+      const data = await getInteractionLogs(50);
+      setInteractions(data);
     } catch (error) {
       showError(error);
     } finally {
@@ -345,7 +346,7 @@ function ToolCallsView() {
     );
   }
 
-  if (toolCalls.length === 0) {
+  if (interactions.length === 0) {
     return (
       <View style={styles.centered}>
         <Icon
@@ -355,60 +356,72 @@ function ToolCallsView() {
           size={48}
         />
         <Text style={[styles.emptyText, { color: colors.TEXT_SECONDARY }]}>
-          No hay tool calls registrados aún
+          No hay interacciones registradas aún
         </Text>
       </View>
     );
   }
 
+  // Agrupar por conversación
+  const groupedByConversation = interactions.reduce((acc, log) => {
+    if (!acc[log.conversationId]) {
+      acc[log.conversationId] = [];
+    }
+    acc[log.conversationId].push(log);
+    return acc;
+  }, {} as Record<number, any[]>);
+
+  const conversationIds = Object.keys(groupedByConversation)
+    .map(Number)
+    .sort((a, b) => b - a); // Más recientes primero
+
   return (
     <View style={styles.section}>
-      <Text style={[styles.sectionTitle, { color: colors.TEXT_PRIMARY }]}>Últimos 20 Tool Calls</Text>
-
-      {toolCalls.map((log, index) => (
-        <View
-          key={index}
-          style={[styles.toolCard, { backgroundColor: colors.CARD_BACKGROUND, borderColor: colors.BORDER }]}
-        >
-          <View style={styles.toolHeader}>
-            <Text style={[styles.toolModel, { color: colors.INFO }]}>{log.model_name}</Text>
-            <Text style={[styles.toolTime, { color: colors.TEXT_SECONDARY }]}>{log.response_time}ms</Text>
-          </View>
-
-          <Text style={[styles.userQuery, { color: colors.TEXT_PRIMARY }]}>"{log.user_query}"</Text>
-
-          <View style={styles.toolCallItem}>
-            <View style={styles.toolCallHeader}>
-              <Icon name="tool" type="material-community" color={colors.PRIMARY} size={16} />
-              <Text style={[styles.toolName, { color: colors.PRIMARY }]}>{log.detected_intent}</Text>
-            </View>
-
-            <Text style={[styles.toolParams, { color: colors.TEXT_SECONDARY, backgroundColor: colors.BACKGROUND }]}>
-              {JSON.stringify(log.extracted_parameters, null, 2)}
-            </Text>
-
-            {/* ✅ AGREGAR: Mostrar resultado del tool */}
-            {log.tool_result && (
-              <View style={{ marginTop: 8 }}>
-                <Text style={[styles.statLabel, { color: colors.TEXT_SECONDARY }]}>Resultado:</Text>
-                <Text style={[styles.toolParams, { color: colors.SUCCESS, backgroundColor: colors.BACKGROUND }]}>
-                  {JSON.stringify(log.tool_result, null, 2)}
-                </Text>
-              </View>
-            )}
-          </View>
-          <Text style={[styles.timestamp, { color: colors.TEXT_SECONDARY }]}>
-            {new Date(log.createdAt).toLocaleString('es-ES')}
+      {/* Stats Header */}
+      <View style={[styles.statsCard, { backgroundColor: colors.CARD_BACKGROUND }]}>
+        <View style={styles.statItem}>
+          <Text style={[styles.statValue, { color: colors.PRIMARY }]}>
+            {conversationIds.length}
+          </Text>
+          <Text style={[styles.statLabel, { color: colors.TEXT_SECONDARY }]}>
+            Conversaciones
           </Text>
         </View>
-      ))}
+        <View style={styles.statItem}>
+          <Text style={[styles.statValue, { color: colors.INFO }]}>
+            {interactions.length}
+          </Text>
+          <Text style={[styles.statLabel, { color: colors.TEXT_SECONDARY }]}>
+            Iteraciones
+          </Text>
+        </View>
+        <View style={styles.statItem}>
+          <Text style={[styles.statValue, { color: colors.SUCCESS }]}>
+            {interactions.filter((i) => i.tool_result?.success).length}
+          </Text>
+          <Text style={[styles.statLabel, { color: colors.TEXT_SECONDARY }]}>
+            Exitosas
+          </Text>
+        </View>
+      </View>
+
+      {/* Grouped Conversations */}
+      <ScrollView>
+        {conversationIds.map((convId) => (
+          <ConversationGroup
+            key={convId}
+            conversationId={convId}
+            logs={groupedByConversation[convId]}
+          />
+        ))}
+      </ScrollView>
 
       <MyButton
         title="Actualizar"
         onPress={loadData}
         variant="outline"
         fullWidth
-        icon={<Icon name="refresh" type="material-community" size={18} />}
+        icon={<Icon name="refresh" type="material-community" size={18} color={colors.PRIMARY} />}
       />
     </View>
   );
@@ -607,14 +620,14 @@ const styles = StyleSheet.create({
   statItem: {
     alignItems: 'center',
   },
-  statLabel: {
-    fontSize: 12,
-    marginBottom: 4,
-  },
-  statValue: {
-    fontSize: 18,
-    fontWeight: '600',
-  },
+  // statLabel: {
+  //   fontSize: 12,
+  //   marginBottom: 4,
+  // },
+  // statValue: {
+  //   fontSize: 18,
+  //   fontWeight: '600',
+  // },
   sectionTitle: {
     fontSize: 16,
     fontWeight: '600',
@@ -756,5 +769,22 @@ const styles = StyleSheet.create({
   },
   errorDetail: {
     fontSize: 11,
+  },
+    statsCard: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    padding: 16,
+    borderRadius: 12,
+    marginBottom: 16,
+    elevation: 2,
+  },
+  statValue: {
+    fontSize: 24,
+    fontWeight: '700',
+  },
+  statLabel: {
+    fontSize: 11,
+    marginTop: 4,
+    textTransform: 'uppercase',
   },
 });

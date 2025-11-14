@@ -1,4 +1,4 @@
-import React, { useRef } from 'react';
+import React, { useRef, useEffect } from 'react';
 import {
   View,
   Text,
@@ -26,6 +26,15 @@ export function ChatWindow({ onClose }: { onClose: () => void }) {
   const [showConversations, setShowConversations] = React.useState(false);
   const flatListRef = useRef<FlatList>(null);
 
+  // Auto-scroll cuando llegan nuevos mensajes
+  useEffect(() => {
+    if (messages.length > 0) {
+      setTimeout(() => {
+        flatListRef.current?.scrollToEnd({ animated: true });
+      }, 100);
+    }
+  }, [messages.length]);
+
   const handleSelectConversation = async (conversationId: number) => {
     await selectConversation(conversationId);
     setShowConversations(false);
@@ -39,7 +48,11 @@ export function ChatWindow({ onClose }: { onClose: () => void }) {
   };
 
   return (
-    <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={styles.container}>
+    <KeyboardAvoidingView 
+      behavior={Platform.OS === 'ios' ? 'padding' : 'height'} 
+      style={styles.container}
+      keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 20}
+    >
       <ModelStatusIndicator />
       <View style={styles.header}>
         <TouchableOpacity style={styles.menuButton} onPress={() => setShowConversations(!showConversations)}>
@@ -70,11 +83,36 @@ export function ChatWindow({ onClose }: { onClose: () => void }) {
           <FlatList
             ref={flatListRef}
             data={messages}
-            keyExtractor={(item) => item.id}
-            renderItem={({ item }) => <ChatMessage content={item.content} role={item.role} />}
+            keyExtractor={(item) => `${item.id}-${item.content.length}`}
+            renderItem={({ item }) => (
+              <ChatMessage 
+                content={item.content} 
+                role={item.role} 
+              />
+            )}
             contentContainerStyle={styles.messagesList}
-            onContentSizeChange={() => flatListRef.current?.scrollToEnd()}
+            // Mejoras para el rendimiento y altura dinámica
+            removeClippedSubviews={false} // Desactivado para evitar cortes
+            maxToRenderPerBatch={5}
+            updateCellsBatchingPeriod={100}
+            windowSize={5}
+            initialNumToRender={10}
+            // Mostrar mensaje vacío si no hay mensajes
+            ListEmptyComponent={
+              <View style={styles.emptyContainer}>
+                <Text style={styles.emptyText}>
+                  Inicia una conversación enviando un mensaje
+                </Text>
+              </View>
+            }
           />
+
+          {isLoading && (
+            <View style={styles.loadingContainer}>
+              <ActivityIndicator size="small" color={colors.PRIMARY} />
+              <Text style={styles.loadingText}>Pensando...</Text>
+            </View>
+          )}
 
           {error && (
             <View style={styles.errorContainer}>
@@ -93,9 +131,16 @@ export function ChatWindow({ onClose }: { onClose: () => void }) {
               maxLength={1000}
               editable={!isLoading}
             />
-            <TouchableOpacity onPress={handleSend} style={styles.sendButton} disabled={isLoading || !inputText.trim()}>
+            <TouchableOpacity 
+              onPress={handleSend} 
+              style={[
+                styles.sendButton,
+                (!inputText.trim() || isLoading) && styles.sendButtonDisabled
+              ]} 
+              disabled={isLoading || !inputText.trim()}
+            >
               {isLoading ? (
-                <ActivityIndicator color={colors.WHITE} />
+                <ActivityIndicator color={colors.WHITE} size="small" />
               ) : (
                 <MaterialIcons name="send" size={24} color={colors.WHITE} />
               )}
@@ -118,7 +163,6 @@ export function ChatButton({ onPress }: { onPress: () => void }) {
   );
 }
 
-// Función para crear estilos dinámicos basados en el tema
 const createStyles = (colors: ReturnType<typeof useThemeColors>) =>
   StyleSheet.create({
     container: {
@@ -145,30 +189,15 @@ const createStyles = (colors: ReturnType<typeof useThemeColors>) =>
     },
     messagesList: {
       padding: 16,
-    },
-    messageContainer: {
-      maxWidth: '80%',
-      padding: 12,
-      borderRadius: 16,
-      marginVertical: 4,
-    },
-    userMessage: {
-      alignSelf: 'flex-end',
-      backgroundColor: colors.PRIMARY,
-    },
-    assistantMessage: {
-      alignSelf: 'flex-start',
-      backgroundColor: colors.SECONDARY,
-    },
-    messageText: {
-      color: colors.WHITE,
-      fontSize: 16,
+      flexGrow: 1,
+      paddingBottom: 20, // Extra padding al final
     },
     inputContainer: {
       flexDirection: 'row',
       padding: 16,
       borderTopWidth: 1,
       borderTopColor: colors.LIGHT_GRAY,
+      backgroundColor: colors.WHITE,
     },
     input: {
       flex: 1,
@@ -187,6 +216,9 @@ const createStyles = (colors: ReturnType<typeof useThemeColors>) =>
       justifyContent: 'center',
       alignItems: 'center',
     },
+    sendButtonDisabled: {
+      opacity: 0.5,
+    },
     floatingButton: {
       position: 'absolute',
       right: 16,
@@ -204,7 +236,7 @@ const createStyles = (colors: ReturnType<typeof useThemeColors>) =>
       shadowRadius: 4,
     },
     errorContainer: {
-      padding: 8,
+      padding: 12,
       backgroundColor: '#ffebee',
       marginHorizontal: 16,
       marginBottom: 8,
@@ -214,26 +246,32 @@ const createStyles = (colors: ReturnType<typeof useThemeColors>) =>
       color: '#c62828',
       fontSize: 14,
     },
+    loadingContainer: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      padding: 12,
+      marginHorizontal: 16,
+      marginBottom: 8,
+    },
+    loadingText: {
+      marginLeft: 8,
+      color: colors.TEXT_SECONDARY,
+      fontSize: 14,
+    },
+    emptyContainer: {
+      flex: 1,
+      justifyContent: 'center',
+      alignItems: 'center',
+      padding: 32,
+    },
+    emptyText: {
+      color: colors.TEXT_SECONDARY,
+      fontSize: 16,
+      textAlign: 'center',
+    },
     conversationsContainer: {
       flex: 1,
       backgroundColor: colors.WHITE,
-    },
-    conversationItem: {
-      padding: 16,
-      borderBottomWidth: 1,
-      borderBottomColor: colors.LIGHT_GRAY,
-    },
-    selectedConversation: {
-      backgroundColor: colors.LIGHT_GRAY,
-    },
-    conversationText: {
-      fontSize: 16,
-      color: colors.PRIMARY,
-    },
-    messageCount: {
-      fontSize: 12,
-      color: colors.SECONDARY,
-      marginTop: 4,
     },
     newConversationButton: {
       flexDirection: 'row',
@@ -247,19 +285,3 @@ const createStyles = (colors: ReturnType<typeof useThemeColors>) =>
       fontSize: 16,
     },
   });
-
-// Estilos para el Markdown (si los necesitas)
-export const markdownStyles = StyleSheet.create({
-  body: {
-    fontSize: 16,
-  },
-  strong: {
-    fontWeight: 'bold',
-  },
-  em: {
-    fontStyle: 'italic',
-  },
-  list_item: {
-    flexDirection: 'row',
-  },
-});

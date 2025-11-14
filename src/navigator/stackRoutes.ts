@@ -43,6 +43,8 @@ import { ChatbotConfigScreen } from '~/Screens/Settings/ChatbotConfigScreen';
 import ManageThemesScreen from '~/Screens/Settings/ManageThemesScreen';
 import EditThemeScreen from '~/Screens/Settings/ManageThemes/EditThemeScreen';
 import AdminDashboardScreen from '~/Screens/Settings/AdminDashboard/AdminDashboardScreen';
+// Statistics
+import ComparePeriodsScreen from '~/Screens/Statistics/ComparePeriodsScreen';
 
 export interface StackRoutesType {
   LoginScreen: typeof LoginScreen;
@@ -81,6 +83,7 @@ export interface StackRoutesType {
   ManageThemesScreen: typeof ManageThemesScreen;
   EditThemeScreen: typeof EditThemeScreen;
   AdminDashboardScreen: typeof AdminDashboardScreen;
+  ComparePeriodsScreen: typeof ComparePeriodsScreen;
 }
 
 const stackRoutes: StackRoutesType = {
@@ -120,6 +123,7 @@ const stackRoutes: StackRoutesType = {
   ManageThemesScreen,
   EditThemeScreen,
   AdminDashboardScreen,
+  ComparePeriodsScreen,
 };
 
 export default stackRoutes;

@@ -117,6 +117,16 @@ function SettingsStackScreen() {
     </SettingsStack.Navigator>
   );
 }
+const StatisticsStack = createStackNavigator();
+function StatisticsStackScreen() {
+  return (
+    <StatisticsStack.Navigator>
+      {/* <StatisticsStack.Screen name="overview" component={Routes.StatisticsOverviewScreen} options={{ title: 'Estadísticas generales' }}/> */}
+      <StatisticsStack.Screen name="comparePeriods" component={Routes.ComparePeriodsScreen} options={{ title: 'Comparar períodos' }}/>
+    </StatisticsStack.Navigator>
+  );
+}
+
 const Tab = createBottomTabNavigator();
 return (
   <ThemeProvider>
@@ -148,6 +158,8 @@ return (
             <Tab.Screen name="Gastos" component={ExpenseStackScreen} />
             <Tab.Screen name="Ingresos" component={IncomeStackScreen} />
             <Tab.Screen name="Balance" component={BalanceStackScreen} />
+            <Tab.Screen name="Estadísticas" component={StatisticsStackScreen} />
+
             <Tab.Screen name="Ajustes" component={SettingsStackScreen} />
           </Tab.Navigator>
         ) : (

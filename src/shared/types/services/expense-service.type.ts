@@ -72,3 +72,63 @@ export type GetLastExpensesWithPaginateResponse = {
 
 export type GetExpensesFromSubcategoryResponse = ExpenseModel[];
 export type CreateExpenseResponse = ExpenseModel
+
+
+export type ComparePeriodsResponse = {
+  periodA: {
+    range: {
+      start: string;
+      end: string;
+    };
+    total: number;
+    months: number;
+    averageMonthly: number;
+  };
+  periodB: {
+    range: {
+      start: string;
+      end: string;
+    };
+    total: number;
+    months: number;
+    averageMonthly: number;
+  };
+  comparison: {
+    total: {
+      difference: number;
+      percentageChange: string | null;
+      trend: 'increase' | 'decrease' | 'equal';
+    };
+    monthlyAverage: {
+      difference: number;
+      percentageChange: string | null;
+      trend: 'increase' | 'decrease' | 'equal';
+    };
+    explanation: string;
+  };
+  chartData?: {
+    labels: string[];
+    datasets: {
+      data: number[];
+      label: string;
+      color: string;
+    }[];
+  };
+};
+
+
+export type ComparePeriodsPayload = {
+  categories: {
+    categoryId: number;
+    subcategoriesId: number[];
+  }[];
+  periodA: {
+    start: Date;
+    end: Date;
+  };
+  periodB: {
+    start: Date;
+    end: Date;
+  };
+};
+

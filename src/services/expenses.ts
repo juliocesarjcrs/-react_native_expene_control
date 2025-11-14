@@ -1,6 +1,6 @@
 import { AxiosResponse } from 'axios';
 import axios from '../plugins/axiosConfig'
-import { CreateExpensePayload, CreateExpenseResponse, EditExpensePayload, ExpenseSearchOptionsQuery, FindExpensesBySubcategoriesResponse, FindLastMonthsFromOnlyCategoryQuery, GetExpensesFromSubcategoryResponse, GetExpensesLastMonthsFromSubcategoryQuery, GetLastExpensesWithPaginateQuery, GetLastExpensesWithPaginateResponse } from '../shared/types/services/expense-service.type';
+import { ComparePeriodsPayload, ComparePeriodsResponse, CreateExpensePayload, CreateExpenseResponse, EditExpensePayload, ExpenseSearchOptionsQuery, FindExpensesBySubcategoriesResponse, FindLastMonthsFromOnlyCategoryQuery, GetExpensesFromSubcategoryResponse, GetExpensesLastMonthsFromSubcategoryQuery, GetLastExpensesWithPaginateQuery, GetLastExpensesWithPaginateResponse } from '../shared/types/services/expense-service.type';
 import { AllExpensesByRangeDatesResponse } from '../shared/types/services';
 import { ExpenseModel } from '~/shared/types';
 const PREFIX = 'expenses'
@@ -49,4 +49,9 @@ export const findExpensesBySubcategories = async (params: ExpenseSearchOptionsQu
   return axios.get(`${PREFIX}/by-subcategories`, { params });
 }
 
-
+export const getComparePeriods = async (
+  payload: ComparePeriodsPayload,
+): Promise<AxiosResponse<ComparePeriodsResponse>> => {
+  console.log("ini", payload.categories[0])
+  return axios.post(`${PREFIX}/analysis/compare-periods`, payload);
+};

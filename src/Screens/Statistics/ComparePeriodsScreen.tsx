@@ -11,10 +11,12 @@ import CompareResultsChart from './components/CompareResultsChart';
 export default function ComparePeriodsScreen() {
   const colors = useThemeColors();
 
-const [selectedCategories, setSelectedCategories] = useState<Array<{
-  categoryId: number;
-  subcategoriesId: number[];
-}>>([]);
+  const [selectedCategories, setSelectedCategories] = useState<
+    Array<{
+      categoryId: number;
+      subcategoriesId: number[];
+    }>
+  >([]);
 
   const [periodA, setPeriodA] = useState<{ start: Date; end: Date } | null>(null);
   const [periodB, setPeriodB] = useState<{ start: Date; end: Date } | null>(null);
@@ -42,9 +44,7 @@ const [selectedCategories, setSelectedCategories] = useState<Array<{
     <ScrollView style={[styles.container, { backgroundColor: colors.BACKGROUND }]}>
       <View style={styles.headerRow}>
         <View style={{ flex: 1 }}>
-          <Text style={[styles.title, { color: colors.TEXT_PRIMARY }]}>
-            Comparar Periodos
-          </Text>
+          <Text style={[styles.title, { color: colors.TEXT_PRIMARY }]}>Comparar Periodos</Text>
           <Text style={[styles.subtitle, { color: colors.TEXT_SECONDARY }]}>
             Analiza y compara gastos entre dos periodos de tiempo
           </Text>
@@ -78,7 +78,7 @@ const [selectedCategories, setSelectedCategories] = useState<Array<{
         >
           Comparar Periodos
         </Button>
-        
+
         {hasData && (
           <Button
             mode="outlined"
@@ -109,29 +109,29 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    marginBottom: 16,
+    marginBottom: 16
   },
   title: { fontSize: 24, fontWeight: '700', marginBottom: 4 },
   subtitle: { fontSize: 14, marginBottom: 4 },
   resetButton: {
-    margin: 0,
+    margin: 0
   },
-  datesRow: { 
-    flexDirection: 'row', 
-    justifyContent: 'space-between', 
-    gap: 8, 
-    marginBottom: 16 
+  datesRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    gap: 8,
+    marginBottom: 16
   },
   buttonsRow: {
     flexDirection: 'row',
     gap: 8,
     marginTop: 12,
-    marginBottom: 16,
+    marginBottom: 16
   },
-  compareButton: { 
-    flex: 1,
+  compareButton: {
+    flex: 1
   },
   clearButton: {
-    flex: 0.4,
-  },
+    flex: 0.4
+  }
 });

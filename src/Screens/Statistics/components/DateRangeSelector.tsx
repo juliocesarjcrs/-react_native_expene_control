@@ -4,6 +4,7 @@ import { Text, Button } from 'react-native-paper';
 import DateTimePicker, { DateTimePickerEvent } from '@react-native-community/datetimepicker';
 import { useThemeColors } from '~/customHooks/useThemeColors';
 import { DateFormat } from '~/utils/Helpers';
+import MyButton from '~/components/MyButton';
 
 interface Props {
   label: string;
@@ -49,22 +50,22 @@ export default function DateRangeSelector({ label, onChange, value }: Props) {
         {label}
       </Text>
 
-      <Button 
-        onPress={() => setShowPicker('start')} 
-        compact
-        mode="outlined"
-      >
-        {start ? DateFormat(start, 'DD MMM') : 'Inicio'}
-      </Button>
+    <MyButton
+        title={start ? DateFormat(start, 'DD MMM') : 'Inicio'}
+        onPress={() => setShowPicker('start')}
+        variant="outline"
+        size="small"
+        fullWidth
+      />
 
-      <Button 
-        onPress={() => setShowPicker('end')} 
-        compact
-        mode="outlined"
-        style={{ marginTop: 4 }}
-      >
-        {end ? DateFormat(end, 'DD MMM') : 'Fin'}
-      </Button>
+      <MyButton
+        title={end ? DateFormat(end, 'DD MMM') : 'Fin'}
+        onPress={() => setShowPicker('end')}
+        variant="outline"
+        size="small"
+        fullWidth
+        style={{ marginTop: 8 }}
+      />
 
       {showPicker && (
         <DateTimePicker

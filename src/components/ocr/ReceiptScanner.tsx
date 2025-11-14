@@ -1,8 +1,6 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, Button, ActivityIndicator, StyleSheet, ScrollView, Alert, TouchableOpacity } from 'react-native';
-// import * as ImagePicker from 'expo-image-picker';
+import { View, Text, ActivityIndicator, StyleSheet, ScrollView, Alert } from 'react-native';
 import { File, Paths } from 'expo-file-system';
-// import * as ImageManipulator from 'expo-image-manipulator';
 import * as Sharing from 'expo-sharing';
 import { OcrAccuracy, OcrApiResponse, Product, ReceiptType } from '~/shared/types/components/receipt-scanner.type';
 import MultiExpenseModal from '../modal/MultiExpenseModal';
@@ -13,15 +11,17 @@ import { buildCsvData, generateCsvLine } from '~/utils/csvUtils';
 import { extractProducts } from '~/utils/parsers';
 import ImagePickerComponent from '../image/ImagePicker';
 import OcrEvaluationSection from './OcrEvaluationSection';
-import { Colors } from '~/styles';
+import { useThemeColors } from '~/customHooks/useThemeColors';
+import MyButton from '../MyButton';
 
 const fileName = 'extractions_v3.csv';
-
 interface ReceiptScannerProps {
   onExtractedData?: (data: { price: string; category?: string; subcategory?: string; rawText: string }) => void;
 }
 
 const ReceiptScanner: React.FC<ReceiptScannerProps> = () => {
+  const colors = useThemeColors();
+
   const [imageUri, setImageUri] = useState<string | null>(null);
   const [text, setText] = useState<string>('');
   const [loading, setLoading] = useState(false);
@@ -33,11 +33,11 @@ const ReceiptScanner: React.FC<ReceiptScannerProps> = () => {
   const [ocrAccuracy, setOcrAccuracy] = useState<OcrAccuracy | ''>('');
   const [receiptType, setReceiptType] = useState<ReceiptType | ''>('');
   const [customReceiptType, setCustomReceiptType] = useState<string>('');
-  // Llama al cargar el componente
+
   useEffect(() => {
     updateCsvRowCount();
   }, []);
-  // Función para contar filas del CSV
+
   const updateCsvRowCount = async () => {
     try {
       const file = new File(Paths.document, fileName);
@@ -49,7 +49,7 @@ const ReceiptScanner: React.FC<ReceiptScannerProps> = () => {
         setCsvRows(0);
       }
     } catch (e) {
-      console.log('Error al contar filas del CSV:', e);
+      console.log('Error contando filas CSV:', e);
       setCsvRows(0);
     }
   };
@@ -72,42 +72,41 @@ const ReceiptScanner: React.FC<ReceiptScannerProps> = () => {
       } else {
         handleOcrError(data);
       }
-    } catch (e: unknown) {
-      setError('Error al procesar la imagen: ' + (e instanceof Error ? e.message : JSON.stringify(e)));
+    } catch (e: any) {
+      setError('Error al procesar imagen: ' + e?.message);
     } finally {
       setLoading(false);
     }
   };
 
   const handleOcrError = (data: OcrApiResponse) => {
-    console.error('OCR Error:', data);
     let apiError = '';
     if (data.IsErroredOnProcessing && data.ErrorMessage) {
       apiError = Array.isArray(data.ErrorMessage) ? data.ErrorMessage.join(' ') : data.ErrorMessage;
-    } else if (data.ErrorDetails) {
-      apiError = data.ErrorDetails;
     }
-    setError('No se pudo extraer texto de la imagen.' + (apiError ? `\nDetalle: ${apiError}` : ''));
+    setError(`No se pudo extraer texto de la imagen.\n${apiError}`);
   };
 
   const handleSaveExpenses = async (expenses: CreateExpensePayload[]) => {
     try {
-      const formattedExpenses = expenses.map((expense) => ({
-        description: expense.commentary || '',
-        price: expense.cost
-      }));
       await CreateMultipleExpense(expenses);
       setEditModalVisible(false);
-      setEditableProducts(formattedExpenses);
+
+      setEditableProducts(
+        expenses.map((exp) => ({
+          description: exp.commentary || '',
+          price: exp.cost,
+        }))
+      );
+
       Alert.alert('Éxito', 'Gastos guardados correctamente');
     } catch (error) {
-      console.error('Error al guardar gastos:', error, { expenses });
+      console.error('Error al guardar gastos:', error);
       Alert.alert('Error', 'No se pudieron guardar los gastos');
     }
   };
 
   const saveToCSV = async () => {
-    console.log('Guardando datos para entrenamiento...');
     if (!ocrAccuracy || !receiptType || editableProducts.length === 0) {
       Alert.alert('Datos incompletos', 'Complete todos los campos requeridos');
       return;
@@ -119,13 +118,12 @@ const ReceiptScanner: React.FC<ReceiptScannerProps> = () => {
         ocrAccuracy,
         receiptType,
         customReceiptType,
-        editableProducts
+        editableProducts,
       });
+
       const file = new File(Paths.document, fileName);
       const csvLine = generateCsvLine(csvData);
-      console.log('::: CSV Line:', csvLine);
 
-      // Encabezados que coinciden con CsvData
       const headers = [
         'raw_text',
         'extracted_data',
@@ -133,41 +131,29 @@ const ReceiptScanner: React.FC<ReceiptScannerProps> = () => {
         'receipt_type',
         'evaluation_date',
         'evaluator_id',
-        'model_version'
+        'model_version',
       ].join(',');
 
-      const content = file.exists ? (await file.text()) + csvLine : headers + '\n' + csvLine;
+      const content = file.exists
+        ? (await file.text()) + csvLine
+        : headers + '\n' + csvLine;
 
       await file.write(content);
       updateCsvRowCount();
 
-      Alert.alert(
-        'Dataset actualizado',
-        `Datos guardados para entrenamiento:\n\n` +
-          `- Precisión: ${csvData.ocr_quality}/4\n` +
-          `- Tipo: ${csvData.receipt_type}\n` +
-          `- Productos: ${JSON.parse(csvData.extracted_data).length} items\n` +
-          `¿Qué deseas hacer ahora?`,
-        [
-          {
-            text: 'Nuevo escaneo',
-            onPress: () => {
-              resetForm();
-            }
-          },
-          {
-            text: 'Ver datos',
-            style: 'cancel'
-          }
-        ]
-      );
-    } catch (error) {
-      handleSaveError(
-        error instanceof Error ? error : new Error(typeof error === 'string' ? error : JSON.stringify(error))
-      );
+      Alert.alert('Dataset actualizado', `Datos guardados para entrenamiento.`, [
+        {
+          text: 'Nuevo escaneo',
+          onPress: () => resetForm(),
+        },
+        { text: 'Ver datos', style: 'cancel' },
+      ]);
+    } catch (error: any) {
+      Alert.alert('Error al guardar', error.message);
     }
   };
-  const resetForm = (): void => {
+
+  const resetForm = () => {
     setPendingRawText('');
     setOcrAccuracy('');
     setReceiptType('');
@@ -178,12 +164,6 @@ const ReceiptScanner: React.FC<ReceiptScannerProps> = () => {
     setError(null);
   };
 
-  const handleSaveError = (error: Error) => {
-    console.error('Save error:', error);
-    Alert.alert('Error al guardar', `Detalles: ${error.message}`, [{ text: 'Entendido' }]);
-  };
-
-  // Función para compartir el archivo CSV
   const shareCSV = async () => {
     try {
       const file = new File(Paths.document, fileName);
@@ -192,14 +172,16 @@ const ReceiptScanner: React.FC<ReceiptScannerProps> = () => {
       } else {
         setError('No hay archivo CSV para compartir.');
       }
-    } catch (e) {
-      setError('Error al intentar compartir el archivo: ' + (e instanceof Error ? e.message : JSON.stringify(e)));
+    } catch (e: any) {
+      setError('Error al compartir: ' + e?.message);
     }
   };
 
   return (
-    <ScrollView contentContainerStyle={styles.scrollContainer}>
-      <View style={styles.innerContainer}>
+    <ScrollView contentContainerStyle={[styles.container, { backgroundColor: colors.BACKGROUND }]}>
+      <View style={styles.inner}>
+
+        {/* --- SELECTOR DE IMAGEN --- */}
         <ImagePickerComponent
           onImageSelected={(base64, uri) => {
             setImageUri(uri);
@@ -209,19 +191,32 @@ const ReceiptScanner: React.FC<ReceiptScannerProps> = () => {
           resetTrigger={!imageUri && !text}
         />
 
-        <Button title="Compartir CSV" onPress={shareCSV} />
-        <Text style={styles.csvCounter}>Registros en CSV: {csvRows}</Text>
+        {/* --- COMPARTIR CSV --- */}
+        <MyButton
+          title="Compartir CSV"
+          variant="secondary"
+          fullWidth
+          onPress={shareCSV}
+        />
 
-        {loading && <ActivityIndicator size="large" color="#0000ff" />}
-        {error && <Text style={styles.error}>{error}</Text>}
+        <Text style={[styles.csvCounter, { color: colors.TEXT_PRIMARY }]}>
+          Registros en CSV: {csvRows}
+        </Text>
 
-        {text && (
+        {loading && <ActivityIndicator size="large" color={colors.PRIMARY} />}
+        {error && <Text style={[styles.error, { color: colors.ERROR }]}>{error}</Text>}
+
+        {/* --- TEXTO EXTRAÍDO --- */}
+        {text !== '' && (
           <>
-            <View style={styles.resultBox}>
-              <Text style={styles.label}>Texto extraído ({editableProducts.length}):</Text>
-              <Text style={styles.text}>{text}</Text>
+            <View style={[styles.resultBox, { backgroundColor: colors.CARD_BACKGROUND }]}>
+              <Text style={[styles.label, { color: colors.TEXT_PRIMARY }]}>
+                Texto extraído ({editableProducts.length}):
+              </Text>
+              <Text style={[styles.text, { color: colors.TEXT_PRIMARY }]}>{text}</Text>
             </View>
 
+            {/* --- SECCIÓN DE EVALUACIÓN --- */}
             <OcrEvaluationSection
               ocrAccuracy={ocrAccuracy}
               setOcrAccuracy={setOcrAccuracy}
@@ -231,19 +226,20 @@ const ReceiptScanner: React.FC<ReceiptScannerProps> = () => {
               setCustomReceiptType={setCustomReceiptType}
               productCount={editableProducts.length}
             />
-            <TouchableOpacity
-              style={[
-                styles.saveButton,
-                (!ocrAccuracy || !receiptType || !pendingRawText || editableProducts.length === 0) &&
-                  styles.disabledButton
-              ]}
+
+            {/* --- BOTÓN GUARDAR DATASET --- */}
+            <MyButton
+              title={`Guardar para entrenamiento (${editableProducts.length} productos)`}
+              fullWidth
               onPress={saveToCSV}
-              disabled={!ocrAccuracy || !receiptType || !pendingRawText || editableProducts.length === 0}
-            >
-              <Text style={styles.saveButtonText}>
-                Guardar para entrenamiento ({editableProducts.length} productos)
-              </Text>
-            </TouchableOpacity>
+              variant="primary"
+              disabled={
+                !ocrAccuracy ||
+                !receiptType ||
+                editableProducts.length === 0 ||
+                !pendingRawText
+              }
+            />
           </>
         )}
 
@@ -253,14 +249,14 @@ const ReceiptScanner: React.FC<ReceiptScannerProps> = () => {
             description: exp.description,
             cost: exp.price,
             categoryId: null,
-            subcategoryId: null
+            subcategoryId: null,
           }))}
-          onClose={(updatedProducts) => {
-            if (updatedProducts) {
+          onClose={(updated) => {
+            if (updated) {
               setEditableProducts(
-                updatedProducts.map((prod) => ({
-                  description: prod.description || '',
-                  price: prod.cost
+                updated.map((p) => ({
+                  description: p.description || '',
+                  price: p.cost,
                 }))
               );
             }
@@ -269,87 +265,44 @@ const ReceiptScanner: React.FC<ReceiptScannerProps> = () => {
           onSave={handleSaveExpenses}
           imageUri={imageUri}
         />
+
       </View>
     </ScrollView>
   );
 };
 
 const styles = StyleSheet.create({
-  scrollContainer: {
+  container: {
     flexGrow: 1,
     padding: 16,
-    backgroundColor: '#fff'
   },
-  innerContainer: {
+  inner: {
     flex: 1,
-    alignItems: 'center'
-  },
-  image: {
-    width: '90%',
-    height: 250,
-    marginVertical: 16,
-    borderRadius: 8,
-    backgroundColor: '#f5f5f5'
-  },
-  error: {
-    color: 'red',
-    marginVertical: 8,
-    textAlign: 'center'
-  },
-  resultBox: {
-    width: '90%',
-    marginTop: 16,
-    padding: 12,
-    backgroundColor: '#f8f9fa',
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: '#e9ecef'
-  },
-  label: {
-    fontWeight: 'bold',
-    marginBottom: 8
-  },
-  text: {
-    fontSize: 14,
-    lineHeight: 20
+    alignItems: 'center',
+    width: '100%',
   },
   csvCounter: {
     marginVertical: 12,
     fontWeight: '600',
-    color: '#495057'
   },
-  evaluationSection: {
-    width: '90%',
-    marginTop: 20,
-    padding: 15,
-    backgroundColor: '#f8f9fa',
-    borderRadius: 8
+  error: {
+    marginVertical: 8,
+    textAlign: 'center',
   },
-  accuracyButton: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    borderWidth: 1,
-    borderColor: '#ddd',
-    justifyContent: 'center',
-    alignItems: 'center'
+  resultBox: {
+    width: '100%',
+    padding: 12,
+    borderRadius: 10,
+    marginTop: 16,
   },
-  saveButton: {
-    backgroundColor: Colors.PRIMARY,
-    paddingVertical: 14,
-    paddingHorizontal: 20,
-    borderRadius: 8,
-    alignItems: 'center',
-    width: '100%'
+  label: {
+    fontWeight: '700',
+    marginBottom: 8,
   },
-  disabledButton: {
-    backgroundColor: '#B0BEC5' // gris suave cuando está deshabilitado
+  text: {
+    fontSize: 14,
+    lineHeight: 20,
   },
-  saveButtonText: {
-    color: 'white',
-    fontWeight: 'bold',
-    fontSize: 16
-  }
 });
 
 export default ReceiptScanner;

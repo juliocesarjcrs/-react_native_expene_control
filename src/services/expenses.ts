@@ -1,6 +1,6 @@
 import { AxiosResponse } from 'axios';
 import axios from '../plugins/axiosConfig'
-import { ComparePeriodsPayload, ComparePeriodsResponse, CreateExpensePayload, CreateExpenseResponse, EditExpensePayload, ExpenseSearchOptionsQuery, FindExpensesBySubcategoriesResponse, FindLastMonthsFromOnlyCategoryQuery, GetExpensesFromSubcategoryResponse, GetExpensesLastMonthsFromSubcategoryQuery, GetLastExpensesWithPaginateQuery, GetLastExpensesWithPaginateResponse } from '../shared/types/services/expense-service.type';
+import { ComparePeriodsPayload, ComparePeriodsResponse, CreateExpensePayload, CreateExpenseResponse, EditExpensePayload, ExpenseSearchOptionsQuery, FindExpensesBySubcategoriesResponse, FindLastMonthsFromOnlyCategoryQuery, GetExpensesFromSubcategoryResponse, GetExpensesLastMonthsFromSubcategoryQuery, GetLastExpensesWithPaginateQuery, GetLastExpensesWithPaginateResponse, GetOneExpenseResponse } from '../shared/types/services/expense-service.type';
 import { AllExpensesByRangeDatesResponse } from '../shared/types/services';
 import { ExpenseModel } from '~/shared/types';
 const PREFIX = 'expenses'
@@ -37,7 +37,7 @@ export const getLastExpensesWithPaginate = async (params: GetLastExpensesWithPag
   return axios.get(`${PREFIX}/last`, { params });
 }
 
-export const getOneExpense = async (idExpense: number) => {
+export const getOneExpense = async (idExpense: number): Promise<AxiosResponse<GetOneExpenseResponse>> => {
   return axios.get(`${PREFIX}/${idExpense}`);
 }
 

@@ -146,6 +146,8 @@ return (
                   iconName = focused ? 'scale-balance' : 'scale-balance';
                 } else if (route.name === 'Ajustes') {
                   iconName = focused ? 'cog' : 'cog-outline';
+                } else if (route.name === 'Estadísticas') {
+                  iconName = focused ? 'bullseye-arrow' : 'bullseye-arrow';
                 }
 
                 // You can return any component that you like here!

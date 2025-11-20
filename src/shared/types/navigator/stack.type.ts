@@ -50,9 +50,14 @@ export type ExpenseStackParamList = {
   createCategory: undefined;
   editCategory: { idCategory: number };
   lastExpenses: undefined;
-  editExpense: { objectExpense: ExtendedExpenseModel };
+  editExpense: EditExpenseScreenRouteParams;
   editSubcategory: EditSubcategoryScreenRouteParams;
 };
+
+export type EditExpenseScreenRouteParams = {
+  objectExpense: ExtendedExpenseModel;
+};
+
 
 export type EditIncomeScreenRouteParams = {
   objectIncome: {

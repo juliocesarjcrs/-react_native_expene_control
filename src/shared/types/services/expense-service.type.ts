@@ -1,4 +1,4 @@
-import { ExpenseModel } from "../models";
+import { ExpenseModel, SubcategoryModel } from "../models";
 
 export type CreateExpensePayload = Omit<ExpenseModel, 'id' | 'createdAt' | 'userId'> &
   Partial<Pick<ExpenseModel, 'commentary'>>;
@@ -131,4 +131,9 @@ export type ComparePeriodsPayload = {
     end: Date;
   };
 };
+
+export type GetOneExpenseResponse = ExpenseModel & {
+  subcategory: SubcategoryModel;
+};
+
 

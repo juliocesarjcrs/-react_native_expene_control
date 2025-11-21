@@ -182,18 +182,18 @@ export default function MainScreen({ navigation }: MainScreenProps) {
         </View>
 
         {/* TOTAL */}
-        <View style={styles.totalBox}>
+        {/* <View style={styles.totalBox}>
           <Text style={styles.totalLabel}>Total gastado este mes</Text>
           <Text style={styles.total}>{NumberFormat(total)}</Text>
-        </View>
+        </View> */}
 
         {/* CHART */}
         <View style={styles.section}>
           {loading ? (
             <MyLoading />
           ) : total > 0 ? (
-            // <MyDonutChart data={categories} total={total} />
-            <MyPieChart data={categories} />
+            <MyDonutChart data={categories} total={total} />
+            // <MyPieChart data={categories} />
           ) : (
             <Text style={styles.textMuted}>No se registran gastos en este mes</Text>
           )}

@@ -147,7 +147,7 @@ return (
                 } else if (route.name === 'Ajustes') {
                   iconName = focused ? 'cog' : 'cog-outline';
                 } else if (route.name === 'Estadísticas') {
-                  iconName = focused ? 'bullseye-arrow' : 'bullseye-arrow';
+                  iconName = focused ? 'chart-line' : 'chart-line';
                 }
 
                 // You can return any component that you like here!

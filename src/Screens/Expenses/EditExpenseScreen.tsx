@@ -201,7 +201,7 @@ export default function EditExpenseScreen({ route, navigation }: EditExpenseScre
       ShowToast();
       reset();
       Keyboard.dismiss();
-      navigation.navigate('lastExpenses');
+      navigation.replace('lastExpenses');
     } catch (error) {
       setLoading(false);
       showError(error);

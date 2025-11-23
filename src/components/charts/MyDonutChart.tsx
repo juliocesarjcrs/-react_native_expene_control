@@ -14,7 +14,6 @@ interface MyDonutChartProps {
 }
 
 const MyDonutChart: React.FC<MyDonutChartProps> = ({ data, total }) => {
-  console.log("MyDonutChart data:", data[0]);
   const [isExpanded, setIsExpanded] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
 

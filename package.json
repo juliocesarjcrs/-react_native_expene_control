@@ -23,6 +23,7 @@
     "@react-navigation/native": "^7.1.17",
     "@react-navigation/stack": "^7.4.7",
     "@reduxjs/toolkit": "^2.8.2",
+    "@shopify/react-native-skia": "^2.4.0",
     "@testing-library/react-native": "^13.3.1",
     "@types/jest": "^30.0.0",
     "axios": "^1.12.2",
@@ -55,6 +56,7 @@
     "react-native-picker-select": "^9.3.1",
     "react-native-picker-select-updated": "^9.0.3",
     "react-native-popover-view": "^6.1.0",
+    "react-native-reanimated": "^4.1.5",
     "react-native-safe-area-context": "5.6.1",
     "react-native-screens": "~4.16.0",
     "react-native-svg": "15.12.1",
@@ -65,7 +67,8 @@
     "redux-thunk": "^3.1.0",
     "rxjs": "^7.8.2",
     "typescript": "^5.9.2",
-    "uuid": "^13.0.0"
+    "uuid": "^13.0.0",
+    "victory-native": "^37.3.6"
   },
   "devDependencies": {
     "@babel/core": "^7.28.4",

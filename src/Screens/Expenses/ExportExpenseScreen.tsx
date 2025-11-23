@@ -1,6 +1,6 @@
-import React, { useState } from "react";
+import React, { useState } from 'react';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
-import { BIG } from '../../styles/fonts';
+import { useThemeColors } from '~/customHooks/useThemeColors';
 import { StackNavigationProp } from '@react-navigation/stack';
 
 import { Errors } from '../../utils/Errors';
@@ -14,9 +14,10 @@ import { DateFormat, NumberFormat, cutText } from '../../utils/Helpers';
 // Components
 import { DateSelector } from '../../components/datePicker';
 import MyLoading from '../../components/loading/MyLoading';
-import MyTable from '../../components/tables/MyTable';
+import ModernTable from '../../components/tables/ModernTable';
 import MyButton from '../../components/MyButton';
 import { SettingsStackParamList } from '../../shared/types';
+import { Icon } from 'react-native-elements';
 
 type ExportExpenseScreenNavigationProp = StackNavigationProp<SettingsStackParamList, 'exportData'>;
 
@@ -25,8 +26,9 @@ interface ExportExpenseScreenProps {
 }
 
 export default function ExportExpenseScreen({ navigation }: ExportExpenseScreenProps) {
+  const colors = useThemeColors();
   const [loading, setLoading] = useState(false);
-  const [tableData, setTableData] = useState<(string | number)[][]>([]);
+  const [tableData, setTableData] = useState<string[][]>([]);
   const [tableHead, setTableHead] = useState<string[]>([]);
   const [isEmptyData, setIsEmptyData] = useState(false);
 
@@ -67,7 +69,7 @@ export default function ExportExpenseScreen({ navigation }: ExportExpenseScreenP
         DateFormat(endDate, 'YYYY-MM-DD')
       );
       setLoading(false);
-      console.log('data.rows.length', data.rows.length);
+      
       if (data.rows.length <= 0) {
         setIsEmptyData(true);
         setTableHead([]);
@@ -75,16 +77,18 @@ export default function ExportExpenseScreen({ navigation }: ExportExpenseScreenP
       } else {
         setIsEmptyData(false);
         setTableHead(data.tableHead);
-        const dataFormated = data.rows.map((row) => {
+        
+        // Formatear datos dinámicamente
+        const dataFormatted = data.rows.map((row: (string | number)[]) => {
           return row.map((value) => {
             if (typeof value === 'number') {
               return NumberFormat(value);
             } else {
-              return cutText(value, 12);
+              return cutText(String(value), 15);
             }
           });
         });
-        setTableData(dataFormated);
+        setTableData(dataFormatted);
       }
     } catch (e) {
       setLoading(false);
@@ -92,32 +96,192 @@ export default function ExportExpenseScreen({ navigation }: ExportExpenseScreenP
     }
   };
 
+  // Generar anchos dinámicamente según el número de columnas (en píxeles)
+  const getColumnWidths = (): number[] | undefined => {
+    if (tableHead.length === 0) return undefined;
+    
+    // Para tablas dinámicas, ajustar anchos según el tipo de dato
+    return tableHead.map((header) => {
+      const lowerHeader = header.toLowerCase();
+      
+      // Columnas de descripción/nombre más anchas
+      if (lowerHeader.includes('descripción') || 
+          lowerHeader.includes('nombre') || 
+          lowerHeader.includes('categoría')) {
+        return 180;
+      }
+      
+      // Columnas de fecha
+      if (lowerHeader.includes('fecha')) {
+        return 110;
+      }
+      
+      // Columnas numéricas (valores, montos)
+      if (lowerHeader.includes('valor') || 
+          lowerHeader.includes('monto') || 
+          lowerHeader.includes('precio') ||
+          lowerHeader.includes('total')) {
+        return 130;
+      }
+      
+      // Default
+      return 120;
+    });
+  };
+
+  const getColumnAlignments = (): ('left' | 'center' | 'right')[] | undefined => {
+    if (tableHead.length === 0) return undefined;
+    
+    return tableHead.map((header) => {
+      const lowerHeader = header.toLowerCase();
+      
+      // Valores monetarios a la derecha
+      if (lowerHeader.includes('valor') || 
+          lowerHeader.includes('monto') || 
+          lowerHeader.includes('precio') ||
+          lowerHeader.includes('total') ||
+          lowerHeader.includes('$')) {
+        return 'right';
+      }
+      
+      // Fechas al centro
+      if (lowerHeader.includes('fecha')) {
+        return 'center';
+      }
+      
+      // Texto a la izquierda
+      return 'left';
+    });
+  };
+
+  // Determinar si necesita scroll horizontal
+  const totalWidth = getColumnWidths()?.reduce((sum, w) => sum + w, 0) || 0;
+  const needsHorizontalScroll = totalWidth > 380; // Si es más ancho que la pantalla típica
+
   return (
-    <View style={styles.container}>
-      <Text>Seleccione un rango de fechas:</Text>
-      <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-        <DateSelector
-          label="Fecha Ini"
-          date={startDate}
-          showDatePicker={showStartDate}
-          onPress={showStartDatePicker}
-          onDateChange={handleStartDateChange}
-          onCancel={() => setShowStartDate(false)}
-        />
-        <DateSelector
-          label="Fecha Fin"
-          date={endDate}
-          showDatePicker={showEndDate}
-          onPress={showEndDatePicker}
-          onDateChange={handleEndDateChange}
-          onCancel={() => setShowEndDate(false)}
-        />
-      </View>
-      <ScrollView horizontal={true}>
-        {isEmptyData && <Text> No existe datos para esas fechas </Text>}
-        <MyTable navigation={navigation} tableHead={tableHead} tableData={tableData} />
+    <View style={[styles.container, { backgroundColor: colors.BACKGROUND }]}>
+      <ScrollView showsVerticalScrollIndicator={false}>
+        {/* Header */}
+        <View style={[styles.header, { backgroundColor: colors.CARD_BACKGROUND }]}>
+          <Text style={[styles.title, { color: colors.TEXT_PRIMARY }]}>
+            Exportar Gastos
+          </Text>
+          <Text style={[styles.subtitle, { color: colors.TEXT_SECONDARY }]}>
+            Seleccione el rango de fechas
+          </Text>
+        </View>
+
+        {/* Selectores de fecha */}
+        <View style={styles.dateContainer}>
+          <DateSelector
+            label="Fecha Inicial"
+            date={startDate}
+            showDatePicker={showStartDate}
+            onPress={showStartDatePicker}
+            onDateChange={handleStartDateChange}
+            onCancel={() => setShowStartDate(false)}
+          />
+          <DateSelector
+            label="Fecha Final"
+            date={endDate}
+            showDatePicker={showEndDate}
+            onPress={showEndDatePicker}
+            onDateChange={handleEndDateChange}
+            onCancel={() => setShowEndDate(false)}
+          />
+        </View>
+
+        {/* Info del rango */}
+        <View style={[styles.infoCard, { backgroundColor: colors.CARD_BACKGROUND, borderColor: colors.BORDER }]}>
+          <Icon
+            type="material-community"
+            name="calendar-range"
+            size={18}
+            color={colors.INFO}
+          />
+          <Text style={[styles.infoText, { color: colors.TEXT_SECONDARY }]}>
+            Del {DateFormat(startDate, 'DD/MM/YYYY')} al {DateFormat(endDate, 'DD/MM/YYYY')}
+          </Text>
+        </View>
+
+        {/* Botón de búsqueda */}
+        {loading ? (
+          <MyLoading />
+        ) : (
+          <MyButton 
+            onPress={exportDataApi} 
+            title="Generar tabla" 
+            variant="primary"
+          />
+        )}
+
+        {/* Mensaje de datos vacíos */}
+        {isEmptyData && (
+          <View style={[styles.emptyState, { backgroundColor: colors.WARNING + '10', borderColor: colors.WARNING }]}>
+            <Icon
+              type="material-community"
+              name="alert-circle-outline"
+              size={48}
+              color={colors.WARNING}
+            />
+            <Text style={[styles.emptyTitle, { color: colors.TEXT_PRIMARY }]}>
+              Sin datos
+            </Text>
+            <Text style={[styles.emptyText, { color: colors.TEXT_SECONDARY }]}>
+              No se encontraron gastos en el rango seleccionado
+            </Text>
+          </View>
+        )}
+
+        {/* Tabla dinámica */}
+        {!isEmptyData && tableHead.length > 0 && (
+          <View>
+            {needsHorizontalScroll && (
+              <View style={[styles.scrollHint, { backgroundColor: colors.INFO + '10', borderColor: colors.INFO }]}>
+                <Icon
+                  type="material-community"
+                  name="gesture-swipe-horizontal"
+                  size={16}
+                  color={colors.INFO}
+                />
+                <Text style={[styles.scrollHintText, { color: colors.TEXT_SECONDARY }]}>
+                  Desliza horizontalmente para ver todas las columnas
+                </Text>
+              </View>
+            )}
+
+            <ModernTable
+              tableHead={tableHead}
+              tableData={tableData}
+              columnWidths={getColumnWidths()}
+              columnAlignments={getColumnAlignments()}
+              horizontalScroll={needsHorizontalScroll}
+              defaultColumnWidth={120}
+            />
+
+            {/* Stats */}
+            <View style={[styles.statsCard, { backgroundColor: colors.CARD_BACKGROUND }]}>
+              <View style={styles.statItem}>
+                <Text style={[styles.statLabel, { color: colors.TEXT_SECONDARY }]}>
+                  Total registros
+                </Text>
+                <Text style={[styles.statValue, { color: colors.PRIMARY }]}>
+                  {tableData.length}
+                </Text>
+              </View>
+              <View style={[styles.statDivider, { backgroundColor: colors.BORDER }]} />
+              <View style={styles.statItem}>
+                <Text style={[styles.statLabel, { color: colors.TEXT_SECONDARY }]}>
+                  Columnas
+                </Text>
+                <Text style={[styles.statValue, { color: colors.PRIMARY }]}>
+                  {tableHead.length}
+                </Text>
+              </View>
+            </View>
+          </View>
+        )}
       </ScrollView>
-      {loading ? <MyLoading /> : <MyButton onPress={exportDataApi} title="Crear tabla" />}
     </View>
   );
 }
@@ -125,32 +289,106 @@ export default function ExportExpenseScreen({ navigation }: ExportExpenseScreenP
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#fff'
-  },
-  fixToText: {
-    flexDirection: 'row',
-    justifyContent: 'space-between'
-  },
-  title: {
-    fontSize: BIG,
-    fontWeight: 'bold',
-    textAlign: 'center',
-    marginBottom: 4
+    padding: 16
   },
   header: {
-    backgroundColor: '#D2D1E8',
-    borderRadius: 12,
-    marginHorizontal: 4
+    padding: 20,
+    borderRadius: 16,
+    marginBottom: 16,
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 8,
+    elevation: 2
   },
-  containerDate: {
-    display: 'flex',
+  title: {
+    fontSize: 20,
+    fontWeight: '700',
+    marginBottom: 4
+  },
+  subtitle: {
+    fontSize: 13,
+    fontWeight: '500'
+  },
+  dateContainer: {
     flexDirection: 'row',
-    marginVertical: 5
+    gap: 12,
+    marginBottom: 12
   },
-  textDate: {
-    paddingVertical: 10,
-    paddingHorizontal: 10,
-    color: 'white',
-    backgroundColor: '#c5c5c5'
+  infoCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 12,
+    borderRadius: 12,
+    marginBottom: 16,
+    borderWidth: 1,
+    gap: 10
+  },
+  infoText: {
+    fontSize: 12,
+    fontWeight: '500',
+    flex: 1
+  },
+  emptyState: {
+    padding: 32,
+    borderRadius: 16,
+    alignItems: 'center',
+    marginTop: 20,
+    borderWidth: 2
+  },
+  emptyTitle: {
+    fontSize: 18,
+    fontWeight: '700',
+    marginTop: 12,
+    marginBottom: 4
+  },
+  emptyText: {
+    fontSize: 13,
+    textAlign: 'center'
+  },
+  scrollHint: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 10,
+    borderRadius: 8,
+    marginBottom: 8,
+    borderWidth: 1,
+    gap: 8
+  },
+  scrollHintText: {
+    fontSize: 11,
+    fontWeight: '500',
+    flex: 1
+  },
+  statsCard: {
+    flexDirection: 'row',
+    padding: 16,
+    borderRadius: 12,
+    marginTop: 12,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 4,
+    elevation: 2
+  },
+  statItem: {
+    flex: 1,
+    alignItems: 'center'
+  },
+  statLabel: {
+    fontSize: 11,
+    fontWeight: '600',
+    marginBottom: 4,
+    textTransform: 'uppercase',
+    letterSpacing: 0.5
+  },
+  statValue: {
+    fontSize: 20,
+    fontWeight: '800'
+  },
+  statDivider: {
+    width: 1,
+    marginHorizontal: 16
   }
 });

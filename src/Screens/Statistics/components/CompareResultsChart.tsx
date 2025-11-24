@@ -1,10 +1,18 @@
 import React, { useState } from 'react';
 import { View, StyleSheet, ScrollView } from 'react-native';
-import { BarChart } from 'react-native-chart-kit';
 import { useWindowDimensions } from 'react-native';
+import { SegmentedButtons, Text } from 'react-native-paper';
+import {
+  VictoryBar,
+  VictoryChart,
+  VictoryTheme,
+  VictoryAxis,
+  VictoryTooltip,
+} from 'victory-native';
+import { VictoryGroup, VictoryLabel } from 'victory-native';
+
 import { useThemeColors } from '~/customHooks/useThemeColors';
 import { ComparePeriodsResponse } from '~/shared/types/services/expense-service.type';
-import { SegmentedButtons, Text } from 'react-native-paper';
 
 interface CompareResultsChartProps {
   data: ComparePeriodsResponse;
@@ -14,51 +22,19 @@ export default function CompareResultsChart({ data }: CompareResultsChartProps) 
   const colors = useThemeColors();
   const { width } = useWindowDimensions();
   const [chartType, setChartType] = useState('comparison');
+  // tooltip toggle state is handled by Victory internal label active flag via events
 
-  const { periodA, periodB, comparison, chartData } = data;
+  const { periodA, periodB, chartData } = data;
 
-  // Función helper para convertir hex a rgba
-  const hexToRgba = (hex: string, opacity = 1) => {
-    const r = parseInt(hex.slice(1, 3), 16);
-    const g = parseInt(hex.slice(3, 5), 16);
-    const b = parseInt(hex.slice(5, 7), 16);
-    return `rgba(${r}, ${g}, ${b}, ${opacity})`;
-  };
+  const baseWidth = Math.max(width - 40, 300);
 
-  // Gráfico de comparación de totales
-  const totalComparisonData = {
-    labels: ['Periodo A', 'Periodo B'],
-    datasets: [
-      {
-        data: [periodA.total, periodB.total],
-      },
-    ],
-  };
+  const convertToVictoryData = (labels: string[], values: number[]) =>
+    labels.map((label, index) => ({
+      label,
+      value: values[index],
+    }));
 
-  // Gráfico de promedios mensuales
-  const averageComparisonData = {
-    labels: ['Promedio A', 'Promedio B'],
-    datasets: [
-      {
-        data: [periodA.averageMonthly, periodB.averageMonthly],
-      },
-    ],
-  };
-
-  const chartConfig = {
-    backgroundGradientFrom: colors.CARD_BACKGROUND,
-    backgroundGradientTo: colors.CARD_BACKGROUND,
-    color: (opacity = 1) => {
-      const primaryHex = colors.PRIMARY;
-      return hexToRgba(primaryHex, opacity);
-    },
-    labelColor: () => colors.TEXT_PRIMARY,
-    barPercentage: 0.6,
-    decimalPlaces: 0,
-    propsForLabels: {
-      fontSize: 10,
-    },
-  };
+  const formatCurrency = (v: number) => ` $${v.toLocaleString()}`;
 
   return (
     <View style={[styles.container, { backgroundColor: colors.CARD_BACKGROUND }]}>
@@ -77,127 +53,226 @@ export default function CompareResultsChart({ data }: CompareResultsChartProps) 
         style={{ marginBottom: 16 }}
       />
 
-      <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-        {chartType === 'comparison' && (
-          <View style={styles.chartWrapper}>
-            <Text style={[styles.chartLabel, { color: colors.TEXT_SECONDARY }]}>
-              Comparación de Totales Acumulados
-            </Text>
-            <BarChart
-              data={totalComparisonData}
-              width={Math.max(width - 40, 300)}
-              height={220}
-              yAxisLabel="$"
-              yAxisSuffix=""
-              fromZero
-              chartConfig={chartConfig}
-              style={styles.chart}
-              showValuesOnTopOfBars
-            />
+      {/* Legend for periods */}
+      {chartData && (
+        <View style={styles.legend}>
+          <View style={styles.legendItem}>
+            <View style={[styles.legendDot, { backgroundColor: '#4CAF50' }]} />
+            <Text style={[styles.legendLabel, { color: colors.TEXT_PRIMARY }]}>Periodo A</Text>
           </View>
-        )}
-
-        {chartType === 'average' && (
-          <View style={styles.chartWrapper}>
-            <Text style={[styles.chartLabel, { color: colors.TEXT_SECONDARY }]}>
-              Comparación de Promedios Mensuales
-            </Text>
-            <BarChart
-              data={averageComparisonData}
-              width={Math.max(width - 40, 300)}
-              height={220}
-              yAxisLabel="$"
-              yAxisSuffix=""
-              fromZero
-              chartConfig={chartConfig}
-              style={styles.chart}
-              showValuesOnTopOfBars
-            />
+          <View style={styles.legendItem}>
+            <View style={[styles.legendDot, { backgroundColor: '#2196F3' }]} />
+            <Text style={[styles.legendLabel, { color: colors.TEXT_PRIMARY }]}>Periodo B</Text>
           </View>
-        )}
+        </View>
+      )}
 
-        {chartType === 'categories' && chartData && (
-          <View style={styles.chartWrapper}>
-            <Text style={[styles.chartLabel, { color: colors.TEXT_SECONDARY }]}>
-              Gastos por Subcategoría - Comparación
-            </Text>
-            
-            <ScrollView 
-              horizontal 
-              showsHorizontalScrollIndicator={true}
-              style={styles.categoriesScroll}
+      {/* ------------------------------- */}
+      {/* COMPARACIÓN DE TOTALES */}
+      {/* ------------------------------- */}
+      {chartType === 'comparison' && (
+        <View style={styles.chartWrapper}>
+          <Text style={[styles.chartLabel, { color: colors.TEXT_SECONDARY }]}>
+            Comparación de Totales Acumulados
+          </Text>
+
+          <ScrollView horizontal>
+            <VictoryChart
+              width={baseWidth}
+              height={250}
+              theme={VictoryTheme.material}
+              padding={{ top: 20, bottom: 70, left: 80, right: 40 }}
+              domainPadding={{ x: 50 }}
             >
-              <View style={styles.periodsContainer}>
-                {/* Periodo A */}
-                <View style={styles.periodChart}>
-                  <View style={styles.periodHeader}>
-                    <View style={[styles.periodDot, { backgroundColor: '#4CAF50' }]} />
-                    <Text style={[styles.periodChartTitle, { color: colors.TEXT_PRIMARY }]}>
-                      Periodo A
-                    </Text>
-                  </View>
-                  <BarChart
-                    data={{
-                      labels: chartData.labels.map(l => 
-                        l.length > 8 ? l.substring(0, 8) + '...' : l
-                      ),
-                      datasets: [{ data: chartData.datasets[0]?.data || [] }],
-                    }}
-                    width={Math.max(chartData.labels.length * 60, 280)}
-                    height={220}
-                    yAxisLabel="$"
-                    yAxisSuffix=""
-                    fromZero
-                    chartConfig={{
-                      ...chartConfig,
-                      color: (opacity = 1) => hexToRgba('#4CAF50', opacity),
-                      barPercentage: 0.7,
-                    }}
-                    style={styles.chart}
+              <VictoryAxis
+                style={{
+                  tickLabels: { fill: colors.TEXT_PRIMARY, fontSize: 12 },
+                }}
+              />
+              <VictoryAxis
+                dependentAxis
+                tickFormat={(t) => formatCurrency(t as number)}
+                style={{
+                  tickLabels: { fill: colors.TEXT_PRIMARY, fontSize: 12 },
+                }}
+              />
+
+              <VictoryBar
+                barWidth={40}
+                style={{ data: { fill: colors.PRIMARY } }}
+                data={[
+                  { label: 'Periodo A', value: periodA.total },
+                  { label: 'Periodo B', value: periodB.total },
+                ]}
+                x="label"
+                y="value"
+                labels={({ datum }) => `${datum.label}: ${formatCurrency(datum.value)}`}
+                labelComponent={
+                  <VictoryTooltip
+                    flyoutStyle={{ fill: colors.CARD_BACKGROUND }}
+                    flyoutPadding={{ top: 8, bottom: 8, left: 10, right: 10 }}
+                    style={{ fontSize: 12 }}
+                    renderInPortal={false}
                   />
-                </View>
+                }
+                events={[
+                  {
+                    target: 'data',
+                    eventHandlers: {
+                      onPress: () => [
+                        {
+                          target: 'labels',
+                          mutation: (props) => ({ active: !props.active }),
+                        },
+                      ],
+                    },
+                  },
+                ]}
+              />
+            </VictoryChart>
+          </ScrollView>
+        </View>
+      )}
 
-                {/* Separador */}
-                <View style={styles.separator} />
+      {/* ------------------------------- */}
+      {/* COMPARACIÓN DE PROMEDIOS */}
+      {/* ------------------------------- */}
+      {chartType === 'average' && (
+        <View style={styles.chartWrapper}>
+          <Text style={[styles.chartLabel, { color: colors.TEXT_SECONDARY }]}>
+            Comparación de Promedios Mensuales
+          </Text>
 
-                {/* Periodo B */}
-                <View style={styles.periodChart}>
-                  <View style={styles.periodHeader}>
-                    <View style={[styles.periodDot, { backgroundColor: '#2196F3' }]} />
-                    <Text style={[styles.periodChartTitle, { color: colors.TEXT_PRIMARY }]}>
-                      Periodo B
-                    </Text>
-                  </View>
-                  <BarChart
-                    data={{
-                      labels: chartData.labels.map(l => 
-                        l.length > 8 ? l.substring(0, 8) + '...' : l
-                      ),
-                      datasets: [{ data: chartData.datasets[1]?.data || [] }],
-                    }}
-                    width={Math.max(chartData.labels.length * 60, 280)}
-                    height={220}
-                    yAxisLabel="$"
-                    yAxisSuffix=""
-                    fromZero
-                    chartConfig={{
-                      ...chartConfig,
-                      color: (opacity = 1) => hexToRgba('#2196F3', opacity),
-                      barPercentage: 0.7,
-                    }}
-                    style={styles.chart}
-                  />
-                </View>
-              </View>
-            </ScrollView>
+          <ScrollView horizontal>
+            <VictoryChart width={baseWidth} height={250} padding={{ top: 20, bottom: 70, left: 80, right: 40 }}>
+              <VictoryAxis
+                style={{
+                  tickLabels: { fill: colors.TEXT_PRIMARY, fontSize: 12 },
+                }}
+              />
+              <VictoryAxis
+                dependentAxis
+                tickFormat={(t) => formatCurrency(t as number)}
+                style={{
+                  tickLabels: { fill: colors.TEXT_PRIMARY, fontSize: 12 },
+                }}
+              />
 
-            {/* Nota explicativa */}
-            <Text style={[styles.note, { color: colors.TEXT_SECONDARY }]}>
-              Desliza horizontalmente para comparar gastos por subcategoría
-            </Text>
-          </View>
-        )}
-      </ScrollView>
+              <VictoryBar
+                barWidth={40}
+                style={{ data: { fill: colors.PRIMARY } }}
+                data={[
+                  { label: 'Promedio A', value: periodA.averageMonthly },
+                  { label: 'Promedio B', value: periodB.averageMonthly },
+                ]}
+                x="label"
+                y="value"
+                labels={({ datum }) => `${datum.label}: ${formatCurrency(datum.value)}`}
+                labelComponent={<VictoryTooltip flyoutStyle={{ fill: colors.CARD_BACKGROUND }} flyoutPadding={{ top: 8, bottom: 8, left: 10, right: 10 }} style={{ fontSize: 12 }} renderInPortal={false} />}
+                events={[
+                  {
+                    target: 'data',
+                    eventHandlers: {
+                      onPress: () => [
+                        {
+                          target: 'labels',
+                          mutation: (props) => ({ active: !props.active }),
+                        },
+                      ],
+                    },
+                  },
+                ]}
+              />
+            </VictoryChart>
+          </ScrollView>
+        </View>
+      )}
+
+      {/* ------------------------------- */}
+      {/* COMPARACIÓN POR CATEGORÍAS */}
+      {/* ------------------------------- */}
+      {chartType === 'categories' && chartData && (
+        <View style={styles.chartWrapper}>
+          <Text style={[styles.chartLabel, { color: colors.TEXT_SECONDARY }]}> 
+            Gastos por Subcategoría - Comparación
+          </Text>
+
+          <ScrollView horizontal>
+            <VictoryChart
+              width={Math.max(chartData.labels.length * 60, 400)}
+              height={300}
+              padding={{ top: 20, bottom: 120, left: 90, right: 40 }}
+              domainPadding={{ x: 20 }}
+            >
+              <VictoryAxis
+                tickFormat={(t) => (typeof t === 'string' && t.length > 10 ? t.slice(0, 10) + '...' : t)}
+                tickLabelComponent={<VictoryLabel angle={-45} dy={10} />}
+                style={{
+                  tickLabels: { fill: colors.TEXT_PRIMARY, fontSize: 10 },
+                }}
+              />
+
+              <VictoryAxis
+                dependentAxis
+                tickFormat={(t) => formatCurrency(t as number)}
+                style={{
+                  tickLabels: { fill: colors.TEXT_PRIMARY, fontSize: 12 },
+                }}
+              />
+
+              <VictoryGroup offset={18} colorScale={["#4CAF50", "#2196F3"]}>
+                <VictoryBar
+                  barWidth={14}
+                  data={convertToVictoryData(chartData.labels, chartData.datasets[0]?.data || [])}
+                  x="label"
+                  y="value"
+                  labels={({ datum }) => `${datum.label}: ${formatCurrency(datum.value)}`}
+                  labelComponent={<VictoryTooltip flyoutStyle={{ fill: colors.CARD_BACKGROUND }} flyoutPadding={{ top: 8, bottom: 8, left: 10, right: 10 }} style={{ fontSize: 11 }} renderInPortal={false} />}
+                  events={[
+                    {
+                      target: 'data',
+                      eventHandlers: {
+                        onPress: () => [
+                          {
+                            target: 'labels',
+                            mutation: (props) => ({ active: !props.active }),
+                          },
+                        ],
+                      },
+                    },
+                  ]}
+                />
+
+                <VictoryBar
+                  barWidth={14}
+                  data={convertToVictoryData(chartData.labels, chartData.datasets[1]?.data || [])}
+                  x="label"
+                  y="value"
+                  labels={({ datum }) => `${datum.label}: ${formatCurrency(datum.value)}`}
+                  labelComponent={<VictoryTooltip flyoutStyle={{ fill: colors.CARD_BACKGROUND }} flyoutPadding={{ top: 8, bottom: 8, left: 10, right: 10 }} style={{ fontSize: 11 }} renderInPortal={false} />}
+                  events={[
+                    {
+                      target: 'data',
+                      eventHandlers: {
+                        onPress: () => [
+                          {
+                            target: 'labels',
+                            mutation: (props) => ({ active: !props.active }),
+                          },
+                        ],
+                      },
+                    },
+                  ]}
+                />
+              </VictoryGroup>
+            </VictoryChart>
+          </ScrollView>
+
+          <Text style={[styles.note, { color: colors.TEXT_SECONDARY }]}> 
+            Toca una barra para ver subcategoría y monto. Rotar etiquetas si es necesario.
+          </Text>
+        </View>
+      )}
     </View>
   );
 }
@@ -215,54 +290,58 @@ const styles = StyleSheet.create({
     marginBottom: 12,
   },
   chartWrapper: {
-    alignItems: 'center',
+    marginBottom: 20,
   },
   chartLabel: {
-    fontSize: 13,
-    marginBottom: 12,
-    textAlign: 'center',
-    fontWeight: '600',
-  },
-  chart: {
-    borderRadius: 16,
-    marginVertical: 8,
-  },
-  categoriesScroll: {
-    marginVertical: 8,
+    fontSize: 14,
+    marginBottom: 6,
   },
   periodsContainer: {
     flexDirection: 'row',
-    gap: 20,
-    paddingHorizontal: 8,
+    alignItems: 'flex-start',
   },
   periodChart: {
-    alignItems: 'center',
+    marginRight: 20,
   },
   periodHeader: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 8,
-    gap: 8,
+    marginBottom: 6,
   },
   periodDot: {
-    width: 12,
-    height: 12,
-    borderRadius: 6,
+    width: 10,
+    height: 10,
+    borderRadius: 5,
+    marginRight: 6,
   },
   periodChartTitle: {
-    fontSize: 15,
-    fontWeight: '600',
+    fontSize: 14,
+    fontWeight: 'bold',
   },
   separator: {
-    width: 2,
-    backgroundColor: '#e0e0e0',
-    marginHorizontal: 10,
+    width: 20,
   },
   note: {
-    fontSize: 11,
-    fontStyle: 'italic',
-    textAlign: 'center',
-    marginTop: 12,
-    paddingHorizontal: 16,
+    marginTop: 8,
+    fontSize: 12,
+  },
+  legend: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  legendItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginRight: 12,
+  },
+  legendDot: {
+    width: 10,
+    height: 10,
+    borderRadius: 5,
+    marginRight: 6,
+  },
+  legendLabel: {
+    fontSize: 12,
   },
 });

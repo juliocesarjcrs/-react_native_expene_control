@@ -21,7 +21,7 @@ export function ChatWindow({ onClose }: { onClose: () => void }) {
   const colors = useThemeColors();
   const styles = createStyles(colors);
 
-  const { messages, isLoading, error, sendMessage, selectConversation, startNewConversation } = useChat();
+  const { messages, isLoading, error, sendMessage, selectConversation, startNewConversation, clearError, loadConversations } = useChat();
   const [inputText, setInputText] = React.useState('');
   const [showConversations, setShowConversations] = React.useState(false);
   const flatListRef = useRef<FlatList>(null);
@@ -40,6 +40,20 @@ export function ChatWindow({ onClose }: { onClose: () => void }) {
     setShowConversations(false);
   };
 
+  const handleNewConversation = async () => {
+    await startNewConversation();
+    setShowConversations(false);
+  };
+
+  const handleToggleConversations = () => {
+    const newState = !showConversations;
+    setShowConversations(newState);
+    // Recargar conversaciones cuando se abre el menú
+    if (newState) {
+      loadConversations();
+    }
+  };
+
   const handleSend = async () => {
     if (inputText.trim()) {
       await sendMessage(inputText.trim());
@@ -55,7 +69,7 @@ export function ChatWindow({ onClose }: { onClose: () => void }) {
     >
       <ModelStatusIndicator />
       <View style={styles.header}>
-        <TouchableOpacity style={styles.menuButton} onPress={() => setShowConversations(!showConversations)}>
+        <TouchableOpacity style={styles.menuButton} onPress={handleToggleConversations}>
           <MaterialIcons name="menu" size={24} color={colors.WHITE} />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Chat Assistant</Text>
@@ -68,10 +82,7 @@ export function ChatWindow({ onClose }: { onClose: () => void }) {
         <View style={styles.conversationsContainer}>
           <TouchableOpacity
             style={styles.newConversationButton}
-            onPress={async () => {
-              await startNewConversation();
-              setShowConversations(false);
-            }}
+            onPress={handleNewConversation}
           >
             <MaterialIcons name="add" size={24} color={colors.WHITE} />
             <Text style={styles.newConversationText}>Nueva conversación</Text>
@@ -83,21 +94,24 @@ export function ChatWindow({ onClose }: { onClose: () => void }) {
           <FlatList
             ref={flatListRef}
             data={messages}
-            keyExtractor={(item) => `${item.id}-${item.content.length}`}
-            renderItem={({ item }) => (
-              <ChatMessage 
-                content={item.content} 
-                role={item.role} 
-              />
-            )}
+            keyExtractor={(item) => `${item.id}-${item.createdAt}`}
+            renderItem={({ item }) => {
+              // No renderizar mensajes del sistema
+              if (item.role === 'system') return null;
+              
+              return (
+                <ChatMessage 
+                  content={item.content} 
+                  role={item.role} 
+                />
+              );
+            }}
             contentContainerStyle={styles.messagesList}
-            // Mejoras para el rendimiento y altura dinámica
-            removeClippedSubviews={false} // Desactivado para evitar cortes
+            removeClippedSubviews={false}
             maxToRenderPerBatch={5}
             updateCellsBatchingPeriod={100}
             windowSize={5}
             initialNumToRender={10}
-            // Mostrar mensaje vacío si no hay mensajes
             ListEmptyComponent={
               <View style={styles.emptyContainer}>
                 <Text style={styles.emptyText}>
@@ -116,7 +130,13 @@ export function ChatWindow({ onClose }: { onClose: () => void }) {
 
           {error && (
             <View style={styles.errorContainer}>
-              <Text style={styles.errorText}>{error}</Text>
+              <View style={styles.errorContent}>
+                <MaterialIcons name="error-outline" size={20} color="#c62828" />
+                <Text style={styles.errorText}>{error}</Text>
+              </View>
+              <TouchableOpacity onPress={clearError} style={styles.errorCloseButton}>
+                <MaterialIcons name="close" size={18} color="#c62828" />
+              </TouchableOpacity>
             </View>
           )}
 
@@ -190,7 +210,7 @@ const createStyles = (colors: ReturnType<typeof useThemeColors>) =>
     messagesList: {
       padding: 16,
       flexGrow: 1,
-      paddingBottom: 20, // Extra padding al final
+      paddingBottom: 20,
     },
     inputContainer: {
       flexDirection: 'row',
@@ -236,15 +256,31 @@ const createStyles = (colors: ReturnType<typeof useThemeColors>) =>
       shadowRadius: 4,
     },
     errorContainer: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
       padding: 12,
       backgroundColor: '#ffebee',
       marginHorizontal: 16,
       marginBottom: 8,
       borderRadius: 8,
+      borderLeftWidth: 4,
+      borderLeftColor: '#c62828',
+    },
+    errorContent: {
+      flex: 1,
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 8,
     },
     errorText: {
+      flex: 1,
       color: '#c62828',
       fontSize: 14,
+    },
+    errorCloseButton: {
+      padding: 4,
+      marginLeft: 8,
     },
     loadingContainer: {
       flexDirection: 'row',

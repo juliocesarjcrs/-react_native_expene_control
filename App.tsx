@@ -33,8 +33,13 @@ export default function App() {
         // console.log('----ERROR, INTERCEPT ---- ',error, );
         // console.log(error.response);
         const { status } = error.response;
+        const url = error.config?.url || '';
+
+        // Excluir chatbot de toasts automáticos
+        const isChatbotError = url.includes('chatbot/');
+
         // Si el servidor respondió pero no cae en 400/401/403:
-        if (![400, 401, 403].includes(error.response.status)) {
+        if (![400, 401, 403].includes(status) && !isChatbotError) {
           const msg = error.response.data?.message || 'Error en el servidor';
           ToastAndroid.show(msg, ToastAndroid.SHORT);
         }
@@ -48,6 +53,11 @@ export default function App() {
           const message = error.response.data.message ? error.response.data.message : 'Sin definir 1';
           showToast(message);
         } else if (status === 400) {
+          // No mostrar toast para errores del chatbot (se manejan en su UI)
+          const url = error.config?.url || '';
+          if (url.includes('chatbot/')) {
+            return Promise.reject(error);
+          }
           console.log('::: type :::', typeof error);
           if (error instanceof AxiosError) {
             console.log('::: Error :::', error);

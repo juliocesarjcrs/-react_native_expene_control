@@ -60,4 +60,5 @@ export type ChatContextType = {
   startNewConversation: () => Promise<void>;
   selectConversation: (conversationId: number) => Promise<void>;
   deleteConversation: (conversationId: number) => Promise<void>;
+  clearError: () => void;
 };

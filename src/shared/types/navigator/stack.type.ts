@@ -103,4 +103,5 @@ export type SettingsStackParamList = {
   manageThemes: undefined;
   editTheme: { themeName: string };
   adminDashboard: undefined;
+  aiModels: undefined;
 };

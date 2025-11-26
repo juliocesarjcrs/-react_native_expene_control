@@ -1,4 +1,4 @@
-import { AIModelModel, HealthStatusModel, ModelInfoModel } from "../models/ai-model.type";
+import { AIModel, HealthStatusModel, ModelInfoModel } from "../models/ai-model.type";
 import { ConversationLogModel } from "../models/conversation-log.type";
 
 export type getCurrentModelResponse = {
@@ -6,9 +6,9 @@ export type getCurrentModelResponse = {
   health: HealthStatusModel;
 };
 
-export type getModelsHealthResponse = AIModelModel[];
+export type getModelsHealthResponse = AIModel[];
 
-export type getAllModelsResponse = AIModelModel[];
+export type getAllModelsResponse = AIModel[];
 
 export type ToolCallAnalysisModel = {
   modelName: string;
@@ -32,3 +32,30 @@ export type ModelErrorModel = {
 };
 
 export type GetModelErrorsResponse = ModelErrorModel[];
+
+
+export type CreateAIModelDto = {
+  provider_type: 'openrouter' | 'openai' | 'custom';
+  model_name: string;
+  api_endpoint: string;
+  api_key_ref: string;
+  priority: number;
+  is_active?: boolean;
+  max_tokens?: number;
+  temperature?: number;
+  supports_tools?: boolean;
+  metadata?: Record<string, any>;
+}
+
+export type UpdateAIModelDto = {
+  provider_type?: 'openrouter' | 'openai' | 'custom';
+  model_name?: string;
+  api_endpoint?: string;
+  api_key_ref?: string;
+  priority?: number;
+  is_active?: boolean;
+  max_tokens?: number;
+  temperature?: number;
+  supports_tools?: boolean;
+  metadata?: Record<string, any>;
+}

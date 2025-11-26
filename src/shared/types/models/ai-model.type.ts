@@ -1,4 +1,4 @@
-export type AIModelModel = {
+export type AIModel = {
   id: number;
   provider_type: 'openrouter' | 'openai' | 'custom';
   model_name: string;

@@ -113,7 +113,7 @@ function SettingsStackScreen() {
             <SettingsStack.Screen name="manageThemes" component={Routes.ManageThemesScreen} options={{ title: 'Gestionar Temas' }}/>
             <SettingsStack.Screen name="editTheme" component={Routes.EditThemeScreen} options={{ title: 'Editar Tema' }}/>
             <SettingsStack.Screen name="adminDashboard" component={Routes.AdminDashboardScreen} options={{ title: 'Panel de Administración' }} />
-
+            <SettingsStack.Screen name="aiModels" component={Routes.AIModelsScreen} options={{ title: 'Modelos de IA' }} />
     </SettingsStack.Navigator>
   );
 }

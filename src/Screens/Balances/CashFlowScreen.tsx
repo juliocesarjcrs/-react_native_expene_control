@@ -17,6 +17,7 @@ import MyButton from '~/components/MyButton';
 import CashFlowLineChart from './components/CashFlowLineChart';
 import CheckBoxOptions from '../../components/checbox/CheckBoxOptions';
 import ModernTable from '~/components/tables/ModernTable';
+import { ScreenHeader } from '~/components/ScreenHeader';
 
 // Types
 import { FinancialRecord } from '../../shared/types/services';
@@ -37,6 +38,12 @@ import { showError } from '~/utils/showError';
 // Theme
 import { useThemeColors } from '~/customHooks/useThemeColors';
 
+// Styles
+import { commonStyles } from '~/styles/common';
+
+// Configs
+import { screenConfigs } from '~/config/screenConfigs';
+
 type ExportExpenseScreenNavigationProp = StackNavigationProp<BalanceStackParamList, 'cashFlow'>;
 
 interface CashFlowScreenProps {
@@ -44,6 +51,7 @@ interface CashFlowScreenProps {
 }
 
 export default function CashFlowScreen({ navigation }: CashFlowScreenProps) {
+  const config = screenConfigs.cashFlow;
   const colors = useThemeColors();
   const month = useSelector((state: RootState) => state.date.month);
 
@@ -222,7 +230,9 @@ export default function CashFlowScreen({ navigation }: CashFlowScreenProps) {
   const isPositiveBalance = monthBalance >= 0;
 
   return (
-    <View style={[styles.container, { backgroundColor: colors.BACKGROUND }]}>
+    <View style={[commonStyles.screenContentWithPadding, { backgroundColor: colors.BACKGROUND }]}>
+      <ScreenHeader title={config.title} subtitle={config.subtitle} />
+
       <ScrollView showsVerticalScrollIndicator={false}>
         {/* Header minimalista */}
         <View style={styles.header}>
@@ -413,10 +423,6 @@ export default function CashFlowScreen({ navigation }: CashFlowScreenProps) {
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    padding: 16
-  },
   header: {
     alignItems: 'center',
     marginBottom: 20,

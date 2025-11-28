@@ -10,18 +10,34 @@ import {
   Alert,
 } from 'react-native';
 import { Icon } from 'react-native-elements';
+
+// Components
 import ConversationGroup from '~/components/admin/ConversationGroup';
 import MyButton from '~/components/MyButton';
-import { useThemeColors } from '~/customHooks/useThemeColors';
+import { ScreenHeader } from '~/components/ScreenHeader';
+
+// Services
 import { getCurrentModel, getInteractionLogs, getModelErrors, getModelsHealth, reloadModels } from '~/services/aiConfigService';
+
+// Types
 import { ConversationLogModel } from '~/shared/types/models/conversation-log.type';
 
 import { showError } from '~/utils/showError';
 
+// Theme
+import { useThemeColors } from '~/customHooks/useThemeColors';
+
+// Styles
+import { commonStyles } from '~/styles/common';
+
+// Configs
+import { screenConfigs } from '~/config/screenConfigs';
+
 type TabType = 'health' | 'tools' | 'errors';
 
 export default function AdminDashboardScreen() {
-  const colors = useThemeColors();
+    const config = screenConfigs.adminDashboard;
+    const colors = useThemeColors();
   const [activeTab, setActiveTab] = useState<TabType>('health');
   const [refreshing, setRefreshing] = useState(false);
 
@@ -38,7 +54,8 @@ export default function AdminDashboardScreen() {
   };
 
   return (
-    <View style={[styles.container, { backgroundColor: colors.BACKGROUND }]}>
+       <View style={[commonStyles.screenContentWithPadding, { backgroundColor: colors.BACKGROUND }]}>
+         <ScreenHeader title={config.title} subtitle={config.subtitle} />
       {/* Tabs */}
       <View style={[styles.tabs, { backgroundColor: colors.CARD_BACKGROUND }]}>
         <TouchableOpacity
@@ -549,9 +566,6 @@ function ErrorsView() {
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
   tabs: {
     flexDirection: 'row',
     elevation: 2,

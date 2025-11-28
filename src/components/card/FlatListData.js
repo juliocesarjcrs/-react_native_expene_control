@@ -5,7 +5,7 @@ import { Icon } from "react-native-elements";
 import { deleteExpense } from "../../services/expenses";
 import { ICON, PRIMARY } from "../../styles/colors";
 import { MEDIUM, SMALL } from "../../styles/fonts";
-import { Errors } from "../../utils/Errors";
+import { showError } from "~/utils/showError";
 import { DateFormat, NumberFormat } from "../../utils/Helpers";
 import { Tooltip } from 'react-native-elements';
 
@@ -16,7 +16,7 @@ const FlatListData = ({ expenses, updateList }) => {
         const { data } = await deleteExpense(idExpense);
         updateList();
       } catch (e) {
-        Errors(e);
+        showError(e);
       }
     };
     const createTwoButtonAlert = (id) =>

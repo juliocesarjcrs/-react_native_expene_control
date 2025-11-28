@@ -2,7 +2,6 @@ import React, { useEffect, useState } from 'react';
 import { ScrollView, StyleSheet, Text, TextInput, View, TouchableWithoutFeedback } from 'react-native';
 
 import { StackNavigationProp } from '@react-navigation/stack';
-import { Errors } from '../../utils/Errors';
 
 // Services
 import { getCategoryWithSubcategories } from '../../services/categories';
@@ -11,6 +10,7 @@ import { createBudgets, getBudgets } from '../../services/budgets';
 // Components
 import MyLoading from '../../components/loading/MyLoading';
 import MyButton from '~/components/MyButton';
+import { ScreenHeader } from '~/components/ScreenHeader';
 
 // Types
 import { SettingsStackParamList } from '../../shared/types';
@@ -18,9 +18,18 @@ import { Category, CreateBudgetPayload } from '../../shared/types/services';
 
 // Utils
 import { NumberFormat } from '../../utils/Helpers';
-import ShowToast from '../../utils/toastUtils';
+import {ShowToast} from '../../utils/toastUtils';
 import YearCitySelector from './components/YearCytySelector';
+import { showError } from '~/utils/showError';
 
+// Theme
+import { useThemeColors } from '~/customHooks/useThemeColors';
+
+// Styles
+import { commonStyles } from '~/styles/common';
+
+// Configs
+import { screenConfigs } from '~/config/screenConfigs';
 
 type VirtualBudgetScreenNavigationProp = StackNavigationProp<SettingsStackParamList, 'exportData'>;
 
@@ -29,6 +38,8 @@ interface VirtualBudgetScreenProps {
 }
 
 export default function VirtualBudgetScreen({ navigation }: VirtualBudgetScreenProps) {
+   const config = screenConfigs.virtualBudget;
+    const colors = useThemeColors();
   const [loading, setLoading] = useState(false);
 
   const [categories, setCategories] = useState<Category[]>([]);
@@ -52,7 +63,7 @@ export default function VirtualBudgetScreen({ navigation }: VirtualBudgetScreenP
       fetchGetBudgets();
     } catch (e) {
       setLoading(false);
-      Errors(e);
+      showError(e);
     }
   };
 
@@ -69,7 +80,7 @@ export default function VirtualBudgetScreen({ navigation }: VirtualBudgetScreenP
       setBudgetValues(data.data);
     } catch (e) {
       setLoading(false);
-      Errors(e);
+      showError(e);
     }
   };
 
@@ -119,7 +130,7 @@ export default function VirtualBudgetScreen({ navigation }: VirtualBudgetScreenP
       ShowToast('Presupuesto guardado');
     } catch (e) {
       setLoading(false);
-      Errors(e);
+      showError(e);
     }
   };
 
@@ -153,9 +164,8 @@ export default function VirtualBudgetScreen({ navigation }: VirtualBudgetScreenP
   };
 
   return (
-    <View
-      style={styles.container}
-    >
+   <View style={[commonStyles.screenContentWithPadding, { backgroundColor: colors.BACKGROUND }]}>
+        <ScreenHeader title={config.title} subtitle={config.subtitle} />
       <YearCitySelector
         selectedYear={selectedYear}
         setSelectedYear={setSelectedYear}

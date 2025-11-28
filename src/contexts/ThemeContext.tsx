@@ -1,8 +1,8 @@
 import React, { createContext, useState, useEffect, useContext, ReactNode } from 'react';
 import { getActiveTheme } from '../services/themeConfigService';
 import { ThemeColors } from '../shared/types/services/theme-config-service.type';
-import { Errors } from '../utils/Errors';
 import { ThemeConfig } from '~/shared/types/models/theme-config.type';
+import { showError } from '~/utils/showError';
 
 type ThemeContextType = {
   theme: ThemeConfig | null;
@@ -58,7 +58,7 @@ export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
       setTheme(activeTheme);
       setColors(activeTheme.colors);
     } catch (error) {
-      Errors(error);
+      showError(error);
       // En caso de error, usar colores por defecto
       setColors(DEFAULT_COLORS);
     } finally {

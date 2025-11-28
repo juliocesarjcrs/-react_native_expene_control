@@ -7,7 +7,6 @@ import { useDispatch } from 'react-redux';
 import { forgotPassword } from '../../services/auth';
 import { StackNavigationProp } from '@react-navigation/stack';
 import { AuthStackParamList } from '../../shared/types';
-import { Errors } from '../../utils/Errors';
 import { setUser } from '../../features/auth/authSlice';
 
 // Components
@@ -18,6 +17,9 @@ import MyButton from '../../components/MyButton';
 // Types
 import { ForgotPasswordPayload } from '../../shared/types/services';
 import { AppDispatch } from '../../shared/types/reducers/root-state.type';
+
+// Utils
+import { showError } from '~/utils/showError';
 
 type ForgotPasswordScreenNavigationProp = StackNavigationProp<AuthStackParamList, 'forgotPassword'>;
 
@@ -48,7 +50,7 @@ export default function ForgotPasswordScreen({ navigation }: forgotPasswordProps
       navigation.navigate('checkCodePassword');
     } catch (error) {
       setLoading(false);
-      Errors(error);
+      showError(error);
     }
   };
   return (

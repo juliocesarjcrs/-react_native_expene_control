@@ -20,16 +20,26 @@ import { RadioButtonGroup } from '../../components/radioButton';
 import { DateSelector } from '../../components/datePicker';
 import { BarSearch } from '../../components/search';
 import { ListResultSearch } from '../../components/card';
+import { ScreenHeader } from '~/components/ScreenHeader';
 
 // Hooks & Utils
-import { useThemeColors } from '../../customHooks/useThemeColors';
 import { showError } from '../../utils/showError';
 import { NumberFormat } from '../../utils/Helpers';
 
+// Theme
+import { useThemeColors } from '~/customHooks/useThemeColors';
+
+// Styles
+import { commonStyles } from '~/styles/common';
+
+// Configs
+import { screenConfigs } from '~/config/screenConfigs';
+
 export default function AdvancedSearchScreen() {
+  const config = screenConfigs.advancedSearch;
   const colors = useThemeColors();
-  const selectOnlyCategoryRef = useRef();
-  
+  const selectOnlyCategoryRef = useRef<any>(null);
+
   const [selectedCategory, setSelectedCategory] = useState<DropDownSelectFormat | null>(null);
   const [subcategories, setSubcategories] = useState<SubcategoryModel[]>([]);
   const [selectedSubcategories, setSelectedSubcategories] = useState<number[]>([]);
@@ -125,29 +135,20 @@ export default function AdvancedSearchScreen() {
 
   const toggleSubcategory = (subcategoryId: number) => {
     setSelectedSubcategories((prev) =>
-      prev.includes(subcategoryId)
-        ? prev.filter((id) => id !== subcategoryId)
-        : [...prev, subcategoryId]
+      prev.includes(subcategoryId) ? prev.filter((id) => id !== subcategoryId) : [...prev, subcategoryId]
     );
   };
 
   return (
-    <View style={[styles.container, { backgroundColor: colors.BACKGROUND }]}>
+    <View style={[commonStyles.screenContentWithPadding, { backgroundColor: colors.BACKGROUND }]}>
+      <ScreenHeader title={config.title} subtitle={config.subtitle} />
       {/* Header fijo con filtros */}
       <View style={[styles.filterSection, { backgroundColor: colors.CARD_BACKGROUND }]}>
-        <ScrollView 
-          showsVerticalScrollIndicator={false}
-          contentContainerStyle={styles.filterContent}
-        >
+        <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.filterContent}>
           {/* Tipo de búsqueda */}
           <View style={styles.filterGroup}>
-            <Text style={[styles.label, { color: colors.TEXT_PRIMARY }]}>
-              Tipo de búsqueda
-            </Text>
-            <RadioButtonGroup 
-              selectedValue={searchType} 
-              onSelect={handleSearchTypeChange} 
-            />
+            <Text style={[styles.label, { color: colors.TEXT_PRIMARY }]}>Tipo de búsqueda</Text>
+            <RadioButtonGroup selectedValue={searchType} onSelect={handleSearchTypeChange} />
           </View>
 
           {/* Categoría */}
@@ -165,11 +166,7 @@ export default function AdvancedSearchScreen() {
               <Text style={[styles.label, { color: colors.TEXT_PRIMARY }]}>
                 Subcategorías ({selectedSubcategories.length} seleccionadas)
               </Text>
-              <ScrollView 
-                horizontal 
-                showsHorizontalScrollIndicator={false}
-                style={styles.subcategoriesScroll}
-              >
+              <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.subcategoriesScroll}>
                 <View style={styles.subcategoriesContainer}>
                   {subcategories.map((subcategory) => (
                     <TouchableOpacity
@@ -180,7 +177,7 @@ export default function AdvancedSearchScreen() {
                           backgroundColor: selectedSubcategories.includes(subcategory.id)
                             ? colors.PRIMARY
                             : colors.BACKGROUND,
-                          borderColor: colors.BORDER,
+                          borderColor: colors.BORDER
                         }
                       ]}
                       onPress={() => toggleSubcategory(subcategory.id)}
@@ -189,21 +186,14 @@ export default function AdvancedSearchScreen() {
                         style={[
                           styles.subcategoryText,
                           {
-                            color: selectedSubcategories.includes(subcategory.id)
-                              ? '#FFFFFF'
-                              : colors.TEXT_PRIMARY,
+                            color: selectedSubcategories.includes(subcategory.id) ? '#FFFFFF' : colors.TEXT_PRIMARY
                           }
                         ]}
                       >
                         {subcategory.name}
                       </Text>
                       {selectedSubcategories.includes(subcategory.id) && (
-                        <Icon 
-                          name="check" 
-                          type="material-community" 
-                          size={16} 
-                          color="#FFFFFF" 
-                        />
+                        <Icon name="check" type="material-community" size={16} color="#FFFFFF" />
                       )}
                     </TouchableOpacity>
                   ))}
@@ -214,9 +204,7 @@ export default function AdvancedSearchScreen() {
 
           {/* Fechas */}
           <View style={styles.filterGroup}>
-            <Text style={[styles.label, { color: colors.TEXT_PRIMARY }]}>
-              Rango de fechas
-            </Text>
+            <Text style={[styles.label, { color: colors.TEXT_PRIMARY }]}>Rango de fechas</Text>
             <View style={styles.dateRow}>
               <DateSelector
                 label="Fecha Inicio"
@@ -245,13 +233,8 @@ export default function AdvancedSearchScreen() {
 
           {/* Búsqueda - Usa el componente BarSearch con su botón interno */}
           <View style={styles.filterGroup}>
-            <Text style={[styles.label, { color: colors.TEXT_PRIMARY }]}>
-              Buscar por texto
-            </Text>
-            <BarSearch 
-              shouldDispatch={false} 
-              onQueryChange={handleSearch}
-            />
+            <Text style={[styles.label, { color: colors.TEXT_PRIMARY }]}>Buscar por texto</Text>
+            <BarSearch shouldDispatch={false} onQueryChange={handleSearch} />
           </View>
         </ScrollView>
       </View>
@@ -263,19 +246,12 @@ export default function AdvancedSearchScreen() {
             {/* Header de resultados */}
             <View style={[styles.resultsHeader, { backgroundColor: colors.PRIMARY }]}>
               <View style={styles.resultsHeaderContent}>
-                <Icon 
-                  name="chart-box-outline" 
-                  type="material-community" 
-                  size={20} 
-                  color="#FFFFFF"
-                />
+                <Icon name="chart-box-outline" type="material-community" size={20} color="#FFFFFF" />
                 <Text style={styles.resultsHeaderText}>
                   {resultSearch.length} resultado{resultSearch.length !== 1 ? 's' : ''}
                 </Text>
               </View>
-              <Text style={styles.totalAmount}>
-                Total: {NumberFormat(sumResultSearch)}
-              </Text>
+              <Text style={styles.totalAmount}>Total: {NumberFormat(sumResultSearch)}</Text>
             </View>
 
             {/* Lista de resultados */}
@@ -289,15 +265,8 @@ export default function AdvancedSearchScreen() {
               />
             ) : (
               <View style={styles.emptyState}>
-                <Icon 
-                  name="magnify" 
-                  type="material-community" 
-                  size={64} 
-                  color={colors.TEXT_SECONDARY}
-                />
-                <Text style={[styles.emptyText, { color: colors.TEXT_SECONDARY }]}>
-                  No se encontraron resultados
-                </Text>
+                <Icon name="magnify" type="material-community" size={64} color={colors.TEXT_SECONDARY} />
+                <Text style={[styles.emptyText, { color: colors.TEXT_SECONDARY }]}>No se encontraron resultados</Text>
                 <Text style={[styles.emptySubtext, { color: colors.TEXT_SECONDARY }]}>
                   Intenta ajustar los filtros de búsqueda
                 </Text>
@@ -308,12 +277,7 @@ export default function AdvancedSearchScreen() {
 
         {!hasSearched && (
           <View style={styles.emptyState}>
-            <Icon 
-              name="file-search-outline" 
-              type="material-community" 
-              size={64} 
-              color={colors.TEXT_SECONDARY}
-            />
+            <Icon name="file-search-outline" type="material-community" size={64} color={colors.TEXT_SECONDARY} />
             <Text style={[styles.emptyText, { color: colors.TEXT_SECONDARY }]}>
               Configura los filtros y presiona buscar
             </Text>
@@ -326,7 +290,7 @@ export default function AdvancedSearchScreen() {
 
 const styles = StyleSheet.create({
   container: {
-    flex: 1,
+    flex: 1
   },
   filterSection: {
     maxHeight: '50%',
@@ -336,27 +300,27 @@ const styles = StyleSheet.create({
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
-    shadowRadius: 4,
+    shadowRadius: 4
   },
   filterContent: {
     padding: 16,
-    paddingBottom: 20,
+    paddingBottom: 20
   },
   filterGroup: {
-    marginBottom: 16,
+    marginBottom: 16
   },
   label: {
     fontSize: 14,
     fontWeight: '600',
-    marginBottom: 8,
+    marginBottom: 8
   },
   subcategoriesScroll: {
-    maxHeight: 120,
+    maxHeight: 120
   },
   subcategoriesContainer: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: 8,
+    gap: 8
   },
   subcategoryChip: {
     flexDirection: 'row',
@@ -366,59 +330,59 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     borderWidth: 1,
     gap: 6,
-    marginBottom: 8,
+    marginBottom: 8
   },
   subcategoryText: {
     fontSize: 13,
-    fontWeight: '500',
+    fontWeight: '500'
   },
   dateRow: {
     flexDirection: 'row',
-    gap: 12,
+    gap: 12
   },
   resultsSection: {
-    flex: 1,
+    flex: 1
   },
   resultsHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     paddingHorizontal: 16,
-    paddingVertical: 12,
+    paddingVertical: 12
   },
   resultsHeaderContent: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
+    gap: 8
   },
   resultsHeaderText: {
     color: '#FFFFFF',
     fontSize: 14,
-    fontWeight: '600',
+    fontWeight: '600'
   },
   totalAmount: {
     color: '#FFFFFF',
     fontSize: 16,
-    fontWeight: 'bold',
+    fontWeight: 'bold'
   },
   resultsList: {
-    padding: 8,
+    padding: 8
   },
   emptyState: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    padding: 32,
+    padding: 32
   },
   emptyText: {
     fontSize: 16,
     fontWeight: '600',
     marginTop: 16,
-    textAlign: 'center',
+    textAlign: 'center'
   },
   emptySubtext: {
     fontSize: 14,
     marginTop: 8,
-    textAlign: 'center',
-  },
+    textAlign: 'center'
+  }
 });

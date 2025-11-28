@@ -7,22 +7,34 @@ import {
   ActivityIndicator,
   TextInput,
   TouchableOpacity,
-  Alert,
+  Alert
 } from 'react-native';
 import { StackNavigationProp } from '@react-navigation/stack';
 import { RouteProp } from '@react-navigation/native';
 
-// import { Errors } from '../../utils/Errors';
-// import { getThemeByName, updateThemeColors, ThemeConfig } from '../../services/themeConfigService';
-// import { useTheme } from '../../contexts/ThemeContext';
-import { ThemeConfig } from '~/shared/types/models/theme-config.type';
-import { SettingsStackParamList } from '~/shared/types';
 import { useTheme } from '~/contexts/ThemeContext';
+
+// Services
 import { getThemeByName, updateThemeColors } from '~/services/themeConfigService';
-import { Errors } from '~/utils/Errors';
+
+// Components
+import { ScreenHeader } from '~/components/ScreenHeader';
 
 // Types
-// import { SettingsStackParamList } from '../../shared/types';
+import { ThemeConfig } from '~/shared/types/models/theme-config.type';
+import { SettingsStackParamList } from '~/shared/types';
+
+// Utils
+import { showError } from '~/utils/showError';
+
+// Theme
+import { useThemeColors } from '~/customHooks/useThemeColors';
+
+// Styles
+import { commonStyles } from '~/styles/common';
+
+// Configs
+import { screenConfigs } from '~/config/screenConfigs';
 
 type EditThemeScreenNavigationProp = StackNavigationProp<SettingsStackParamList, 'editTheme'>;
 type EditThemeScreenRouteProp = RouteProp<SettingsStackParamList, 'editTheme'>;
@@ -33,6 +45,8 @@ type EditThemeScreenProps = {
 };
 
 export default function EditThemeScreen({ navigation, route }: EditThemeScreenProps) {
+  const config = screenConfigs.graphBalances;
+
   const { themeName } = route.params;
   const [theme, setTheme] = useState<ThemeConfig | null>(null);
   const [colors, setColors] = useState<Record<string, string>>({});
@@ -51,7 +65,7 @@ export default function EditThemeScreen({ navigation, route }: EditThemeScreenPr
       setTheme(data);
       setColors(data.colors);
     } catch (error) {
-      Errors(error);
+      showError(error);
     } finally {
       setLoading(false);
     }
@@ -60,7 +74,7 @@ export default function EditThemeScreen({ navigation, route }: EditThemeScreenPr
   const handleColorChange = (key: string, value: string) => {
     setColors((prev) => ({
       ...prev,
-      [key]: value,
+      [key]: value
     }));
   };
 
@@ -78,11 +92,11 @@ export default function EditThemeScreen({ navigation, route }: EditThemeScreenPr
       Alert.alert('Éxito', 'Colores actualizados correctamente', [
         {
           text: 'OK',
-          onPress: () => navigation.goBack(),
-        },
+          onPress: () => navigation.goBack()
+        }
       ]);
     } catch (error) {
-      Errors(error);
+      showError(error);
     } finally {
       setSaving(false);
     }
@@ -107,6 +121,8 @@ export default function EditThemeScreen({ navigation, route }: EditThemeScreenPr
 
   return (
     <ScrollView style={styles.container}>
+      <ScreenHeader title={config.title} subtitle={config.subtitle} />
+
       <View style={styles.header}>
         <Text style={styles.headerTitle}>Editar Tema: {theme.themeName}</Text>
         <Text style={styles.headerSubtitle}>Modifica los colores del tema</Text>
@@ -157,42 +173,42 @@ export default function EditThemeScreen({ navigation, route }: EditThemeScreenPr
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f5f5f5',
+    backgroundColor: '#f5f5f5'
   },
   centerContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#f5f5f5',
+    backgroundColor: '#f5f5f5'
   },
   loadingText: {
     marginTop: 10,
     fontSize: 16,
-    color: '#666',
+    color: '#666'
   },
   errorText: {
     fontSize: 16,
-    color: '#f44336',
+    color: '#f44336'
   },
   header: {
     backgroundColor: '#9c27b0',
     padding: 20,
-    marginBottom: 10,
+    marginBottom: 10
   },
   headerTitle: {
     fontSize: 24,
     fontWeight: 'bold',
     color: 'white',
     marginBottom: 5,
-    textTransform: 'capitalize',
+    textTransform: 'capitalize'
   },
   headerSubtitle: {
     fontSize: 14,
     color: 'white',
-    opacity: 0.9,
+    opacity: 0.9
   },
   colorsContainer: {
-    padding: 10,
+    padding: 10
   },
   colorRow: {
     backgroundColor: 'white',
@@ -203,20 +219,20 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.1,
     shadowRadius: 2,
-    elevation: 2,
+    elevation: 2
   },
   colorInfo: {
-    marginBottom: 10,
+    marginBottom: 10
   },
   colorLabel: {
     fontSize: 16,
     fontWeight: 'bold',
     color: '#333',
-    marginBottom: 8,
+    marginBottom: 8
   },
   colorPreview: {
     flexDirection: 'row',
-    alignItems: 'center',
+    alignItems: 'center'
   },
   colorBox: {
     width: 40,
@@ -224,12 +240,12 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     borderWidth: 1,
     borderColor: '#e0e0e0',
-    marginRight: 10,
+    marginRight: 10
   },
   colorValue: {
     fontSize: 14,
     color: '#666',
-    fontFamily: 'monospace',
+    fontFamily: 'monospace'
   },
   colorInput: {
     borderWidth: 1,
@@ -237,36 +253,36 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     padding: 12,
     fontSize: 16,
-    backgroundColor: '#fafafa',
+    backgroundColor: '#fafafa'
   },
   buttonContainer: {
     padding: 15,
     gap: 10,
-    marginTop: 10,
+    marginTop: 10
   },
   saveButton: {
     backgroundColor: '#4caf50',
     paddingVertical: 15,
     borderRadius: 8,
-    alignItems: 'center',
+    alignItems: 'center'
   },
   saveButtonDisabled: {
-    opacity: 0.6,
+    opacity: 0.6
   },
   saveButtonText: {
     color: 'white',
     fontSize: 18,
-    fontWeight: 'bold',
+    fontWeight: 'bold'
   },
   cancelButton: {
     backgroundColor: '#f44336',
     paddingVertical: 15,
     borderRadius: 8,
-    alignItems: 'center',
+    alignItems: 'center'
   },
   cancelButtonText: {
     color: 'white',
     fontSize: 18,
-    fontWeight: 'bold',
-  },
+    fontWeight: 'bold'
+  }
 });

@@ -2,12 +2,12 @@ import React, { useState } from "react";
 import { useForm, Controller } from "react-hook-form";
 import { StyleSheet, Text, View } from "react-native";
 import { Input } from "react-native-elements";
-import { Errors } from "~/utils/Errors";
 import MyLoading from "~/components/loading/MyLoading";
 import MyButton from "~/components/MyButton";
 import { passwordRecovery } from "../../services/auth";
 import { useSelector } from "react-redux";
-import ShowToast from '../../utils/toastUtils';
+import { ShowToast } from '../../utils/toastUtils';
+import {showError} from '~/utils/showError';
 
 export default function ResetPasswordScreen({navigation}) {
     const {
@@ -34,7 +34,7 @@ export default function ResetPasswordScreen({navigation}) {
             }
         } catch (error) {
             setLoading(false);
-            Errors(error);
+            showError(error);
         }
     };
 

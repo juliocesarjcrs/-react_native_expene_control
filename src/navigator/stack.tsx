@@ -10,7 +10,7 @@ import { setIsAuth, setLoadingAuth, setUser } from "../features/auth/authSlice";
 import Routes from './stackRoutes'
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import {Icon} from 'react-native-elements'
-import {Errors} from '../utils/Errors';
+import { showError } from "~/utils/showError";
 import { BalanceStackParamList, ExpenseStackParamList, IncomeStackParamList, SettingsStackParamList, UserModel } from "../shared/types";
 
 // Services
@@ -21,6 +21,7 @@ import { RootState } from "../shared/types/reducers";
 import { AppDispatch } from "../shared/types/reducers/root-state.type";
 import { FeatureFlagsProvider } from "~/contexts/FeatureFlagsContext";
 import { ThemeProvider } from "~/contexts/ThemeContext";
+import { minimalHeaderOptions, MinimalNavigationTheme } from "./navigationTheme";
 
 export default function MyStack() {
   const dispatch: AppDispatch = useDispatch();
@@ -43,7 +44,7 @@ export default function MyStack() {
       dispatch(setLoadingAuth(false));
     } catch(e) {
       dispatch(setLoadingAuth(false));
-      Errors(e)
+      showError(e)
     }
   }
   const Stack = createStackNavigator();
@@ -57,7 +58,7 @@ const SettingsStack = createStackNavigator<SettingsStackParamList>();
 
 function ExpenseStackScreen() {
   return (
-    <ExpenseStack.Navigator>
+    <ExpenseStack.Navigator screenOptions={minimalHeaderOptions}>
        <ExpenseStack.Screen name="main" component={Routes.MainScreen} options={{ title: 'Resumen gastos del mes' }}/>
         <ExpenseStack.Screen name="sumary" component={Routes.SumaryExpenseScreen} options={{ title: 'Resumen' }}/>
         <ExpenseStack.Screen name="createExpense" component={Routes.CreateExpenseScreen} options={{ title: 'Ingresar gasto' }}  />
@@ -75,7 +76,7 @@ function ExpenseStackScreen() {
 // //screenOptions={{headerShown: false}}
 function IncomeStackScreen() {
   return (
-    <IncomeStack.Navigator>
+    <IncomeStack.Navigator screenOptions={minimalHeaderOptions}>
             <IncomeStack.Screen name="sumaryIncomes" component={Routes.SumaryIncomesScreen} options={{ title: 'Resumen ingresos del mes' }}/>
             <IncomeStack.Screen name="createIncome" component={Routes.CreateIncomeScreen} options={{ title: 'Agregar ingreso' }}/>
             <IncomeStack.Screen name="createCategory" component={Routes.CreateCategoryScreen} options={{ title: 'Crear Categoría' }} />
@@ -88,7 +89,7 @@ function IncomeStackScreen() {
 
 function BalanceStackScreen() {
   return (
-    <BalanceStack.Navigator>
+    <BalanceStack.Navigator screenOptions={minimalHeaderOptions}>
             <BalanceStack.Screen name="cashFlow" component={Routes.CashFlowScreen} options={{ title: 'Balance' }}/>
             <BalanceStack.Screen name="graphBalances" component={Routes.GraphBalancesScreen} options={{ title: 'Graficas Balance' }}/>
     </BalanceStack.Navigator>
@@ -97,7 +98,7 @@ function BalanceStackScreen() {
 
 function SettingsStackScreen() {
   return (
-    <SettingsStack.Navigator>
+    <SettingsStack.Navigator screenOptions={minimalHeaderOptions}>
             <SettingsStack.Screen name="settings" component={Routes.SettingsScreen} options={{ title: 'Ajustes' }}/>
             <SettingsStack.Screen name="editUser" component={Routes.EditUserScreen} options={{ title: 'Editar perfil' }}/>
             <SettingsStack.Screen name="createUser" component={Routes.CreateUserScreen} options={{ title: 'Crear usuario' }}/>
@@ -120,7 +121,7 @@ function SettingsStackScreen() {
 const StatisticsStack = createStackNavigator();
 function StatisticsStackScreen() {
   return (
-    <StatisticsStack.Navigator>
+    <StatisticsStack.Navigator screenOptions={minimalHeaderOptions}>
       {/* <StatisticsStack.Screen name="overview" component={Routes.StatisticsOverviewScreen} options={{ title: 'Estadísticas generales' }}/> */}
       <StatisticsStack.Screen name="comparePeriods" component={Routes.ComparePeriodsScreen} options={{ title: 'Comparar períodos' }}/>
     </StatisticsStack.Navigator>
@@ -131,7 +132,7 @@ const Tab = createBottomTabNavigator();
 return (
   <ThemeProvider>
     <FeatureFlagsProvider>
-      <NavigationContainer>
+      <NavigationContainer theme={MinimalNavigationTheme}>
         {isAuth ? (
           <Tab.Navigator
             screenOptions={({ route }) => ({
@@ -154,7 +155,8 @@ return (
                 return <Icon type="material-community" color={color} name={iconName} size={size} />;
               },
               tabBarActiveTintColor: 'tomato',
-              tabBarInactiveTintColor: 'gray'
+              tabBarInactiveTintColor: 'gray',
+               headerShown: false 
             })}
           >
             <Tab.Screen name="Gastos" component={ExpenseStackScreen} />

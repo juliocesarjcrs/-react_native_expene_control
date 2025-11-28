@@ -7,7 +7,7 @@ import { Icon, Divider, Tooltip, TooltipProps } from 'react-native-elements';
 import { deleteIncome } from '../../../services/incomes';
 
 // Types
-import { Errors } from '../../../utils/Errors';
+import { showError } from '~/utils/showError';
 import { CategoryIncomesSumary } from '~/shared/types/services';
 
 // Utils
@@ -43,11 +43,10 @@ const MyAcordeonIncome: React.FC<MyAcordeonIncomeProps> = ({ data, editCategory,
     ]);
   const deleteItem = async (idIncome: number) => {
     try {
-      console.log('idIncome', idIncome, typeof idIncome);
       await deleteIncome(idIncome);
       updateList();
     } catch (e) {
-      Errors(e);
+      showError(e);
     }
   };
 

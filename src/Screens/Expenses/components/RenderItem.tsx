@@ -14,9 +14,9 @@ import { ExtendedExpenseModel } from "../../../shared/types/models/expense.type"
 import { ExpenseStackParamList } from "../../../shared/types";
 
 // Utils
-import ShowToast from "../../../utils/toastUtils";
-import {Errors} from '../../../utils/Errors';
+import { ShowToast } from "../../../utils/toastUtils";
 import {DateFormat, NumberFormat} from '../../../utils/Helpers';
+import { showError } from "~/utils/showError";
 
 // styles
 import {ICON, MUTED} from '../../../styles/colors';
@@ -43,7 +43,7 @@ const RenderItem: React.FC<RenderItemProps> = ({ item, navigation, updateList })
       ShowToast();
       updateList();
     } catch (e) {
-      Errors(e);
+      showError(e);
     }
   };
   const createTwoButtonAlert = (expenseDelete: typeof item) => {

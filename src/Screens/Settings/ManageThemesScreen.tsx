@@ -1,24 +1,28 @@
 import React, { useEffect, useState } from 'react';
-import {
-  StyleSheet,
-  View,
-  Text,
-  ScrollView,
-  ActivityIndicator,
-  TouchableOpacity,
-  Alert,
-} from 'react-native';
+import { StyleSheet, View, Text, ScrollView, ActivityIndicator, TouchableOpacity, Alert } from 'react-native';
 import { StackNavigationProp } from '@react-navigation/stack';
 import { RouteProp } from '@react-navigation/native';
 
 import { getAllThemes, activateTheme } from '../../services/themeConfigService';
 import { useTheme } from '../../contexts/ThemeContext';
 
+// Components
+import MyButton from '~/components/MyButton';
+import { ScreenHeader } from '~/components/ScreenHeader';
+
 // Types
 import { SettingsStackParamList } from '../../shared/types';
 import { ThemeConfig } from '~/shared/types/models/theme-config.type';
-import MyButton from '~/components/MyButton';
 import { showError } from '~/utils/showError';
+
+// Theme
+import { useThemeColors } from '~/customHooks/useThemeColors';
+
+// Styles
+import { commonStyles } from '~/styles/common';
+
+// Configs
+import { screenConfigs } from '~/config/screenConfigs';
 
 type ManageThemesScreenNavigationProp = StackNavigationProp<SettingsStackParamList>;
 type ManageThemesScreenRouteProp = RouteProp<SettingsStackParamList>;
@@ -29,6 +33,8 @@ type ManageThemesScreenProps = {
 };
 
 export default function ManageThemesScreen({ navigation }: ManageThemesScreenProps) {
+  const config = screenConfigs.manageThemes;
+  const colors = useThemeColors();
   const [themes, setThemes] = useState<ThemeConfig[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [activating, setActivating] = useState<string | null>(null);
@@ -63,7 +69,7 @@ export default function ManageThemesScreen({ navigation }: ManageThemesScreenPro
       setThemes((prev) =>
         prev.map((t) => ({
           ...t,
-          isActive: t.themeName === themeName ? 1 : 0,
+          isActive: t.themeName === themeName ? 1 : 0
         }))
       );
 
@@ -92,11 +98,8 @@ export default function ManageThemesScreen({ navigation }: ManageThemesScreenPro
   }
 
   return (
-    <ScrollView style={styles.container}>
-      <View style={styles.header}>
-        <Text style={styles.headerTitle}>Gestión de Temas</Text>
-        <Text style={styles.headerSubtitle}>Selecciona el tema del sistema</Text>
-      </View>
+    <ScrollView style={[commonStyles.screenContentWithPadding, { backgroundColor: colors.BACKGROUND }]}>
+      <ScreenHeader title={config.title} subtitle={config.subtitle} />
 
       {themes.map((theme) => (
         <View key={theme.id} style={styles.themeCard}>
@@ -135,7 +138,7 @@ export default function ManageThemesScreen({ navigation }: ManageThemesScreenPro
                 )}
               </TouchableOpacity>
             )}
-             <MyButton onPress={() => navigateToEditTheme(theme.themeName)} title="Editar Colores" />
+            <MyButton onPress={() => navigateToEditTheme(theme.themeName)} title="Editar Colores" />
           </View>
         </View>
       ))}
@@ -152,34 +155,34 @@ export default function ManageThemesScreen({ navigation }: ManageThemesScreenPro
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f5f5f5',
+    backgroundColor: '#f5f5f5'
   },
   centerContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#f5f5f5',
+    backgroundColor: '#f5f5f5'
   },
   loadingText: {
     marginTop: 10,
     fontSize: 16,
-    color: '#666',
+    color: '#666'
   },
   header: {
     backgroundColor: '#9c27b0',
     padding: 20,
-    marginBottom: 10,
+    marginBottom: 10
   },
   headerTitle: {
     fontSize: 24,
     fontWeight: 'bold',
     color: 'white',
-    marginBottom: 5,
+    marginBottom: 5
   },
   headerSubtitle: {
     fontSize: 14,
     color: 'white',
-    opacity: 0.9,
+    opacity: 0.9
   },
   themeCard: {
     backgroundColor: 'white',
@@ -191,36 +194,36 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 4,
-    elevation: 3,
+    elevation: 3
   },
   themeHeader: {
-    marginBottom: 15,
+    marginBottom: 15
   },
   themeTitleContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
+    justifyContent: 'space-between'
   },
   themeName: {
     fontSize: 20,
     fontWeight: 'bold',
     color: '#333',
-    textTransform: 'capitalize',
+    textTransform: 'capitalize'
   },
   activeBadge: {
     backgroundColor: '#4caf50',
     paddingHorizontal: 10,
     paddingVertical: 5,
-    borderRadius: 5,
+    borderRadius: 5
   },
   activeBadgeText: {
     fontSize: 12,
     fontWeight: 'bold',
-    color: 'white',
+    color: 'white'
   },
   colorPreview: {
     flexDirection: 'row',
-    marginBottom: 15,
+    marginBottom: 15
   },
   colorBox: {
     width: 50,
@@ -228,11 +231,11 @@ const styles = StyleSheet.create({
     marginRight: 8,
     borderRadius: 8,
     borderWidth: 1,
-    borderColor: '#e0e0e0',
+    borderColor: '#e0e0e0'
   },
   buttonContainer: {
     flexDirection: 'row',
-    gap: 10,
+    gap: 10
   },
   activateButton: {
     flex: 1,
@@ -240,31 +243,31 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     borderRadius: 8,
     alignItems: 'center',
-    justifyContent: 'center',
+    justifyContent: 'center'
   },
   activateButtonText: {
     color: 'white',
     fontSize: 16,
-    fontWeight: 'bold',
+    fontWeight: 'bold'
   },
   editButton: {
     flex: 1,
     backgroundColor: '#2196f3',
     paddingVertical: 12,
     borderRadius: 8,
-    alignItems: 'center',
+    alignItems: 'center'
   },
   editButtonText: {
     color: 'white',
     fontSize: 16,
-    fontWeight: 'bold',
+    fontWeight: 'bold'
   },
   emptyState: {
     padding: 40,
-    alignItems: 'center',
+    alignItems: 'center'
   },
   emptyText: {
     fontSize: 16,
-    color: '#999',
-  },
+    color: '#999'
+  }
 });

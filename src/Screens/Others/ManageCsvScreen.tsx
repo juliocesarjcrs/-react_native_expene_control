@@ -4,7 +4,22 @@ import { Directory, File, Paths } from 'expo-file-system';
 import * as Sharing from 'expo-sharing';
 import { Icon } from 'react-native-elements';
 
+// Components
+import { ScreenHeader } from '~/components/ScreenHeader';
+
+// Theme
+import { useThemeColors } from '~/customHooks/useThemeColors';
+
+// Styles
+import { commonStyles } from '~/styles/common';
+
+// Configs
+import { screenConfigs } from '~/config/screenConfigs';
+
+
 export default function ManageCSVsScreen(): React.JSX.Element {
+    const config = screenConfigs.manageCSV;
+    const colors = useThemeColors();
   const [csvFiles, setCsvFiles] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
 
@@ -60,7 +75,8 @@ export default function ManageCSVsScreen(): React.JSX.Element {
   };
 
   return (
-    <View style={styles.container}>
+    <View style={[commonStyles.screenContentWithPadding, { backgroundColor: colors.BACKGROUND }]}>
+          <ScreenHeader title={config.title} subtitle={config.subtitle} />
       <Text style={styles.title}>Archivos CSV guardados</Text>
       <FlatList
         data={csvFiles}
@@ -89,7 +105,7 @@ export default function ManageCSVsScreen(): React.JSX.Element {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#fff', padding: 16 },
+
   title: { fontSize: 20, fontWeight: 'bold', marginBottom: 16, textAlign: 'center' },
   row: {
     flexDirection: 'row',

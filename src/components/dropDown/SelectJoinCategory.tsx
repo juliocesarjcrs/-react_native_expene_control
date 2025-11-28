@@ -7,7 +7,6 @@ import { useSelector } from 'react-redux';
 import { getAllSubcategoriesExpensesByMonth } from '../../services/categories';
 
 // Utils
-import { Errors } from '../../utils/Errors';
 import ErrorText from '../ErrorText';
 
 // Components
@@ -25,6 +24,7 @@ import {
 import { COLOR_SEPARATOR_DROPDOWN, COLOR_TEXT_DROPDOWN, ICON_DROPDOWN } from '~/styles/colors';
 import { MEGA_BIG } from '~/styles/fonts';
 import { Icon } from 'react-native-elements';
+import { showError } from '~/utils/showError';
 
 interface SelectJoinCategoryProps {
   fetchExpensesSubcategory: (data: DropDownSelectJoinCategoryFormat) => void;
@@ -75,7 +75,7 @@ const SelectJoinCategory = forwardRef(
         defaultIdCategory(dataFormat);
       } catch (error) {
         setLoading(false);
-        Errors(error);
+        showError(error);
       }
     };
     const defaultIdCategory = (categoriesFormat: CategoryFormat[]) => {

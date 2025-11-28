@@ -1,6 +1,6 @@
 import { StatusBar } from 'expo-status-bar';
 import React, { useEffect, useState } from 'react';
-import { Keyboard, StyleSheet, View } from 'react-native';
+import { Keyboard, View } from 'react-native';
 import { useForm, Controller } from 'react-hook-form';
 import { Input } from 'react-native-elements';
 import { RouteProp } from '@react-navigation/native';
@@ -12,14 +12,24 @@ import { EditCategory, getCategory } from '../../services/categories';
 import MyButton from '~/components/MyButton';
 import MyLoading from '~/components/loading/MyLoading';
 import ModalIcon from '../../components/modal/ModalIcon';
+import { ScreenHeader } from '~/components/ScreenHeader';
 
 // Types
 import { CategoryModel, ExpenseStackParamList } from '~/shared/types';
 import { EditCategoryPayload } from '~/shared/types/services';
 
 // Utils
-import { Errors } from '../../utils/Errors';
-import ShowToast from '../../utils/toastUtils';
+import { ShowToast } from '../../utils/toastUtils';
+import { showError } from '~/utils/showError';
+
+// Theme
+import { useThemeColors } from '~/customHooks/useThemeColors';
+
+// Styles
+import { commonStyles } from '~/styles/common';
+
+// Configs
+import { screenConfigs } from '~/config/screenConfigs';
 
 type EditCategoryScreenRouteProp = RouteProp<ExpenseStackParamList, 'editCategory'>;
 
@@ -29,6 +39,8 @@ interface EditCategoryScreenProps {
 export type CategoryFormData = Omit<CategoryModel, 'budget'> & { budget: string };
 
 export default function EditCategoryScreen({ route }: EditCategoryScreenProps) {
+   const screenConfig = screenConfigs.editCategory;
+    const colors = useThemeColors();
   const idCategory = route.params.idCategory;
 
   const [category, setCategory] = useState<CategoryFormData | undefined>(undefined);
@@ -60,7 +72,7 @@ export default function EditCategoryScreen({ route }: EditCategoryScreenProps) {
       setCategory(dataTransfor);
       reset(dataTransfor);
     } catch (e) {
-      Errors(e);
+      showError(e);
     }
   };
 
@@ -75,7 +87,7 @@ export default function EditCategoryScreen({ route }: EditCategoryScreenProps) {
       ShowToast();
     } catch (error) {
       setLoading(false);
-      Errors(error);
+      showError(error);
     }
   };
   const setIconHandle = (val: string) => {
@@ -83,7 +95,8 @@ export default function EditCategoryScreen({ route }: EditCategoryScreenProps) {
   };
 
   return (
-    <View style={styles.container}>
+   <View style={[commonStyles.screenContainer, { backgroundColor: colors.BACKGROUND }]}>
+        <ScreenHeader title={screenConfig.title} subtitle={screenConfig.subtitle} />
       <StatusBar style="auto" />
       <Controller
         name="name"
@@ -139,11 +152,3 @@ export default function EditCategoryScreen({ route }: EditCategoryScreenProps) {
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#fff',
-    alignItems: 'center',
-    justifyContent: 'center'
-  }
-});

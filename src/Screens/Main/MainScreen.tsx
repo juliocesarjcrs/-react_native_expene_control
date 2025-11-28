@@ -1,13 +1,9 @@
 import React, { useEffect, useState } from 'react';
 import { ScrollView, StyleSheet, Text, View, Image } from 'react-native';
-import MyPieChart from '../../components/charts/MyPieChart';
 import { AsignColor, compareValues, NumberFormat } from '../../utils/Helpers';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useDispatch, useSelector } from 'react-redux';
-import { MUTED, SECUNDARY } from '../../styles/colors';
-import { Button } from 'react-native-elements';
-import { BIG } from '../../styles/fonts';
-import { Errors } from '../../utils/Errors';
+
 import Constants from 'expo-constants';
 
 import { URL_BASE } from '@env';
@@ -29,12 +25,15 @@ import CardLastExpenses, { CardLastExpensesNavigationProp } from './components/C
 import MyMonthPicker from '../../components/datePicker/MyMonthPicker';
 import MyLoading from '../../components/loading/MyLoading';
 import MyButton from '../../components/MyButton';
+import OptionsGrid from './components/OptionsGrid';
+import MyDonutChart from '~/components/charts/MyDonutChart';
 
 // Screens
 import { ChatScreen } from '../../Screens/common/ChatScreen';
 import { useFeatureFlag } from '~/customHooks/useFeatureFlag';
-import OptionsGrid from './components/OptionsGrid';
-import MyDonutChart from '~/components/charts/MyDonutChart';
+import { ScreenHeader } from '~/components/ScreenHeader';
+import { screenConfigs } from '~/config/screenConfigs';
+import { showError } from '~/utils/showError';
 
 type MainScreenNavigationProp = StackNavigationProp<ExpenseStackParamList, 'main'>;
 
@@ -51,6 +50,7 @@ type CategoryDataFormat = {
 };
 
 export default function MainScreen({ navigation }: MainScreenProps) {
+  const config = screenConfigs.main;
   const month = useSelector((state: RootState) => state.date.month);
   const dispatch: AppDispatch = useDispatch();
   const [categories, setCategories] = useState<CategoryDataFormat[]>([]);
@@ -85,7 +85,7 @@ export default function MainScreen({ navigation }: MainScreenProps) {
       setCategories(dataFormat);
     } catch (e) {
       setLoading(false);
-      Errors(e);
+      showError(e);
     }
   };
   const cutName = (name: string) => {
@@ -106,7 +106,7 @@ export default function MainScreen({ navigation }: MainScreenProps) {
       await AsyncStorage.removeItem('user');
       dispatch(setIsAuth(false));
     } catch (error) {
-      Errors(error);
+      showError(error);
     }
   };
 
@@ -128,7 +128,7 @@ export default function MainScreen({ navigation }: MainScreenProps) {
         getUrlAws(data.image);
       }
     } catch (error) {
-      Errors(error);
+      showError(error);
     }
   };
   // get url signed AWS
@@ -145,7 +145,7 @@ export default function MainScreen({ navigation }: MainScreenProps) {
       }
     } catch (error) {
       setLoading(false);
-      Errors(error);
+      showError(error);
     }
   };
 
@@ -154,6 +154,10 @@ export default function MainScreen({ navigation }: MainScreenProps) {
 
   return (
     <View style={styles.container}>
+        <ScreenHeader 
+        title={config.title} 
+        subtitle={config.subtitle} 
+      />
       <ScrollView contentContainerStyle={styles.scrollContent}>
         {/* HEADER */}
         <View style={styles.header}>
@@ -193,7 +197,6 @@ export default function MainScreen({ navigation }: MainScreenProps) {
             <MyLoading />
           ) : total > 0 ? (
             <MyDonutChart data={categories} total={total} />
-            // <MyPieChart data={categories} />
           ) : (
             <Text style={styles.textMuted}>No se registran gastos en este mes</Text>
           )}

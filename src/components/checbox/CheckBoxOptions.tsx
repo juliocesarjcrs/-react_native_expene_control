@@ -5,11 +5,11 @@ import { View, StyleSheet, TouchableOpacity } from "react-native";
 import { CheckBox, Icon } from "react-native-elements";
 import Popover from "react-native-popover-view";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { Errors } from "../../utils/Errors";
 import { DateFormat, GetInitialMonth } from "../../utils/Helpers";
 import {ICON} from '../../styles/colors';
 import { StackNavigationProp } from "@react-navigation/stack";
 import { ParamListBase } from '@react-navigation/native';
+import { showError } from "~/utils/showError";
 
 type CheckboxOption = {
     id: number;
@@ -56,7 +56,7 @@ interface CheckBoxOptionsProps<T extends StackNavigationProp<ParamListBase>> {
             )}`;
             setCheckboxes(copyCheckboxes);
         } catch (error) {
-            Errors(error);
+            showError(error);
         }
     };
 

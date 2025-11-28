@@ -13,7 +13,7 @@ import { getAllSubcategoriesExpensesByMonth } from '../../services/categories';
 import MyButton from '~/components/MyButton';
 import ErrorText from '../../components/ErrorText';
 import MyLoading from '~/components/loading/MyLoading';
-import { useThemeColors } from '~/customHooks/useThemeColors';
+import { ScreenHeader } from '~/components/ScreenHeader';
 
 // Types
 import DateTimePicker, { DateTimePickerEvent } from '@react-native-community/datetimepicker';
@@ -21,15 +21,23 @@ import DropDownPicker, { ItemType } from 'react-native-dropdown-picker';
 import { ExpenseStackParamList, SubcategoryModel } from '~/shared/types';
 import { CategoryOption, FormValues, SubcategoryOption } from '~/shared/types/screens/expenses/edit-expenses.type';
 import { EditExpensePayload, GetOneExpenseResponse } from '~/shared/types/services/expense-service.type';
+import { StackNavigationProp } from '@react-navigation/stack';
 
 // Utils
 import { NumberFormat, DateFormat } from '../../utils/Helpers';
 import { showError } from '~/utils/showError';
-import ShowToast from '../../utils/toastUtils';
-// import { CateroryFormat } from '~/shared/types/components';
-import SelectJoinCategory from '~/components/dropDown/SelectJoinCategory';
-import { StackNavigationProp } from '@react-navigation/stack';
+import { ShowToast } from '../../utils/toastUtils';
+
 import { RouteProp } from '@react-navigation/native';
+
+// Theme
+import { useThemeColors } from '~/customHooks/useThemeColors';
+
+// Styles
+import { commonStyles } from '~/styles/common';
+
+// Configs
+import { screenConfigs } from '~/config/screenConfigs';
 
 type EditExpenseScreenNavigationProp = StackNavigationProp<ExpenseStackParamList, 'editExpense'>;
 type EditExpenseScreenRouteProp = RouteProp<ExpenseStackParamList, 'editExpense'>;
@@ -42,6 +50,7 @@ interface EditExpenseScreenProps {
 
 
 export default function EditExpenseScreen({ route, navigation }: EditExpenseScreenProps) {
+  const config = screenConfigs.editExpense;
   const colors = useThemeColors();
   const idExpense = route.params.objectExpense.id;
   const objectExpense = route.params.objectExpense;
@@ -224,7 +233,8 @@ export default function EditExpenseScreen({ route, navigation }: EditExpenseScre
   };
 
   return (
-    <View style={[styles.container, { backgroundColor: colors.BACKGROUND }]}>
+     <View style={[commonStyles.screenContentWithPadding, { backgroundColor: colors.BACKGROUND }]}>
+         <ScreenHeader title={config.title} subtitle={config.subtitle} />
       <View style={[styles.card, { backgroundColor: colors.CARD_BACKGROUND, borderColor: colors.BORDER }]}>
         {/* COST */}
         <Controller
@@ -397,9 +407,6 @@ export default function EditExpenseScreen({ route, navigation }: EditExpenseScre
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1
-  },
   card: {
     flex: 1,
     padding: 12,

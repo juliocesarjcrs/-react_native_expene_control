@@ -2,11 +2,11 @@ import React, { useState } from "react";
 import { useForm, Controller } from "react-hook-form";
 import { StyleSheet, Text, View } from "react-native";
 import { Input } from "react-native-elements";
-import { Errors } from "~/utils/Errors";
 import MyLoading from "~/components/loading/MyLoading";
 import MyButton from "~/components/MyButton";
 import { checkRecoverycode } from "../../services/auth";
 import { useSelector } from "react-redux";
+import {showError} from '~/utils/showError';
 
 export default function CheckCodePasswordScreen({navigation}) {
 
@@ -33,7 +33,7 @@ export default function CheckCodePasswordScreen({navigation}) {
             }
         } catch (error) {
             setLoading(false);
-            Errors(error);
+            showError(error);
         }
     };
 

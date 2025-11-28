@@ -11,7 +11,8 @@ import { CreateIncome } from '../../services/incomes';
 import MyLoading from '../../components/loading/MyLoading';
 import ErrorText from '../../components/ErrorText';
 import MyButton from '~/components/MyButton';
-import ShowToast from '../../utils/toastUtils';
+import { ShowToast } from '~/utils/toastUtils';
+import { ScreenHeader } from '~/components/ScreenHeader';
 
 // Types
 import { IncomeStackParamList } from '../../shared/types';
@@ -19,36 +20,38 @@ import { CreateIncomePayload } from '../../shared/types/services/income-service.
 
 // Utils
 import { DateFormat } from '../../utils/Helpers';
-import { Errors } from '../../utils/Errors';
+import { showError } from '~/utils/showError';
 
 // Styles
 import { DateSelector } from '../../components/datePicker';
 import SelectOnlyCategory from '../../components/dropDown/SelectOnlyCategory';
 import { DropDownSelectFormat } from '../../shared/types/components';
 import { IncomesPayloadOnSubmit } from '~/shared/types/screens/incomes';
+import { commonStyles } from '~/styles/common';
 
 // Theme
 import { useThemeColors } from '~/customHooks/useThemeColors';
 
-type CreateIncomeScreenNavigationProp = StackNavigationProp<
-  IncomeStackParamList,
-  'lastIncomes'
->;
+// Configs
+import { screenConfigs } from '~/config/screenConfigs';
+
+type CreateIncomeScreenNavigationProp = StackNavigationProp<IncomeStackParamList, 'lastIncomes'>;
 
 interface CreateIncomeScreenProps {
   navigation: CreateIncomeScreenNavigationProp;
 }
 
 export default function CreateIncomeScreen({ navigation }: CreateIncomeScreenProps) {
+  const config = screenConfigs.createIncome;
   const colors = useThemeColors();
 
   const {
     handleSubmit,
     control,
     reset,
-    formState: { errors },
+    formState: { errors }
   } = useForm({
-    defaultValues: { amount: '', commentary: '' },
+    defaultValues: { amount: '', commentary: '' }
   });
 
   const [categoryId, setCategoryId] = useState<number | null>(null);
@@ -73,13 +76,13 @@ export default function CreateIncomeScreen({ navigation }: CreateIncomeScreenPro
 
       const payloadSend = {
         ...payload,
-        amount: parseInt(payload.amount),
+        amount: parseInt(payload.amount)
       };
 
       const dataSend: CreateIncomePayload = {
         ...payloadSend,
         categoryId,
-        date: DateFormat(date, 'YYYY-MM-DD'),
+        date: DateFormat(date, 'YYYY-MM-DD')
       };
 
       setLoading(true);
@@ -93,12 +96,13 @@ export default function CreateIncomeScreen({ navigation }: CreateIncomeScreenPro
       navigation.navigate('sumaryIncomes');
     } catch (error) {
       setLoading(false);
-      Errors(error);
+      showError(error);
     }
   };
 
   return (
-    <View style={[styles.container, { backgroundColor: colors.BACKGROUND }]}>
+    <View style={[commonStyles.screenContentWithPadding, { backgroundColor: colors.BACKGROUND }]}>
+      <ScreenHeader title={config.title} subtitle={config.subtitle} />
       <SelectOnlyCategory searchType={1} handleCategoryChange={handleCategoryChange} />
 
       {!categoryId ? <ErrorText msg="Necesita una categoria de ingresos" /> : null}
@@ -112,8 +116,8 @@ export default function CreateIncomeScreen({ navigation }: CreateIncomeScreenPro
           min: { value: 1, message: 'El minimó valor aceptado es 1' },
           max: {
             value: 99999999,
-            message: 'El costo no puede superar los 99.999.999',
-          },
+            message: 'El costo no puede superar los 99.999.999'
+          }
         }}
         render={({ field: { onChange, value } }) => (
           <Input
@@ -138,8 +142,8 @@ export default function CreateIncomeScreen({ navigation }: CreateIncomeScreenPro
         rules={{
           maxLength: {
             value: 200,
-            message: 'El comentario no puede superar los 200 caracteres.',
-          },
+            message: 'El comentario no puede superar los 200 caracteres.'
+          }
         }}
         render={({ field: { onChange, value } }) => (
           <Input
@@ -167,11 +171,7 @@ export default function CreateIncomeScreen({ navigation }: CreateIncomeScreenPro
         onCancel={() => setShowDate(false)}
       />
 
-      {loading ? (
-        <MyLoading />
-      ) : (
-        <MyButton title="Guardar" onPress={handleSubmit(onSubmit)} />
-      )}
+      {loading ? <MyLoading /> : <MyButton title="Guardar" onPress={handleSubmit(onSubmit)} />}
     </View>
   );
 }
@@ -179,6 +179,6 @@ export default function CreateIncomeScreen({ navigation }: CreateIncomeScreenPro
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    padding: 16,
-  },
+    padding: 16
+  }
 });

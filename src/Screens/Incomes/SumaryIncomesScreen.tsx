@@ -12,6 +12,7 @@ import MyAcordeonIncome from './components/MyAcordeonIncome';
 import MyLoading from '~/components/loading/MyLoading';
 import CardLastIncomes, { CardLastIncomesNavigationProp } from '../Main/components/CardLastIncomes';
 import MyButton from '~/components/MyButton';
+import { ScreenHeader } from '~/components/ScreenHeader';
 
 // Types
 import { RootState } from '~/shared/types/reducers';
@@ -20,10 +21,17 @@ import { IncomeStackParamList } from '~/shared/types';
 
 // Utils
 import { DateFormat, NumberFormat } from '../../utils/Helpers';
-import { Errors } from '../../utils/Errors';
+import { showError } from '~/utils/showError';
+
+// Theme
+import { useThemeColors } from '~/customHooks/useThemeColors';
 
 // Styles
 import { BIG } from '../../styles/fonts';
+import { commonStyles } from '~/styles/common';
+
+// Configs
+import { screenConfigs } from '~/config/screenConfigs';
 
 export type SumaryIncomesScreenNavigationProp = StackNavigationProp<IncomeStackParamList, 'sumaryIncomes'>;
 type SumaryIncomesScreenRouteProp = RouteProp<IncomeStackParamList, 'sumaryIncomes'>;
@@ -34,6 +42,8 @@ interface SumaryIncomesScreenProps {
 }
 
 export default function SumaryIncomesScreen({ navigation }: SumaryIncomesScreenProps) {
+  const config = screenConfigs.sumaryIncomes;
+  const colors = useThemeColors();
   const [total, setTotal] = useState(0);
   const [categories, setCategories] = useState<CategoryIncomesSumary[]>([]);
   const [loading, setLoading] = useState(false);
@@ -55,7 +65,7 @@ export default function SumaryIncomesScreen({ navigation }: SumaryIncomesScreenP
       setCategories(data.data);
     } catch (e) {
       setLoading(false);
-      Errors(e);
+      showError(e);
     }
   };
   const sendEditCategoryScreen = (id: number) => {
@@ -72,8 +82,9 @@ export default function SumaryIncomesScreen({ navigation }: SumaryIncomesScreenP
   };
 
   return (
-    <View style={styles.container}>
-       <MyButton title="Agregar ingreso" onPress={sendAddIncomeScrenn} variant="primary"/>
+    <View style={[commonStyles.screenContentWithPadding, { backgroundColor: colors.BACKGROUND }]}>
+      <ScreenHeader title={config.title} subtitle={config.subtitle} />
+      <MyButton title="Agregar ingreso" onPress={sendAddIncomeScrenn} variant="primary" />
       <Text
         style={{
           fontSize: BIG,
@@ -94,16 +105,11 @@ export default function SumaryIncomesScreen({ navigation }: SumaryIncomesScreenP
         </ScrollView>
       )}
       <ScrollView>
-        <MyButton title="Nueva categoría" onPress={sendCreteCategoryScrenn} variant="primary"/>
+        <MyButton title="Nueva categoría" onPress={sendCreteCategoryScrenn} variant="primary" />
         <CardLastIncomes navigation={navigation as CardLastIncomesNavigationProp} />
       </ScrollView>
     </View>
   );
 }
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: 'white',
-    paddingBottom: 15
-  }
 });

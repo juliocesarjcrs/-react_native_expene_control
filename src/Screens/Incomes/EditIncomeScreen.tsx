@@ -1,11 +1,9 @@
 import React, { useState } from 'react';
-import { Keyboard, StyleSheet, View } from 'react-native';
+import { Keyboard, View } from 'react-native';
 import { useForm, Controller } from 'react-hook-form';
 import { Input } from 'react-native-elements';
 import { RouteProp } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
-
-import { useThemeColors } from '~/customHooks/useThemeColors';
 
 // Services
 import { editIncome } from '../../services/incomes';
@@ -15,7 +13,7 @@ import { DateSelector } from '../../components/datePicker';
 import SelectOnlyCategory from '../../components/dropDown/SelectOnlyCategory';
 import MyLoading from '../../components/loading/MyLoading';
 import MyButton from '~/components/MyButton';
-import ShowToast from '../../utils/toastUtils';
+import { ScreenHeader } from '~/components/ScreenHeader';
 
 // Types
 import { EditIncomePayload } from '../../shared/types/services/income-service.type';
@@ -25,7 +23,17 @@ import { IncomesPayloadOnSubmit } from '~/shared/types/screens/incomes';
 
 // Utils
 import { DateFormat } from '../../utils/Helpers';
-import { Errors } from '../../utils/Errors';
+import { showError } from '~/utils/showError';
+import { ShowToast } from '../../utils/toastUtils';
+
+// Theme
+import { useThemeColors } from '~/customHooks/useThemeColors';
+
+// Styles
+import { commonStyles } from '~/styles/common';
+
+// Configs
+import { screenConfigs } from '~/config/screenConfigs';
 
 type EditIncomeScreenNavigationProp = StackNavigationProp<IncomeStackParamList, 'editIncome'>;
 type EditIncomeScreenRouteProp = RouteProp<IncomeStackParamList, 'editIncome'>;
@@ -36,6 +44,7 @@ interface EditIncomeScreenProps {
 }
 
 export default function EditIncomeScreen({ navigation, route }: EditIncomeScreenProps) {
+  const config = screenConfigs.editIncome;
   const colors = useThemeColors();
 
   const { objectIncome } = route.params;
@@ -98,12 +107,14 @@ export default function EditIncomeScreen({ navigation, route }: EditIncomeScreen
       navigation.goBack();
     } catch (error) {
       setLoading(false);
-      Errors(error);
+      showError(error);
     }
   };
 
   return (
-    <View style={[styles.container, { backgroundColor: colors.BACKGROUND }]}>
+    <View style={[commonStyles.screenContentWithPadding, { backgroundColor: colors.BACKGROUND }]}>
+      <ScreenHeader title={config.title} subtitle={config.subtitle} />
+
       <SelectOnlyCategory
         searchType={1}
         handleCategoryChange={handleCategoryChange}
@@ -179,22 +190,8 @@ export default function EditIncomeScreen({ navigation, route }: EditIncomeScreen
       />
 
       {/* BUTTON */}
-      {loading ? (
-        <MyLoading />
-      ) : (
-        <MyButton
-          title="Guardar"
-          onPress={handleSubmit(onSubmit)}
-        />
-      )}
+      {loading ? <MyLoading /> : <MyButton title="Guardar" onPress={handleSubmit(onSubmit)} />}
     </View>
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    paddingHorizontal: 16,
-    paddingVertical: 12
-  }
-});

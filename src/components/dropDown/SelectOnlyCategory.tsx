@@ -3,7 +3,7 @@ import { View, Text, StyleSheet } from 'react-native';
 import DropDownPicker from 'react-native-dropdown-picker';
 
 // Utils
-import { Errors } from '../../utils/Errors';
+import { showError } from '~/utils/showError';
 import ErrorText from '../ErrorText';
 
 // Services
@@ -74,7 +74,7 @@ const SelectOnlyCategory = forwardRef(
         defaultIdCategory(dataFormat);
       } catch (error) {
         setLoading(false);
-        Errors(error);
+        showError(error);
       }
     };
 

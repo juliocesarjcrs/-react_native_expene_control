@@ -11,8 +11,8 @@ import { DELETE_LOAN } from '../../../graphql/mutations';
 import { Loan } from '../../../shared/types/graphql/loan-query.type';
 
 // Utils
+import { showError } from '~/utils/showError';
 import { DateFormat, NumberFormat } from '../../../utils/Helpers';
-import { Errors } from '../../../utils/Errors';
 
 // Styles
 import { BACKGROUND_TOOLTIP, ICON, PRIMARY } from '../../../styles/colors';
@@ -34,7 +34,7 @@ const FlatListLoans: React.FC<FlatListLoansProps> = ({ loans, updateList }) => {
         });
         updateList();
       } catch (e) {
-        Errors(e);
+        showError(e);
       }
     };
     const createTwoButtonAlert = (id: string) =>

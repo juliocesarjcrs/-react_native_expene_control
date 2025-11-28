@@ -13,6 +13,9 @@ import { getExchangeCurrency } from '../../services/external';
 import FlatListData from '../../components/card/FlatListData';
 import MyLoading from '~/components/loading/MyLoading';
 import SelectJoinCategory from '~/components/dropDown/SelectJoinCategory';
+import { ScreenHeader } from '~/components/ScreenHeader';
+import { DateSelector } from '~/components/datePicker';
+import MyButton from '~/components/MyButton';
 
 // Types
 import { RootState } from '~/shared/types/reducers';
@@ -22,16 +25,23 @@ import { CreateExpensePayload, GetExpensesFromSubcategoryResponse } from '~/shar
 import { DropDownSelectJoinCategoryFormat } from '~/shared/types/components/dropDown/SelectOnlyCategory.type';
 
 // Utils
-import { Errors } from '../../utils/Errors';
-import ShowToast from '../../utils/toastUtils';
+import { ShowToast } from '../../utils/toastUtils';
 import { NumberFormat, DateFormat } from '../../utils/Helpers';
-import { DateSelector } from '~/components/datePicker';
-import MyButton from '~/components/MyButton';
+import { showError } from '~/utils/showError';
+
+// Theme
+import { useThemeColors } from '~/customHooks/useThemeColors';
 
 // Styles
+import { commonStyles } from '~/styles/common';
+
+// Configs
+import { screenConfigs } from '~/config/screenConfigs';
 
 export default function CreateExpenseScreen(): React.JSX.Element {
-  const selectJoinCategoryRef = useRef();
+  const config = screenConfigs.createExpense;
+  const colors = useThemeColors();
+  const selectJoinCategoryRef = useRef<any>(null);
 
   const month = useSelector((state: RootState) => state.date.month);
   const {
@@ -73,7 +83,7 @@ export default function CreateExpenseScreen(): React.JSX.Element {
       calculateTotal(data);
     } catch (e) {
       setLoading(false);
-      Errors(e);
+      showError(e);
     }
   };
   const fetchExpensesOnlyCategory = async () => {
@@ -123,7 +133,7 @@ export default function CreateExpenseScreen(): React.JSX.Element {
       Keyboard.dismiss();
     } catch (error) {
       setLoading(false);
-      Errors(error);
+      showError(error);
     }
   };
   const updateList = () => {
@@ -139,7 +149,9 @@ export default function CreateExpenseScreen(): React.JSX.Element {
   };
 
   return (
-    <View style={styles.mainContainer}>
+    <View style={[commonStyles.screenContentWithPadding, { backgroundColor: colors.BACKGROUND }]}>
+      <ScreenHeader title={config.title} subtitle={config.subtitle} />
+
       <Controller
         name="cost"
         control={control}
@@ -198,23 +210,6 @@ export default function CreateExpenseScreen(): React.JSX.Element {
         ref={selectJoinCategoryRef}
       />
 
-      {/* <View style={styles.rows}>
-              {checkboxes.map((cb, index) => {
-                  return (
-                      <CheckBox
-                          center
-                          key={cb.id}
-                          title={cb.title}
-                          iconType="material"
-                          checkedIcon="check-box"
-                          uncheckedIcon="check-box-outline-blank"
-                          checked={cb.checked}
-                          onPress={() => toggleCheckbox(cb.id, index)}
-                          containerStyle={styles.containerCheckbox}
-                      />
-                  );
-              })}
-          </View> */}
       <DateSelector
         label="  Fecha "
         date={date}
@@ -228,7 +223,7 @@ export default function CreateExpenseScreen(): React.JSX.Element {
         {loading ? (
           <MyLoading />
         ) : (
-          <MyButton title="Guardar gasto" onPress={handleSubmit(onSubmit)} variant="primary"/>
+          <MyButton title="Guardar gasto" onPress={handleSubmit(onSubmit)} variant="primary" />
         )}
 
         <Text style={styles.totalText}>Total: {NumberFormat(sumCost)}</Text>
@@ -238,12 +233,6 @@ export default function CreateExpenseScreen(): React.JSX.Element {
   );
 }
 const styles = StyleSheet.create({
-  mainContainer: {
-    flex: 1,
-    paddingHorizontal: 16,
-    paddingVertical: 0,
-    backgroundColor: '#fff'
-  },
   bottomSection: {
     flex: 1
   },

@@ -1,13 +1,11 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import { FlatList, SafeAreaView, StyleSheet, Text, View } from 'react-native';
-import { Errors } from '../../utils/Errors';
 import { getLastIncomesWithPaginate } from '../../services/incomes';
 import { MUTED } from '../../styles/colors';
 import RenderItem from './components/RenderItem';
 
 import { useDispatch, useSelector } from 'react-redux';
 import usePrevious from '../../customHooks/usePrevious';
-import { handlerDataSearch } from '../../utils/Helpers';
 import { IncomeStackParamList } from '../../shared/types';
 import { StackNavigationProp } from '@react-navigation/stack';
 import { setQuery } from '../../features/searchExpenses/searchExpensesSlice';
@@ -19,7 +17,19 @@ import MyLoading from '../../components/loading/MyLoading';
 import { RootState } from '../../shared/types/reducers';
 import { RouteProp, useFocusEffect } from '@react-navigation/native';
 import { AppDispatch } from '../../shared/types/reducers/root-state.type';
+import { ScreenHeader } from '~/components/ScreenHeader';
 
+// Utils
+import { showError } from '~/utils/showError';
+import { handlerDataSearch } from '../../utils/Helpers';
+// Theme
+import { useThemeColors } from '~/customHooks/useThemeColors';
+
+// Styles
+import { commonStyles } from '~/styles/common';
+
+// Configs
+import { screenConfigs } from '~/config/screenConfigs';
 export type LastIncomesScreenNavigationProp = StackNavigationProp<IncomeStackParamList, 'lastIncomes'>;
 type LastIncomesScreenRouteProp = RouteProp<IncomeStackParamList, 'lastIncomes'>;
 
@@ -29,6 +39,8 @@ interface LastIncomesScreenProps {
 }
 
 export default function LastIncomesScreen({ navigation }: LastIncomesScreenProps) {
+  const config = screenConfigs.lastIncomes;
+  const colors = useThemeColors();
   const [lastIncomes, setLastIncomes] = useState<LastIncomes[]>([]);
   const [loadingFooter, setLoadingFotter] = useState(false);
   const [page, setPage] = useState(1);
@@ -82,75 +94,87 @@ export default function LastIncomesScreen({ navigation }: LastIncomesScreenProps
   }, [page]);
 
   // fetchData recibe page y reset flag
-  const fetchData = useCallback(async (pageToFetch: number, reset: boolean) => {
-    console.log('[LastIncomesScreen] fetchData called with', { pageToFetch, reset, query, lastIncomesLength: lastIncomes.length, stopeFetch });
-    try {
-      setLoadingFotter(true);
-      const params = {
-        take: 25,
-        page: pageToFetch,
-        query
-      };
-      const { data } = await getLastIncomesWithPaginate(params);
-      setLoadingFotter(false);
-      if (data.data.length <= 0) {
-        setStopeFetch(true);
-        console.log('[LastIncomesScreen] fetchData: No más datos, stopeFetch=true');
+  const fetchData = useCallback(
+    async (pageToFetch: number, reset: boolean) => {
+      console.log('[LastIncomesScreen] fetchData called with', {
+        pageToFetch,
+        reset,
+        query,
+        lastIncomesLength: lastIncomes.length,
+        stopeFetch
+      });
+      try {
+        setLoadingFotter(true);
+        const params = {
+          take: 25,
+          page: pageToFetch,
+          query
+        };
+        const { data } = await getLastIncomesWithPaginate(params);
+        setLoadingFotter(false);
+        if (data.data.length <= 0) {
+          setStopeFetch(true);
+          console.log('[LastIncomesScreen] fetchData: No más datos, stopeFetch=true');
+        }
+        let newList = [];
+        if (reset) {
+          console.log('[LastIncomesScreen] fetchData: Resetting lastIncomes', params.query, prevQuery, params.page);
+          newList = handlerDataSearch(data.data, [], params.query, prevQuery, params.page);
+        } else {
+          newList = handlerDataSearch(data.data, lastIncomes, params.query, prevQuery, params.page);
+        }
+        setLastIncomes(newList);
+        console.log('[LastIncomesScreen] fetchData: setLastIncomes, length:', newList.length);
+      } catch (e) {
+        setLoadingFotter(false);
+        showError(e);
       }
-      let newList = [];
-      if (reset) {
-        console.log('[LastIncomesScreen] fetchData: Resetting lastIncomes', params.query, prevQuery, params.page);
-        newList = handlerDataSearch(data.data, [], params.query, prevQuery, params.page);
-      } else {
-        newList = handlerDataSearch(data.data, lastIncomes, params.query, prevQuery, params.page);
-      }
-      setLastIncomes(newList);
-      console.log('[LastIncomesScreen] fetchData: setLastIncomes, length:', newList.length);
-    } catch (e) {
-      setLoadingFotter(false);
-      Errors(e);
-    }
-  }, [query, lastIncomes, prevQuery, stopeFetch]);
+    },
+    [query, lastIncomes, prevQuery, stopeFetch]
+  );
 
   // Paginador
   const loadMoreData = () => {
-    console.log('[LastIncomesScreen] loadMoreData: stopeFetch:', stopeFetch, 'loadingFooter:', loadingFooter, 'page:', page);
+    console.log(
+      '[LastIncomesScreen] loadMoreData: stopeFetch:',
+      stopeFetch,
+      'loadingFooter:',
+      loadingFooter,
+      'page:',
+      page
+    );
     if (!stopeFetch && !loadingFooter) {
       setPage((prev) => prev + 1);
     }
   };
   const updateList = () => {
     console.log('[LastIncomesScreen] updateList called');
-        fetchData(1, true);
-    };
+    fetchData(1, true);
+  };
   const renderFooter = () => {
     return <View>{loadingFooter ? <MyLoading testID="loading-footer" /> : null}</View>;
   };
 
   return (
-    <SafeAreaView style={styles.container}>
-        <FlatList
-          testID="flatlist-incomes"
-          data={lastIncomes}
-          renderItem={({ item }) => (<RenderItem item={item} navigation={navigation} updateList={updateList}/>)}
-          keyExtractor={(item) => item.id.toString()}
-          ListEmptyComponent={() => <Text style={styles.textMuted}>No se registran últimos ingresos</Text>}
-          initialNumToRender={10}
-          onEndReached={loadMoreData}
-          onEndReachedThreshold={0.1}
-          ListHeaderComponent={BarSearch}
-          ListFooterComponent={renderFooter}
-        />
+    <SafeAreaView style={[commonStyles.screenContentWithPadding, { backgroundColor: colors.BACKGROUND }]}>
+      <ScreenHeader title={config.title} subtitle={config.subtitle} />
+      <FlatList
+        testID="flatlist-incomes"
+        data={lastIncomes}
+        renderItem={({ item }) => <RenderItem item={item} navigation={navigation} updateList={updateList} />}
+        keyExtractor={(item) => item.id.toString()}
+        ListEmptyComponent={() => <Text style={styles.textMuted}>No se registran últimos ingresos</Text>}
+        initialNumToRender={10}
+        onEndReached={loadMoreData}
+        onEndReachedThreshold={0.1}
+        ListHeaderComponent={BarSearch}
+        ListFooterComponent={renderFooter}
+      />
     </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#fff',
-    paddingHorizontal: 15
-  },
   textMuted: {
     textAlign: 'center',
     color: MUTED

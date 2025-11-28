@@ -16,11 +16,11 @@ import { LastIncomes } from "../../../shared/types/services/income-service.type"
 
 // Utils
 import { DateFormat, NumberFormat } from "../../../utils/Helpers";
-import { Errors } from "../../../utils/Errors";
 
 // Styles
 import { ICON, MUTED } from "../../../styles/colors";
 import { MEDIUM, SMALL } from "../../../styles/fonts";
+import { showError } from "~/utils/showError";
 
 export type CardLastIncomesNavigationProp = StackNavigationProp<IncomeStackParamList, 'lastIncomes'>;
 
@@ -70,7 +70,7 @@ const CardLastIncomes = ({ navigation }: CardLastIncomesProps) => {
       setIncomes(data.data);
     } catch (error) {
       setLoading(false);
-      Errors(error);
+      showError(error);
     }
   };
   const toggleCheckbox = (id: number, index: number) => {

@@ -1,7 +1,7 @@
 import React, { createContext, useState, useEffect, useContext, ReactNode } from 'react';
-import { Errors } from '../utils/Errors';
 import { FeatureFlag } from '~/shared/types/models/feature-flags.type';
 import { getEnabledFeatures } from '~/services/featureFlagsService';
+import { showError } from '~/utils/showError';
 
 interface FeatureFlagsContextType {
   features: FeatureFlag[];
@@ -30,7 +30,7 @@ export const FeatureFlagsProvider: React.FC<FeatureFlagsProviderProps> = ({ chil
       const data = await getEnabledFeatures();
       setFeatures(data);
     } catch (error) {
-      Errors(error);
+      showError(error);
     } finally {
       setLoading(false);
     }

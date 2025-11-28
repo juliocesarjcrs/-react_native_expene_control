@@ -1,15 +1,13 @@
 import React, { useState } from 'react';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
-import { useThemeColors } from '~/customHooks/useThemeColors';
 import { StackNavigationProp } from '@react-navigation/stack';
-
-import { Errors } from '../../utils/Errors';
 
 // Services
 import { getAllExpensesByRangeDates } from '../../services/categories';
 
 // Utils
 import { DateFormat, NumberFormat, cutText } from '../../utils/Helpers';
+import { showError } from '~/utils/showError';
 
 // Components
 import { DateSelector } from '../../components/datePicker';
@@ -18,6 +16,16 @@ import ModernTable from '../../components/tables/ModernTable';
 import MyButton from '../../components/MyButton';
 import { SettingsStackParamList } from '../../shared/types';
 import { Icon } from 'react-native-elements';
+import { ScreenHeader } from '~/components/ScreenHeader';
+
+// Theme
+import { useThemeColors } from '~/customHooks/useThemeColors';
+
+// Styles
+import { commonStyles } from '~/styles/common';
+
+// Configs
+import { screenConfigs } from '~/config/screenConfigs';
 
 type ExportExpenseScreenNavigationProp = StackNavigationProp<SettingsStackParamList, 'exportData'>;
 
@@ -26,6 +34,7 @@ interface ExportExpenseScreenProps {
 }
 
 export default function ExportExpenseScreen({ navigation }: ExportExpenseScreenProps) {
+  const config = screenConfigs.exportData;
   const colors = useThemeColors();
   const [loading, setLoading] = useState(false);
   const [tableData, setTableData] = useState<string[][]>([]);
@@ -69,7 +78,7 @@ export default function ExportExpenseScreen({ navigation }: ExportExpenseScreenP
         DateFormat(endDate, 'YYYY-MM-DD')
       );
       setLoading(false);
-      
+
       if (data.rows.length <= 0) {
         setIsEmptyData(true);
         setTableHead([]);
@@ -77,7 +86,7 @@ export default function ExportExpenseScreen({ navigation }: ExportExpenseScreenP
       } else {
         setIsEmptyData(false);
         setTableHead(data.tableHead);
-        
+
         // Formatear datos dinámicamente
         const dataFormatted = data.rows.map((row: (string | number)[]) => {
           return row.map((value) => {
@@ -92,38 +101,38 @@ export default function ExportExpenseScreen({ navigation }: ExportExpenseScreenP
       }
     } catch (e) {
       setLoading(false);
-      Errors(e);
+      showError(e);
     }
   };
 
   // Generar anchos dinámicamente según el número de columnas (en píxeles)
   const getColumnWidths = (): number[] | undefined => {
     if (tableHead.length === 0) return undefined;
-    
+
     // Para tablas dinámicas, ajustar anchos según el tipo de dato
     return tableHead.map((header) => {
       const lowerHeader = header.toLowerCase();
-      
+
       // Columnas de descripción/nombre más anchas
-      if (lowerHeader.includes('descripción') || 
-          lowerHeader.includes('nombre') || 
-          lowerHeader.includes('categoría')) {
+      if (lowerHeader.includes('descripción') || lowerHeader.includes('nombre') || lowerHeader.includes('categoría')) {
         return 180;
       }
-      
+
       // Columnas de fecha
       if (lowerHeader.includes('fecha')) {
         return 110;
       }
-      
+
       // Columnas numéricas (valores, montos)
-      if (lowerHeader.includes('valor') || 
-          lowerHeader.includes('monto') || 
-          lowerHeader.includes('precio') ||
-          lowerHeader.includes('total')) {
+      if (
+        lowerHeader.includes('valor') ||
+        lowerHeader.includes('monto') ||
+        lowerHeader.includes('precio') ||
+        lowerHeader.includes('total')
+      ) {
         return 130;
       }
-      
+
       // Default
       return 120;
     });
@@ -131,24 +140,26 @@ export default function ExportExpenseScreen({ navigation }: ExportExpenseScreenP
 
   const getColumnAlignments = (): ('left' | 'center' | 'right')[] | undefined => {
     if (tableHead.length === 0) return undefined;
-    
+
     return tableHead.map((header) => {
       const lowerHeader = header.toLowerCase();
-      
+
       // Valores monetarios a la derecha
-      if (lowerHeader.includes('valor') || 
-          lowerHeader.includes('monto') || 
-          lowerHeader.includes('precio') ||
-          lowerHeader.includes('total') ||
-          lowerHeader.includes('$')) {
+      if (
+        lowerHeader.includes('valor') ||
+        lowerHeader.includes('monto') ||
+        lowerHeader.includes('precio') ||
+        lowerHeader.includes('total') ||
+        lowerHeader.includes('$')
+      ) {
         return 'right';
       }
-      
+
       // Fechas al centro
       if (lowerHeader.includes('fecha')) {
         return 'center';
       }
-      
+
       // Texto a la izquierda
       return 'left';
     });
@@ -159,16 +170,13 @@ export default function ExportExpenseScreen({ navigation }: ExportExpenseScreenP
   const needsHorizontalScroll = totalWidth > 380; // Si es más ancho que la pantalla típica
 
   return (
-    <View style={[styles.container, { backgroundColor: colors.BACKGROUND }]}>
+    <View style={[commonStyles.screenContentWithPadding, { backgroundColor: colors.BACKGROUND }]}>
+      <ScreenHeader title={config.title} subtitle={config.subtitle} />
       <ScrollView showsVerticalScrollIndicator={false}>
         {/* Header */}
         <View style={[styles.header, { backgroundColor: colors.CARD_BACKGROUND }]}>
-          <Text style={[styles.title, { color: colors.TEXT_PRIMARY }]}>
-            Exportar Gastos
-          </Text>
-          <Text style={[styles.subtitle, { color: colors.TEXT_SECONDARY }]}>
-            Seleccione el rango de fechas
-          </Text>
+          {/* <Text style={[styles.title, { color: colors.TEXT_PRIMARY }]}>Exportar Gastos</Text> */}
+          <Text style={[styles.subtitle, { color: colors.TEXT_SECONDARY }]}>Seleccione el rango de fechas</Text>
         </View>
 
         {/* Selectores de fecha */}
@@ -193,40 +201,20 @@ export default function ExportExpenseScreen({ navigation }: ExportExpenseScreenP
 
         {/* Info del rango */}
         <View style={[styles.infoCard, { backgroundColor: colors.CARD_BACKGROUND, borderColor: colors.BORDER }]}>
-          <Icon
-            type="material-community"
-            name="calendar-range"
-            size={18}
-            color={colors.INFO}
-          />
+          <Icon type="material-community" name="calendar-range" size={18} color={colors.INFO} />
           <Text style={[styles.infoText, { color: colors.TEXT_SECONDARY }]}>
             Del {DateFormat(startDate, 'DD/MM/YYYY')} al {DateFormat(endDate, 'DD/MM/YYYY')}
           </Text>
         </View>
 
         {/* Botón de búsqueda */}
-        {loading ? (
-          <MyLoading />
-        ) : (
-          <MyButton 
-            onPress={exportDataApi} 
-            title="Generar tabla" 
-            variant="primary"
-          />
-        )}
+        {loading ? <MyLoading /> : <MyButton onPress={exportDataApi} title="Generar tabla" variant="primary" />}
 
         {/* Mensaje de datos vacíos */}
         {isEmptyData && (
           <View style={[styles.emptyState, { backgroundColor: colors.WARNING + '10', borderColor: colors.WARNING }]}>
-            <Icon
-              type="material-community"
-              name="alert-circle-outline"
-              size={48}
-              color={colors.WARNING}
-            />
-            <Text style={[styles.emptyTitle, { color: colors.TEXT_PRIMARY }]}>
-              Sin datos
-            </Text>
+            <Icon type="material-community" name="alert-circle-outline" size={48} color={colors.WARNING} />
+            <Text style={[styles.emptyTitle, { color: colors.TEXT_PRIMARY }]}>Sin datos</Text>
             <Text style={[styles.emptyText, { color: colors.TEXT_SECONDARY }]}>
               No se encontraron gastos en el rango seleccionado
             </Text>
@@ -238,12 +226,7 @@ export default function ExportExpenseScreen({ navigation }: ExportExpenseScreenP
           <View>
             {needsHorizontalScroll && (
               <View style={[styles.scrollHint, { backgroundColor: colors.INFO + '10', borderColor: colors.INFO }]}>
-                <Icon
-                  type="material-community"
-                  name="gesture-swipe-horizontal"
-                  size={16}
-                  color={colors.INFO}
-                />
+                <Icon type="material-community" name="gesture-swipe-horizontal" size={16} color={colors.INFO} />
                 <Text style={[styles.scrollHintText, { color: colors.TEXT_SECONDARY }]}>
                   Desliza horizontalmente para ver todas las columnas
                 </Text>
@@ -262,21 +245,13 @@ export default function ExportExpenseScreen({ navigation }: ExportExpenseScreenP
             {/* Stats */}
             <View style={[styles.statsCard, { backgroundColor: colors.CARD_BACKGROUND }]}>
               <View style={styles.statItem}>
-                <Text style={[styles.statLabel, { color: colors.TEXT_SECONDARY }]}>
-                  Total registros
-                </Text>
-                <Text style={[styles.statValue, { color: colors.PRIMARY }]}>
-                  {tableData.length}
-                </Text>
+                <Text style={[styles.statLabel, { color: colors.TEXT_SECONDARY }]}>Total registros</Text>
+                <Text style={[styles.statValue, { color: colors.PRIMARY }]}>{tableData.length}</Text>
               </View>
               <View style={[styles.statDivider, { backgroundColor: colors.BORDER }]} />
               <View style={styles.statItem}>
-                <Text style={[styles.statLabel, { color: colors.TEXT_SECONDARY }]}>
-                  Columnas
-                </Text>
-                <Text style={[styles.statValue, { color: colors.PRIMARY }]}>
-                  {tableHead.length}
-                </Text>
+                <Text style={[styles.statLabel, { color: colors.TEXT_SECONDARY }]}>Columnas</Text>
+                <Text style={[styles.statValue, { color: colors.PRIMARY }]}>{tableHead.length}</Text>
               </View>
             </View>
           </View>
@@ -287,10 +262,6 @@ export default function ExportExpenseScreen({ navigation }: ExportExpenseScreenP
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    padding: 16
-  },
   header: {
     padding: 20,
     borderRadius: 16,

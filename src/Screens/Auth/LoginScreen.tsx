@@ -6,7 +6,6 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { Input } from "react-native-elements";
 import { useSelector } from "react-redux";
 
-import {Errors} from '../../utils/Errors';
 import { StackNavigationProp } from "@react-navigation/stack";
 
 // Services
@@ -24,7 +23,8 @@ import { AuthStackParamList } from "../../shared/types";
 import { RootState } from "../../shared/types/reducers";
 import { AppDispatch } from "../../shared/types/reducers/root-state.type";
 // Utils
-import ShowToast from "../../utils/toastUtils";
+import { ShowToast } from "../../utils/toastUtils";
+import { showError } from "~/utils/showError";
 
 interface LoginFormData {
     email: string;
@@ -77,7 +77,7 @@ export default function LoginScreen({ navigation } : LoginScreenProps)  {
             setLoading(false);
             dispatch(setUser(null));
             dispatch(setIsAuth(false));
-            Errors(error);
+            showError(error);
         }
     };
     return (

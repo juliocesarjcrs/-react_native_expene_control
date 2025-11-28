@@ -15,8 +15,8 @@ import { LastExpense } from '../../../shared/types/services/expense-service.type
 import { ExpenseStackParamList } from '../../../shared/types';
 
 // Utils
-import { Errors } from '../../../utils/Errors';
 import { DateFormat, NumberFormat } from '../../../utils/Helpers';
+import { showError } from '~/utils/showError';
 
 // Styles
 import { ICON, MUTED } from '../../../styles/colors';
@@ -71,7 +71,7 @@ const CardLastExpenses = ({ navigation }: CardLastExpensesProps) => {
       setExpenses(data.data);
     } catch (error) {
       setLoading(false);
-      Errors(error);
+      showError(error);
     }
   };
   const toggleCheckbox = (id: number, index: number) => {

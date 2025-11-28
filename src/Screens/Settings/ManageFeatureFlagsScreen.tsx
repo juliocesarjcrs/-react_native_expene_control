@@ -3,14 +3,29 @@ import { StyleSheet, View, Text, ScrollView, ActivityIndicator, Switch, Alert } 
 import { StackNavigationProp } from '@react-navigation/stack';
 import { RouteProp } from '@react-navigation/native';
 
-import { Errors } from '../../utils/Errors';
-
-import { getAllFeatures, toggleFeature } from '~/services/featureFlagsService';
 import { useFeatureFlags } from '~/contexts/FeatureFlagsContext';
+
+// Components
+import { ScreenHeader } from '~/components/ScreenHeader';
+
+// Services
+import { getAllFeatures, toggleFeature } from '~/services/featureFlagsService';
 
 // Types
 import { SettingsStackParamList } from '../../shared/types';
 import { FeatureFlag } from '~/shared/types/models/feature-flags.type';
+
+// Utils
+import { showError } from '~/utils/showError';
+
+// Theme
+import { useThemeColors } from '~/customHooks/useThemeColors';
+
+// Styles
+import { commonStyles } from '~/styles/common';
+
+// Configs
+import { screenConfigs } from '~/config/screenConfigs';
 
 type ManageFeatureFlagsScreenNavigationProp = StackNavigationProp<SettingsStackParamList>;
 type ManageFeatureFlagsScreenRouteProp = RouteProp<SettingsStackParamList>;
@@ -21,6 +36,8 @@ interface ManageFeatureFlagsScreenProps {
 }
 
 export default function ManageFeatureFlagsScreen({ navigation }: ManageFeatureFlagsScreenProps) {
+  const config = screenConfigs.manageFeatureFlags;
+  const colors = useThemeColors();
   const [features, setFeatures] = useState<FeatureFlag[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [togglingKey, setTogglingKey] = useState<string | null>(null);
@@ -39,7 +56,7 @@ export default function ManageFeatureFlagsScreen({ navigation }: ManageFeatureFl
       const data = await getAllFeatures();
       setFeatures(data);
     } catch (error) {
-      Errors(error);
+      showError(error);
     } finally {
       setLoading(false);
     }
@@ -62,7 +79,7 @@ export default function ManageFeatureFlagsScreen({ navigation }: ManageFeatureFl
 
       Alert.alert('Éxito', `Funcionalidad "${featureKey}" ${newStatus ? 'activada' : 'desactivada'} correctamente`);
     } catch (error) {
-      Errors(error);
+      showError(error);
     } finally {
       setTogglingKey(null);
     }
@@ -79,10 +96,7 @@ export default function ManageFeatureFlagsScreen({ navigation }: ManageFeatureFl
 
   return (
     <ScrollView style={styles.container}>
-      <View style={styles.header}>
-        <Text style={styles.headerTitle}>Gestión de Funcionalidades</Text>
-        <Text style={styles.headerSubtitle}>Activa o desactiva módulos del sistema</Text>
-      </View>
+      <ScreenHeader title={config.title} subtitle={config.subtitle} />
 
       {features.map((feature) => (
         <View key={feature.id} style={styles.featureCard}>
@@ -143,22 +157,6 @@ const styles = StyleSheet.create({
     marginTop: 10,
     fontSize: 16,
     color: '#666'
-  },
-  header: {
-    backgroundColor: '#9c27b0',
-    padding: 20,
-    marginBottom: 10
-  },
-  headerTitle: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: 'white',
-    marginBottom: 5
-  },
-  headerSubtitle: {
-    fontSize: 14,
-    color: 'white',
-    opacity: 0.9
   },
   featureCard: {
     backgroundColor: 'white',

@@ -4,17 +4,27 @@ import { StackNavigationProp } from '@react-navigation/stack';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { RouteProp } from '@react-navigation/native';
 
-import { Errors } from '../../utils/Errors';
-
 // Services
 import { getUser } from '../../services/users';
 
 // Components
-import MyButton from '../../components/MyButton';
+import { ScreenHeader } from '~/components/ScreenHeader';
 import MenuCardButton from '~/components/buttons/MenuCardButton';
 
 // Types
 import { SettingsStackParamList, UserModel } from '../../shared/types';
+
+// Utils
+import { showError } from '~/utils/showError';
+
+// Theme
+import { useThemeColors } from '~/customHooks/useThemeColors';
+
+// Styles
+import { commonStyles } from '~/styles/common';
+
+// Configs
+import { screenConfigs } from '~/config/screenConfigs';
 
 type SettingsScreenNavigationProp = StackNavigationProp<SettingsStackParamList>;
 type SettingsScreenRouteProp = RouteProp<SettingsStackParamList>;
@@ -26,6 +36,8 @@ interface SettingsScreenProps {
 }
 
 export default function SettingsScreen({ navigation }: SettingsScreenProps) {
+  const config = screenConfigs.settings;
+  const colors = useThemeColors();
   const [userLoggued, setUserLoggued] = useState<UserModel>();
 
   useEffect(() => {
@@ -40,14 +52,15 @@ export default function SettingsScreen({ navigation }: SettingsScreenProps) {
       const { data } = await getUser(user.id);
       setUserLoggued(data);
     } catch (error) {
-      Errors(error);
+      showError(error);
     }
   };
 
   const go = (route: any) => () => navigation.navigate(route);
 
   return (
-    <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
+    <ScrollView style={[commonStyles.screenContentWithPadding, { backgroundColor: colors.BACKGROUND }]}showsVerticalScrollIndicator={false}>
+       <ScreenHeader title={config.title} subtitle={config.subtitle} />
 
       {/* --- GENERAL --- */}
       <View style={styles.section}>

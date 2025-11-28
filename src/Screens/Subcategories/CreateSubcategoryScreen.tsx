@@ -1,31 +1,42 @@
 import React, { useEffect, useState } from 'react';
-import { StyleSheet, View } from 'react-native';
+import { View } from 'react-native';
 // import {  Inputs } from "~/styles";
 import { useForm, Controller } from 'react-hook-form';
 import { Input } from 'react-native-elements';
 
-import { MEDIUM } from '../../styles/fonts';
-import FlatListItem from './components/FlatListItem';
+
 import { Keyboard } from 'react-native';
 
 import { StackNavigationProp } from '@react-navigation/stack';
 import { RouteProp } from '@react-navigation/native';
+
 // Services
 import { CreateSubcategory, getSubategoriesByCategory } from '../../services/subcategories';
 
 // Components
 import MyLoading from '../../components/loading/MyLoading';
+import FlatListItem from './components/FlatListItem';
 import MyButton from '../../components/MyButton';
+import { ScreenHeader } from '~/components/ScreenHeader';
 
 // Types
 import { ExpenseStackParamList } from '../../shared/types';
-
-// Utils
-import { Errors } from '../../utils/Errors';
 import {
   CreateSubcategoryPayload,
   SubcategoriesWithExpenses
 } from '../../shared/types/services/subcategories-services.type';
+
+// Utils
+import { showError } from '~/utils/showError';
+
+// Theme
+import { useThemeColors } from '~/customHooks/useThemeColors';
+
+// Styles
+import { commonStyles } from '~/styles/common';
+
+// Configs
+import { screenConfigs } from '~/config/screenConfigs';
 
 type CreateSubcategoryScreenNavigationProp = StackNavigationProp<ExpenseStackParamList, 'createSubcategory'>;
 type CreateSubcategoryScreenRouteProp = RouteProp<ExpenseStackParamList, 'createSubcategory'>;
@@ -36,6 +47,8 @@ interface CreateSubcategoryScreenProps {
 }
 
 export default function CreateSubcategoryScreen({ route, navigation }: CreateSubcategoryScreenProps) {
+  const screenConfig = screenConfigs.createSubcategory;
+  const colors = useThemeColors();
   const idCategory = route.params.idCategory;
   const [subcategories, setSubcategories] = useState<SubcategoriesWithExpenses[] | []>([]);
   const {
@@ -65,7 +78,7 @@ export default function CreateSubcategoryScreen({ route, navigation }: CreateSub
       const { data } = await getSubategoriesByCategory(idCategory);
       setSubcategories(data as SubcategoriesWithExpenses[]);
     } catch (error) {
-      Errors(error);
+      showError(error);
     }
   };
   const create = async (payload: CreateSubcategoryPayload) => {
@@ -82,7 +95,7 @@ export default function CreateSubcategoryScreen({ route, navigation }: CreateSub
       reset();
     } catch (error) {
       setLoading(false);
-      Errors(error);
+      showError(error);
     }
   };
   const updateList = () => {
@@ -90,7 +103,9 @@ export default function CreateSubcategoryScreen({ route, navigation }: CreateSub
   };
 
   return (
-    <View style={styles.container}>
+    <View style={[commonStyles.screenContainer, { backgroundColor: colors.BACKGROUND }]}>
+      <ScreenHeader title={screenConfig.title} subtitle={screenConfig.subtitle} />
+
       <Controller
         name="name"
         control={control}
@@ -121,17 +136,3 @@ export default function CreateSubcategoryScreen({ route, navigation }: CreateSub
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#fff',
-    alignItems: 'center',
-    justifyContent: 'center'
-  },
-  item: {
-    padding: 10,
-    fontSize: MEDIUM,
-    height: 44
-  }
-});

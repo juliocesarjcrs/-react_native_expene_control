@@ -9,9 +9,7 @@ import {
   ActivityIndicator,
   StyleSheet
 } from 'react-native';
-import MyButton from '~/components/MyButton';
-import { useThemeColors } from '~/customHooks/useThemeColors';
-import { ConfigEditor } from '~/components/chatbot-config/ConfigEditor';
+// Services
 import {
   getAllChatbotConfigs,
   updateChatbotConfig,
@@ -19,12 +17,29 @@ import {
   getChatbotConfigHistory,
   invalidateConfigCache
 } from '~/services/chatbotConfigService';
+
+// Components
+import MyButton from '~/components/MyButton';
+import { ConfigEditor } from '~/components/chatbot-config/ConfigEditor';
+
+// Types
 import { ChatbotConfig, ChatbotConfigHistory } from '~/shared/types/models/chatbot-config.type';
+
+// Utils
 import { DateFormat } from '~/utils/Helpers';
 import { showError } from '~/utils/showError';
+// Theme
+import { useThemeColors } from '~/customHooks/useThemeColors';
 
+// Styles
+import { commonStyles } from '~/styles/common';
+
+// Configs
+import { screenConfigs } from '~/config/screenConfigs';
+import { ScreenHeader } from '~/components/ScreenHeader';
 export const ChatbotConfigScreen = () => {
-  const colors = useThemeColors();
+   const config = screenConfigs.chatbotConfig;
+   const colors = useThemeColors();
 
   const [configs, setConfigs] = useState<ChatbotConfig[]>([]);
   const [selectedConfig, setSelectedConfig] = useState<ChatbotConfig | null>(null);
@@ -124,13 +139,8 @@ export const ChatbotConfigScreen = () => {
   }
 
   return (
-    <ScrollView style={[styles.container, { backgroundColor: colors.BACKGROUND }]}>
-      <View style={[styles.header, { backgroundColor: colors.CARD_BACKGROUND, borderBottomColor: colors.BORDER }]}>
-        <Text style={[styles.title, { color: colors.TEXT_PRIMARY }]}>Configuración del Chatbot</Text>
-        <Text style={[styles.subtitle, { color: colors.TEXT_SECONDARY }]}>
-          Gestiona prompts, herramientas y comportamiento del asistente
-        </Text>
-      </View>
+    <ScrollView style={[commonStyles.screenContentWithPadding, { backgroundColor: colors.BACKGROUND }]}>
+      <ScreenHeader title={config.title} subtitle={config.subtitle} />
 
       {/* Botón de recarga global */}
       <View style={[styles.reloadSection, { backgroundColor: colors.CARD_BACKGROUND }]}>
@@ -281,18 +291,6 @@ const styles = StyleSheet.create({
   },
   loadingText: {
     marginTop: 12,
-    fontSize: 14
-  },
-  header: {
-    padding: 20,
-    borderBottomWidth: 1
-  },
-  title: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    marginBottom: 4
-  },
-  subtitle: {
     fontSize: 14
   },
   reloadSection: {

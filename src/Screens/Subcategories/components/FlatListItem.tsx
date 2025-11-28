@@ -1,20 +1,19 @@
-import React from "react";
-import { Alert, FlatList, StyleSheet, Text, View } from "react-native";
-import { Icon } from "react-native-elements";
+import React from 'react';
+import { Alert, FlatList, StyleSheet, Text, View } from 'react-native';
+import { Icon } from 'react-native-elements';
 
 // Services
-import { deleteSubategory } from "../../../services/subcategories";
+import { deleteSubategory } from '../../../services/subcategories';
 
 // Types
-import { SubcategoriesWithExpenses } from "../../../shared/types/services/subcategories-services.type";
+import { SubcategoriesWithExpenses } from '../../../shared/types/services/subcategories-services.type';
 
 // Utils
-import { Errors } from "../../../utils/Errors";
 
 // Styles
-import { ICON, PRIMARY } from "../../../styles/colors";
-import { MEDIUM } from "../../../styles/fonts";
-
+import { ICON, PRIMARY } from '../../../styles/colors';
+import { MEDIUM } from '../../../styles/fonts';
+import { showError } from '~/utils/showError';
 
 interface FlatListItemProps {
   data: [] | SubcategoriesWithExpenses[];
@@ -30,25 +29,25 @@ const FlatListItem: React.FC<FlatListItemProps> = ({ data, updateList, navigatio
         await deleteSubategory(idExpense);
         updateList();
       } catch (e) {
-        Errors(e);
+        showError(e);
       }
     };
     const sendEditSubcategoryScreen = (subcategoryObject: SubcategoriesWithExpenses) => {
-      navigation.navigate("editSubcategory", { subcategoryObject });
+      navigation.navigate('editSubcategory', { subcategoryObject });
     };
 
     const createTwoButtonAlert = (id: number) =>
-      Alert.alert("Eliminar", "¿Desea eliminar esta Subcategoria?", [
+      Alert.alert('Eliminar', '¿Desea eliminar esta Subcategoria?', [
         {
-          text: "Cancel",
-          style: "cancel",
+          text: 'Cancel',
+          style: 'cancel'
         },
-        { text: "OK", onPress: () => deleteItem(id) },
+        { text: 'OK', onPress: () => deleteItem(id) }
       ]);
     return (
       <View style={styles.header}>
         <Text style={styles.title}>{item.name}</Text>
-        <View style={{ display: "flex", flexDirection: "row" }}>
+        <View style={{ display: 'flex', flexDirection: 'row' }}>
           <View style={{ paddingRight: 15 }}>
             <Icon
               type="material-community"
@@ -60,8 +59,8 @@ const FlatListItem: React.FC<FlatListItemProps> = ({ data, updateList, navigatio
           </View>
           <Icon
             type="material-community"
-            style={{ paddingRight: 55, color: "white" }}
-            name={"pencil-outline"}
+            style={{ paddingRight: 55, color: 'white' }}
+            name={'pencil-outline'}
             size={20}
             color={ICON}
             onPress={() => sendEditSubcategoryScreen(item)}
@@ -72,31 +71,25 @@ const FlatListItem: React.FC<FlatListItemProps> = ({ data, updateList, navigatio
   };
   const styles = StyleSheet.create({
     header: {
-      display: "flex",
-      flexDirection: "row",
-      justifyContent: "space-between",
+      display: 'flex',
+      flexDirection: 'row',
+      justifyContent: 'space-between',
       width: 300,
       backgroundColor: PRIMARY,
-      padding: 5,
+      padding: 5
     },
     title: {
       fontSize: MEDIUM,
-      color: "white",
-      padding: 2,
+      color: 'white',
+      padding: 2
     },
     item: {
       padding: 10,
       fontSize: MEDIUM,
-      height: 44,
-    },
+      height: 44
+    }
   });
 
-  return (
-    <FlatList
-      keyExtractor={(item) => item.id.toString()}
-      data={data}
-      renderItem={listItem}
-    />
-  );
+  return <FlatList keyExtractor={(item) => item.id.toString()} data={data} renderItem={listItem} />;
 };
 export default FlatListItem;

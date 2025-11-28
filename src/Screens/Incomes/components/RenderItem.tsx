@@ -5,13 +5,13 @@ import { MEDIUM, SMALL } from '../../../styles/fonts';
 import { DateFormat, NumberFormat } from '../../../utils/Helpers';
 import { Icon } from 'react-native-elements';
 import Popover from 'react-native-popover-view';
-import { Errors } from '../../../utils/Errors';
 import { deleteIncome } from '../../../services/incomes';
-import ShowToast from '../../../utils/toastUtils';
+import { ShowToast } from '../../../utils/toastUtils';
 import { LastIncomes } from '../../../shared/types/services/income-service.type';
 import { FONT_WEIGHTS } from '../../../styles/fontWeight';
 import { StackNavigationProp } from '@react-navigation/stack';
 import { IncomeStackParamList } from '../../../shared/types';
+import { showError } from '~/utils/showError';
 
 type RenderItemNavigationProp = StackNavigationProp<IncomeStackParamList, 'lastIncomes'>;
 interface RenderItemProps {
@@ -32,7 +32,7 @@ const RenderItem: React.FC<RenderItemProps> = ({ item, navigation, updateList })
       ShowToast();
       updateList();
     } catch (e) {
-      Errors(e);
+      showError(e);
     }
   };
   const createTwoButtonAlert = (id: number) => {

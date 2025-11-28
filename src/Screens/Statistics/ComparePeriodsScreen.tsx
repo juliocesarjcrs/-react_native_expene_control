@@ -1,14 +1,23 @@
 import React, { useState } from 'react';
 import { View, ScrollView, StyleSheet } from 'react-native';
 import { Button, Text, IconButton } from 'react-native-paper';
-import { useThemeColors } from '~/customHooks/useThemeColors';
+// Components
 import CategorySelector from './components/CategorySelector';
 import DateRangeSelector from './components/DateRangeSelector';
 import ComparisonSummary from './components/ComparisonSummary';
 import { useComparePeriods } from '~/customHooks/useComparePeriods';
 import CompareResultsChart from './components/CompareResultsChart';
+import { ScreenHeader } from '~/components/ScreenHeader';
+
+// Theme
+import { useThemeColors } from '~/customHooks/useThemeColors';
+
+// Configs
+import { screenConfigs } from '~/config/screenConfigs';
+import { commonStyles } from '~/styles/common';
 
 export default function ComparePeriodsScreen() {
+  const config = screenConfigs.comparePeriods;
   const colors = useThemeColors();
 
   const [selectedCategories, setSelectedCategories] = useState<
@@ -41,24 +50,22 @@ export default function ComparePeriodsScreen() {
   const hasData = compareResults !== null;
 
   return (
-    <ScrollView style={[styles.container, { backgroundColor: colors.BACKGROUND }]}>
-      <View style={styles.headerRow}>
-        <View style={{ flex: 1 }}>
-          <Text style={[styles.title, { color: colors.TEXT_PRIMARY }]}>Comparar Periodos</Text>
-          <Text style={[styles.subtitle, { color: colors.TEXT_SECONDARY }]}>
-            Analiza y compara gastos entre dos periodos de tiempo
-          </Text>
-        </View>
-        {(canCompare || hasData) && (
-          <IconButton
-            icon="refresh"
-            size={24}
-            iconColor={colors.ERROR}
-            onPress={handleReset}
-            style={styles.resetButton}
-          />
-        )}
-      </View>
+    <ScrollView style={[commonStyles.screenContentWithPadding, { backgroundColor: colors.BACKGROUND }]}>
+      <ScreenHeader
+        title={config.title}
+        subtitle={config.subtitle}
+        rightComponent={
+          (canCompare || hasData) && (
+            <IconButton
+              icon="refresh"
+              size={24}
+              iconColor={colors.ERROR}
+              onPress={handleReset}
+              style={styles.resetButton}
+            />
+          )
+        }
+      />
 
       <CategorySelector onChange={setSelectedCategories} />
 
@@ -104,15 +111,6 @@ export default function ComparePeriodsScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, padding: 16 },
-  headerRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    marginBottom: 16
-  },
-  title: { fontSize: 24, fontWeight: '700', marginBottom: 4 },
-  subtitle: { fontSize: 14, marginBottom: 4 },
   resetButton: {
     margin: 0
   },

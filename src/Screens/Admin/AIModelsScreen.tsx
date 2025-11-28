@@ -17,6 +17,7 @@ import { getAllModels, reloadModels } from '~/services/aiConfigService';
 import { ModelEditor } from './components/ModelEditor';
 import { ModelsList } from './components/ModelsList';
 import MyButton from '~/components/MyButton';
+import { ScreenHeader } from '~/components/ScreenHeader';
 
 // Types
 import { AIModel } from '~/shared/types/models/ai-model.type';
@@ -27,8 +28,16 @@ import { showError } from '~/utils/showError';
 // Theme
 import { useThemeColors } from '~/customHooks/useThemeColors';
 
+// Styles
+import { commonStyles } from '~/styles/common';
+
+// Configs
+import { screenConfigs } from '~/config/screenConfigs';
+
+
 export default function AIModelsScreen() {
-  const colors = useThemeColors();
+  const config = screenConfigs.aiModels;
+   const colors = useThemeColors();
   
   const [models, setModels] = useState<AIModel[]>([]);
   const [loading, setLoading] = useState(false);
@@ -99,14 +108,9 @@ export default function AIModelsScreen() {
   return (
     <View style={[styles.container, { backgroundColor: colors.BACKGROUND }]}>
       {/* Header */}
-      <View style={[styles.header, { backgroundColor: colors.CARD_BACKGROUND, borderBottomColor: colors.BORDER }]}>
-        <Text style={[styles.title, { color: colors.TEXT_PRIMARY }]}>
-          Modelos de IA
-        </Text>
-        <Text style={[styles.subtitle, { color: colors.TEXT_SECONDARY }]}>
-          Gestiona los modelos disponibles y su prioridad
-        </Text>
-      </View>
+            <ScreenHeader title={config.title} subtitle={config.subtitle} />
+      
+
 
       {/* Actions */}
       <View style={[styles.actionsBar, { backgroundColor: colors.CARD_BACKGROUND }]}>
@@ -158,10 +162,6 @@ const styles = StyleSheet.create({
   },
   loadingText: {
     fontSize: 14
-  },
-  header: {
-    padding: 20,
-    borderBottomWidth: 1
   },
   title: {
     fontSize: 24,

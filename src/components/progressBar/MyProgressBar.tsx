@@ -65,7 +65,7 @@ export default function MyProgressBar({
         {/* Percentage text */}
         <View
           style={{
-            width: `${parseFloat(progressData.displayPercentage)}%` as any,
+            width: `${Math.max(parseFloat(progressData.displayPercentage), 15)}%` as any,
             height: height,
             bottom: 25
           }}

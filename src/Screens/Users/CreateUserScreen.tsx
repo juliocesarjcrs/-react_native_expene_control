@@ -1,17 +1,29 @@
-import React, { useEffect, useState } from "react";
-import { StyleSheet, Text, View, FlatList, SafeAreaView, ListRenderItem } from "react-native";
-import { useForm, Controller } from "react-hook-form";
-import { Input } from "react-native-elements";
-import { StackNavigationProp } from "@react-navigation/stack";
-import { RadioButton } from "react-native-paper";
-import { getUsersList, createUser } from "~/services/users";
-import { showError } from "~/utils/showError";
-import { ShowToast } from "~/utils/toastUtils";
-import { ScreenHeader } from "~/components/ScreenHeader";
-import MyButton from "~/components/MyButton";
-import { MEDIUM } from "~/styles/fonts";
-import { SettingsStackParamList, UserModel } from "~/shared/types";
-import { EMAIL_REGEX } from "~/constants/regex";
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import {
+  StyleSheet,
+  Text,
+  View,
+  FlatList,
+  SafeAreaView,
+  ListRenderItemInfo,
+  ActivityIndicator,
+  KeyboardAvoidingView,
+  Platform,
+  ListRenderItem
+} from 'react-native';
+import { useForm, Controller } from 'react-hook-form';
+import { Input } from 'react-native-elements';
+import { StackNavigationProp } from '@react-navigation/stack';
+import { RadioButton } from 'react-native-paper';
+import { getUsersList, createUser } from '~/services/users';
+import { showError } from '~/utils/showError';
+import { ShowToast } from '~/utils/toastUtils';
+import { ScreenHeader } from '~/components/ScreenHeader';
+import MyButton from '~/components/MyButton';
+import { MEDIUM, SMALL } from '~/styles/fonts';
+import { SettingsStackParamList, UserModel } from '~/shared/types';
+import { EMAIL_REGEX } from '~/constants/regex';
+import { UserListItem } from './components/UserListItem';
 // Theme
 import { useThemeColors } from '~/customHooks/useThemeColors';
 
@@ -21,11 +33,7 @@ import { commonStyles } from '~/styles/common';
 // Configs
 import { screenConfigs } from '~/config/screenConfigs';
 
-
-export type CreateUserScreenNavigationProp = StackNavigationProp<
-  SettingsStackParamList,
-  "createUser"
->;
+export type CreateUserScreenNavigationProp = StackNavigationProp<SettingsStackParamList, 'createUser'>;
 
 interface CreateUserScreenProps {
   navigation: CreateUserScreenNavigationProp;
@@ -47,9 +55,9 @@ export default function CreateUserScreen({ navigation }: CreateUserScreenProps) 
     handleSubmit,
     control,
     reset,
-    formState: { errors },
+    formState: { errors }
   } = useForm<CreateUserFormData>({
-    defaultValues: { email: "", name: "", password: "" },
+    defaultValues: { email: '', name: '', password: '' }
   });
 
   const [image, setImage] = useState<string | null>(null);
@@ -60,7 +68,7 @@ export default function CreateUserScreen({ navigation }: CreateUserScreenProps) 
 
   useEffect(() => {
     fetchData();
-    const unsubscribe = navigation.addListener("focus", () => {
+    const unsubscribe = navigation.addListener('focus', () => {
       fetchData();
     });
     return unsubscribe;
@@ -78,21 +86,21 @@ export default function CreateUserScreen({ navigation }: CreateUserScreenProps) 
   const onSubmit = async (payload: CreateUserFormData): Promise<void> => {
     try {
       const formData = new FormData();
-      formData.append("email", payload.email);
-      formData.append("name", payload.name);
-      formData.append("password", payload.password);
-      formData.append("role", role.toString());
+      formData.append('email', payload.email);
+      formData.append('name', payload.name);
+      formData.append('password', payload.password);
+      formData.append('role', role.toString());
 
       if (image && type && fileName) {
-        formData.append("image", {
+        formData.append('image', {
           type: type,
           uri: image,
-          name: fileName,
+          name: fileName
         } as any);
       }
 
       await createUser(formData as any);
-      ShowToast("Usuario creado exitosamente");
+      ShowToast('Usuario creado exitosamente');
       reset();
       setRole(0);
       fetchData();
@@ -105,178 +113,160 @@ export default function CreateUserScreen({ navigation }: CreateUserScreenProps) 
     setRole(parseInt(newValue) as UserRole);
   };
 
-  const renderItem: ListRenderItem<UserModel> = ({ item }) => (
-    <Item name={item.name} image={item.image} role={item.role} />
-  );
-
-  
+  const renderItem: ListRenderItem<UserModel> = ({ item }) => <UserListItem user={item} colors={colors} />;
 
   return (
     <View style={[commonStyles.screenContainer, { backgroundColor: colors.BACKGROUND }]}>
       <ScreenHeader title={screenConfig.title} subtitle={screenConfig.subtitle} />
 
-      <View style={commonStyles.screenContent}>
-        <Controller
-          name="email"
-          control={control}
-          rules={{
-            required: { value: true, message: "El email es obligatorio" },
-            pattern: {
-              value: EMAIL_REGEX,
-              message: "El email no es válido",
-            },
-          }}
-          render={({ field: { onChange, value } }) => (
-            <Input
-              value={value}
-              placeholder="Email"
-              onChangeText={onChange}
-              keyboardType="email-address"
-              autoCapitalize="none"
-              errorStyle={{ color: colors.ERROR }}
-              errorMessage={errors?.email?.message}
-            />
-          )}
-        />
+      <SafeAreaView style={{ flex: 1 }}>
+        <FlatList
+          data={listUsers}
+          keyExtractor={(item) => item.id.toString()}
+          contentContainerStyle={styles.scrollContent}
+          ListHeaderComponent={
+            <View style={styles.formContainer}>
+              <Controller
+                name="email"
+                control={control}
+                rules={{
+                  required: { value: true, message: 'El email es obligatorio' },
+                  pattern: {
+                    value: EMAIL_REGEX,
+                    message: 'El email no es válido'
+                  }
+                }}
+                render={({ field: { onChange, value } }) => (
+                  <Input
+                    value={value}
+                    placeholder="Email"
+                    placeholderTextColor={colors.TEXT_SECONDARY}
+                    onChangeText={onChange}
+                    keyboardType="email-address"
+                    autoCapitalize="none"
+                    errorStyle={{ color: colors.ERROR }}
+                    errorMessage={errors?.email?.message}
+                    inputStyle={{ color: colors.TEXT_PRIMARY }}
+                    containerStyle={styles.inputContainer}
+                  />
+                )}
+              />
 
-        <Controller
-          name="name"
-          control={control}
-          rules={{
-            required: { value: true, message: "El nombre es obligatorio" },
-            minLength: {
-              value: 2,
-              message: "El nombre debe tener al menos 2 caracteres",
-            },
-          }}
-          render={({ field: { onChange, value } }) => (
-            <Input
-              value={value}
-              placeholder="Nombre"
-              onChangeText={onChange}
-              errorStyle={{ color: colors.ERROR }}
-              errorMessage={errors?.name?.message}
-            />
-          )}
-        />
+              <Controller
+                name="name"
+                control={control}
+                rules={{
+                  required: { value: true, message: 'El nombre es obligatorio' },
+                  minLength: {
+                    value: 2,
+                    message: 'El nombre debe tener al menos 2 caracteres'
+                  }
+                }}
+                render={({ field: { onChange, value } }) => (
+                  <Input
+                    value={value}
+                    placeholder="Nombre"
+                    placeholderTextColor={colors.TEXT_SECONDARY}
+                    onChangeText={onChange}
+                    errorStyle={{ color: colors.ERROR }}
+                    errorMessage={errors?.name?.message}
+                    inputStyle={{ color: colors.TEXT_PRIMARY }}
+                    containerStyle={styles.inputContainer}
+                  />
+                )}
+              />
 
-        <Controller
-          name="password"
-          control={control}
-          rules={{
-            required: {
-              value: true,
-              message: "La contraseña es obligatoria",
-            },
-            minLength: {
-              value: 3,
-              message: "La contraseña debe tener al menos 3 caracteres",
-            },
-          }}
-          render={({ field: { onChange, value } }) => (
-            <Input
-              value={value}
-              placeholder="Contraseña"
-              onChangeText={onChange}
-              secureTextEntry={true}
-              errorStyle={{ color: colors.ERROR }}
-              errorMessage={errors?.password?.message}
-            />
-          )}
-        />
+              <Controller
+                name="password"
+                control={control}
+                rules={{
+                  required: {
+                    value: true,
+                    message: 'La contraseña es obligatoria'
+                  },
+                  minLength: {
+                    value: 3,
+                    message: 'La contraseña debe tener al menos 3 caracteres'
+                  }
+                }}
+                render={({ field: { onChange, value } }) => (
+                  <Input
+                    value={value}
+                    placeholder="Contraseña"
+                    placeholderTextColor={colors.TEXT_SECONDARY}
+                    onChangeText={onChange}
+                    secureTextEntry={true}
+                    errorStyle={{ color: colors.ERROR }}
+                    errorMessage={errors?.password?.message}
+                    inputStyle={{ color: colors.TEXT_PRIMARY }}
+                    containerStyle={styles.inputContainer}
+                  />
+                )}
+              />
 
-        <View style={styles.roleSection}>
-          <Text style={[styles.roleLabel, { color: colors.TEXT_PRIMARY }]}>
-            Rol del usuario:
-          </Text>
-          <RadioButton.Group onValueChange={handleRoleChange} value={role.toString()}>
-            <View style={styles.radioOption}>
-              <Text style={{ color: colors.TEXT_PRIMARY }}>Usuario Normal</Text>
-              <RadioButton value="0" />
+              <View style={styles.roleSection}>
+                <Text style={[styles.roleLabel, { color: colors.TEXT_PRIMARY }]}>Rol del usuario:</Text>
+                <RadioButton.Group onValueChange={handleRoleChange} value={role.toString()}>
+                  <View style={styles.radioContainer}>
+                    <View style={styles.radioOption}>
+                      <RadioButton.Android value="0" color={colors.PRIMARY} uncheckedColor={colors.TEXT_SECONDARY} />
+                      <Text style={{ color: colors.TEXT_PRIMARY, fontSize: SMALL, marginLeft: 4 }}>Normal</Text>
+                    </View>
+                    <View style={styles.radioOption}>
+                      <RadioButton.Android value="1" color={colors.PRIMARY} uncheckedColor={colors.TEXT_SECONDARY} />
+                      <Text style={{ color: colors.TEXT_PRIMARY, fontSize: SMALL, marginLeft: 4 }}>Admin</Text>
+                    </View>
+                  </View>
+                </RadioButton.Group>
+              </View>
+
+              <MyButton title="Crear usuario" onPress={handleSubmit(onSubmit)} />
+
+              <Text style={[styles.listTitle, { color: colors.TEXT_PRIMARY }]}>
+                Usuarios existentes ({listUsers.length}):
+              </Text>
             </View>
-            <View style={styles.radioOption}>
-              <Text style={{ color: colors.TEXT_PRIMARY }}>Administrador</Text>
-              <RadioButton value="1" />
-            </View>
-          </RadioButton.Group>
-        </View>
-
-        <MyButton title="Crear usuario" onPress={handleSubmit(onSubmit)} />
-
-        <SafeAreaView style={styles.listContainer}>
-          <Text style={[styles.listTitle, { color: colors.TEXT_PRIMARY }]}>
-            Usuarios existentes:
-          </Text>
-          <FlatList
-            data={listUsers}
-            renderItem={renderItem}
-            keyExtractor={(item) => item.id.toString()}
-          />
-        </SafeAreaView>
-      </View>
+          }
+          renderItem={renderItem}
+        />
+      </SafeAreaView>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
+  scrollContent: {
+    paddingBottom: 20
+  },
+  formContainer: {
+    paddingHorizontal: 16,
+    paddingTop: 10
+  },
+  inputContainer: {
+    marginBottom: -10
+  },
   roleSection: {
-    marginVertical: 12,
-    paddingHorizontal: 10,
+    marginVertical: 8,
+    marginBottom: 16
   },
   roleLabel: {
-    fontSize: MEDIUM,
-    fontWeight: "bold",
-    marginBottom: 8,
+    fontSize: SMALL,
+    fontWeight: '600',
+    marginBottom: 8
+  },
+  radioContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 20
   },
   radioOption: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    paddingVertical: 8,
-  },
-  listContainer: {
-    flex: 1,
-    marginTop: 20,
+    flexDirection: 'row',
+    alignItems: 'center'
   },
   listTitle: {
     fontSize: MEDIUM,
-    fontWeight: "bold",
-    marginBottom: 12,
-    paddingHorizontal: 10,
-  },
-  item: {
-    backgroundColor: "#f9c2ff",
-    padding: 8,
-    marginVertical: 4,
-    marginHorizontal: 16,
-    borderRadius: 8,
-  },
-  itemName: {
-    fontWeight: "bold",
-    fontSize: MEDIUM,
-  },
-  itemImage: {
-    fontSize: 12,
-    color: "#666",
-  },
-  itemRole: {
-    fontWeight: "bold",
-    fontSize: 12,
-  },
+    fontWeight: 'bold',
+    marginTop: 24,
+    marginBottom: 12
+  }
 });
-
-interface ItemProps {
-  name: string;
-  image: string | null;
-  role: number;
-}
-
-const Item = ({ name, image, role }: ItemProps) => (
-  <View style={styles.item}>
-    <Text style={styles.itemName}>{name}</Text>
-    {image && (
-      <Text style={styles.itemImage}>{image.slice(0, 20)}...</Text>
-    )}
-    <Text style={styles.itemRole}>{role === 1 ? "Admin" : "Normal"}</Text>
-  </View>
-);

@@ -17,17 +17,17 @@ export type EditCategoryPayload = Partial<CategoryModel>;
 
 // GetAllSubcategoriesExpensesByMonth
 export type GetAllSubcategoriesExpensesByMonthResponse = {
-  data: Category[];
+  data: CategoryExpense[];
   total: number;
 }
 
-export type Subcategory = {
+export type SubcategoryExpense = {
   id: number;
   name: string;
   total: number;
 }
 
-export type Category = {
+export type CategoryExpense = {
   id: number;
   name: string;
   icon: string;
@@ -35,7 +35,7 @@ export type Category = {
   budget: number;
   userId: number;
   total: number;
-  subcategories: Subcategory[];
+  subcategories: SubcategoryExpense[];
 }
 
 export type CategoryIncomesSumary = {
@@ -63,10 +63,10 @@ export type CateroryFormatIncome = {
 }
 // GetCategoryWithSubcategories
 export type GetCategoryWithSubcategoriesResponse = {
-  data: Category[];
+  data: CategoryExpense[];
 }
 
-export type CategoryWithoutTypeAndSubcategories = Omit<Category, 'type' | 'subcategories'>;
+export type CategoryWithoutTypeAndSubcategories = Omit<CategoryExpense, 'type' | 'subcategories'>;
 
 export type GetAllExpensesByMonthResponse = {
   data: CategoryWithoutTypeAndSubcategories[];

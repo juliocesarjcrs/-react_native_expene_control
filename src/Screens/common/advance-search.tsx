@@ -18,7 +18,6 @@ import { ExpenseSearchOptionsQuery } from '../../shared/types/services/expense-s
 import SelectOnlyCategory from '../../components/dropDown/SelectOnlyCategory';
 import { RadioButtonGroup } from '../../components/radioButton';
 import { DateSelector } from '../../components/datePicker';
-import { BarSearch } from '../../components/search';
 import { ListResultSearch } from '../../components/card';
 import { ScreenHeader } from '~/components/ScreenHeader';
 
@@ -34,6 +33,7 @@ import { commonStyles } from '~/styles/common';
 
 // Configs
 import { screenConfigs } from '~/config/screenConfigs';
+import BarSearch from '~/components/search/BarSearch';
 
 export default function AdvancedSearchScreen() {
   const config = screenConfigs.advancedSearch;
@@ -93,7 +93,7 @@ export default function AdvancedSearchScreen() {
         setSumResultSearch(data.sum);
       } else if (searchType === 0 && selectedCategory) {
         if (selectedSubcategories.length === 0) {
-          showError({ message: 'Debe seleccionar al menos una subcategoría' });
+          showError({ message: 'Debe seleccionar al menos una subcategoría' }, 'Debe seleccionar al menos una subcategoría');
           return;
         }
 

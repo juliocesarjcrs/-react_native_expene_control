@@ -1,5 +1,6 @@
 import { IncomeModel } from "../models";
 import { ExtendedExpenseModel } from "../models/expense.type";
+import { SubcategoriesWithExpenses } from "../services/subcategories-services.type";
 
 export type MainTabParamList = {
   Gastos: undefined;
@@ -9,33 +10,7 @@ export type MainTabParamList = {
 };
 
 export type EditSubcategoryScreenRouteParams = {
-  subcategoryObject: {
-    category: {
-      budget: number;
-      createdAt: string;
-      icon: string | null;
-      id: number;
-      name: string;
-      type: number;
-      userId: number;
-    };
-    categoryId: number;
-    createdAt: string;
-    expenses?: Array<{
-      commentary: string;
-      cost: number;
-      createdAt: string;
-      date: string;
-      id: number;
-      subcategoryId: number;
-      userId: number;
-    }>;
-    icon: string | null;
-    id: number;
-    name: string;
-    userId?: number;
-  };
-
+  subcategoryObject: SubcategoriesWithExpenses;
 }
 
 export type CreateSubcategoryScreenRouteParams = {

@@ -14,9 +14,10 @@ import { ScreenHeader } from '~/components/ScreenHeader';
 import MyButton from '~/components/MyButton';
 import MyLoading from '~/components/loading/MyLoading';
 import ModalIcon from '~/components/modal/ModalIcon';
-import FlatListItem from './components/FlatListItem';
+import FlatListItem from './components/CategoryList';
 import { CategoryModel, ExpenseStackParamList } from '~/shared/types';
 import { CreateCategoryPayload } from '~/shared/types/services';
+import CategoryList from './components/CategoryList';
 
 export type CreateCategoryScreenNavigationProp = StackNavigationProp<ExpenseStackParamList, 'createCategory'>;
 
@@ -98,14 +99,17 @@ export default function CreateCategoryScreen({ navigation }: CreateCategoryScree
 
       <View style={commonStyles.screenContent}>
         <View style={styles.radioGroup}>
+          <Text style={[styles.radioLabel, { color: colors.TEXT_PRIMARY }]}>Tipo de categoría:</Text>
           <RadioButton.Group onValueChange={handleTypeChange} value={type.toString()}>
-            <View style={styles.radioOption}>
-              <Text style={[styles.radioLabel, { color: colors.TEXT_PRIMARY }]}>Tipo Gasto</Text>
-              <RadioButton value="0" />
-            </View>
-            <View style={styles.radioOption}>
-              <Text style={[styles.radioLabel, { color: colors.TEXT_PRIMARY }]}>Tipo Ingreso</Text>
-              <RadioButton value="1" />
+            <View style={styles.radioContainer}>
+              <View style={styles.radioOption}>
+                <RadioButton.Android value="0" color={colors.WARNING} uncheckedColor={colors.TEXT_SECONDARY} />
+                <Text style={{ color: colors.TEXT_PRIMARY, fontSize: 14, marginLeft: 4 }}>Gasto</Text>
+              </View>
+              <View style={styles.radioOption}>
+                <RadioButton.Android value="1" color={colors.SUCCESS} uncheckedColor={colors.TEXT_SECONDARY} />
+                <Text style={{ color: colors.TEXT_PRIMARY, fontSize: 14, marginLeft: 4 }}>Ingreso</Text>
+              </View>
             </View>
           </RadioButton.Group>
         </View>
@@ -138,8 +142,7 @@ export default function CreateCategoryScreen({ navigation }: CreateCategoryScree
         <ModalIcon icon={icon} setIcon={handleIconChange} />
 
         {loading ? <MyLoading /> : <MyButton onPress={handleSubmit(onSubmit)} title="Guardar" />}
-
-        <FlatListItem data={categories} updateList={updateList} />
+        <CategoryList data={categories} updateList={updateList} />
       </View>
     </View>
   );
@@ -147,16 +150,22 @@ export default function CreateCategoryScreen({ navigation }: CreateCategoryScree
 
 const styles = StyleSheet.create({
   radioGroup: {
-    marginVertical: 12
+    marginVertical: 8,
+    marginBottom: 16,
+    paddingHorizontal: 10
+  },
+  radioLabel: {
+    fontSize: 14,
+    fontWeight: '600',
+    marginBottom: 8
+  },
+  radioContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 20
   },
   radioOption: {
     flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 16,
-    paddingVertical: 8
-  },
-  radioLabel: {
-    fontSize: 16
+    alignItems: 'center'
   }
 });

@@ -14,7 +14,7 @@ import MyLoading from '~/components/loading/MyLoading';
 
 // Types
 import { RootState } from '~/shared/types/reducers';
-import { Category } from '~/shared/types/services';
+import { CategoryExpense } from '~/shared/types/services';
 import { ExpenseStackParamList } from '~/shared/types';
 
 // Utils
@@ -35,8 +35,8 @@ interface SumaryExpenseScreenProps {
   navigation: SumaryExpenseScreenNavigationProp;
 }
 
-interface CategoryWithData extends Category {
-  data: Category['subcategories'];
+interface CategoryWithData extends CategoryExpense {
+  data: CategoryExpense['subcategories'];
 }
 
 export default function SumaryExpenseScreen({ navigation }: SumaryExpenseScreenProps) {

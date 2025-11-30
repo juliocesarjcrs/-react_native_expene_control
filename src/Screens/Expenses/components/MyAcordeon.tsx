@@ -13,13 +13,13 @@ import ListSubcategory from '~/components/card/ListSubcategory';
 import MyProgressBar from '~/components/progressBar/MyProgressBar';
 
 // Types
-import { Category } from '~/shared/types/services';
+import { CategoryExpense } from '~/shared/types/services';
 
 // Styles
 import { SMALL, MEDIUM } from '~/styles/fonts';
 
 interface MyAcordeonProps {
-  data: Category & { data: Category['subcategories'] };
+  data: CategoryExpense & { data: CategoryExpense['subcategories'] };
   editCategory: (id: number) => void;
   createSubcategory: (id: number) => void;
 }

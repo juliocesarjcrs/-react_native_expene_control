@@ -1,8 +1,6 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import { FlatList, SafeAreaView, StyleSheet, Text, View } from 'react-native';
 import { getLastIncomesWithPaginate } from '../../services/incomes';
-import { MUTED } from '../../styles/colors';
-import RenderItem from './components/RenderItem';
 
 import { useDispatch, useSelector } from 'react-redux';
 import usePrevious from '../../customHooks/usePrevious';
@@ -12,12 +10,13 @@ import { setQuery } from '../../features/searchExpenses/searchExpensesSlice';
 import { LastIncomes } from '../../shared/types/services/income-service.type';
 
 // Components
-import { BarSearch } from '../../components/search';
 import MyLoading from '../../components/loading/MyLoading';
 import { RootState } from '../../shared/types/reducers';
 import { RouteProp, useFocusEffect } from '@react-navigation/native';
 import { AppDispatch } from '../../shared/types/reducers/root-state.type';
 import { ScreenHeader } from '~/components/ScreenHeader';
+import RenderItemIncome from './components/RenderItemIncome';
+import BarSearch from '~/components/search/BarSearch';
 
 // Utils
 import { showError } from '~/utils/showError';
@@ -161,13 +160,13 @@ export default function LastIncomesScreen({ navigation }: LastIncomesScreenProps
       <FlatList
         testID="flatlist-incomes"
         data={lastIncomes}
-        renderItem={({ item }) => <RenderItem item={item} navigation={navigation} updateList={updateList} />}
+        renderItem={({ item }) => <RenderItemIncome item={item} navigation={navigation} updateList={updateList} />}
         keyExtractor={(item) => item.id.toString()}
-        ListEmptyComponent={() => <Text style={styles.textMuted}>No se registran últimos ingresos</Text>}
+        ListEmptyComponent={() => <Text style={[styles.textMuted, { color: colors.DARK_GRAY}]}>No se registran últimos ingresos</Text>}
         initialNumToRender={10}
         onEndReached={loadMoreData}
         onEndReachedThreshold={0.1}
-        ListHeaderComponent={BarSearch}
+        ListHeaderComponent={() => <BarSearch />}
         ListFooterComponent={renderFooter}
       />
     </SafeAreaView>
@@ -176,7 +175,6 @@ export default function LastIncomesScreen({ navigation }: LastIncomesScreenProps
 
 const styles = StyleSheet.create({
   textMuted: {
-    textAlign: 'center',
-    color: MUTED
+    textAlign: 'center'
   }
 });

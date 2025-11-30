@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { FlatList, SafeAreaView, StyleSheet, Text, View } from 'react-native';
 import { StackNavigationProp } from '@react-navigation/stack';
-import { MUTED } from '../../styles/colors';
 import { useDispatch, useSelector } from 'react-redux';
 import { setQuery } from '../../features/searchExpenses/searchExpensesSlice';
 
@@ -10,9 +9,9 @@ import { getLastExpensesWithPaginate } from '../../services/expenses';
 
 // Components
 import MyLoading from '../../components/loading/MyLoading';
-import { BarSearch } from '../../components/search';
 import { ScreenHeader } from '~/components/ScreenHeader';
-import RenderItem from './components/RenderItem';
+import RenderItemExpense from './components/RenderItemExpense';
+import BarSearch from '~/components/search/BarSearch';
 
 // Types
 import { ExpenseStackParamList } from '../../shared/types';
@@ -122,13 +121,13 @@ export default function LastExpensesScreen({ navigation }: LastExpenseScreenProp
       <FlatList
         testID="flatlist-expenses"
         data={lastExpenses}
-        renderItem={({ item }) => <RenderItem item={item} navigation={navigation} updateList={updateList} />}
+        renderItem={({ item }) => <RenderItemExpense item={item} navigation={navigation} updateList={updateList} />}
         keyExtractor={(item) => item.id.toString()}
-        ListEmptyComponent={() => <Text style={styles.textMuted}>No se registran últimos gastos</Text>}
+        ListEmptyComponent={() => <Text style={[styles.textMuted, { color: colors.DARK_GRAY}]}>No se registran últimos gastos</Text>}
         initialNumToRender={10}
         onEndReached={loadMoreData}
         onEndReachedThreshold={0.1}
-        ListHeaderComponent={BarSearch}
+        ListHeaderComponent={() => <BarSearch />}
         ListFooterComponent={renderFooter}
       />
     </SafeAreaView>
@@ -142,7 +141,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 15
   },
   textMuted: {
-    textAlign: 'center',
-    color: MUTED
+    textAlign: 'center'
   }
 });

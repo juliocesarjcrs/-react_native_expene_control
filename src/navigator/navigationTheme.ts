@@ -1,6 +1,7 @@
 import { DefaultTheme } from "@react-navigation/native";
 import { TextStyle } from "react-native";
 
+// Theme por defecto (fallback)
 export const MinimalNavigationTheme = {
   ...DefaultTheme,
   colors: {
@@ -15,24 +16,21 @@ export const MinimalNavigationTheme = {
 
 // Header minimalista - OCULTO por defecto
 export const minimalHeaderOptions = {
-  headerShown: false, // Ocultamos el header del stack
+  headerShown: false,
   headerLargeTitle: false,
   headerShadowVisible: false,
   headerBackTitleVisible: false,
   headerTitleStyle: {
     fontSize: 16,
     fontWeight: "600" as TextStyle["fontWeight"],
-    color: "#111111",
   } as TextStyle,
   headerStyle: {
-    backgroundColor: "#FFFFFF",
     elevation: 0,
     shadowOpacity: 0,
     borderBottomWidth: 0,
   },
 };
 
-// Solo para pantallas que necesiten el header nativo (ej: modales)
 export const modalHeaderOptions = {
   ...minimalHeaderOptions,
   headerShown: true,

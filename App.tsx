@@ -12,6 +12,7 @@ import { AxiosError } from 'axios';
 
 import { ApolloProvider } from '@apollo/client/react';
 import client from './src/plugins/ApolloClient';
+import { ThemeProvider } from '~/contexts/ThemeContext';
 
 export type ApiError = {
   error: string;
@@ -100,7 +101,9 @@ export default function App() {
     <ApolloProvider client={client}>
       <Provider store={store}>
         <ChatProvider>
-          <MyStack />
+          <ThemeProvider>
+            <MyStack />
+          </ThemeProvider>
         </ChatProvider>
       </Provider>
     </ApolloProvider>

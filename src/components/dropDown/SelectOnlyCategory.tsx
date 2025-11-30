@@ -15,8 +15,8 @@ import MyLoading from '../loading/MyLoading';
 // TYpes
 import { CateroryFormat, DropDownSelectFormat } from '../../shared/types/components';
 import { Icon } from 'react-native-elements';
-import { COLOR_SEPARATOR_DROPDOWN, COLOR_TEXT_DROPDOWN, ICON_DROPDOWN } from '../../styles/colors';
-
+import { useThemeColors } from '~/customHooks/useThemeColors';
+import { MEGA_BIG } from '~/styles/fonts';
 interface SelectOnlyCategoryProps {
   handleCategoryChange: (data: DropDownSelectFormat) => void;
   searchType: number;
@@ -24,6 +24,7 @@ interface SelectOnlyCategoryProps {
 }
 const SelectOnlyCategory = forwardRef(
   ({ handleCategoryChange, searchType, selectedCategoryId }: SelectOnlyCategoryProps, ref: Ref<any>) => {
+    const colors = useThemeColors();
     const [categoriesFormat, setCategoriesFormat] = useState<CateroryFormat[]>([]);
     const [loading, setLoading] = useState(false);
     const ITEM_HEIGHT = 42;
@@ -67,7 +68,7 @@ const SelectOnlyCategory = forwardRef(
             value: e.id,
             iconName: e.icon,
             //bsubcategories: e.subcategories,
-            icon: () => <Icon type="font-awesome" name={e.icon ? e.icon : 'home'} size={35} color={ICON_DROPDOWN} />
+            icon: () => <Icon type="font-awesome" name={e.icon ? e.icon : 'home'} size={35} color={colors.PRIMARY} />
           };
         });
         setCategoriesFormat(dataFormat);
@@ -100,33 +101,48 @@ const SelectOnlyCategory = forwardRef(
           setItems={setCategoriesFormat}
           maxHeight={ITEM_HEIGHT * categoriesFormat.length}
           placeholder="Selecione una categoría"
+          placeholderStyle={[styles.placeholder, { color: colors.GRAY }]}
           zIndex={2000}
           zIndexInverse={1000}
           loading={loading}
-          ActivityIndicatorComponent={({ color, size }) => <MyLoading />}
+          ActivityIndicatorComponent={() => <MyLoading />}
           activityIndicatorColor="red"
           activityIndicatorSize={30}
-          dropDownContainerStyle={{
-            backgroundColor: '#dfdfdf'
-          }}
+          style={[
+            styles.dropdown,
+            {
+              backgroundColor: colors.CARD_BACKGROUND,
+              borderColor: colors.BORDER
+            }
+          ]}
+          dropDownContainerStyle={[
+            styles.dropdownContainer,
+            {
+              backgroundColor: colors.CARD_BACKGROUND,
+              borderColor: colors.BORDER
+            }
+          ]}
           listMode="MODAL"
-          // styles modal
+          modalProps={{
+            animationType: 'fade'
+          }}
+          modalContentContainerStyle={[
+            styles.modalContainer,
+            {
+              backgroundColor: colors.CARD_BACKGROUND
+            }
+          ]}
           itemSeparator={true}
-          itemSeparatorStyle={{
-            backgroundColor: COLOR_SEPARATOR_DROPDOWN,
-            paddingVertical: 5
-          }}
-          selectedItemContainerStyle={{
-            backgroundColor: '#F0AEBB'
-          }}
-          selectedItemLabelStyle={{
-            fontWeight: 'bold'
-          }}
-          // como se ve el select
-          textStyle={{
-            fontSize: 18,
-            color: COLOR_TEXT_DROPDOWN
-          }}
+          itemSeparatorStyle={[styles.separator, { backgroundColor: colors.BORDER }]}
+          selectedItemContainerStyle={[
+            styles.selectedItemContainer,
+            {
+              backgroundColor: colors.PRIMARY
+            }
+          ]}
+          selectedItemLabelStyle={[styles.selectedItemLabel, { color: colors.WHITE }]}
+          textStyle={[styles.dropdownText, { color: colors.TEXT_PRIMARY }]}
+          labelStyle={[styles.label, { color: colors.TEXT_PRIMARY }]}
         />
         {!idCategory ? <ErrorText msg="Necesita seleccionar una  Categoria" /> : null}
       </View>
@@ -136,8 +152,47 @@ const SelectOnlyCategory = forwardRef(
 SelectOnlyCategory.displayName = 'SelectOnlyCategory';
 const styles = StyleSheet.create({
   container: {
-    // flex: 1,
-    // backgroundColor: 'red'
+    flex: 0,
+    marginBottom: 0,
+    paddingBottom: 0,
+    zIndex: 3000, // Asegura que el contenedor esté por encima de otros elementos
+    padding: 0
+  },
+  dropdown: {
+    borderWidth: 1,
+    borderRadius: 8,
+    minHeight: 50,
+    margin: 0,
+    padding: 0
+  },
+  dropdownContainer: {
+    borderWidth: 1,
+    borderRadius: 8,
+    margin: 0,
+    padding: 0
+  },
+  modalContainer: {
+    borderRadius: 12,
+    padding: 2,
+    marginHorizontal: 2
+  },
+  separator: {
+    paddingVertical: 5
+  },
+  selectedItemContainer: {
+    borderRadius: 8
+  },
+  selectedItemLabel: {
+    fontWeight: 'bold'
+  },
+  dropdownText: {
+    fontSize: MEGA_BIG
+  },
+  label: {
+    fontSize: MEGA_BIG
+  },
+  placeholder: {
+    fontSize: 16
   }
 });
 

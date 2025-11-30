@@ -1,163 +1,192 @@
-import React from 'react';
-import { Alert, Modal, StyleSheet, View } from 'react-native';
-import { Text } from 'react-native';
-import { Icon, Divider, Tooltip, TooltipProps } from 'react-native-elements';
+import React, { useState } from 'react';
+import { Alert, StyleSheet, View, Text } from 'react-native';
+import { Icon, Divider } from 'react-native-elements';
 
 // Services
-import { deleteIncome } from '../../../services/incomes';
-
-// Types
-import { showError } from '~/utils/showError';
-import { CategoryIncomesSumary } from '~/shared/types/services';
+import { deleteIncome } from '~/services/incomes';
 
 // Utils
-import { NumberFormat, DateFormat } from '~/utils/Helpers';
+import { showError } from '~/utils/showError';
+import { NumberFormat } from '~/utils/Helpers';
+
+// Theme
+import { useThemeColors } from '~/customHooks/useThemeColors';
+
+// Types
+import { CategoryIncomesSumary } from '~/shared/types/services';
 
 // Styles
-import { ICON, PRIMARY_BLACK } from '~/styles/colors';
-import { PRIMARY } from '../../../styles/colors';
-import { MEDIUM, SMALL } from '../../../styles/fonts';
+import { MEDIUM, SMALL } from '~/styles/fonts';
+import { IncomeListItem } from './IncomeListItem';
 
 interface MyAcordeonIncomeProps {
   data: CategoryIncomesSumary;
   editCategory: (id: number) => void;
   updateList: () => void;
 }
-const MyAcordeonIncome: React.FC<MyAcordeonIncomeProps> = ({ data, editCategory, updateList }) => {
+
+export default function MyAcordeonIncome({ data, editCategory, updateList }: MyAcordeonIncomeProps) {
+  const colors = useThemeColors();
   const { id, icon, name } = data;
-  const [expanded, setExpanded] = React.useState(false);
-  const sendEditCategoryScreen = (id: number) => {
-    editCategory(id);
+  const [expanded, setExpanded] = useState<boolean>(false);
+
+  const sendEditCategoryScreen = (categoryId: number): void => {
+    editCategory(categoryId);
   };
-  const togleExpanded = () => {
+
+  const toggleExpanded = (): void => {
     setExpanded(!expanded);
   };
-  const createTwoButtonAlert = (id: number) =>
-    Alert.alert('Eliminar', '¿Desea eliminar este ingreso?', [
+
+  const confirmDelete = (incomeId: number): void => {
+    Alert.alert('Eliminar ingreso', '¿Estás seguro de que deseas eliminar este ingreso?', [
       {
         text: 'Cancelar',
-        onPress: () => console.log('Cancel Pressed'),
         style: 'cancel'
       },
-      { text: 'OK', onPress: () => deleteItem(id) }
+      {
+        text: 'Eliminar',
+        onPress: () => deleteItem(incomeId),
+        style: 'destructive'
+      }
     ]);
-  const deleteItem = async (idIncome: number) => {
+  };
+
+  const deleteItem = async (incomeId: number): Promise<void> => {
     try {
-      await deleteIncome(idIncome);
+      await deleteIncome(incomeId);
       updateList();
-    } catch (e) {
-      showError(e);
+    } catch (error) {
+      showError(error);
     }
   };
 
   return (
     <View style={{ flex: 1 }}>
-      <View style={styles.container}>
-        <View style={{ flex: 1 }}>
-          <View style={styles.title}>
+      <View style={[styles.container, { backgroundColor: colors.CARD_BACKGROUND }]}>
+        {/* Header con título e iconos */}
+        <View style={styles.headerRow}>
+          <View style={styles.titleSection}>
             <Icon
               type="font-awesome"
-              style={{ paddingLeft: 5 }}
-              name={icon ? icon : 'home'}
-              size={25}
-              color={expanded ? PRIMARY_BLACK : ICON}
+              name={icon || 'home'}
+              size={22}
+              color={expanded ? colors.PRIMARY : colors.TEXT_SECONDARY}
             />
             <Text
-              style={{
-                paddingHorizontal: 20,
-                color: expanded ? PRIMARY_BLACK : 'black'
-              }}
+              style={[
+                styles.categoryName,
+                {
+                  color: expanded ? colors.PRIMARY : colors.TEXT_PRIMARY,
+                  fontWeight: expanded ? 'bold' : 'normal'
+                }
+              ]}
             >
-              {name} ({data.incomes.length})
+              {name}
             </Text>
+            <View style={[styles.badge, { backgroundColor: colors.SUCCESS + '20' }]}>
+              <Text style={[styles.badgeText, { color: colors.SUCCESS }]}>{data.incomes.length}</Text>
+            </View>
+          </View>
+
+          <View style={styles.actionsSection}>
             <Icon
               type="material-community"
-              name={'pencil-outline'}
+              name="pencil-outline"
               size={20}
-              color={ICON}
+              color={colors.TEXT_SECONDARY}
               onPress={() => sendEditCategoryScreen(id)}
+              containerStyle={styles.iconButton}
+            />
+            <Icon
+              name={expanded ? 'chevron-up' : 'chevron-down'}
+              type="font-awesome"
+              size={20}
+              color={colors.TEXT_SECONDARY}
+              onPress={toggleExpanded}
+              containerStyle={styles.iconButton}
             />
           </View>
-          <Text style={{ paddingLeft: 50 }}>{NumberFormat(data.total)}</Text>
-          <Divider style={{ backgroundColor: PRIMARY_BLACK, marginVertical: 2 }} />
         </View>
-        <View style={styles.containerIcon}>
-          <Icon name={expanded ? 'chevron-up' : 'chevron-down'} type="font-awesome" onPress={() => togleExpanded()} />
+
+        {/* Total de ingresos */}
+        <View style={styles.totalSection}>
+          <Text style={[styles.totalLabel, { color: colors.TEXT_SECONDARY }]}>Total ingresos:</Text>
+          <Text style={[styles.totalAmount, { color: colors.SUCCESS }]}>{NumberFormat(data.total)}</Text>
         </View>
+
+        <Divider style={{ backgroundColor: colors.BORDER, marginTop: 8 }} />
       </View>
+
+      {/* Lista de ingresos expandible */}
       <View>
         {expanded &&
-          data.incomes.map((item, idx2) => {
-            const tooltipProps: TooltipProps = {
-              withPointer: true,
-              popover: <Text>{item.commentary}</Text>,
-              toggleOnPress: true,
-              toggleAction: 'onPress',
-              height: 80,
-              width: 200,
-              containerStyle: {},
-              pointerColor: 'white',
-              onClose: () => {},
-              onOpen: () => {},
-              overlayColor: 'transparent',
-              withOverlay: true,
-              backgroundColor: '#333',
-              highlightColor: 'transparent',
-              skipAndroidStatusBar: false,
-              ModalComponent: Modal,
-              closeOnlyOnBackdropPress: false
-            };
-            return (
-              <View style={styles.header} key={idx2}>
-                <Text style={styles.titleDate}>
-                  {DateFormat(item.date, 'DD MMM')} {DateFormat(item.createdAt ?? '', 'hh:mm a')}
-                </Text>
-                <Tooltip {...tooltipProps}>
-                  <Text style={styles.item}>{NumberFormat(item.amount)}</Text>
-                </Tooltip>
-                <Icon name="trash" type="font-awesome" onPress={() => createTwoButtonAlert(item.id)} />
-              </View>
-            );
-          })}
+          data.incomes.map((item) => (
+            <IncomeListItem key={item.id} item={item} onDelete={confirmDelete} colors={colors} />
+          ))}
       </View>
     </View>
   );
-};
+}
+
 const styles = StyleSheet.create({
   container: {
-    display: 'flex',
-    flexDirection: 'row',
-    justifyContent: 'space-between'
+    marginHorizontal: 8,
+    marginVertical: 6,
+    paddingHorizontal: 12,
+    paddingTop: 12,
+    paddingBottom: 8,
+    borderRadius: 12,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3
   },
-  title: {
-    display: 'flex',
+  headerRow: {
     flexDirection: 'row',
-    paddingVertical: 3
-  },
-  containerIcon: {
-    display: 'flex',
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    paddingRight: 10
-  },
-  header: {
-    display: 'flex',
-    flexDirection: 'row',
-    // width: 300,
-    backgroundColor: PRIMARY,
-    padding: 5,
+    justifyContent: 'space-between',
     alignItems: 'center',
-    justifyContent: 'space-between'
+    marginBottom: 8
   },
-  item: {
-    padding: 2,
-    color: 'white',
+  titleSection: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flex: 1
+  },
+  categoryName: {
+    fontSize: MEDIUM,
+    marginLeft: 10,
+    marginRight: 6
+  },
+  badge: {
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    borderRadius: 10
+  },
+  badgeText: {
+    fontSize: SMALL,
+    fontWeight: '600'
+  },
+  actionsSection: {
+    flexDirection: 'row',
+    alignItems: 'center'
+  },
+  iconButton: {
+    marginLeft: 8
+  },
+  totalSection: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginTop: 4,
+    marginBottom: 8
+  },
+  totalLabel: {
     fontSize: SMALL
   },
-  titleDate: {
-    color: 'white',
+  totalAmount: {
     fontSize: MEDIUM,
-    padding: 2
+    fontWeight: 'bold'
   }
 });
-export default MyAcordeonIncome;

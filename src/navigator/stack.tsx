@@ -20,10 +20,13 @@ import { getUser } from "../services/users";
 import { RootState } from "../shared/types/reducers";
 import { AppDispatch } from "../shared/types/reducers/root-state.type";
 import { FeatureFlagsProvider } from "~/contexts/FeatureFlagsContext";
-import { ThemeProvider } from "~/contexts/ThemeContext";
-import { minimalHeaderOptions, MinimalNavigationTheme } from "./navigationTheme";
+import { minimalHeaderOptions } from "./navigationTheme";
+import { useNavigationTheme } from "~/customHooks/useNavigationTheme";
+import { useThemeColors } from "~/customHooks/useThemeColors";
 
 export default function MyStack() {
+  const navigationTheme = useNavigationTheme();
+  const colors = useThemeColors();
   const dispatch: AppDispatch = useDispatch();
   const isAuth = useSelector((state: RootState) => state.auth.isAuth);
   useEffect(()=>{
@@ -38,7 +41,7 @@ export default function MyStack() {
       if(user && user.id){
         const {data} = await getUser(user.id)
         dispatch(setLoadingAuth(false));
-        dispatch(setUser(data.user));
+        dispatch(setUser(data));
         dispatch(setIsAuth(true));
       }
       dispatch(setLoadingAuth(false));
@@ -130,9 +133,8 @@ function StatisticsStackScreen() {
 
 const Tab = createBottomTabNavigator();
 return (
-  <ThemeProvider>
     <FeatureFlagsProvider>
-      <NavigationContainer theme={MinimalNavigationTheme}>
+      <NavigationContainer theme={navigationTheme}>
         {isAuth ? (
           <Tab.Navigator
             screenOptions={({ route }) => ({
@@ -154,9 +156,13 @@ return (
                 // You can return any component that you like here!
                 return <Icon type="material-community" color={color} name={iconName} size={size} />;
               },
-              tabBarActiveTintColor: 'tomato',
-              tabBarInactiveTintColor: 'gray',
-               headerShown: false 
+            tabBarActiveTintColor: colors.PRIMARY, // ← CAMBIA AQUÍ
+                tabBarInactiveTintColor: colors.TEXT_SECONDARY, // ← CAMBIA AQUÍ
+                tabBarStyle: { // ← AGREGA ESTO
+                  backgroundColor: colors.CARD_BACKGROUND,
+                  borderTopColor: colors.BORDER,
+                },
+                headerShown: false 
             })}
           >
             <Tab.Screen name="Gastos" component={ExpenseStackScreen} />
@@ -173,7 +179,6 @@ return (
         )}
       </NavigationContainer>
     </FeatureFlagsProvider>
-  </ThemeProvider>
 );
 }
 

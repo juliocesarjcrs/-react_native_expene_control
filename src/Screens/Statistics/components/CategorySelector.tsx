@@ -4,7 +4,7 @@ import { Text, Chip, Searchbar, IconButton } from 'react-native-paper';
 import { Icon } from 'react-native-elements';
 import { useThemeColors } from '~/customHooks/useThemeColors';
 import { getCategoryWithSubcategories } from '~/services/categories';
-import { Category } from '~/shared/types/services';
+import { CategoryExpense } from '~/shared/types/services';
 import { showError } from '~/utils/showError';
 
 interface CategorySelectorProps {
@@ -13,7 +13,7 @@ interface CategorySelectorProps {
 
 export default function CategorySelector({ onChange }: CategorySelectorProps) {
   const colors = useThemeColors();
-  const [categories, setCategories] = useState<Category[]>([]);
+  const [categories, setCategories] = useState<CategoryExpense[]>([]);
   const [selected, setSelected] = useState<{ [key: number]: number[] }>({});
   const [expandedCategories, setExpandedCategories] = useState<{ [key: number]: boolean }>({});
   const [searchQuery, setSearchQuery] = useState('');

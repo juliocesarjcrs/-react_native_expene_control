@@ -15,8 +15,8 @@ import { showError } from '~/utils/showError';
 import { DateFormat, NumberFormat } from '../../../utils/Helpers';
 
 // Styles
-import { BACKGROUND_TOOLTIP, ICON, PRIMARY } from '../../../styles/colors';
 import { MEDIUM, SMALL } from '../../../styles/fonts';
+import { useThemeColors } from '~/customHooks/useThemeColors';
 
 interface FlatListLoansProps {
   loans: Loan[] | undefined;
@@ -24,6 +24,7 @@ interface FlatListLoansProps {
 }
 
 const FlatListLoans: React.FC<FlatListLoansProps> = ({ loans, updateList }) => {
+  const colors = useThemeColors();
   const [deleteLoanMutation] = useMutation(DELETE_LOAN);
   const ListLoan = ({ item }: { item: Loan }) => {
 
@@ -61,14 +62,14 @@ const FlatListLoans: React.FC<FlatListLoansProps> = ({ loans, updateList }) => {
       onOpen: () => {},
       overlayColor: 'transparent',
       withOverlay: true,
-      backgroundColor: BACKGROUND_TOOLTIP,
+      backgroundColor: colors.PRIMARY,
       highlightColor: 'transparent',
       skipAndroidStatusBar: false,
       ModalComponent: Modal,
       closeOnlyOnBackdropPress: false
     };
     return (
-      <View style={styles.header}>
+      <View style={[styles.header,{ backgroundColor: colors.PRIMARY }]}>
         <Tooltip {...tooltipProps}>
           <Text style={styles.title}>{NumberFormat(item.amount)}</Text>
         </Tooltip>
@@ -83,7 +84,7 @@ const FlatListLoans: React.FC<FlatListLoansProps> = ({ loans, updateList }) => {
           style={{ paddingRight: 15 }}
           name="trash-can"
           size={20}
-          color={ICON}
+          color={colors.PRIMARY}
           onPress={() => createTwoButtonAlert(String(item.id))}
         />
       </View>
@@ -94,7 +95,6 @@ const FlatListLoans: React.FC<FlatListLoansProps> = ({ loans, updateList }) => {
       display: 'flex',
       flexDirection: 'row',
       // width: 300,
-      backgroundColor: PRIMARY,
       padding: 5,
       // alignItems: "center",
       justifyContent: 'space-between'

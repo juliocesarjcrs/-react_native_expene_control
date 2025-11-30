@@ -1,9 +1,9 @@
-import { Subcategory } from "../../services";
+import { SubcategoryExpense } from "../../services";
 
 export type CategoryExpensesFormat = {
   label: string;
   value: number;
-  subcategories: Subcategory[];
+  subcategories: SubcategoryExpense[];
   icon: () => React.JSX.Element;
 }
 export type FormExpensesValues = {

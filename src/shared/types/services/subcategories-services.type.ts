@@ -1,4 +1,4 @@
-import { ExpenseModel, SubcategoryModel } from "../models";
+import { CategoryModel, ExpenseModel, SubcategoryModel } from "../models";
 
 
 export type CreateSubcategoryPayload = Omit<SubcategoryModel, 'id'>;
@@ -23,6 +23,7 @@ export type SubcategoriesWithExpenses = {
   categoryId: number;
   userId: number;
   expenses: ExpenseModel[];
+  category: CategoryModel
 };
 
 export type GetSubategoriesByCategoryResponse = SubcategoriesWithExpenses | SubcategoryModel[];

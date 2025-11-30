@@ -1,9 +1,11 @@
 import React, { useMemo } from 'react';
 import { View, Text, StyleSheet } from 'react-native';
-import { Badge } from 'react-native-elements';
-import { dayMonth } from '~/utils/Helpers';
+
+// Theme
 import { useThemeColors } from '~/customHooks/useThemeColors';
-import { COMPLETE_COLOR_PROGRESS_BAR, MISSING_COLOR_PROGRESS_BAR } from '~/styles/colors';
+
+// Styles
+import { SMALL } from '~/styles/fonts';
 
 type MyProgressBarProps = {
   percentage: string;
@@ -15,8 +17,8 @@ type MyProgressBarProps = {
 export default function MyProgressBar({
   percentage,
   height,
-  backgroundColor = 'grey',
-  completedColor = COMPLETE_COLOR_PROGRESS_BAR
+  backgroundColor,
+  completedColor
 }: MyProgressBarProps) {
   const colors = useThemeColors();
 
@@ -24,92 +26,130 @@ export default function MyProgressBar({
     const tempPercentage = parseFloat(percentage);
     const isOverBudget = tempPercentage > 100;
 
-    return {
-      displayPercentage: isOverBudget ? '100%' : percentage,
-      originalPercentage: percentage,
-      barColor: isOverBudget ? '#FA7E87' : completedColor
-    };
-  }, [percentage, completedColor]);
+    // Usar colores del theme si no se especifican
+    const finalCompletedColor = completedColor || colors.SUCCESS;
+    const finalBackgroundColor = backgroundColor || colors.BORDER;
 
-  const todayIndicator = dayMonth(12);
+    return {
+      displayPercentage: isOverBudget ? 100 : tempPercentage,
+      originalPercentage: percentage,
+      barColor: isOverBudget ? colors.ERROR : finalCompletedColor,
+      bgColor: finalBackgroundColor,
+      isOverBudget
+    };
+  }, [percentage, completedColor, backgroundColor, colors]);
+
+  // Calcular el ancho mínimo para que el texto quepa
+  const textMinWidth = 50; // px mínimos para el texto
+  const barWidthPercent = progressData.displayPercentage;
+  const showTextInside = barWidthPercent >= 15; // Mostrar texto dentro solo si hay suficiente espacio
 
   return (
-    <View>
-      <View style={styles.container}>
-        {/* Background bar */}
-        <View
-          style={{
-            width: '100%',
+    <View style={styles.container}>
+      {/* Background bar */}
+      <View
+        style={[
+          styles.backgroundBar,
+          {
             height: height,
-            marginVertical: 10,
-            borderRadius: 5,
-            borderColor: backgroundColor,
-            borderWidth: 1,
-            backgroundColor: MISSING_COLOR_PROGRESS_BAR
-          }}
-        />
-
+            backgroundColor: progressData.bgColor,
+            borderColor: colors.BORDER,
+          }
+        ]}
+      >
         {/* Progress bar */}
         <View
-          style={{
-            width: `${parseFloat(progressData.displayPercentage)}%` as any,
-            height: height,
-            marginVertical: 10,
-            borderRadius: 5,
-            backgroundColor: progressData.barColor,
-            position: 'absolute',
-            bottom: 15
-          }}
-        />
-
-        {/* Percentage text */}
-        <View
-          style={{
-            width: `${Math.max(parseFloat(progressData.displayPercentage), 15)}%` as any,
-            height: height,
-            bottom: 25
-          }}
+          style={[
+            styles.progressBar,
+            {
+              width: `${barWidthPercent}%`,
+              height: height,
+              backgroundColor: progressData.barColor,
+            }
+          ]}
         >
-          <Text style={styles.percentageText}>{progressData.originalPercentage}</Text>
+          {/* Percentage text DENTRO de la barra */}
+          {showTextInside && (
+            <View style={styles.textContainer}>
+              <Text style={[styles.percentageText, { color: colors.WHITE }]}>
+                {progressData.originalPercentage}
+              </Text>
+            </View>
+          )}
         </View>
 
-        {/* Today indicator */}
-        <View
-          style={{
-            width: todayIndicator.percentage as any,
-            flexDirection: 'row',
-            justifyContent: 'flex-end',
-            position: 'absolute',
-            bottom: 5,
-            left: -18
-          }}
-        >
-          <View style={styles.verticalLine} />
-          <Badge value="Hoy" status="success" />
-        </View>
+        {/* Percentage text FUERA de la barra (cuando es muy pequeña) */}
+        {!showTextInside && (
+          <View 
+            style={[
+              styles.textContainerOutside,
+              { left: `${barWidthPercent}%` }
+            ]}
+          >
+            <Text style={[styles.percentageTextOutside, { color: colors.TEXT_PRIMARY }]}>
+              {progressData.originalPercentage}
+            </Text>
+          </View>
+        )}
       </View>
+
+      {/* Badge de alerta si excede */}
+      {progressData.isOverBudget && (
+        <View style={styles.warningContainer}>
+          <Text style={[styles.warningText, { color: colors.ERROR }]}>
+            ¡Presupuesto excedido!
+          </Text>
+        </View>
+      )}
     </View>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
-    justifyContent: 'center'
+    justifyContent: 'center',
+  },
+  backgroundBar: {
+    width: '100%',
+    borderRadius: 10,
+    borderWidth: 1,
+    overflow: 'hidden',
+    position: 'relative',
+  },
+  progressBar: {
+    borderRadius: 10,
+    justifyContent: 'center',
+    alignItems: 'flex-end',
+    paddingRight: 8,
+  },
+  textContainer: {
+    position: 'absolute',
+    right: 8,
+    top: 0,
+    bottom: 0,
+    justifyContent: 'center',
   },
   percentageText: {
-    textAlign: 'right',
+    fontSize: SMALL,
     fontWeight: 'bold',
-    color: 'white',
-    fontSize: 11,
-    paddingRight: 4
   },
-  verticalLine: {
-    backgroundColor: 'gray',
-    width: 1,
-    height: 15,
-    position: 'relative',
-    bottom: 17,
-    left: 17,
-    opacity: 0.6
-  }
+  textContainerOutside: {
+    position: 'absolute',
+    top: 0,
+    bottom: 0,
+    justifyContent: 'center',
+    marginLeft: 8,
+  },
+  percentageTextOutside: {
+    fontSize: SMALL,
+    fontWeight: 'bold',
+  },
+  warningContainer: {
+    marginTop: 4,
+    alignItems: 'center',
+  },
+  warningText: {
+    fontSize: SMALL - 1,
+    fontWeight: '600',
+  },
 });

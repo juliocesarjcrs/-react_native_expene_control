@@ -1,6 +1,6 @@
 import { CategoryModel } from '~/shared/types';
 import axios from '../plugins/axiosConfig'
-import { AllExpensesByRangeDatesResponse, Category, CreateCategoryPayload, EditCategoryPayload, GetAllExpensesByMonthResponse, GetAllSubcategoriesExpensesByMonthResponse, GetCategoriesParams, GetCategoriesResponse, GetCategoryTypeIncomeResponse, GetCategoryWithSubcategoriesResponse } from "../shared/types/services";
+import { AllExpensesByRangeDatesResponse, CategoryExpense, CreateCategoryPayload, EditCategoryPayload, GetAllExpensesByMonthResponse, GetAllSubcategoriesExpensesByMonthResponse, GetCategoriesParams, GetCategoriesResponse, GetCategoryTypeIncomeResponse, GetCategoryWithSubcategoriesResponse } from "../shared/types/services";
 import { AxiosResponse } from "axios";
 const PREFIX = "categories";
 export const getCategories = async (params: GetCategoriesParams): Promise<AxiosResponse<GetCategoriesResponse>> => {

@@ -14,7 +14,7 @@ import {
 import { Icon } from 'react-native-elements';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { getCategoryWithSubcategories } from '~/services/categories';
-import { Category } from '~/shared/types/services';
+import { CategoryExpense } from '~/shared/types/services';
 import ExpenseItem from './components/ExpenseItem';
 import { CreateExpensePayload } from '~/shared/types/services/expense-service.type';
 import {
@@ -48,7 +48,7 @@ const MultiExpenseModal: React.FC<MultiExpenseModalProps> = ({
     return expenses.reduce((sum, expense) => sum + (expense.cost || 0), 0);
   }, [expenses]);
 
-  const transformCategories = useCallback((apiCategories: Category[]): CategoryDropdown[] => {
+  const transformCategories = useCallback((apiCategories: CategoryExpense[]): CategoryDropdown[] => {
     return apiCategories.map((category) => ({
       label: category.name,
       value: category.id,

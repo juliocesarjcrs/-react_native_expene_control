@@ -1,8 +1,9 @@
 /* eslint-disable no-useless-escape */
-import { Product } from "~/shared/types/components/receipt-scanner.type";
-import { formatDescription } from "./formatDescription";
+import { Product } from '~/shared/types/components/receipt-scanner.type';
+import { formatDescription } from './formatDescription';
 
-const PRODUCT_PATTERN = /^\d+\s+([A-Za-zÃÃ‰ÃÃ"ÃšÃœÃ'Ã±Ã¡Ã©Ã­Ã³ÃºÃ¼#%().,\/&\s*\-]+?(?:\s*\/\s*[A-Za-zÃÃ‰ÃÃ"ÃšÃœÃ'Ã±Ã¡Ã©Ã­Ã³ÃºÃ¼#%().,\/&\s*\-]+?)*)(?:\s+(\d{1,3}(?:[.,]\s?\d{2,3})?)[A-Za-z]*)?$/i;
+const PRODUCT_PATTERN =
+  /^\d+\s+([A-Za-zÃÃ‰ÃÃ"ÃšÃœÃ'Ã±Ã¡Ã©Ã­Ã³ÃºÃ¼#%().,\/&\s*\-]+?(?:\s*\/\s*[A-Za-zÃÃ‰ÃÃ"ÃšÃœÃ'Ã±Ã¡Ã©Ã­Ã³ÃºÃ¼#%().,\/&\s*\-]+?)*)(?:\s+(\d{1,3}(?:[.,]\s?\d{2,3})?)[A-Za-z]*)?$/i;
 const PRICE_PATTERN = /(\d+[.,]?\d*[A-Za-z]?)\s*$/;
 const EXITO_PRODUCT_PATTERN = /(\d{6,})\s+([A-Z].+?)\s+(\d{1,3}[.,]\d{3})[A-Z]?/;
 const DESC_PATTERN = /^\d+\s+(\d{6,})\s+([A-Z].+)/;
@@ -10,30 +11,31 @@ const SIMPLE_PRICE_PATTERN = /^(\d{1,3}[.,]\d{3})[A-Z]?$/;
 const KGM_PATTERN = /(\d+(?:\.\s?\d+)?)\/(KGM)\s+[x*]\s+([\d.,]+)\s+V\.\s+Ahorro\s+([\d.,]+)/i;
 
 export function parseCarulla(lines: string[], joined: string): Product[] {
-  console.log("📄 Procesando como tipo Carulla...");
+  console.log('📄 Procesando como tipo Carulla...');
 
   // Determinar el tipo de formato y procesar
   if (isAltCarulla(joined)) {
-    console.log("📄 Procesando como Carulla alternativo (caso 2)");
+    console.log('📄 Procesando como Carulla alternativo (caso 2)');
     return processAltCarulla(lines);
   }
 
   if (isExitoFormat(joined)) {
-    console.log("🛒 Procesando como tipo Éxito");
+    console.log('🛒 Procesando como tipo Éxito');
     return processExitoFormat(lines);
   }
 
   if (isCarullaCase5(joined)) {
-    console.log("🛠️ Procesando como caso especial Carulla 5");
+    console.log('🛠️ Procesando como caso especial Carulla 5');
     return processCarullaCase5(lines, joined);
   }
 
-  if (isCarullaCase6(joined)) { // caso(16)
-    console.log("🛠️ Procesando como caso especial Carulla 6");
+  if (isCarullaCase6(joined)) {
+    // caso(16)
+    console.log('🛠️ Procesando como caso especial Carulla 6');
     return processCarullaCase6(lines, joined);
   }
 
-  console.log("🔍 Aplicando heurísticas generales");
+  console.log('🔍 Aplicando heurísticas generales');
   return fallbackProcessing(lines, joined);
 }
 
@@ -47,12 +49,12 @@ function processWeightAndSavings(line: string, description: string): string {
 
     const totalOriginal = originalPrice * parseFloat(weight);
     const totalPid = totalOriginal - savings;
-    const newPricePerkg = totalPid / parseFloat(weight)
+    const newPricePerkg = totalPid / parseFloat(weight);
 
     if (totalOriginal > 0) {
       const savingsPercentage = (savings / totalOriginal) * 100;
-      const formattedNewPrice = Math.round(newPricePerkg).toLocaleString("es-CO");
-      const formattedOriginalPrice = Math.round(originalPrice).toLocaleString("es-CO");
+      const formattedNewPrice = Math.round(newPricePerkg).toLocaleString('es-CO');
+      const formattedOriginalPrice = Math.round(originalPrice).toLocaleString('es-CO');
       if (savingsPercentage > 0) {
         return `${description} — ${weight} kg (Precio original: $${formattedOriginalPrice}/kg) con ${Math.round(savingsPercentage)}% de descuento Precio final: $${formattedNewPrice}/kg`;
       }
@@ -64,34 +66,46 @@ function processWeightAndSavings(line: string, description: string): string {
 
 // Funciones de detección de formatos
 function isExitoFormat(joined: string): boolean {
-  return (joined.includes('PLU\tDETALLE\tPRECIO') || joined.includes('PLU DETALLE PRECIO')) &&
+  return (
+    (joined.includes('PLU\tDETALLE\tPRECIO') || joined.includes('PLU DETALLE PRECIO')) &&
     (joined.includes('V. Ahorro') || joined.includes('V . Ahorro')) &&
     !joined.match(/PLU\s+DETALLE\s*$/m) &&
     !isCarullaCase5(joined) &&
-    !isCarullaCase6(joined);
+    !isCarullaCase6(joined)
+  );
 }
 
 function isCarullaCase6(joined: string): boolean {
-  return (joined.includes('PLU\tDETALLE\tPRECIO') || joined.includes('PLU DETALLE PRECIO')) &&
+  return (
+    (joined.includes('PLU\tDETALLE\tPRECIO') || joined.includes('PLU DETALLE PRECIO')) &&
     joined.match(/\d+\s+[\d.]+\/KGM/gm) !== null &&
-    joined.includes('Total Item :');
+    joined.includes('Total Item :')
+  );
 }
 
 function isCarullaCase5(joined: string): boolean {
-  return (joined.includes('PLU DETALLE') || joined.includes('PLU\tDETALLE\n')) &&
+  return (
+    (joined.includes('PLU DETALLE') || joined.includes('PLU\tDETALLE\n')) &&
     !joined.includes('PLU\tDETALLE\tPRECIO') &&
     !joined.includes('PLU DETALLE PRECIO') &&
-    (joined.includes('Total Item :') || joined.includes('Total Item'));
+    (joined.includes('Total Item :') || joined.includes('Total Item'))
+  );
 }
 
 function isAltCarulla(joined: string): boolean {
-  return joined.includes('DETALLE PRECIO') &&
+  return (
+    joined.includes('DETALLE PRECIO') &&
     joined.indexOf('DETALLE') < joined.indexOf('PLU') &&
-    joined.includes('Total Item :');
+    joined.includes('Total Item :')
+  );
 }
 
 // Función unificada para procesar productos con patrones comunes
-function processProductsWithPatterns(lines: string[], patterns: RegExp[], joined?: string): Product[] {
+function processProductsWithPatterns(
+  lines: string[],
+  patterns: RegExp[],
+  joined?: string
+): Product[] {
   const products: Product[] = [];
 
   for (let i = 0; i < lines.length; i++) {
@@ -108,7 +122,9 @@ function processProductsWithPatterns(lines: string[], patterns: RegExp[], joined
           price = parseInt(match[3].replace(/[.,]/g, ''), 10);
         } else if (pattern === PRODUCT_PATTERN) {
           description = formatDescription(match[1].trim());
-          price = match[2] ? parseInt(match[2].replace(/[.,\s]/g, '').replace(/[A-Za-z]$/i, ''), 10) : 0;
+          price = match[2]
+            ? parseInt(match[2].replace(/[.,\s]/g, '').replace(/[A-Za-z]$/i, ''), 10)
+            : 0;
         }
 
         if (description && price > 0) {
@@ -128,7 +144,7 @@ function processExitoFormat(lines: string[]): Product[] {
 }
 
 function processCarullaCase6(lines: string[], joined: string): Product[] {
-  console.log("🛠️ Procesando como caso 6 Carulla con precios en línea");
+  console.log('🛠️ Procesando como caso 6 Carulla con precios en línea');
   const products: Product[] = [];
 
   for (let i = 0; i < lines.length; i++) {
@@ -236,7 +252,9 @@ function processAltCarulla(lines: string[]): Product[] {
     const current = lines[i];
     const next = lines[i + 1]?.trim();
 
-    const unitLineMatch = current.match(/^(?:\d+\s+)?(?:1\/u|\d+\.\d+\/\w+).*?x.*?(?:\d+\.\d+\s+)*.*?(\d+\.\d{3})(?:[A-Za-z]*\s*)?$/i);
+    const unitLineMatch = current.match(
+      /^(?:\d+\s+)?(?:1\/u|\d+\.\d+\/\w+).*?x.*?(?:\d+\.\d+\s+)*.*?(\d+\.\d{3})(?:[A-Za-z]*\s*)?$/i
+    );
     const descLineMatch = next?.match(/^(\d{6,})\s+(.+)/);
 
     if (unitLineMatch && descLineMatch) {

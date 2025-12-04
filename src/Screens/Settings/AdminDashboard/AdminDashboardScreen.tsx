@@ -7,7 +7,7 @@ import {
   StyleSheet,
   RefreshControl,
   TouchableOpacity,
-  Alert,
+  Alert
 } from 'react-native';
 import { Icon } from 'react-native-elements';
 
@@ -17,7 +17,13 @@ import MyButton from '~/components/MyButton';
 import { ScreenHeader } from '~/components/ScreenHeader';
 
 // Services
-import { getCurrentModel, getInteractionLogs, getModelErrors, getModelsHealth, reloadModels } from '~/services/aiConfigService';
+import {
+  getCurrentModel,
+  getInteractionLogs,
+  getModelErrors,
+  getModelsHealth,
+  reloadModels
+} from '~/services/aiConfigService';
 
 // Types
 import { ConversationLogModel } from '~/shared/types/models/conversation-log.type';
@@ -36,8 +42,8 @@ import { screenConfigs } from '~/config/screenConfigs';
 type TabType = 'health' | 'tools' | 'errors';
 
 export default function AdminDashboardScreen() {
-    const config = screenConfigs.adminDashboard;
-    const colors = useThemeColors();
+  const config = screenConfigs.adminDashboard;
+  const colors = useThemeColors();
   const [activeTab, setActiveTab] = useState<TabType>('health');
   const [refreshing, setRefreshing] = useState(false);
 
@@ -54,8 +60,8 @@ export default function AdminDashboardScreen() {
   };
 
   return (
-       <View style={[commonStyles.screenContentWithPadding, { backgroundColor: colors.BACKGROUND }]}>
-         <ScreenHeader title={config.title} subtitle={config.subtitle} />
+    <View style={[commonStyles.screenContentWithPadding, { backgroundColor: colors.BACKGROUND }]}>
+      <ScreenHeader title={config.title} subtitle={config.subtitle} />
       {/* Tabs */}
       <View style={[styles.tabs, { backgroundColor: colors.CARD_BACKGROUND }]}>
         <TouchableOpacity
@@ -63,8 +69,8 @@ export default function AdminDashboardScreen() {
             styles.tab,
             activeTab === 'health' && {
               borderBottomColor: colors.PRIMARY,
-              borderBottomWidth: 2,
-            },
+              borderBottomWidth: 2
+            }
           ]}
           onPress={() => setActiveTab('health')}
         >
@@ -78,9 +84,8 @@ export default function AdminDashboardScreen() {
             style={[
               styles.tabText,
               {
-                color:
-                  activeTab === 'health' ? colors.PRIMARY : colors.TEXT_SECONDARY,
-              },
+                color: activeTab === 'health' ? colors.PRIMARY : colors.TEXT_SECONDARY
+              }
             ]}
           >
             Estado
@@ -92,8 +97,8 @@ export default function AdminDashboardScreen() {
             styles.tab,
             activeTab === 'tools' && {
               borderBottomColor: colors.PRIMARY,
-              borderBottomWidth: 2,
-            },
+              borderBottomWidth: 2
+            }
           ]}
           onPress={() => setActiveTab('tools')}
         >
@@ -107,9 +112,8 @@ export default function AdminDashboardScreen() {
             style={[
               styles.tabText,
               {
-                color:
-                  activeTab === 'tools' ? colors.PRIMARY : colors.TEXT_SECONDARY,
-              },
+                color: activeTab === 'tools' ? colors.PRIMARY : colors.TEXT_SECONDARY
+              }
             ]}
           >
             Tool Calls
@@ -121,8 +125,8 @@ export default function AdminDashboardScreen() {
             styles.tab,
             activeTab === 'errors' && {
               borderBottomColor: colors.PRIMARY,
-              borderBottomWidth: 2,
-            },
+              borderBottomWidth: 2
+            }
           ]}
           onPress={() => setActiveTab('errors')}
         >
@@ -136,9 +140,8 @@ export default function AdminDashboardScreen() {
             style={[
               styles.tabText,
               {
-                color:
-                  activeTab === 'errors' ? colors.PRIMARY : colors.TEXT_SECONDARY,
-              },
+                color: activeTab === 'errors' ? colors.PRIMARY : colors.TEXT_SECONDARY
+              }
             ]}
           >
             Errores
@@ -149,9 +152,7 @@ export default function AdminDashboardScreen() {
       {/* Content */}
       <ScrollView
         style={styles.content}
-        refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
-        }
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
       >
         {activeTab === 'health' && <ModelsHealthView />}
         {activeTab === 'tools' && <ToolCallsView />}
@@ -177,10 +178,7 @@ function ModelsHealthView() {
   const loadData = async () => {
     try {
       setLoading(true);
-      const [current, models] = await Promise.all([
-        getCurrentModel(),
-        getModelsHealth(),
-      ]);
+      const [current, models] = await Promise.all([getCurrentModel(), getModelsHealth()]);
       setCurrentModel(current);
       setAllModels(models);
     } catch (error) {
@@ -212,23 +210,16 @@ function ModelsHealthView() {
     currentModel?.health?.healthScore > 0.7
       ? colors.SUCCESS
       : currentModel?.health?.healthScore > 0.4
-      ? colors.WARNING
-      : colors.ERROR;
+        ? colors.WARNING
+        : colors.ERROR;
 
   return (
     <View style={styles.section}>
       {/* Modelo Actual */}
       <View style={[styles.card, { backgroundColor: colors.CARD_BACKGROUND }]}>
         <View style={styles.cardHeader}>
-          <Icon
-            name="robot"
-            type="material-community"
-            color={colors.PRIMARY}
-            size={24}
-          />
-          <Text style={[styles.cardTitle, { color: colors.TEXT_PRIMARY }]}>
-            Modelo Activo
-          </Text>
+          <Icon name="robot" type="material-community" color={colors.PRIMARY} size={24} />
+          <Text style={[styles.cardTitle, { color: colors.TEXT_PRIMARY }]}>Modelo Activo</Text>
         </View>
 
         <View style={styles.statusRow}>
@@ -240,27 +231,21 @@ function ModelsHealthView() {
 
         <View style={styles.statsGrid}>
           <View style={styles.statItem}>
-            <Text style={[styles.statLabel, { color: colors.TEXT_SECONDARY }]}>
-              Health Score
-            </Text>
+            <Text style={[styles.statLabel, { color: colors.TEXT_SECONDARY }]}>Health Score</Text>
             <Text style={[styles.statValue, { color: healthColor }]}>
               {(currentModel?.health?.healthScore * 100 || 0).toFixed(0)}%
             </Text>
           </View>
 
           <View style={styles.statItem}>
-            <Text style={[styles.statLabel, { color: colors.TEXT_SECONDARY }]}>
-              Latencia
-            </Text>
+            <Text style={[styles.statLabel, { color: colors.TEXT_SECONDARY }]}>Latencia</Text>
             <Text style={[styles.statValue, { color: colors.TEXT_PRIMARY }]}>
               {currentModel?.health?.responseTime || 0}ms
             </Text>
           </View>
 
           <View style={styles.statItem}>
-            <Text style={[styles.statLabel, { color: colors.TEXT_SECONDARY }]}>
-              Errores
-            </Text>
+            <Text style={[styles.statLabel, { color: colors.TEXT_SECONDARY }]}>Errores</Text>
             <Text style={[styles.statValue, { color: colors.ERROR }]}>
               {currentModel?.health?.errorCount || 0}
             </Text>
@@ -269,16 +254,14 @@ function ModelsHealthView() {
       </View>
 
       {/* Lista de Todos los Modelos */}
-      <Text style={[styles.sectionTitle, { color: colors.TEXT_PRIMARY }]}>
-        Todos los Modelos
-      </Text>
+      <Text style={[styles.sectionTitle, { color: colors.TEXT_PRIMARY }]}>Todos los Modelos</Text>
 
       {allModels.map((model) => (
         <View
           key={model.id}
           style={[
             styles.modelCard,
-            { backgroundColor: colors.CARD_BACKGROUND, borderColor: colors.BORDER },
+            { backgroundColor: colors.CARD_BACKGROUND, borderColor: colors.BORDER }
           ]}
         >
           <View style={styles.modelHeader}>
@@ -294,16 +277,14 @@ function ModelsHealthView() {
               style={[
                 styles.activeBadge,
                 {
-                  backgroundColor: model.is_active
-                    ? colors.SUCCESS + '20'
-                    : colors.GRAY + '20',
-                },
+                  backgroundColor: model.is_active ? colors.SUCCESS + '20' : colors.GRAY + '20'
+                }
               ]}
             >
               <Text
                 style={[
                   styles.activeBadgeText,
-                  { color: model.is_active ? colors.SUCCESS : colors.GRAY },
+                  { color: model.is_active ? colors.SUCCESS : colors.GRAY }
                 ]}
               >
                 {model.is_active ? 'Activo' : 'Inactivo'}
@@ -313,8 +294,7 @@ function ModelsHealthView() {
 
           <View style={styles.modelStats}>
             <Text style={[styles.modelStat, { color: colors.TEXT_SECONDARY }]}>
-              Health: {(model.health_score * 100).toFixed(0)}% • Errores:{' '}
-              {model.error_count}
+              Health: {(model.health_score * 100).toFixed(0)}% • Errores: {model.error_count}
             </Text>
           </View>
         </View>
@@ -380,13 +360,16 @@ function ToolCallsView() {
   }
 
   // Agrupar por conversación
-  const groupedByConversation = interactions.reduce((acc, log) => {
-    if (!acc[log.conversationId]) {
-      acc[log.conversationId] = [];
-    }
-    acc[log.conversationId].push(log);
-    return acc;
-  }, {} as Record<number, any[]>);
+  const groupedByConversation = interactions.reduce(
+    (acc, log) => {
+      if (!acc[log.conversationId]) {
+        acc[log.conversationId] = [];
+      }
+      acc[log.conversationId].push(log);
+      return acc;
+    },
+    {} as Record<number, any[]>
+  );
 
   const conversationIds = Object.keys(groupedByConversation)
     .map(Number)
@@ -400,25 +383,17 @@ function ToolCallsView() {
           <Text style={[styles.statValue, { color: colors.PRIMARY }]}>
             {conversationIds.length}
           </Text>
-          <Text style={[styles.statLabel, { color: colors.TEXT_SECONDARY }]}>
-            Conversaciones
-          </Text>
+          <Text style={[styles.statLabel, { color: colors.TEXT_SECONDARY }]}>Conversaciones</Text>
         </View>
         <View style={styles.statItem}>
-          <Text style={[styles.statValue, { color: colors.INFO }]}>
-            {interactions.length}
-          </Text>
-          <Text style={[styles.statLabel, { color: colors.TEXT_SECONDARY }]}>
-            Iteraciones
-          </Text>
+          <Text style={[styles.statValue, { color: colors.INFO }]}>{interactions.length}</Text>
+          <Text style={[styles.statLabel, { color: colors.TEXT_SECONDARY }]}>Iteraciones</Text>
         </View>
         <View style={styles.statItem}>
           <Text style={[styles.statValue, { color: colors.SUCCESS }]}>
             {interactions.filter((i) => i.tool_result?.success).length}
           </Text>
-          <Text style={[styles.statLabel, { color: colors.TEXT_SECONDARY }]}>
-            Exitosas
-          </Text>
+          <Text style={[styles.statLabel, { color: colors.TEXT_SECONDARY }]}>Exitosas</Text>
         </View>
       </View>
 
@@ -479,12 +454,7 @@ function ErrorsView() {
   if (errors.length === 0) {
     return (
       <View style={styles.centered}>
-        <Icon
-          name="check-circle"
-          type="material-community"
-          color={colors.SUCCESS}
-          size={48}
-        />
+        <Icon name="check-circle" type="material-community" color={colors.SUCCESS} size={48} />
         <Text style={[styles.emptyText, { color: colors.SUCCESS }]}>
           ¡Sin errores! Todo funciona correctamente 🎉
         </Text>
@@ -494,9 +464,7 @@ function ErrorsView() {
 
   return (
     <View style={styles.section}>
-      <Text style={[styles.sectionTitle, { color: colors.TEXT_PRIMARY }]}>
-        Últimos 20 Errores
-      </Text>
+      <Text style={[styles.sectionTitle, { color: colors.TEXT_PRIMARY }]}>Últimos 20 Errores</Text>
 
       {errors.map((error, index) => (
         <View
@@ -506,15 +474,13 @@ function ErrorsView() {
             {
               backgroundColor: colors.ERROR + '10',
               borderColor: colors.ERROR,
-              borderLeftWidth: 4,
-            },
+              borderLeftWidth: 4
+            }
           ]}
         >
           <View style={styles.errorHeader}>
             <Icon name="alert-circle" type="material-community" color={colors.ERROR} size={20} />
-            <Text style={[styles.errorModel, { color: colors.ERROR }]}>
-              {error.modelName}
-            </Text>
+            <Text style={[styles.errorModel, { color: colors.ERROR }]}>{error.modelName}</Text>
             <View style={[styles.iterationBadge, { backgroundColor: colors.WARNING + '20' }]}>
               <Text style={[styles.iterationText, { color: colors.WARNING }]}>
                 Iter. {error.iteration || 1}
@@ -522,11 +488,9 @@ function ErrorsView() {
             </View>
           </View>
 
-          <Text style={[styles.errorMessage, { color: colors.TEXT_PRIMARY }]}>
-            {error.error}
-          </Text>
+          <Text style={[styles.errorMessage, { color: colors.TEXT_PRIMARY }]}>{error.error}</Text>
 
-           {/* ✅ AGREGAR: Información adicional */}
+          {/* ✅ AGREGAR: Información adicional */}
           <View style={styles.errorDetails}>
             <Text style={[styles.errorDetail, { color: colors.TEXT_SECONDARY }]}>
               🔧 Tools: {error.supportsTools ? 'Sí' : 'No'}
@@ -572,7 +536,7 @@ const styles = StyleSheet.create({
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
-    shadowRadius: 4,
+    shadowRadius: 4
   },
   tab: {
     flex: 1,
@@ -580,17 +544,17 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     paddingVertical: 12,
-    gap: 6,
+    gap: 6
   },
   tabText: {
     fontSize: 14,
-    fontWeight: '600',
+    fontWeight: '600'
   },
   content: {
-    flex: 1,
+    flex: 1
   },
   section: {
-    padding: 16,
+    padding: 16
   },
   card: {
     padding: 16,
@@ -600,39 +564,39 @@ const styles = StyleSheet.create({
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.1,
-    shadowRadius: 2,
+    shadowRadius: 2
   },
   cardHeader: {
     flexDirection: 'row',
     alignItems: 'center',
     marginBottom: 12,
-    gap: 8,
+    gap: 8
   },
   cardTitle: {
     fontSize: 18,
-    fontWeight: '600',
+    fontWeight: '600'
   },
   statusRow: {
     flexDirection: 'row',
     alignItems: 'center',
     marginBottom: 16,
-    gap: 8,
+    gap: 8
   },
   statusDot: {
     width: 12,
     height: 12,
-    borderRadius: 6,
+    borderRadius: 6
   },
   modelName: {
     fontSize: 16,
-    fontWeight: '500',
+    fontWeight: '500'
   },
   statsGrid: {
     flexDirection: 'row',
-    justifyContent: 'space-around',
+    justifyContent: 'space-around'
   },
   statItem: {
-    alignItems: 'center',
+    alignItems: 'center'
   },
   // statLabel: {
   //   fontSize: 12,
@@ -645,160 +609,160 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 16,
     fontWeight: '600',
-    marginBottom: 12,
+    marginBottom: 12
   },
   modelCard: {
     padding: 12,
     borderRadius: 8,
     marginBottom: 8,
-    borderWidth: 1,
+    borderWidth: 1
   },
   modelHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'flex-start',
-    marginBottom: 8,
+    marginBottom: 8
   },
   modelCardName: {
     fontSize: 14,
-    fontWeight: '600',
+    fontWeight: '600'
   },
   modelProvider: {
     fontSize: 12,
-    marginTop: 2,
+    marginTop: 2
   },
   activeBadge: {
     paddingHorizontal: 8,
     paddingVertical: 4,
-    borderRadius: 4,
+    borderRadius: 4
   },
   activeBadgeText: {
     fontSize: 11,
-    fontWeight: '600',
+    fontWeight: '600'
   },
   modelStats: {
-    marginTop: 4,
+    marginTop: 4
   },
   modelStat: {
-    fontSize: 12,
+    fontSize: 12
   },
   toolCard: {
     padding: 12,
     borderRadius: 8,
     marginBottom: 12,
-    borderWidth: 1,
+    borderWidth: 1
   },
   toolHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginBottom: 8,
+    marginBottom: 8
   },
   toolModel: {
     fontSize: 12,
-    fontWeight: '600',
+    fontWeight: '600'
   },
   toolTime: {
-    fontSize: 11,
+    fontSize: 11
   },
   userQuery: {
     fontSize: 14,
     fontStyle: 'italic',
-    marginBottom: 12,
+    marginBottom: 12
   },
   toolCallItem: {
-    marginBottom: 8,
+    marginBottom: 8
   },
   toolCallHeader: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
-    marginBottom: 4,
+    marginBottom: 4
   },
   toolName: {
     fontSize: 13,
-    fontWeight: '600',
+    fontWeight: '600'
   },
   toolParams: {
     fontSize: 11,
     fontFamily: 'monospace',
     padding: 8,
-    borderRadius: 4,
+    borderRadius: 4
   },
   timestamp: {
     fontSize: 11,
-    marginTop: 4,
+    marginTop: 4
   },
   errorCard: {
     padding: 12,
     borderRadius: 8,
-    marginBottom: 12,
+    marginBottom: 12
   },
   errorHeader: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
-    marginBottom: 8,
+    marginBottom: 8
   },
   errorModel: {
     fontSize: 13,
-    fontWeight: '600',
+    fontWeight: '600'
   },
   errorMessage: {
     fontSize: 13,
-    marginBottom: 8,
+    marginBottom: 8
   },
   errorFooter: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
+    justifyContent: 'space-between'
   },
   errorTime: {
-    fontSize: 11,
+    fontSize: 11
   },
   centered: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    padding: 32,
+    padding: 32
   },
   emptyText: {
     fontSize: 14,
     marginTop: 12,
-    textAlign: 'center',
+    textAlign: 'center'
   },
   iterationBadge: {
     paddingHorizontal: 6,
     paddingVertical: 2,
     borderRadius: 4,
-    marginLeft: 8,
+    marginLeft: 8
   },
   iterationText: {
     fontSize: 10,
-    fontWeight: '600',
+    fontWeight: '600'
   },
   errorDetails: {
     flexDirection: 'row',
     gap: 12,
     marginVertical: 8,
-    flexWrap: 'wrap',
+    flexWrap: 'wrap'
   },
   errorDetail: {
-    fontSize: 11,
+    fontSize: 11
   },
-    statsCard: {
+  statsCard: {
     flexDirection: 'row',
     justifyContent: 'space-around',
     padding: 16,
     borderRadius: 12,
     marginBottom: 16,
-    elevation: 2,
+    elevation: 2
   },
   statValue: {
     fontSize: 24,
-    fontWeight: '700',
+    fontWeight: '700'
   },
   statLabel: {
     fontSize: 11,
     marginTop: 4,
-    textTransform: 'uppercase',
-  },
+    textTransform: 'uppercase'
+  }
 });

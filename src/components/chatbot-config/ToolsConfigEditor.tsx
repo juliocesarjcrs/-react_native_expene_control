@@ -39,9 +39,7 @@ export const ToolsConfigEditor: React.FC<ToolsConfigEditorProps> = ({
   return (
     <View style={styles.container}>
       <View style={[styles.header, { borderBottomColor: colors.BORDER }]}>
-        <Text style={[styles.title, { color: colors.TEXT_PRIMARY }]}>
-          Configurar Herramientas
-        </Text>
+        <Text style={[styles.title, { color: colors.TEXT_PRIMARY }]}>Configurar Herramientas</Text>
         <Text style={[styles.subtitle, { color: colors.TEXT_SECONDARY }]}>
           Activa/desactiva tools y ajusta su prioridad de ejecución
         </Text>
@@ -61,9 +59,7 @@ export const ToolsConfigEditor: React.FC<ToolsConfigEditorProps> = ({
           >
             <View style={styles.toolHeader}>
               <View style={styles.toolInfo}>
-                <Text style={[styles.toolName, { color: colors.TEXT_PRIMARY }]}>
-                  {tool.name}
-                </Text>
+                <Text style={[styles.toolName, { color: colors.TEXT_PRIMARY }]}>{tool.name}</Text>
                 {tool.description && (
                   <Text style={[styles.toolDescription, { color: colors.TEXT_SECONDARY }]}>
                     {tool.description}
@@ -105,16 +101,8 @@ export const ToolsConfigEditor: React.FC<ToolsConfigEditorProps> = ({
 
       <View style={[styles.footer, { borderTopColor: colors.BORDER }]}>
         <View style={styles.actions}>
-          <MyButton
-            title="Cancelar"
-            variant="cancel"
-            onPress={onCancel}
-          />
-          <MyButton
-            title="Guardar"
-            onPress={handleSave}
-            loading={loading}
-          />
+          <MyButton title="Cancelar" variant="cancel" onPress={onCancel} />
+          <MyButton title="Guardar" onPress={handleSave} loading={loading} />
         </View>
       </View>
     </View>

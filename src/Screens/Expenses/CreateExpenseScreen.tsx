@@ -20,7 +20,10 @@ import ExpenseList from './components/ExpenseList';
 import { RootState } from '~/shared/types/reducers';
 import { ExpenseModel } from '~/shared/types';
 import { FormExpensesValues } from '~/shared/types/screens/expenses/create-expenses.type';
-import { CreateExpensePayload, GetExpensesFromSubcategoryResponse } from '~/shared/types/services/expense-service.type';
+import {
+  CreateExpensePayload,
+  GetExpensesFromSubcategoryResponse
+} from '~/shared/types/services/expense-service.type';
 import { DropDownSelectJoinCategoryFormat } from '~/shared/types/components/dropDown/SelectOnlyCategory.type';
 
 // Utils
@@ -57,26 +60,28 @@ export default function CreateExpenseScreen(): React.JSX.Element {
   const [sumCost, setSumCost] = useState<number>(0);
   const [expenses, setExpenses] = useState<ExpenseModel[]>([]);
   const [loading, setLoading] = useState<boolean>(false);
-  
+
   // Date picker
   const [date, setDate] = useState<Date>(new Date());
   const [showDate, setShowDate] = useState<boolean>(false);
-  
+
   const handleStartDateChange = (selectedDate?: Date): void => {
     setShowDate(false);
     if (selectedDate) {
       setDate(selectedDate);
     }
   };
-  
+
   const showStartDatePicker = (): void => {
     setShowDate(true);
   };
-  
+
   // Currency converter
   const [currencySymbol] = useState<string>('COP');
 
-  const fetchExpensesSubcategory = async (foundSubcategory: DropDownSelectJoinCategoryFormat): Promise<void> => {
+  const fetchExpensesSubcategory = async (
+    foundSubcategory: DropDownSelectJoinCategoryFormat
+  ): Promise<void> => {
     try {
       setLoading(true);
       setSubcategoryId(foundSubcategory.value);
@@ -89,11 +94,11 @@ export default function CreateExpenseScreen(): React.JSX.Element {
       showError(error);
     }
   };
-  
+
   const fetchExpensesOnlyCategory = async (): Promise<void> => {
     // Implementation pending
   };
-  
+
   const calculateTotal = (data: GetExpensesFromSubcategoryResponse): void => {
     const total = data.reduce((acu: number, val: ExpenseModel) => {
       return acu + val.cost;
@@ -103,7 +108,7 @@ export default function CreateExpenseScreen(): React.JSX.Element {
 
   const onSubmit = async (payload: FormExpensesValues): Promise<void> => {
     let newAmount: number | string = payload.cost;
-    
+
     if (currencySymbol !== 'COP') {
       try {
         const values = {
@@ -117,24 +122,24 @@ export default function CreateExpenseScreen(): React.JSX.Element {
         console.log('error---', error);
       }
     }
-    
+
     try {
       if (!subcategoryId) {
         ShowToast('Debes seleccionar una subcategoría');
         return;
       }
-      
+
       const dataSend: CreateExpensePayload = {
         ...payload,
         cost: parseInt(String(newAmount)),
         subcategoryId,
         date: DateFormat(date, 'YYYY-MM-DD')
       };
-      
+
       setLoading(true);
       const { data } = await CreateExpense(dataSend);
       setLoading(false);
-      
+
       const newExpense = [data, ...expenses];
       setExpenses(newExpense);
       calculateTotal(newExpense);
@@ -146,14 +151,14 @@ export default function CreateExpenseScreen(): React.JSX.Element {
       showError(error);
     }
   };
-  
+
   const updateList = (): void => {
     if (!subcategoryId) {
       return;
     }
     fetchExpenses(subcategoryId);
   };
-  
+
   const fetchExpenses = async (idSubcategory: number): Promise<void> => {
     const { data } = await getExpensesFromSubcategory(idSubcategory, month);
     setExpenses(data);
@@ -164,8 +169,8 @@ export default function CreateExpenseScreen(): React.JSX.Element {
     <View style={[commonStyles.screenContainer, { backgroundColor: colors.BACKGROUND }]}>
       <ScreenHeader title={config.title} subtitle={config.subtitle} />
 
-      <ScrollView 
-        style={{ flex: 1 }} 
+      <ScrollView
+        style={{ flex: 1 }}
         contentContainerStyle={styles.scrollContent}
         keyboardShouldPersistTaps="handled"
       >
@@ -197,7 +202,7 @@ export default function CreateExpenseScreen(): React.JSX.Element {
             )}
             defaultValue=""
           />
-          
+
           <Controller
             name="commentary"
             control={control}
@@ -243,10 +248,10 @@ export default function CreateExpenseScreen(): React.JSX.Element {
           {loading ? (
             <MyLoading />
           ) : (
-            <MyButton 
-              title="Guardar gasto" 
-              onPress={handleSubmit(onSubmit as any)} 
-              variant="primary" 
+            <MyButton
+              title="Guardar gasto"
+              onPress={handleSubmit(onSubmit as any)}
+              variant="primary"
             />
           )}
 
@@ -271,11 +276,11 @@ export default function CreateExpenseScreen(): React.JSX.Element {
 const styles = StyleSheet.create({
   scrollContent: {
     flexGrow: 1,
-    paddingBottom: 20,
+    paddingBottom: 20
   },
   formContainer: {
     paddingHorizontal: 16,
-    paddingTop: 10,
+    paddingTop: 10
   },
   totalContainer: {
     flexDirection: 'row',
@@ -289,13 +294,13 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 4,
-    elevation: 2,
+    elevation: 2
   },
   totalLabel: {
-    fontSize: MEDIUM,
+    fontSize: MEDIUM
   },
   totalAmount: {
     fontSize: MEDIUM,
-    fontWeight: 'bold',
-  },
+    fontWeight: 'bold'
+  }
 });

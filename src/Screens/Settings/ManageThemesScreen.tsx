@@ -1,5 +1,13 @@
 import React, { useEffect, useState } from 'react';
-import { StyleSheet, View, Text, ScrollView, ActivityIndicator, TouchableOpacity, Alert } from 'react-native';
+import {
+  StyleSheet,
+  View,
+  Text,
+  ScrollView,
+  ActivityIndicator,
+  TouchableOpacity,
+  Alert
+} from 'react-native';
 import { StackNavigationProp } from '@react-navigation/stack';
 import { RouteProp } from '@react-navigation/native';
 
@@ -98,7 +106,9 @@ export default function ManageThemesScreen({ navigation }: ManageThemesScreenPro
   }
 
   return (
-    <ScrollView style={[commonStyles.screenContentWithPadding, { backgroundColor: colors.BACKGROUND }]}>
+    <ScrollView
+      style={[commonStyles.screenContentWithPadding, { backgroundColor: colors.BACKGROUND }]}
+    >
       <ScreenHeader title={config.title} subtitle={config.subtitle} />
 
       {themes.map((theme) => (

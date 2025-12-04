@@ -1,20 +1,20 @@
-import React, { useEffect, useState, useCallback } from "react";
-import { FlatList, SafeAreaView, StyleSheet, Text, View, ListRenderItem } from "react-native";
-import { Icon, Input } from "react-native-elements";
-import { StackNavigationProp } from "@react-navigation/stack";
-import uuid from "react-native-uuid";
-import { NumberFormat } from "~/utils/Helpers";
-import { useThemeColors } from "~/customHooks/useThemeColors";
-import { commonStyles } from "~/styles/common";
-import { screenConfigs } from "~/config/screenConfigs";
-import { ScreenHeader } from "~/components/ScreenHeader";
-import MyButton from "~/components/MyButton";
-import RowInput from "./components/RowInput";
-import { SettingsStackParamList } from "~/shared/types";
+import React, { useState, useCallback } from 'react';
+import { FlatList, SafeAreaView, StyleSheet, Text, View, ListRenderItem } from 'react-native';
+import { Icon, Input } from 'react-native-elements';
+import { StackNavigationProp } from '@react-navigation/stack';
+import uuid from 'react-native-uuid';
+import { NumberFormat } from '~/utils/Helpers';
+import { useThemeColors } from '~/customHooks/useThemeColors';
+import { commonStyles } from '~/styles/common';
+import { screenConfigs } from '~/config/screenConfigs';
+import { ScreenHeader } from '~/components/ScreenHeader';
+import MyButton from '~/components/MyButton';
+import RowInput from './components/RowInput';
+import { SettingsStackParamList } from '~/shared/types';
 
 export type CalculeProductsScreenNavigationProp = StackNavigationProp<
   SettingsStackParamList,
-  "calculeProducts"
+  'calculeProducts'
 >;
 
 interface CalculeProductsScreenProps {
@@ -30,14 +30,14 @@ export type Product = {
 
 export default function CalculeProductsScreen({ navigation }: CalculeProductsScreenProps) {
   const colors = useThemeColors();
-  const [generalDiscount, setGeneralDiscount] = useState<string>("15");
+  const [generalDiscount, setGeneralDiscount] = useState<string>('15');
   const [products, setProducts] = useState<Product[]>([
     {
       id: uuid.v4() as string,
-      price: "",
+      price: '',
       realVal: 0,
-      discount: "15",
-    },
+      discount: '15'
+    }
   ]);
 
   const realTotal = products.reduce((acc, product) => acc + product.realVal, 0);
@@ -45,9 +45,9 @@ export default function CalculeProductsScreen({ navigation }: CalculeProductsScr
   const addRow = useCallback((): void => {
     const newProduct: Product = {
       id: uuid.v4() as string,
-      price: "",
+      price: '',
       realVal: 0,
-      discount: generalDiscount,
+      discount: generalDiscount
     };
     setProducts((prev) => [...prev, newProduct]);
   }, [generalDiscount]);
@@ -58,9 +58,7 @@ export default function CalculeProductsScreen({ navigation }: CalculeProductsScr
 
   const updateTotal = useCallback((updatedProduct: Product): void => {
     setProducts((prev) =>
-      prev.map((product) =>
-        product.id === updatedProduct.id ? updatedProduct : product
-      )
+      prev.map((product) => (product.id === updatedProduct.id ? updatedProduct : product))
     );
   }, []);
 
@@ -72,17 +70,13 @@ export default function CalculeProductsScreen({ navigation }: CalculeProductsScr
     setProducts((prev) =>
       prev.map((product) => ({
         ...product,
-        discount: generalDiscount,
+        discount: generalDiscount
       }))
     );
   };
 
   const renderItem: ListRenderItem<Product> = ({ item }) => (
-    <RowInput
-      prod={item}
-      sendRemoveRow={removeRow}
-      updateTotal={updateTotal}
-    />
+    <RowInput prod={item} sendRemoveRow={removeRow} updateTotal={updateTotal} />
   );
 
   const headerComponent = (): React.ReactElement => {
@@ -92,31 +86,18 @@ export default function CalculeProductsScreen({ navigation }: CalculeProductsScr
           title="Agregar producto"
           onPress={addRow}
           variant="primary"
-          icon={
-            <Icon
-              type="font-awesome"
-              name="plus"
-              size={20}
-              color={colors.WHITE}
-            />
-          }
+          icon={<Icon type="font-awesome" name="plus" size={20} color={colors.WHITE} />}
           fullWidth
         />
         <View style={styles.tableHeader}>
           <View style={styles.headerColumn}>
-            <Text style={[styles.headerText, { color: colors.TEXT_PRIMARY }]}>
-              Precio
-            </Text>
+            <Text style={[styles.headerText, { color: colors.TEXT_PRIMARY }]}>Precio</Text>
           </View>
           <View style={styles.headerColumnSmall}>
-            <Text style={[styles.headerText, { color: colors.TEXT_PRIMARY }]}>
-              Desc. %
-            </Text>
+            <Text style={[styles.headerText, { color: colors.TEXT_PRIMARY }]}>Desc. %</Text>
           </View>
           <View style={styles.headerColumn}>
-            <Text style={[styles.headerText, { color: colors.TEXT_PRIMARY }]}>
-              Valor final
-            </Text>
+            <Text style={[styles.headerText, { color: colors.TEXT_PRIMARY }]}>Valor final</Text>
           </View>
           <View style={styles.headerColumnAction} />
         </View>
@@ -179,50 +160,50 @@ export default function CalculeProductsScreen({ navigation }: CalculeProductsScr
 
 const styles = StyleSheet.create({
   safeArea: {
-    flex: 1,
+    flex: 1
   },
   discountSection: {
-    flexDirection: "row",
-    alignItems: "center",
+    flexDirection: 'row',
+    alignItems: 'center',
     paddingHorizontal: 10,
-    marginBottom: 12,
+    marginBottom: 12
   },
   discountInput: {
-    flex: 1,
+    flex: 1
   },
   applyButton: {
-    marginTop: 20,
+    marginTop: 20
   },
   tableHeader: {
-    flexDirection: "row",
+    flexDirection: 'row',
     padding: 8,
-    paddingHorizontal: 12,
+    paddingHorizontal: 12
   },
   headerColumn: {
-    flex: 1,
+    flex: 1
   },
   headerColumnSmall: {
-    width: 80,
+    width: 80
   },
   headerColumnAction: {
-    width: 50,
+    width: 50
   },
   headerText: {
-    fontWeight: "bold",
-    fontSize: 14,
+    fontWeight: 'bold',
+    fontSize: 14
   },
   footer: {
     padding: 16,
     marginTop: 12,
     borderRadius: 8,
-    marginHorizontal: 10,
+    marginHorizontal: 10
   },
   totalText: {
     fontSize: 18,
-    fontWeight: "bold",
-    textAlign: "right",
+    fontWeight: 'bold',
+    textAlign: 'right'
   },
   listContent: {
-    paddingBottom: 20,
-  },
+    paddingBottom: 20
+  }
 });

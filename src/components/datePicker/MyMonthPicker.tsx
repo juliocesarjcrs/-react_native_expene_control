@@ -46,12 +46,12 @@ const MyMonthPicker = () => {
   };
 
   return (
-   <View style={{ paddingHorizontal: 12 }}>
+    <View style={{ paddingHorizontal: 12 }}>
       <MyButton
         title={` Mes: ${DateFormat(month, 'MMMM YYYY')}`}
         onPress={() => setVisible(true)}
         variant="primary"
-       icon={<Icon type="material-community" name="calendar" size={25} color="white" />}
+        icon={<Icon type="material-community" name="calendar" size={25} color="white" />}
       />
 
       <Modal transparent visible={visible} animationType="fade">
@@ -92,16 +92,26 @@ const MyMonthPicker = () => {
           </View>
         </View>
       </Modal>
-   </View>
+    </View>
   );
 };
 
 const styles = (colors: ThemeColors) =>
   StyleSheet.create({
-    backdrop: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: 'rgba(0,0,0,0.4)' },
+    backdrop: {
+      flex: 1,
+      justifyContent: 'center',
+      alignItems: 'center',
+      backgroundColor: 'rgba(0,0,0,0.4)'
+    },
     modal: { backgroundColor: colors.CARD_BACKGROUND, borderRadius: 10, padding: 20, width: '85%' },
 
-    yearContainer: { flexDirection: 'row', justifyContent: 'center', alignItems: 'center', marginBottom: 15 },
+    yearContainer: {
+      flexDirection: 'row',
+      justifyContent: 'center',
+      alignItems: 'center',
+      marginBottom: 15
+    },
     arrow: { fontSize: 28, marginHorizontal: 20, color: colors.TEXT_PRIMARY },
     yearText: { fontSize: 20, fontWeight: 'bold', color: colors.TEXT_PRIMARY },
 

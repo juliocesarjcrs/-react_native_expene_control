@@ -3,11 +3,11 @@ import { handlerDataSearch } from '../Helpers';
 describe('handlerDataSearch', () => {
   const prevData = [
     { id: 1, value: 'a' },
-    { id: 2, value: 'b' },
+    { id: 2, value: 'b' }
   ];
   const newData = [
     { id: 3, value: 'c' },
-    { id: 4, value: 'd' },
+    { id: 4, value: 'd' }
   ];
 
   it('should reset the list if the query changes', () => {

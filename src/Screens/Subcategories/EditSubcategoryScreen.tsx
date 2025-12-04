@@ -30,7 +30,10 @@ import { EditSubcategoryPayload } from '../../shared/types/services/subcategorie
 // Configs
 import { screenConfigs } from '~/config/screenConfigs';
 
-type EditSubcategoryScreenNavigationProp = StackNavigationProp<ExpenseStackParamList, 'editSubcategory'>;
+type EditSubcategoryScreenNavigationProp = StackNavigationProp<
+  ExpenseStackParamList,
+  'editSubcategory'
+>;
 type EditSubcategoryScreenRouteProp = RouteProp<ExpenseStackParamList, 'editSubcategory'>;
 
 interface EditSubcategoryScreenProps {

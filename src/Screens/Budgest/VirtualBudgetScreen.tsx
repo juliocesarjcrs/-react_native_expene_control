@@ -80,7 +80,11 @@ export default function VirtualBudgetScreen({ navigation }: VirtualBudgetScreenP
     }
   };
 
-  const handleBudgetChange = (categoryId: number, subcategoryId: number | null, text: string): void => {
+  const handleBudgetChange = (
+    categoryId: number,
+    subcategoryId: number | null,
+    text: string
+  ): void => {
     const value = parseFormattedNumber(text);
     const updatedBudgets = [...budgetValues];
     const existingBudgetIndex = updatedBudgets.findIndex(
@@ -127,7 +131,9 @@ export default function VirtualBudgetScreen({ navigation }: VirtualBudgetScreenP
   };
 
   const getBudgetValue = (categoryId: number, subcategoryId: number | null): string => {
-    const budget = budgetValues.find((b) => b.categoryId === categoryId && b.subcategoryId === subcategoryId);
+    const budget = budgetValues.find(
+      (b) => b.categoryId === categoryId && b.subcategoryId === subcategoryId
+    );
     return budget && budget.budget > 0 ? formatNumberInput(budget.budget) : '';
   };
 
@@ -156,7 +162,9 @@ export default function VirtualBudgetScreen({ navigation }: VirtualBudgetScreenP
           </View>
 
           <View style={[styles.totalCard, { backgroundColor: colors.CARD_BACKGROUND }]}>
-            <Text style={[styles.totalLabel, { color: colors.TEXT_SECONDARY }]}>Presupuesto total:</Text>
+            <Text style={[styles.totalLabel, { color: colors.TEXT_SECONDARY }]}>
+              Presupuesto total:
+            </Text>
             <Text style={[styles.totalAmount, { color: colors.PRIMARY }]}>{calculateTotal()}</Text>
           </View>
           <ScrollView
@@ -257,7 +265,11 @@ const CategoryBudgetCard = ({
 }: CategoryBudgetCardProps) => {
   return (
     <View style={[cardStyles.container, { backgroundColor: colors.CARD_BACKGROUND }]}>
-      <TouchableOpacity style={cardStyles.header} onPress={() => onToggle(category.id)} activeOpacity={0.7}>
+      <TouchableOpacity
+        style={cardStyles.header}
+        onPress={() => onToggle(category.id)}
+        activeOpacity={0.7}
+      >
         <View style={cardStyles.headerLeft}>
           <Icon
             type="font-awesome"
@@ -266,16 +278,22 @@ const CategoryBudgetCard = ({
             color={colors.PRIMARY}
             containerStyle={cardStyles.icon}
           />
-          <Text style={[cardStyles.categoryName, { color: colors.TEXT_PRIMARY }]}>{category.name}</Text>
+          <Text style={[cardStyles.categoryName, { color: colors.TEXT_PRIMARY }]}>
+            {category.name}
+          </Text>
           <View style={[cardStyles.badge, { backgroundColor: colors.INFO + '20' }]}>
-            <Text style={[cardStyles.badgeText, { color: colors.INFO }]}>{category.subcategories.length}</Text>
+            <Text style={[cardStyles.badgeText, { color: colors.INFO }]}>
+              {category.subcategories.length}
+            </Text>
           </View>
         </View>
 
         <View style={cardStyles.headerRight}>
           <View style={cardStyles.totalContainer}>
             <Text style={[cardStyles.totalLabel, { color: colors.TEXT_SECONDARY }]}>Total:</Text>
-            <Text style={[cardStyles.totalValue, { color: colors.SUCCESS }]}>{NumberFormat(categoryTotal)}</Text>
+            <Text style={[cardStyles.totalValue, { color: colors.SUCCESS }]}>
+              {NumberFormat(categoryTotal)}
+            </Text>
           </View>
           <Icon
             type="material-community"
@@ -377,7 +395,13 @@ interface SubcategoryBudgetInputProps {
   colors: ReturnType<typeof useThemeColors>;
 }
 
-const SubcategoryBudgetInput = ({ subcategory, categoryId, value, onChange, colors }: SubcategoryBudgetInputProps) => {
+const SubcategoryBudgetInput = ({
+  subcategory,
+  categoryId,
+  value,
+  onChange,
+  colors
+}: SubcategoryBudgetInputProps) => {
   const [isFocused, setIsFocused] = useState(false);
 
   return (

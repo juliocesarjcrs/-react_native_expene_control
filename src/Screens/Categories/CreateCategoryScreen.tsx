@@ -14,12 +14,14 @@ import { ScreenHeader } from '~/components/ScreenHeader';
 import MyButton from '~/components/MyButton';
 import MyLoading from '~/components/loading/MyLoading';
 import ModalIcon from '~/components/modal/ModalIcon';
-import FlatListItem from './components/CategoryList';
 import { CategoryModel, ExpenseStackParamList } from '~/shared/types';
 import { CreateCategoryPayload } from '~/shared/types/services';
 import CategoryList from './components/CategoryList';
 
-export type CreateCategoryScreenNavigationProp = StackNavigationProp<ExpenseStackParamList, 'createCategory'>;
+export type CreateCategoryScreenNavigationProp = StackNavigationProp<
+  ExpenseStackParamList,
+  'createCategory'
+>;
 
 interface CreateCategoryScreenProps {
   navigation: CreateCategoryScreenNavigationProp;
@@ -99,16 +101,30 @@ export default function CreateCategoryScreen({ navigation }: CreateCategoryScree
 
       <View style={commonStyles.screenContent}>
         <View style={styles.radioGroup}>
-          <Text style={[styles.radioLabel, { color: colors.TEXT_PRIMARY }]}>Tipo de categoría:</Text>
+          <Text style={[styles.radioLabel, { color: colors.TEXT_PRIMARY }]}>
+            Tipo de categoría:
+          </Text>
           <RadioButton.Group onValueChange={handleTypeChange} value={type.toString()}>
             <View style={styles.radioContainer}>
               <View style={styles.radioOption}>
-                <RadioButton.Android value="0" color={colors.WARNING} uncheckedColor={colors.TEXT_SECONDARY} />
-                <Text style={{ color: colors.TEXT_PRIMARY, fontSize: 14, marginLeft: 4 }}>Gasto</Text>
+                <RadioButton.Android
+                  value="0"
+                  color={colors.WARNING}
+                  uncheckedColor={colors.TEXT_SECONDARY}
+                />
+                <Text style={{ color: colors.TEXT_PRIMARY, fontSize: 14, marginLeft: 4 }}>
+                  Gasto
+                </Text>
               </View>
               <View style={styles.radioOption}>
-                <RadioButton.Android value="1" color={colors.SUCCESS} uncheckedColor={colors.TEXT_SECONDARY} />
-                <Text style={{ color: colors.TEXT_PRIMARY, fontSize: 14, marginLeft: 4 }}>Ingreso</Text>
+                <RadioButton.Android
+                  value="1"
+                  color={colors.SUCCESS}
+                  uncheckedColor={colors.TEXT_SECONDARY}
+                />
+                <Text style={{ color: colors.TEXT_PRIMARY, fontSize: 14, marginLeft: 4 }}>
+                  Ingreso
+                </Text>
               </View>
             </View>
           </RadioButton.Group>

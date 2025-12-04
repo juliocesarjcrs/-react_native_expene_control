@@ -1,7 +1,7 @@
 export type Product = {
   description: string;
   price: number;
-}
+};
 
 export type OcrAccuracy =
   | '0' // Falló completamente
@@ -11,7 +11,15 @@ export type OcrAccuracy =
   | '4' // Excelente calidad (95-100% de texto correcto)
   | 'unverified'; // Por defecto
 
-export type ReceiptType = 'D1' | 'Carulla' | 'Exito' | 'DollarCity' | 'Ara' | 'Falabella' | 'CruzVerde' | 'Otros';
+export type ReceiptType =
+  | 'D1'
+  | 'Carulla'
+  | 'Exito'
+  | 'DollarCity'
+  | 'Ara'
+  | 'Falabella'
+  | 'CruzVerde'
+  | 'Otros';
 
 export type CsvData = {
   raw_text: string;
@@ -21,7 +29,7 @@ export type CsvData = {
   evaluation_date: string;
   evaluator_id: string;
   model_version: string;
-}
+};
 
 export type ScannerState = {
   pendingRawText: string;
@@ -29,7 +37,7 @@ export type ScannerState = {
   receiptType: ReceiptType | '';
   customReceiptType: string;
   editableProducts: Product[];
-}
+};
 
 export type Word = {
   WordText: string;
@@ -37,19 +45,19 @@ export type Word = {
   Top: number;
   Height: number;
   Width: number;
-}
+};
 
 export type Line = {
   Words: Word[];
   MaxHeight: number;
   MinTop: number;
-}
+};
 
 export type TextOverlay = {
   Lines: Line[];
   HasOverlay: boolean;
   Message: string | null;
-}
+};
 
 export type ParsedResult = {
   TextOverlay: TextOverlay | null;
@@ -57,7 +65,7 @@ export type ParsedResult = {
   ParsedText: string | null;
   ErrorMessage: string | null;
   ErrorDetails: string | null;
-}
+};
 
 export type OcrApiResponse = {
   ParsedResults: ParsedResult[];
@@ -67,7 +75,7 @@ export type OcrApiResponse = {
   ErrorDetails: string | null;
   SearchablePDFURL: string | null;
   ProcessingTimeInMilliseconds: string;
-}
+};
 
 // Tipos auxiliares para códigos de estado
 export type OcrExitCode = 1 | 2 | 3 | 4;

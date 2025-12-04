@@ -2,7 +2,7 @@ import 'intl';
 import 'intl/locale-data/jsonp/en';
 import { colorPalette } from './colorPalette';
 
-import dayjs, { Dayjs } from "dayjs";
+import dayjs, { Dayjs } from 'dayjs';
 import isLeapYear from 'dayjs/plugin/isLeapYear';
 import 'dayjs/locale/es';
 import { DayMonthResult } from '~/shared/types/utils/helpers.type';
@@ -10,7 +10,6 @@ import { LastIncomes } from '~/shared/types/services/income-service.type';
 
 dayjs.extend(isLeapYear); //  TypeError: Object is not a function, js engine: hermes
 dayjs.locale('es');
-
 
 /**
  * Formatea un número con separadores de miles para mostrar en inputs
@@ -42,16 +41,16 @@ export const parseFormattedNumber = (text: string): number => {
   return isNaN(parsed) ? 0 : parsed;
 };
 export const NumberFormat = (value: number | string): string => {
-  const num = typeof value === "string" ? Number(value) : value;
+  const num = typeof value === 'string' ? Number(value) : value;
 
   // Opcional: validar por si el string no es número
   if (isNaN(num)) {
-    console.warn("NumberFormat recibió un valor no numérico:", value);
-    return "$ 0";
+    console.warn('NumberFormat recibió un valor no numérico:', value);
+    return '$ 0';
   }
 
-  const formatted = new Intl.NumberFormat("es-CO", {
-    maximumFractionDigits: 0,
+  const formatted = new Intl.NumberFormat('es-CO', {
+    maximumFractionDigits: 0
   }).format(num);
 
   return `$ ${formatted}`;
@@ -59,57 +58,48 @@ export const NumberFormat = (value: number | string): string => {
 
 export const DateFormat = (date: string | Date, format = 'DD MMM hh:mm a') => {
   return dayjs(date).format(format);
-
-}
+};
 
 export const AsignColor = (index: number) => {
-
-  const leng = colorPalette.length
+  const leng = colorPalette.length;
   if (index < leng) {
-    return colorPalette[index]
+    return colorPalette[index];
   }
-  return '#AEA3CD'
-
-}
+  return '#AEA3CD';
+};
 export const delay = (miliseconst = 1000) => {
-  return new Promise(resolve => {
+  return new Promise((resolve) => {
     setTimeout(() => {
       resolve(2);
     }, miliseconst);
   });
-}
+};
 export const compareValues = <T extends Record<string, any>>(
   key: keyof T,
-  order: "asc" | "desc" = "asc"
+  order: 'asc' | 'desc' = 'asc'
 ) => {
   return function innerSort(a: T, b: T): number {
     if (!a.hasOwnProperty(key) || !b.hasOwnProperty(key)) {
       return 0;
     }
 
-    const varA =
-      typeof a[key] === "string" ? (a[key] as string).toUpperCase() : a[key];
-    const varB =
-      typeof b[key] === "string" ? (b[key] as string).toUpperCase() : b[key];
+    const varA = typeof a[key] === 'string' ? (a[key] as string).toUpperCase() : a[key];
+    const varB = typeof b[key] === 'string' ? (b[key] as string).toUpperCase() : b[key];
 
     let comparison = 0;
     if (varA > varB) comparison = 1;
     else if (varA < varB) comparison = -1;
 
-    return order === "desc" ? comparison * -1 : comparison;
+    return order === 'desc' ? comparison * -1 : comparison;
   };
 };
-
-
-
 
 export const GetInitialMonth = (
   date: string | number | Date | Dayjs,
   offset: number = 0
 ): number => {
-  return dayjs().diff(dayjs(date), "months") + offset;
+  return dayjs().diff(dayjs(date), 'months') + offset;
 };
-
 
 export const cutText = (text: string, n = 12): string => {
   if (text.length > n) {
@@ -117,7 +107,7 @@ export const cutText = (text: string, n = 12): string => {
   } else {
     return text;
   }
-}
+};
 
 export const dayMonth = (offset = 0): DayMonthResult => {
   const today = dayjs().date();
@@ -137,17 +127,17 @@ export const dayMonth = (offset = 0): DayMonthResult => {
     daysInMonth,
     percentage,
     withOffset: offset > 0,
-    numPercentage: numPercentage,
+    numPercentage: numPercentage
   };
 };
 
 const percent = (total: number, cant: number) => {
-  return total > 0 ? (cant * 100) / total : 0
-}
+  return total > 0 ? (cant * 100) / total : 0;
+};
 
 export const getDateStartOfMonth = (date: string) => {
   return dayjs(date).startOf('month').format('YYYY-MM-DD');
-}
+};
 
 export const handlerDataSearch = (
   newData: LastIncomes[],
@@ -159,7 +149,7 @@ export const handlerDataSearch = (
   let concatPages = [];
   const condition1 = query === null && prevQuery === undefined;
   const condition2 = query === null && prevQuery === null;
-  const condition3 = query === "" && prevQuery === "";
+  const condition3 = query === '' && prevQuery === '';
   if (condition1 || condition2) {
     concatPages = dataOldArray.concat(newData);
     concatPages = getUniqArrDeep(concatPages);
@@ -184,7 +174,6 @@ const getUniqArrDeep = (arr: LastIncomes[]) => {
   return [...new Set(arrStr)].map((item) => JSON.parse(item));
 };
 
-
 export const filterLimitDataForGraph = <T>(data: T[], numMonthsGraph: number): T[] => {
   const len = data.length;
   return data.slice(len - numMonthsGraph, len);
@@ -195,7 +184,4 @@ export const calculateAverage = (data: number[]) => {
     return acu + val;
   }, 0);
   return data.length > 0 ? sum / data.length : 0;
-}
-
-
-
+};

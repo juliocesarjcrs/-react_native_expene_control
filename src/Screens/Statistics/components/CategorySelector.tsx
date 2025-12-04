@@ -69,7 +69,9 @@ export default function CategorySelector({ onChange }: CategorySelectorProps) {
   const filteredCategories = categories.filter(
     (cat) =>
       cat.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      cat.subcategories.some((sub: any) => sub.name.toLowerCase().includes(searchQuery.toLowerCase()))
+      cat.subcategories.some((sub: any) =>
+        sub.name.toLowerCase().includes(searchQuery.toLowerCase())
+      )
   );
 
   const getSelectedCount = () => {
@@ -79,7 +81,9 @@ export default function CategorySelector({ onChange }: CategorySelectorProps) {
   return (
     <View style={styles.container}>
       <View style={styles.header}>
-        <Text style={[styles.title, { color: colors.TEXT_PRIMARY }]}>Categorías y subcategorías</Text>
+        <Text style={[styles.title, { color: colors.TEXT_PRIMARY }]}>
+          Categorías y subcategorías
+        </Text>
         <Text style={[styles.subtitle, { color: colors.TEXT_SECONDARY }]}>
           {getSelectedCount()} subcategorías seleccionadas
         </Text>
@@ -92,14 +96,22 @@ export default function CategorySelector({ onChange }: CategorySelectorProps) {
         style={[styles.searchBar, { backgroundColor: colors.CARD_BACKGROUND }]}
       />
 
-      <ScrollView style={styles.scrollView} nestedScrollEnabled={true} showsVerticalScrollIndicator={true}>
+      <ScrollView
+        style={styles.scrollView}
+        nestedScrollEnabled={true}
+        showsVerticalScrollIndicator={true}
+      >
         {filteredCategories.map((cat) => {
           const isExpanded = expandedCategories[cat.id];
           const selectedSubs = selected[cat.id] || [];
-          const allSelected = selectedSubs.length === cat.subcategories.length && cat.subcategories.length > 0;
+          const allSelected =
+            selectedSubs.length === cat.subcategories.length && cat.subcategories.length > 0;
 
           return (
-            <View key={cat.id} style={[styles.categoryCard, { backgroundColor: colors.CARD_BACKGROUND }]}>
+            <View
+              key={cat.id}
+              style={[styles.categoryCard, { backgroundColor: colors.CARD_BACKGROUND }]}
+            >
               <View style={styles.categoryHeader}>
                 <View style={styles.categoryTitleRow}>
                   <Icon
@@ -110,7 +122,9 @@ export default function CategorySelector({ onChange }: CategorySelectorProps) {
                     containerStyle={styles.iconContainer}
                   />
                   <View style={styles.categoryInfo}>
-                    <Text style={[styles.categoryName, { color: colors.TEXT_PRIMARY }]}>{cat.name}</Text>
+                    <Text style={[styles.categoryName, { color: colors.TEXT_PRIMARY }]}>
+                      {cat.name}
+                    </Text>
                     <Text style={[styles.subcategoryCount, { color: colors.TEXT_SECONDARY }]}>
                       {selectedSubs.length}/{cat.subcategories.length} seleccionadas
                     </Text>

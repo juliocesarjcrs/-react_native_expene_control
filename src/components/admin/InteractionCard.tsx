@@ -36,12 +36,8 @@ export default function InteractionCard({ log }: Props) {
         {
           backgroundColor: colors.CARD_BACKGROUND,
           borderColor: colors.BORDER,
-          borderLeftColor: isSuccess
-            ? hasData
-              ? colors.SUCCESS
-              : colors.WARNING
-            : colors.ERROR,
-        },
+          borderLeftColor: isSuccess ? (hasData ? colors.SUCCESS : colors.WARNING) : colors.ERROR
+        }
       ]}
       onPress={() => setExpanded(!expanded)}
       activeOpacity={0.7}
@@ -53,13 +49,11 @@ export default function InteractionCard({ log }: Props) {
             style={[
               styles.iterationBadge,
               {
-                backgroundColor: colors.PRIMARY + '20',
-              },
+                backgroundColor: colors.PRIMARY + '20'
+              }
             ]}
           >
-            <Text style={[styles.iterationText, { color: colors.PRIMARY }]}>
-              #{log.iteration}
-            </Text>
+            <Text style={[styles.iterationText, { color: colors.PRIMARY }]}>#{log.iteration}</Text>
           </View>
           <View>
             <Text style={[styles.modelName, { color: colors.INFO }]}>
@@ -68,7 +62,7 @@ export default function InteractionCard({ log }: Props) {
             <Text style={[styles.timestamp, { color: colors.TEXT_SECONDARY }]}>
               {new Date(log.createdAt).toLocaleTimeString('es-ES', {
                 hour: '2-digit',
-                minute: '2-digit',
+                minute: '2-digit'
               })}
             </Text>
           </View>
@@ -96,28 +90,19 @@ export default function InteractionCard({ log }: Props) {
       </View>
 
       {/* User Query */}
-      <Text style={[styles.userQuery, { color: colors.TEXT_PRIMARY }]}>
-        "{log.user_query}"
-      </Text>
+      <Text style={[styles.userQuery, { color: colors.TEXT_PRIMARY }]}>"{log.user_query}"</Text>
 
       {/* Tool Badge */}
       <View
         style={[
           styles.toolBadge,
           {
-            backgroundColor: colors.PRIMARY + '15',
-          },
+            backgroundColor: colors.PRIMARY + '15'
+          }
         ]}
       >
-        <Icon
-          name="wrench"
-          type="material-community"
-          color={colors.PRIMARY}
-          size={14}
-        />
-        <Text style={[styles.toolName, { color: colors.PRIMARY }]}>
-          {log.detected_intent}
-        </Text>
+        <Icon name="wrench" type="material-community" color={colors.PRIMARY} size={14} />
+        <Text style={[styles.toolName, { color: colors.PRIMARY }]}>{log.detected_intent}</Text>
       </View>
 
       {/* Result Summary */}
@@ -139,29 +124,15 @@ export default function InteractionCard({ log }: Props) {
               </View>
             ) : (
               <View style={styles.warningRow}>
-                <Icon
-                  name="alert"
-                  type="material-community"
-                  color={colors.WARNING}
-                  size={16}
-                />
-                <Text style={[styles.resultText, { color: colors.WARNING }]}>
-                  Sin resultados
-                </Text>
+                <Icon name="alert" type="material-community" color={colors.WARNING} size={16} />
+                <Text style={[styles.resultText, { color: colors.WARNING }]}>Sin resultados</Text>
               </View>
             )}
           </>
         ) : (
           <View style={styles.errorRow}>
-            <Icon
-              name="alert-circle"
-              type="material-community"
-              color={colors.ERROR}
-              size={16}
-            />
-            <Text style={[styles.resultText, { color: colors.ERROR }]}>
-              Error en ejecución
-            </Text>
+            <Icon name="alert-circle" type="material-community" color={colors.ERROR} size={16} />
+            <Text style={[styles.resultText, { color: colors.ERROR }]}>Error en ejecución</Text>
           </View>
         )}
       </View>
@@ -177,7 +148,7 @@ export default function InteractionCard({ log }: Props) {
             <View
               style={[
                 styles.codeBlock,
-                { backgroundColor: colors.BACKGROUND, borderColor: colors.BORDER },
+                { backgroundColor: colors.BACKGROUND, borderColor: colors.BORDER }
               ]}
             >
               <Text style={[styles.codeText, { color: colors.TEXT_PRIMARY }]}>
@@ -188,26 +159,17 @@ export default function InteractionCard({ log }: Props) {
 
           {/* Result */}
           <View style={styles.section}>
-            <Text style={[styles.sectionTitle, { color: colors.TEXT_SECONDARY }]}>
-              Resultado:
-            </Text>
+            <Text style={[styles.sectionTitle, { color: colors.TEXT_SECONDARY }]}>Resultado:</Text>
             <View
               style={[
                 styles.codeBlock,
                 {
-                  backgroundColor: isSuccess
-                    ? colors.SUCCESS + '10'
-                    : colors.ERROR + '10',
-                  borderColor: isSuccess ? colors.SUCCESS : colors.ERROR,
-                },
+                  backgroundColor: isSuccess ? colors.SUCCESS + '10' : colors.ERROR + '10',
+                  borderColor: isSuccess ? colors.SUCCESS : colors.ERROR
+                }
               ]}
             >
-              <Text
-                style={[
-                  styles.codeText,
-                  { color: isSuccess ? colors.SUCCESS : colors.ERROR },
-                ]}
-              >
+              <Text style={[styles.codeText, { color: isSuccess ? colors.SUCCESS : colors.ERROR }]}>
                 {JSON.stringify(log.tool_result, null, 2)}
               </Text>
             </View>
@@ -231,56 +193,56 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     marginBottom: 12,
     borderWidth: 1,
-    borderLeftWidth: 4,
+    borderLeftWidth: 4
   },
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 8,
+    marginBottom: 8
   },
   headerLeft: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 10,
+    gap: 10
   },
   headerRight: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
+    gap: 8
   },
   iterationBadge: {
     paddingHorizontal: 8,
     paddingVertical: 4,
     borderRadius: 12,
     minWidth: 32,
-    alignItems: 'center',
+    alignItems: 'center'
   },
   iterationText: {
     fontSize: 12,
-    fontWeight: '700',
+    fontWeight: '700'
   },
   modelName: {
     fontSize: 12,
-    fontWeight: '600',
+    fontWeight: '600'
   },
   timestamp: {
     fontSize: 10,
-    marginTop: 2,
+    marginTop: 2
   },
   statsRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 4,
+    gap: 4
   },
   responseTime: {
-    fontSize: 11,
+    fontSize: 11
   },
   userQuery: {
     fontSize: 14,
     fontStyle: 'italic',
     marginBottom: 8,
-    lineHeight: 20,
+    lineHeight: 20
   },
   toolBadge: {
     flexDirection: 'row',
@@ -290,67 +252,67 @@ const styles = StyleSheet.create({
     paddingVertical: 6,
     borderRadius: 6,
     alignSelf: 'flex-start',
-    marginBottom: 8,
+    marginBottom: 8
   },
   toolName: {
     fontSize: 12,
-    fontWeight: '600',
+    fontWeight: '600'
   },
   resultSummary: {
-    marginBottom: 8,
+    marginBottom: 8
   },
   successRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 6,
+    gap: 6
   },
   warningRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 6,
+    gap: 6
   },
   errorRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 6,
+    gap: 6
   },
   resultText: {
     fontSize: 12,
     fontWeight: '500',
-    flex: 1,
+    flex: 1
   },
   expandedContent: {
     marginTop: 12,
     paddingTop: 12,
     borderTopWidth: 1,
-    borderTopColor: '#e0e0e0',
+    borderTopColor: '#e0e0e0'
   },
   section: {
-    marginBottom: 12,
+    marginBottom: 12
   },
   sectionTitle: {
     fontSize: 11,
     fontWeight: '600',
     marginBottom: 6,
     textTransform: 'uppercase',
-    letterSpacing: 0.5,
+    letterSpacing: 0.5
   },
   codeBlock: {
     padding: 10,
     borderRadius: 6,
-    borderWidth: 1,
+    borderWidth: 1
   },
   codeText: {
     fontSize: 11,
     fontFamily: 'monospace',
-    lineHeight: 16,
+    lineHeight: 16
   },
   metadata: {
     paddingTop: 8,
     borderTopWidth: 1,
-    borderTopColor: '#e0e0e0',
+    borderTopColor: '#e0e0e0'
   },
   metadataText: {
-    fontSize: 10,
-  },
+    fontSize: 10
+  }
 });

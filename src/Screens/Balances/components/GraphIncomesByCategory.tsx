@@ -1,6 +1,12 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { View, Text, StyleSheet, useWindowDimensions } from 'react-native';
-import { VictoryChart, VictoryLine, VictoryAxis, VictoryScatter, VictoryArea } from 'victory-native';
+import {
+  VictoryChart,
+  VictoryLine,
+  VictoryAxis,
+  VictoryScatter,
+  VictoryArea
+} from 'victory-native';
 import { StackNavigationProp } from '@react-navigation/stack';
 
 // Services
@@ -136,7 +142,9 @@ export default function GraphIncomesByCategory({ navigation }: GraphIncomesByCat
       {/* Header */}
       <View style={styles.header}>
         <View style={{ flex: 1 }}>
-          <Text style={[styles.headerTitle, { color: colors.TEXT_PRIMARY }]}>Evolución por categorías</Text>
+          <Text style={[styles.headerTitle, { color: colors.TEXT_PRIMARY }]}>
+            Evolución por categorías
+          </Text>
           <Text style={[styles.headerSubtitle, { color: colors.TEXT_SECONDARY }]}>
             Ingresos en los últimos {numMonths} meses
           </Text>
@@ -145,7 +153,11 @@ export default function GraphIncomesByCategory({ navigation }: GraphIncomesByCat
       </View>
 
       {/* Selector */}
-      <SelectOnlyCategory searchType={1} handleCategoryChange={fetchIncomesOnlyCategory} ref={selectOnlyCategoryRef} />
+      <SelectOnlyCategory
+        searchType={1}
+        handleCategoryChange={fetchIncomesOnlyCategory}
+        ref={selectOnlyCategoryRef}
+      />
 
       {loading ? (
         <MyLoading />
@@ -286,7 +298,8 @@ export default function GraphIncomesByCategory({ navigation }: GraphIncomesByCat
                 style={{
                   data: {
                     fill: colors.SUCCESS,
-                    stroke: ({ datum }) => (activePoint?.x === datum.x ? colors.CARD_BACKGROUND : colors.SUCCESS),
+                    stroke: ({ datum }) =>
+                      activePoint?.x === datum.x ? colors.CARD_BACKGROUND : colors.SUCCESS,
                     strokeWidth: ({ datum }) => (activePoint?.x === datum.x ? 3 : 0)
                   }
                 }}
@@ -312,7 +325,9 @@ export default function GraphIncomesByCategory({ navigation }: GraphIncomesByCat
             </View>
           </View>
 
-          <Text style={[styles.hint, { color: colors.TEXT_SECONDARY }]}>Toca los puntos para ver valores</Text>
+          <Text style={[styles.hint, { color: colors.TEXT_SECONDARY }]}>
+            Toca los puntos para ver valores
+          </Text>
         </View>
       )}
     </View>

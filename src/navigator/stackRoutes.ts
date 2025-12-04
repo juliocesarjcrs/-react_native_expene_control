@@ -88,7 +88,7 @@ export interface StackRoutesType {
   EditThemeScreen: typeof EditThemeScreen;
   AdminDashboardScreen: typeof AdminDashboardScreen;
   ComparePeriodsScreen: typeof ComparePeriodsScreen;
-  AIModelsScreen : typeof AIModelsScreen;
+  AIModelsScreen: typeof AIModelsScreen;
 }
 
 const stackRoutes: StackRoutesType = {
@@ -129,7 +129,7 @@ const stackRoutes: StackRoutesType = {
   EditThemeScreen,
   AdminDashboardScreen,
   ComparePeriodsScreen,
-  AIModelsScreen,
+  AIModelsScreen
 };
 
 export default stackRoutes;

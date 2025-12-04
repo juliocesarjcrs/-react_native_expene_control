@@ -5,6 +5,7 @@ Componente de tabla responsive y minimalista con soporte para temas claro/oscuro
 ## 📦 Instalación
 
 Los componentes se encuentran en `~/components/tables/`:
+
 - `ModernTable.tsx` - Componente principal
 - `ModernTableHead.tsx` - Encabezados
 - `ModernTableRow.tsx` - Filas
@@ -14,7 +15,7 @@ Los componentes se encuentran en `~/components/tables/`:
 ```typescript
 import ModernTable from '~/components/tables/ModernTable';
 
-<ModernTable 
+<ModernTable
   tableHead={['Mes', '% Ahorro', 'Valor']}
   tableData={[
     ['agosto 2025', '34 %', '$ 5.277.413'],
@@ -26,22 +27,22 @@ import ModernTable from '~/components/tables/ModernTable';
 
 ## 📋 Props
 
-| Prop | Tipo | Requerido | Default | Descripción |
-|------|------|-----------|---------|-------------|
-| `tableHead` | `string[]` | ✅ | - | Encabezados de columnas |
-| `tableData` | `string[][]` | ✅ | - | Datos (array de arrays de strings) |
-| `columnWidths` | `number[]` | ❌ | `[120, ...]` | Anchos en píxeles por columna |
-| `columnAlignments` | `('left' \| 'center' \| 'right')[]` | ❌ | `['left', ...]` | Alineación por columna |
-| `highlightedRows` | `number[]` | ❌ | `[]` | Índices de filas a destacar |
-| `horizontalScroll` | `boolean` | ❌ | `false` | Activar scroll horizontal |
-| `defaultColumnWidth` | `number` | ❌ | `120` | Ancho por defecto en píxeles |
+| Prop                 | Tipo                                | Requerido | Default         | Descripción                        |
+| -------------------- | ----------------------------------- | --------- | --------------- | ---------------------------------- |
+| `tableHead`          | `string[]`                          | ✅        | -               | Encabezados de columnas            |
+| `tableData`          | `string[][]`                        | ✅        | -               | Datos (array de arrays de strings) |
+| `columnWidths`       | `number[]`                          | ❌        | `[120, ...]`    | Anchos en píxeles por columna      |
+| `columnAlignments`   | `('left' \| 'center' \| 'right')[]` | ❌        | `['left', ...]` | Alineación por columna             |
+| `highlightedRows`    | `number[]`                          | ❌        | `[]`            | Índices de filas a destacar        |
+| `horizontalScroll`   | `boolean`                           | ❌        | `false`         | Activar scroll horizontal          |
+| `defaultColumnWidth` | `number`                            | ❌        | `120`           | Ancho por defecto en píxeles       |
 
 ## 💡 Ejemplos
 
 ### Tabla con anchos personalizados
 
 ```typescript
-<ModernTable 
+<ModernTable
   tableHead={['Producto', 'Cantidad', 'Precio']}
   tableData={[
     ['Laptop', '3', '$ 3.500.000'],
@@ -55,7 +56,7 @@ import ModernTable from '~/components/tables/ModernTable';
 ### Tabla con scroll horizontal (muchas columnas)
 
 ```typescript
-<ModernTable 
+<ModernTable
   tableHead={['Fecha', 'Categoría', 'Descripción', 'Monto', 'Estado']}
   tableData={[/* datos */]}
   columnWidths={[100, 120, 180, 120, 100]}
@@ -66,7 +67,7 @@ import ModernTable from '~/components/tables/ModernTable';
 ### Tabla con fila destacada
 
 ```typescript
-<ModernTable 
+<ModernTable
   tableHead={['Mes', 'Valor']}
   tableData={[
     ['Enero', '$ 1.000.000'],
@@ -80,21 +81,26 @@ import ModernTable from '~/components/tables/ModernTable';
 ## 🎨 Características Automáticas
 
 ### Colorización inteligente
+
 - 🔴 **Porcentajes negativos** → Color rojo automático
 - 🟢 **Porcentajes >20%** → Color verde automático
 - 🔴 **Valores monetarios negativos** → Color rojo automático
 - 🔵 **Filas destacadas** → Color primario del tema
 
 ### Auto-detección de filas especiales
+
 Detecta y resalta automáticamente filas que contienen:
+
 - "Promedio"
 - "Total"
 - "Suma"
 
 ### Scroll automático
+
 Si el ancho total de las columnas excede el ancho de la pantalla, se activa automáticamente el scroll horizontal.
 
 ### Ajuste de texto
+
 Los textos largos se ajustan automáticamente con `adjustsFontSizeToFit` y `numberOfLines={2}`.
 
 ## 🎯 Uso en Columnas Dinámicas
@@ -119,7 +125,7 @@ const getColumnAlignments = (headers: string[]): ('left' | 'center' | 'right')[]
   });
 };
 
-<ModernTable 
+<ModernTable
   tableHead={dynamicHeaders}
   tableData={dynamicData}
   columnWidths={getColumnWidths(dynamicHeaders)}
@@ -130,6 +136,7 @@ const getColumnAlignments = (headers: string[]): ('left' | 'center' | 'right')[]
 ## 🌈 Compatibilidad con Temas
 
 El componente usa `useThemeColors()` y respeta automáticamente:
+
 - ✅ Tema claro / oscuro
 - ✅ Colores personalizados (`PRIMARY`, `SUCCESS`, `ERROR`, `INFO`)
 - ✅ Fondos y bordes adaptativos
@@ -143,15 +150,19 @@ El componente usa `useThemeColors()` y respeta automáticamente:
 ## 🔧 Mantenimiento
 
 ### Modificar estilos globales
+
 Edita los estilos en cada componente:
+
 - `ModernTableHead.tsx` → Estilos del header
 - `ModernTableRow.tsx` → Estilos de las filas
 - `ModernTable.tsx` → Estilos del contenedor
 
 ### Cambiar comportamiento de colorización
+
 Modifica la función `getCellColor()` en `ModernTableRow.tsx`
 
 ### Ajustar anchos por defecto
+
 Cambia `defaultColumnWidth` en el componente principal
 
 ## 📝 Notas
@@ -164,12 +175,15 @@ Cambia `defaultColumnWidth` en el componente principal
 ## 🐛 Troubleshooting
 
 **Problema**: Las columnas no se alinean
+
 - **Solución**: Asegúrate de especificar `columnWidths` con valores en píxeles
 
 **Problema**: El scroll no funciona
+
 - **Solución**: Activa `horizontalScroll={true}` o el componente lo hará automáticamente
 
 **Problema**: Los colores no cambian con el tema
+
 - **Solución**: Verifica que `useThemeColors()` esté configurado correctamente
 
 ---

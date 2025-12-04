@@ -1,5 +1,5 @@
 import React, { useRef } from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import { useForm, Controller } from 'react-hook-form';
 import { Input } from 'react-native-elements';
 import { StackNavigationProp } from '@react-navigation/stack';
@@ -15,7 +15,10 @@ import MyButton from '~/components/MyButton';
 import { SettingsStackParamList, UserModel } from '~/shared/types';
 import { ChangePasswordPayload } from '~/shared/types/services';
 
-export type ChangePasswordScreenNavigationProp = StackNavigationProp<SettingsStackParamList, 'changePassword'>;
+export type ChangePasswordScreenNavigationProp = StackNavigationProp<
+  SettingsStackParamList,
+  'changePassword'
+>;
 
 interface ChangePasswordScreenProps {
   navigation: ChangePasswordScreenNavigationProp;

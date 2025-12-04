@@ -44,14 +44,8 @@ export const JsonEditor: React.FC<JsonEditorProps> = ({
   return (
     <View style={styles.container}>
       <View style={[styles.header, { borderBottomColor: colors.BORDER }]}>
-        <Text style={[styles.title, { color: colors.TEXT_PRIMARY }]}>
-          Editor JSON
-        </Text>
-        {error && (
-          <Text style={[styles.error, { color: colors.ERROR }]}>
-            ⚠️ {error}
-          </Text>
-        )}
+        <Text style={[styles.title, { color: colors.TEXT_PRIMARY }]}>Editor JSON</Text>
+        {error && <Text style={[styles.error, { color: colors.ERROR }]}>⚠️ {error}</Text>}
       </View>
 
       <ScrollView style={styles.editorContainer}>
@@ -78,17 +72,8 @@ export const JsonEditor: React.FC<JsonEditorProps> = ({
 
       <View style={[styles.footer, { borderTopColor: colors.BORDER }]}>
         <View style={styles.actions}>
-          <MyButton
-            title="Cancelar"
-            variant="cancel"
-            onPress={onCancel}
-          />
-          <MyButton
-            title="Guardar"
-            onPress={handleSave}
-            loading={loading}
-            disabled={!!error}
-          />
+          <MyButton title="Cancelar" variant="cancel" onPress={onCancel} />
+          <MyButton title="Guardar" onPress={handleSave} loading={loading} disabled={!!error} />
         </View>
       </View>
     </View>

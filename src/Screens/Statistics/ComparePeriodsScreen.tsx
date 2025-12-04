@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { View, ScrollView, StyleSheet } from 'react-native';
-import { Button, Text, IconButton } from 'react-native-paper';
+import { Button, IconButton } from 'react-native-paper';
 // Components
 import CategorySelector from './components/CategorySelector';
 import DateRangeSelector from './components/DateRangeSelector';
@@ -50,7 +50,9 @@ export default function ComparePeriodsScreen() {
   const hasData = compareResults !== null;
 
   return (
-    <ScrollView style={[commonStyles.screenContentWithPadding, { backgroundColor: colors.BACKGROUND }]}>
+    <ScrollView
+      style={[commonStyles.screenContentWithPadding, { backgroundColor: colors.BACKGROUND }]}
+    >
       <ScreenHeader
         title={config.title}
         subtitle={config.subtitle}

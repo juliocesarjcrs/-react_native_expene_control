@@ -1,8 +1,16 @@
 import { AxiosResponse } from 'axios';
-import axios from '../plugins/axiosConfig'
-import { CreateSubcategoryPayload, EditSubcategoryPayload, GetSubategoriesByCategoryQuery, GetSubategoriesByCategoryResponse } from '../shared/types/services/subcategories-services.type';
-const PREFIX = "subcategories";
-export const getSubategoriesByCategory = async (idCategory: number, params: GetSubategoriesByCategoryQuery = { withExpenses: true }): Promise<AxiosResponse<GetSubategoriesByCategoryResponse>> => {
+import axios from '../plugins/axiosConfig';
+import {
+  CreateSubcategoryPayload,
+  EditSubcategoryPayload,
+  GetSubategoriesByCategoryQuery,
+  GetSubategoriesByCategoryResponse
+} from '../shared/types/services/subcategories-services.type';
+const PREFIX = 'subcategories';
+export const getSubategoriesByCategory = async (
+  idCategory: number,
+  params: GetSubategoriesByCategoryQuery = { withExpenses: true }
+): Promise<AxiosResponse<GetSubategoriesByCategoryResponse>> => {
   return await axios.get(`${PREFIX}/category/${idCategory}`, { params });
 };
 

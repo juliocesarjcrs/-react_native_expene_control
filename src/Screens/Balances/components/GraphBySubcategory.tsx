@@ -1,10 +1,19 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { View, Text, StyleSheet, useWindowDimensions } from 'react-native';
-import { VictoryChart, VictoryLine, VictoryAxis, VictoryScatter, VictoryArea } from 'victory-native';
+import {
+  VictoryChart,
+  VictoryLine,
+  VictoryAxis,
+  VictoryScatter,
+  VictoryArea
+} from 'victory-native';
 import { StackNavigationProp } from '@react-navigation/stack';
 
 // Services
-import { findLastMonthsFromOnlyCategory, getExpensesLastMonthsFromSubcategory } from '../../../services/expenses';
+import {
+  findLastMonthsFromOnlyCategory,
+  getExpensesLastMonthsFromSubcategory
+} from '../../../services/expenses';
 
 // Components
 import SelectJoinCategory from '../../../components/dropDown/SelectJoinCategory';
@@ -169,7 +178,9 @@ export default function GraphBySubcategory({ navigation }: GraphBySubcategoryPro
       {/* Header */}
       <View style={styles.header}>
         <View style={{ flex: 1 }}>
-          <Text style={[styles.headerTitle, { color: colors.TEXT_PRIMARY }]}>Evolución por categorías</Text>
+          <Text style={[styles.headerTitle, { color: colors.TEXT_PRIMARY }]}>
+            Evolución por categorías
+          </Text>
           <Text style={[styles.headerSubtitle, { color: colors.TEXT_SECONDARY }]}>
             Gastos en los últimos {numMonths} meses
           </Text>
@@ -209,7 +220,9 @@ export default function GraphBySubcategory({ navigation }: GraphBySubcategoryPro
 
                 {previousAverage > 0 && (
                   <View style={styles.statItem}>
-                    <Text style={[styles.statLabel, { color: colors.TEXT_SECONDARY }]}>Anterior</Text>
+                    <Text style={[styles.statLabel, { color: colors.TEXT_SECONDARY }]}>
+                      Anterior
+                    </Text>
                     <Text
                       style={[styles.statValue, { color: colors.TEXT_PRIMARY }]}
                       numberOfLines={1}
@@ -240,7 +253,12 @@ export default function GraphBySubcategory({ navigation }: GraphBySubcategoryPro
           <View style={[styles.chartContainer, { backgroundColor: colors.CARD_BACKGROUND }]}>
             {/* Tooltip dentro del contenedor del gráfico */}
             {activePoint && (
-              <View style={[styles.tooltip, { backgroundColor: colors.ERROR, shadowColor: colors.ERROR }]}>
+              <View
+                style={[
+                  styles.tooltip,
+                  { backgroundColor: colors.ERROR, shadowColor: colors.ERROR }
+                ]}
+              >
                 <Text style={styles.tooltipMonth}>{activePoint.label}</Text>
                 <Text style={styles.tooltipValue}>{NumberFormat(activePoint.y)}</Text>
               </View>
@@ -327,7 +345,8 @@ export default function GraphBySubcategory({ navigation }: GraphBySubcategoryPro
                 style={{
                   data: {
                     fill: colors.ERROR,
-                    stroke: ({ datum }) => (activePoint?.x === datum.x ? colors.CARD_BACKGROUND : colors.ERROR),
+                    stroke: ({ datum }) =>
+                      activePoint?.x === datum.x ? colors.CARD_BACKGROUND : colors.ERROR,
                     strokeWidth: ({ datum }) => (activePoint?.x === datum.x ? 3 : 0)
                   }
                 }}
@@ -353,7 +372,9 @@ export default function GraphBySubcategory({ navigation }: GraphBySubcategoryPro
             </View>
           </View>
 
-          <Text style={[styles.hint, { color: colors.TEXT_SECONDARY }]}>Toca los puntos para ver valores</Text>
+          <Text style={[styles.hint, { color: colors.TEXT_SECONDARY }]}>
+            Toca los puntos para ver valores
+          </Text>
         </View>
       )}
     </View>

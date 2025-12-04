@@ -11,7 +11,10 @@ import LastTransactionsCard from './LastTransactionsCard';
 import { IncomeStackParamList } from '~/shared/types';
 import { LastIncomes } from '~/shared/types/services/income-service.type';
 
-export type CardLastIncomesNavigationProp = StackNavigationProp<IncomeStackParamList, 'lastIncomes'>;
+export type CardLastIncomesNavigationProp = StackNavigationProp<
+  IncomeStackParamList,
+  'lastIncomes'
+>;
 
 interface CardLastIncomesProps {
   navigation: CardLastIncomesNavigationProp;

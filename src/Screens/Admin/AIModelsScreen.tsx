@@ -1,13 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import {
-  View,
-  Text,
-  ScrollView,
-  StyleSheet,
-  RefreshControl,
-  TouchableOpacity,
-  Alert
-} from 'react-native';
+import { View, Text, ScrollView, StyleSheet, RefreshControl, Alert } from 'react-native';
 import { Icon } from 'react-native-elements';
 
 // Services
@@ -28,17 +20,13 @@ import { showError } from '~/utils/showError';
 // Theme
 import { useThemeColors } from '~/customHooks/useThemeColors';
 
-// Styles
-import { commonStyles } from '~/styles/common';
-
 // Configs
 import { screenConfigs } from '~/config/screenConfigs';
 
-
 export default function AIModelsScreen() {
   const config = screenConfigs.aiModels;
-   const colors = useThemeColors();
-  
+  const colors = useThemeColors();
+
   const [models, setModels] = useState<AIModel[]>([]);
   const [loading, setLoading] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
@@ -108,9 +96,7 @@ export default function AIModelsScreen() {
   return (
     <View style={[styles.container, { backgroundColor: colors.BACKGROUND }]}>
       {/* Header */}
-            <ScreenHeader title={config.title} subtitle={config.subtitle} />
-      
-
+      <ScreenHeader title={config.title} subtitle={config.subtitle} />
 
       {/* Actions */}
       <View style={[styles.actionsBar, { backgroundColor: colors.CARD_BACKGROUND }]}>
@@ -130,23 +116,13 @@ export default function AIModelsScreen() {
       {/* Lista de modelos */}
       <ScrollView
         style={styles.content}
-        refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
-        }
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
       >
-        <ModelsList
-          models={models}
-          onEdit={handleEditModel}
-          onReload={loadModels}
-        />
+        <ModelsList models={models} onEdit={handleEditModel} onReload={loadModels} />
       </ScrollView>
 
       {/* Modal Editor */}
-      <ModelEditor
-        visible={showEditor}
-        model={selectedModel}
-        onClose={handleCloseEditor}
-      />
+      <ModelEditor visible={showEditor} model={selectedModel} onClose={handleCloseEditor} />
     </View>
   );
 }

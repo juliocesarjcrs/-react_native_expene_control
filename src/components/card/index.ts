@@ -1,1 +1,1 @@
-export {ListResultSearch} from './ListResultSearch'
+export { ListResultSearch } from './ListResultSearch';

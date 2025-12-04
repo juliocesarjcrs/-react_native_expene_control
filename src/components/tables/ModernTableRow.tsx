@@ -10,8 +10,8 @@ interface ModernTableRowProps {
   columnAlignments?: ('left' | 'center' | 'right')[];
 }
 
-const ModernTableRow: React.FC<ModernTableRowProps> = ({ 
-  data, 
+const ModernTableRow: React.FC<ModernTableRowProps> = ({
+  data,
   isLastRow = false,
   isHighlighted = false,
   columnWidths,
@@ -31,12 +31,12 @@ const ModernTableRow: React.FC<ModernTableRowProps> = ({
     if (isHighlighted) {
       return colors.PRIMARY;
     }
-    
+
     // Para porcentajes negativos, usar color de error
     if (text.includes('%') && text.includes('-')) {
       return colors.ERROR;
     }
-    
+
     // Para porcentajes positivos altos (>20%), usar color de éxito
     if (text.includes('%')) {
       const percentage = parseInt(text.replace(/[^0-9-]/g, ''));
@@ -44,42 +44,42 @@ const ModernTableRow: React.FC<ModernTableRowProps> = ({
         return colors.SUCCESS;
       }
     }
-    
+
     // Para valores monetarios negativos
     if (text.includes('$') && text.includes('-')) {
       return colors.ERROR;
     }
-    
+
     // Default
     return colors.TEXT_PRIMARY;
   };
 
   return (
-    <View 
+    <View
       style={[
-        styles.container, 
-        { 
+        styles.container,
+        {
           backgroundColor: isHighlighted ? colors.PRIMARY + '08' : colors.CARD_BACKGROUND,
-          borderBottomColor: colors.BORDER 
+          borderBottomColor: colors.BORDER
         },
         isLastRow && styles.lastRow
       ]}
     >
       {data.map((cellText, idx) => (
-        <View 
-          key={idx} 
+        <View
+          key={idx}
           style={[
             styles.cell,
             // Cuando se pasan `columnWidths` queremos usar un ancho fijo (px)
             // para que coincida con el header. Si no hay ancho para la
             // columna, dejamos que el `flex: 1` del estilo por defecto actúe.
-            (columnWidths && columnWidths[idx]) ? { width: columnWidths[idx] } : undefined
+            columnWidths && columnWidths[idx] ? { width: columnWidths[idx] } : undefined
           ]}
         >
-          <Text 
+          <Text
             style={[
-              styles.cellText, 
-              { 
+              styles.cellText,
+              {
                 color: getCellColor(cellText, idx),
                 textAlign: getTextAlign(idx),
                 fontWeight: isHighlighted ? '700' : '500'

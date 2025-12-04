@@ -1,6 +1,6 @@
 const Font = {
   isLoaded: jest.fn().mockReturnValue(true),
-  loadAsync: jest.fn(),
+  loadAsync: jest.fn()
 };
 
 module.exports = Font;

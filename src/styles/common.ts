@@ -4,16 +4,16 @@ import { SPACING } from '~/constants/spacing';
 export const commonStyles = StyleSheet.create({
   screenContainer: {
     flex: 1,
-    paddingTop: Platform.OS === 'android' ? StatusBar.currentHeight : 0,
+    paddingTop: Platform.OS === 'android' ? StatusBar.currentHeight : 0
   },
 
   screenContent: {
     flex: 1,
-    paddingHorizontal: SPACING.lg,
+    paddingHorizontal: SPACING.lg
   },
 
   screenContentWithPadding: {
     flex: 1,
-    padding: SPACING.lg,
-  },
+    padding: SPACING.lg
+  }
 });

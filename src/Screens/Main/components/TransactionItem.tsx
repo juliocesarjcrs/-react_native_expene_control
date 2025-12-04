@@ -1,10 +1,9 @@
-import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import React from 'react';
+import { View, Text, StyleSheet } from 'react-native';
 import { Icon } from 'react-native-elements';
 
 // Utils
 import { DateFormat, NumberFormat } from '~/utils/Helpers';
-
 
 // Theme
 import { useThemeColors } from '~/customHooks/useThemeColors';
@@ -37,18 +36,12 @@ export const TransactionItem = ({ item, type, colors }: TransactionItemProps) =>
 
       {/* Info */}
       <View style={itemStyles.infoContainer}>
-        <Text 
-          style={[itemStyles.name, { color: colors.TEXT_PRIMARY }]}
-          numberOfLines={1}
-        >
+        <Text style={[itemStyles.name, { color: colors.TEXT_PRIMARY }]} numberOfLines={1}>
           {displayName}
         </Text>
-        
+
         {hasCommentary && (
-          <Text 
-            style={[itemStyles.commentary, { color: colors.TEXT_SECONDARY }]}
-            numberOfLines={1}
-          >
+          <Text style={[itemStyles.commentary, { color: colors.TEXT_SECONDARY }]} numberOfLines={1}>
             {item.commentary}
           </Text>
         )}
@@ -80,9 +73,9 @@ export const TransactionItem = ({ item, type, colors }: TransactionItemProps) =>
 
       {/* Amount */}
       <View style={itemStyles.amountContainer}>
-        <Text 
+        <Text
           style={[
-            itemStyles.amount, 
+            itemStyles.amount,
             { color: type === 'expense' ? colors.WARNING : colors.SUCCESS }
           ]}
         >
@@ -98,7 +91,7 @@ const itemStyles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     paddingVertical: 10,
-    borderBottomWidth: 1,
+    borderBottomWidth: 1
   },
   iconContainer: {
     width: 36,
@@ -106,38 +99,38 @@ const itemStyles = StyleSheet.create({
     borderRadius: 18,
     justifyContent: 'center',
     alignItems: 'center',
-    marginRight: 10,
+    marginRight: 10
   },
   infoContainer: {
     flex: 1,
-    marginRight: 8,
+    marginRight: 8
   },
   name: {
     fontSize: SMALL + 2,
     fontWeight: '600',
-    marginBottom: 2,
+    marginBottom: 2
   },
   commentary: {
     fontSize: SMALL,
     marginBottom: 3,
-    fontStyle: 'italic',
+    fontStyle: 'italic'
   },
   dateRow: {
     flexDirection: 'row',
-    alignItems: 'center',
+    alignItems: 'center'
   },
   date: {
-    fontSize: SMALL - 1,
+    fontSize: SMALL - 1
   },
   separator: {
     marginHorizontal: 4,
-    fontSize: SMALL - 1,
+    fontSize: SMALL - 1
   },
   amountContainer: {
-    alignItems: 'flex-end',
+    alignItems: 'flex-end'
   },
   amount: {
     fontSize: MEDIUM,
-    fontWeight: 'bold',
-  },
+    fontWeight: 'bold'
+  }
 });

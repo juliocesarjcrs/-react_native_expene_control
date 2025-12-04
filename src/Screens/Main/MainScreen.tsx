@@ -185,7 +185,9 @@ export default function MainScreen({ navigation }: MainScreenProps) {
           </View>
 
           <View style={styles.userInfo}>
-            <Text style={[styles.name, { color: colors.TEXT_PRIMARY }]}>{userLoggued?.name ?? 'Usuario'}</Text>
+            <Text style={[styles.name, { color: colors.TEXT_PRIMARY }]}>
+              {userLoggued?.name ?? 'Usuario'}
+            </Text>
             <Text style={[styles.env, { color: colors.TEXT_SECONDARY }]}>{URL_BASE}</Text>
           </View>
         </View>
@@ -232,7 +234,12 @@ export default function MainScreen({ navigation }: MainScreenProps) {
             <MyDonutChart data={categories} total={total} />
           ) : (
             <View style={styles.emptyState}>
-              <Icon type="material-community" name="chart-pie" size={48} color={colors.TEXT_SECONDARY} />
+              <Icon
+                type="material-community"
+                name="chart-pie"
+                size={48}
+                color={colors.TEXT_SECONDARY}
+              />
               <Text style={[styles.emptyText, { color: colors.TEXT_SECONDARY }]}>
                 No se registran gastos en este mes
               </Text>
@@ -252,7 +259,9 @@ export default function MainScreen({ navigation }: MainScreenProps) {
         <MyButton onPress={LogOut} title="Cerrar sesión" variant="cancel" />
 
         {/* VERSION */}
-        <Text style={[styles.versionText, { color: colors.TEXT_SECONDARY }]}>Versión: {version}</Text>
+        <Text style={[styles.versionText, { color: colors.TEXT_SECONDARY }]}>
+          Versión: {version}
+        </Text>
       </ScrollView>
 
       {isEnabled && <ChatScreen />}

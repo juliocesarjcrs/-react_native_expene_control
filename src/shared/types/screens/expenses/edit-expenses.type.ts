@@ -1,4 +1,4 @@
-import { SubcategoryModel } from "../../models";
+import { SubcategoryModel } from '../../models';
 
 export type FormValues = {
   cost: string;

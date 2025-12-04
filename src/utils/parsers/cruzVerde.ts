@@ -1,9 +1,9 @@
 /* eslint-disable no-useless-escape */
-import { Product } from "~/shared/types/components/receipt-scanner.type";
-import { formatDescription } from "./formatDescription";
+import { Product } from '~/shared/types/components/receipt-scanner.type';
+import { formatDescription } from './formatDescription';
 
 export function parseCruzVerde(lines: string[]): Product[] {
-  console.log("📄 Procesando como tipo Cruz Verde...");
+  console.log('📄 Procesando como tipo Cruz Verde...');
 
   const products: Product[] = [];
   const productLineRegex = /^(.+)\s+(\d+%)\s*([\d\s\.]+)?$/i;
@@ -15,13 +15,13 @@ export function parseCruzVerde(lines: string[]): Product[] {
     if (!trimmedLine) continue;
 
     // Detectar inicio de sección de productos
-    if (trimmedLine.includes("DESCRIPCION") && trimmedLine.includes("VALOR")) {
+    if (trimmedLine.includes('DESCRIPCION') && trimmedLine.includes('VALOR')) {
       foundProductsSection = true;
       continue;
     }
 
     // Detectar totales para terminar procesamiento
-    if (foundProductsSection && trimmedLine.startsWith("TOTAL")) {
+    if (foundProductsSection && trimmedLine.startsWith('TOTAL')) {
       break;
     }
 
@@ -51,23 +51,25 @@ export function parseCruzVerde(lines: string[]): Product[] {
   }
 
   // Caso especial para tickets con descuentos (como en el test case)
-  if (products.length > 0 && lines.some(line => line.includes("TOTAL SIN REDONDEO"))) {
-    const totalLine = lines.find(line => line.includes("TOTAL SIN REDONDEO"));
+  if (products.length > 0 && lines.some((line) => line.includes('TOTAL SIN REDONDEO'))) {
+    const totalLine = lines.find((line) => line.includes('TOTAL SIN REDONDEO'));
     if (totalLine) {
       const totalMatch = totalLine.match(/([\d\s\.]+)$/);
       if (totalMatch) {
         const totalPrice = parseInt(totalMatch[1].replace(/\s|\./g, ''));
         if (!isNaN(totalPrice)) {
           // Actualizar el precio del primer producto con el total ajustado
-          return [{
-            description: products[0].description,
-            price: totalPrice
-          }];
+          return [
+            {
+              description: products[0].description,
+              price: totalPrice
+            }
+          ];
         }
       }
     }
   }
 
   // Filtrar productos con precio > 0 para casos normales
-  return products.filter(p => p.price > 0);
+  return products.filter((p) => p.price > 0);
 }

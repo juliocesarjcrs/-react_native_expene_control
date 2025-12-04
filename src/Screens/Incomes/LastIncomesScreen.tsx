@@ -29,7 +29,10 @@ import { commonStyles } from '~/styles/common';
 
 // Configs
 import { screenConfigs } from '~/config/screenConfigs';
-export type LastIncomesScreenNavigationProp = StackNavigationProp<IncomeStackParamList, 'lastIncomes'>;
+export type LastIncomesScreenNavigationProp = StackNavigationProp<
+  IncomeStackParamList,
+  'lastIncomes'
+>;
 type LastIncomesScreenRouteProp = RouteProp<IncomeStackParamList, 'lastIncomes'>;
 
 interface LastIncomesScreenProps {
@@ -68,11 +71,17 @@ export default function LastIncomesScreen({ navigation }: LastIncomesScreenProps
       isFirstRender.current = false;
       // Si el query es distinto de null, espera a que el reset lo limpie
       if (query !== null) {
-        console.log('[LastIncomesScreen] useEffect [query]: Detenido porque query !== null:', query);
+        console.log(
+          '[LastIncomesScreen] useEffect [query]: Detenido porque query !== null:',
+          query
+        );
         return;
       }
     }
-    console.log('[LastIncomesScreen] useEffect [query]: Reiniciando paginación y datos. Query:', query);
+    console.log(
+      '[LastIncomesScreen] useEffect [query]: Reiniciando paginación y datos. Query:',
+      query
+    );
     // Reinicia todos los flags de paginación y datos
     setLastIncomes([]);
     setPage(1);
@@ -84,10 +93,18 @@ export default function LastIncomesScreen({ navigation }: LastIncomesScreenProps
   // Manejar paginación (solo si no es búsqueda nueva)
   useEffect(() => {
     if (page > 1 && query !== null) {
-      console.log('[LastIncomesScreen] useEffect [page]: page > 1 y query !== null, fetchData', page, query);
+      console.log(
+        '[LastIncomesScreen] useEffect [page]: page > 1 y query !== null, fetchData',
+        page,
+        query
+      );
       fetchData(page, false); // false: no reset
     } else if (page > 1 && query === null) {
-      console.log('[LastIncomesScreen] useEffect [page]: page > 1 y query === null, fetchData', page, query);
+      console.log(
+        '[LastIncomesScreen] useEffect [page]: page > 1 y query === null, fetchData',
+        page,
+        query
+      );
       fetchData(page, false);
     }
   }, [page]);
@@ -117,7 +134,12 @@ export default function LastIncomesScreen({ navigation }: LastIncomesScreenProps
         }
         let newList = [];
         if (reset) {
-          console.log('[LastIncomesScreen] fetchData: Resetting lastIncomes', params.query, prevQuery, params.page);
+          console.log(
+            '[LastIncomesScreen] fetchData: Resetting lastIncomes',
+            params.query,
+            prevQuery,
+            params.page
+          );
           newList = handlerDataSearch(data.data, [], params.query, prevQuery, params.page);
         } else {
           newList = handlerDataSearch(data.data, lastIncomes, params.query, prevQuery, params.page);
@@ -155,14 +177,22 @@ export default function LastIncomesScreen({ navigation }: LastIncomesScreenProps
   };
 
   return (
-    <SafeAreaView style={[commonStyles.screenContentWithPadding, { backgroundColor: colors.BACKGROUND }]}>
+    <SafeAreaView
+      style={[commonStyles.screenContentWithPadding, { backgroundColor: colors.BACKGROUND }]}
+    >
       <ScreenHeader title={config.title} subtitle={config.subtitle} />
       <FlatList
         testID="flatlist-incomes"
         data={lastIncomes}
-        renderItem={({ item }) => <RenderItemIncome item={item} navigation={navigation} updateList={updateList} />}
+        renderItem={({ item }) => (
+          <RenderItemIncome item={item} navigation={navigation} updateList={updateList} />
+        )}
         keyExtractor={(item) => item.id.toString()}
-        ListEmptyComponent={() => <Text style={[styles.textMuted, { color: colors.DARK_GRAY}]}>No se registran últimos ingresos</Text>}
+        ListEmptyComponent={() => (
+          <Text style={[styles.textMuted, { color: colors.DARK_GRAY }]}>
+            No se registran últimos ingresos
+          </Text>
+        )}
         initialNumToRender={10}
         onEndReached={loadMoreData}
         onEndReachedThreshold={0.1}

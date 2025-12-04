@@ -2,7 +2,12 @@ import React, { useEffect, useState } from 'react';
 import { View, Text, ActivityIndicator, StyleSheet, ScrollView, Alert } from 'react-native';
 import { File, Paths } from 'expo-file-system';
 import * as Sharing from 'expo-sharing';
-import { OcrAccuracy, OcrApiResponse, Product, ReceiptType } from '~/shared/types/components/receipt-scanner.type';
+import {
+  OcrAccuracy,
+  OcrApiResponse,
+  Product,
+  ReceiptType
+} from '~/shared/types/components/receipt-scanner.type';
 import MultiExpenseModal from '../modal/MultiExpenseModal';
 import { callOCRSpaceAPI, mockOCRSpaceAPI } from '~/services/ocrService';
 import { CreateMultipleExpense } from '~/services/expenses';
@@ -16,7 +21,12 @@ import MyButton from '../MyButton';
 
 const fileName = 'extractions_v3.csv';
 interface ReceiptScannerProps {
-  onExtractedData?: (data: { price: string; category?: string; subcategory?: string; rawText: string }) => void;
+  onExtractedData?: (data: {
+    price: string;
+    category?: string;
+    subcategory?: string;
+    rawText: string;
+  }) => void;
 }
 
 const ReceiptScanner: React.FC<ReceiptScannerProps> = () => {
@@ -95,7 +105,7 @@ const ReceiptScanner: React.FC<ReceiptScannerProps> = () => {
       setEditableProducts(
         expenses.map((exp) => ({
           description: exp.commentary || '',
-          price: exp.cost,
+          price: exp.cost
         }))
       );
 
@@ -118,7 +128,7 @@ const ReceiptScanner: React.FC<ReceiptScannerProps> = () => {
         ocrAccuracy,
         receiptType,
         customReceiptType,
-        editableProducts,
+        editableProducts
       });
 
       const file = new File(Paths.document, fileName);
@@ -131,12 +141,10 @@ const ReceiptScanner: React.FC<ReceiptScannerProps> = () => {
         'receipt_type',
         'evaluation_date',
         'evaluator_id',
-        'model_version',
+        'model_version'
       ].join(',');
 
-      const content = file.exists
-        ? (await file.text()) + csvLine
-        : headers + '\n' + csvLine;
+      const content = file.exists ? (await file.text()) + csvLine : headers + '\n' + csvLine;
 
       await file.write(content);
       updateCsvRowCount();
@@ -144,9 +152,9 @@ const ReceiptScanner: React.FC<ReceiptScannerProps> = () => {
       Alert.alert('Dataset actualizado', `Datos guardados para entrenamiento.`, [
         {
           text: 'Nuevo escaneo',
-          onPress: () => resetForm(),
+          onPress: () => resetForm()
         },
-        { text: 'Ver datos', style: 'cancel' },
+        { text: 'Ver datos', style: 'cancel' }
       ]);
     } catch (error: any) {
       Alert.alert('Error al guardar', error.message);
@@ -180,7 +188,6 @@ const ReceiptScanner: React.FC<ReceiptScannerProps> = () => {
   return (
     <ScrollView contentContainerStyle={[styles.container, { backgroundColor: colors.BACKGROUND }]}>
       <View style={styles.inner}>
-
         {/* --- SELECTOR DE IMAGEN --- */}
         <ImagePickerComponent
           onImageSelected={(base64, uri) => {
@@ -192,12 +199,7 @@ const ReceiptScanner: React.FC<ReceiptScannerProps> = () => {
         />
 
         {/* --- COMPARTIR CSV --- */}
-        <MyButton
-          title="Compartir CSV"
-          variant="secondary"
-          fullWidth
-          onPress={shareCSV}
-        />
+        <MyButton title="Compartir CSV" variant="secondary" fullWidth onPress={shareCSV} />
 
         <Text style={[styles.csvCounter, { color: colors.TEXT_PRIMARY }]}>
           Registros en CSV: {csvRows}
@@ -234,10 +236,7 @@ const ReceiptScanner: React.FC<ReceiptScannerProps> = () => {
               onPress={saveToCSV}
               variant="primary"
               disabled={
-                !ocrAccuracy ||
-                !receiptType ||
-                editableProducts.length === 0 ||
-                !pendingRawText
+                !ocrAccuracy || !receiptType || editableProducts.length === 0 || !pendingRawText
               }
             />
           </>
@@ -249,14 +248,14 @@ const ReceiptScanner: React.FC<ReceiptScannerProps> = () => {
             description: exp.description,
             cost: exp.price,
             categoryId: null,
-            subcategoryId: null,
+            subcategoryId: null
           }))}
           onClose={(updated) => {
             if (updated) {
               setEditableProducts(
                 updated.map((p) => ({
                   description: p.description || '',
-                  price: p.cost,
+                  price: p.cost
                 }))
               );
             }
@@ -265,7 +264,6 @@ const ReceiptScanner: React.FC<ReceiptScannerProps> = () => {
           onSave={handleSaveExpenses}
           imageUri={imageUri}
         />
-
       </View>
     </ScrollView>
   );
@@ -274,35 +272,35 @@ const ReceiptScanner: React.FC<ReceiptScannerProps> = () => {
 const styles = StyleSheet.create({
   container: {
     flexGrow: 1,
-    padding: 16,
+    padding: 16
   },
   inner: {
     flex: 1,
     alignItems: 'center',
-    width: '100%',
+    width: '100%'
   },
   csvCounter: {
     marginVertical: 12,
-    fontWeight: '600',
+    fontWeight: '600'
   },
   error: {
     marginVertical: 8,
-    textAlign: 'center',
+    textAlign: 'center'
   },
   resultBox: {
     width: '100%',
     padding: 12,
     borderRadius: 10,
-    marginTop: 16,
+    marginTop: 16
   },
   label: {
     fontWeight: '700',
-    marginBottom: 8,
+    marginBottom: 8
   },
   text: {
     fontSize: 14,
-    lineHeight: 20,
-  },
+    lineHeight: 20
+  }
 });
 
 export default ReceiptScanner;

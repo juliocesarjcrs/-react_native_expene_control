@@ -33,7 +33,10 @@ import { commonStyles } from '~/styles/common';
 // Configs
 import { screenConfigs } from '~/config/screenConfigs';
 
-export type SumaryIncomesScreenNavigationProp = StackNavigationProp<IncomeStackParamList, 'sumaryIncomes'>;
+export type SumaryIncomesScreenNavigationProp = StackNavigationProp<
+  IncomeStackParamList,
+  'sumaryIncomes'
+>;
 type SumaryIncomesScreenRouteProp = RouteProp<IncomeStackParamList, 'sumaryIncomes'>;
 
 interface SumaryIncomesScreenProps {
@@ -100,7 +103,12 @@ export default function SumaryIncomesScreen({ navigation }: SumaryIncomesScreenP
       ) : (
         <ScrollView style={{ marginTop: 20 }}>
           {categories.map((e) => (
-            <MyAcordeonIncome key={e.id} data={e} editCategory={sendEditCategoryScreen} updateList={updateList} />
+            <MyAcordeonIncome
+              key={e.id}
+              data={e}
+              editCategory={sendEditCategoryScreen}
+              updateList={updateList}
+            />
           ))}
         </ScrollView>
       )}
@@ -111,5 +119,4 @@ export default function SumaryIncomesScreen({ navigation }: SumaryIncomesScreenP
     </View>
   );
 }
-const styles = StyleSheet.create({
-});
+const styles = StyleSheet.create({});

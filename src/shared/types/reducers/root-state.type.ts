@@ -1,4 +1,4 @@
-import store from "../../../store/store";
+import store from '../../../store/store';
 // import { AuthState } from "./auth-reducers.type";
 // import { DateState } from "./date-reducers.type";
 // import { SearchExpensesState } from "./search-expenses-reducers";

@@ -1,31 +1,30 @@
-import { CategoryModel, IncomeModel } from "../models";
+import { CategoryModel, IncomeModel } from '../models';
 
 export type AllExpensesByRangeDatesResponse = {
-  tableHead: string[]
+  tableHead: string[];
   rows: (string | number)[][];
-}
+};
 
 export type GetCategoriesParams = {
-  type: number
-}
+  type: number;
+};
 
 export type GetCategoriesResponse = CategoryModel[];
 
 export type CreateCategoryPayload = Omit<CategoryModel, 'id' | 'userId' | 'createdAt' | 'budget'>;
 export type EditCategoryPayload = Partial<CategoryModel>;
 
-
 // GetAllSubcategoriesExpensesByMonth
 export type GetAllSubcategoriesExpensesByMonthResponse = {
   data: CategoryExpense[];
   total: number;
-}
+};
 
 export type SubcategoryExpense = {
   id: number;
   name: string;
   total: number;
-}
+};
 
 export type CategoryExpense = {
   id: number;
@@ -36,7 +35,7 @@ export type CategoryExpense = {
   userId: number;
   total: number;
   subcategories: SubcategoryExpense[];
-}
+};
 
 export type CategoryIncomesSumary = {
   id: number;
@@ -53,18 +52,17 @@ export type CategoryIncomesSumary = {
 export type GetCategoryTypeIncomeResponse = {
   data: CategoryIncomesSumary[];
   total: number;
-}
+};
 
 export type CateroryFormatIncome = {
-  label: string
-  value: number,
+  label: string;
+  value: number;
   // iconName?: string | null
-
-}
+};
 // GetCategoryWithSubcategories
 export type GetCategoryWithSubcategoriesResponse = {
   data: CategoryExpense[];
-}
+};
 
 export type CategoryWithoutTypeAndSubcategories = Omit<CategoryExpense, 'type' | 'subcategories'>;
 

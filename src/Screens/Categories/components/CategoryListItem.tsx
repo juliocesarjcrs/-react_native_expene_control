@@ -20,8 +20,6 @@ export const CategoryListItem = ({ item, onDelete, colors }: CategoryListItemPro
     return type === 1 ? colors.SUCCESS : colors.WARNING;
   };
 
-  const hasBudget = item.budget && item.budget > 0;
-
   return (
     <View
       style={[
@@ -55,7 +53,9 @@ export const CategoryListItem = ({ item, onDelete, colors }: CategoryListItemPro
 
         <View style={itemStyles.metaInfo}>
           {/* Badge de tipo */}
-          <View style={[itemStyles.typeBadge, { backgroundColor: getTypeBadgeColor(item.type) + '20' }]}>
+          <View
+            style={[itemStyles.typeBadge, { backgroundColor: getTypeBadgeColor(item.type) + '20' }]}
+          >
             <Text style={[itemStyles.typeText, { color: getTypeBadgeColor(item.type) }]}>
               {getTypeLabel(item.type)}
             </Text>
@@ -78,7 +78,10 @@ export const CategoryListItem = ({ item, onDelete, colors }: CategoryListItemPro
       </View>
 
       {/* Botón eliminar */}
-      <TouchableOpacity onPress={() => onDelete(item.id, item.name)} style={itemStyles.deleteButton}>
+      <TouchableOpacity
+        onPress={() => onDelete(item.id, item.name)}
+        style={itemStyles.deleteButton}
+      >
         <Icon type="material-community" name="delete-outline" size={22} color={colors.ERROR} />
       </TouchableOpacity>
     </View>

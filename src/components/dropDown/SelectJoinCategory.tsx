@@ -14,7 +14,10 @@ import MyLoading from '../loading/MyLoading';
 
 // Types
 import { RootState } from '../../shared/types/reducers';
-import { CategoryFormat, SubcategoryFormat } from '../../shared/types/components/dropDown/SelectJoinCategory.type';
+import {
+  CategoryFormat,
+  SubcategoryFormat
+} from '../../shared/types/components/dropDown/SelectJoinCategory.type';
 import {
   DropDownSelectJoinCategoryFormat,
   DropDownSelectJoinCategoryFormat2
@@ -37,7 +40,14 @@ type SubcategoryFormatInt = {
 };
 
 const SelectJoinCategory = forwardRef(
-  ({ fetchExpensesSubcategory, fetchExpensesOnlyCategory, containerStyle }: SelectJoinCategoryProps, ref) => {
+  (
+    {
+      fetchExpensesSubcategory,
+      fetchExpensesOnlyCategory,
+      containerStyle
+    }: SelectJoinCategoryProps,
+    ref
+  ) => {
     const colors = useThemeColors();
     const month = useSelector((state: RootState) => state.date.month);
     const [categories, setCategories] = useState<CategoryFormat[]>([]);
@@ -69,7 +79,14 @@ const SelectJoinCategory = forwardRef(
             label: e.name,
             value: e.id,
             subcategories: e.subcategories,
-            icon: () => <Icon name={e.icon ? e.icon : 'question'} type="font-awesome" size={35} color={colors.PRIMARY} />
+            icon: () => (
+              <Icon
+                name={e.icon ? e.icon : 'question'}
+                type="font-awesome"
+                size={35}
+                color={colors.PRIMARY}
+              />
+            )
           };
         });
         setCategories(dataFormat);
@@ -140,26 +157,38 @@ const SelectJoinCategory = forwardRef(
           ActivityIndicatorComponent={() => <MyLoading />}
           activityIndicatorColor="red"
           activityIndicatorSize={30}
-          style={[styles.dropdown, { 
-            backgroundColor: colors.CARD_BACKGROUND, 
-            borderColor: colors.BORDER 
-          }]}
-          dropDownContainerStyle={[styles.dropdownContainer, { 
-            backgroundColor: colors.CARD_BACKGROUND, 
-            borderColor: colors.BORDER 
-          }]}
+          style={[
+            styles.dropdown,
+            {
+              backgroundColor: colors.CARD_BACKGROUND,
+              borderColor: colors.BORDER
+            }
+          ]}
+          dropDownContainerStyle={[
+            styles.dropdownContainer,
+            {
+              backgroundColor: colors.CARD_BACKGROUND,
+              borderColor: colors.BORDER
+            }
+          ]}
           listMode="MODAL"
           modalProps={{
             animationType: 'fade'
           }}
-          modalContentContainerStyle={[styles.modalContainer, { 
-            backgroundColor: colors.CARD_BACKGROUND 
-          }]}
+          modalContentContainerStyle={[
+            styles.modalContainer,
+            {
+              backgroundColor: colors.CARD_BACKGROUND
+            }
+          ]}
           itemSeparator={true}
           itemSeparatorStyle={[styles.separator, { backgroundColor: colors.BORDER }]}
-          selectedItemContainerStyle={[styles.selectedItemContainer, { 
-            backgroundColor: colors.PRIMARY 
-          }]}
+          selectedItemContainerStyle={[
+            styles.selectedItemContainer,
+            {
+              backgroundColor: colors.PRIMARY
+            }
+          ]}
           selectedItemLabelStyle={[styles.selectedItemLabel, { color: colors.WHITE }]}
           textStyle={[styles.dropdownText, { color: colors.TEXT_PRIMARY }]}
           labelStyle={[styles.label, { color: colors.TEXT_PRIMARY }]}
@@ -180,27 +209,39 @@ const SelectJoinCategory = forwardRef(
           zIndex={2000}
           zIndexInverse={2000}
           loading={loading}
-          style={[styles.dropdown, { 
-            marginBottom: 0, 
-            backgroundColor: colors.CARD_BACKGROUND, 
-            borderColor: colors.BORDER 
-          }]}
-          dropDownContainerStyle={[styles.dropdownContainer, { 
-            backgroundColor: colors.CARD_BACKGROUND, 
-            borderColor: colors.BORDER 
-          }]}
+          style={[
+            styles.dropdown,
+            {
+              marginBottom: 0,
+              backgroundColor: colors.CARD_BACKGROUND,
+              borderColor: colors.BORDER
+            }
+          ]}
+          dropDownContainerStyle={[
+            styles.dropdownContainer,
+            {
+              backgroundColor: colors.CARD_BACKGROUND,
+              borderColor: colors.BORDER
+            }
+          ]}
           listMode="MODAL"
           modalProps={{
             animationType: 'fade'
           }}
-          modalContentContainerStyle={[styles.modalContainer, { 
-            backgroundColor: colors.CARD_BACKGROUND 
-          }]}
+          modalContentContainerStyle={[
+            styles.modalContainer,
+            {
+              backgroundColor: colors.CARD_BACKGROUND
+            }
+          ]}
           itemSeparator={true}
           itemSeparatorStyle={[styles.separator, { backgroundColor: colors.BORDER }]}
-          selectedItemContainerStyle={[styles.selectedItemContainer, { 
-            backgroundColor: colors.PRIMARY 
-          }]}
+          selectedItemContainerStyle={[
+            styles.selectedItemContainer,
+            {
+              backgroundColor: colors.PRIMARY
+            }
+          ]}
           selectedItemLabelStyle={[styles.selectedItemLabel, { color: colors.WHITE }]}
           textStyle={[styles.dropdownText, { color: colors.TEXT_PRIMARY }]}
           labelStyle={[styles.label, { color: colors.TEXT_PRIMARY }]}

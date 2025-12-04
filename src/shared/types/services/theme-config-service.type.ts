@@ -1,4 +1,4 @@
-import { ThemeConfig } from "../models/theme-config.type";
+import { ThemeConfig } from '../models/theme-config.type';
 
 export type ThemeColors = {
   PRIMARY: string;
@@ -22,7 +22,6 @@ export type ThemeColors = {
   TEXT_SECONDARY: string;
   BORDER: string;
 };
-
 
 export type CreateThemeDto = {
   themeName: string;

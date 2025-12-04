@@ -53,7 +53,7 @@ export default function MyProgressBar({
           {
             height: height,
             backgroundColor: progressData.bgColor,
-            borderColor: colors.BORDER,
+            borderColor: colors.BORDER
           }
         ]}
       >
@@ -64,7 +64,7 @@ export default function MyProgressBar({
             {
               width: `${barWidthPercent}%`,
               height: height,
-              backgroundColor: progressData.barColor,
+              backgroundColor: progressData.barColor
             }
           ]}
         >
@@ -80,12 +80,7 @@ export default function MyProgressBar({
 
         {/* Percentage text FUERA de la barra (cuando es muy pequeña) */}
         {!showTextInside && (
-          <View 
-            style={[
-              styles.textContainerOutside,
-              { left: `${barWidthPercent}%` }
-            ]}
-          >
+          <View style={[styles.textContainerOutside, { left: `${barWidthPercent}%` }]}>
             <Text style={[styles.percentageTextOutside, { color: colors.TEXT_PRIMARY }]}>
               {progressData.originalPercentage}
             </Text>
@@ -96,9 +91,7 @@ export default function MyProgressBar({
       {/* Badge de alerta si excede */}
       {progressData.isOverBudget && (
         <View style={styles.warningContainer}>
-          <Text style={[styles.warningText, { color: colors.ERROR }]}>
-            ¡Presupuesto excedido!
-          </Text>
+          <Text style={[styles.warningText, { color: colors.ERROR }]}>¡Presupuesto excedido!</Text>
         </View>
       )}
     </View>
@@ -107,49 +100,49 @@ export default function MyProgressBar({
 
 const styles = StyleSheet.create({
   container: {
-    justifyContent: 'center',
+    justifyContent: 'center'
   },
   backgroundBar: {
     width: '100%',
     borderRadius: 10,
     borderWidth: 1,
     overflow: 'hidden',
-    position: 'relative',
+    position: 'relative'
   },
   progressBar: {
     borderRadius: 10,
     justifyContent: 'center',
     alignItems: 'flex-end',
-    paddingRight: 8,
+    paddingRight: 8
   },
   textContainer: {
     position: 'absolute',
     right: 8,
     top: 0,
     bottom: 0,
-    justifyContent: 'center',
+    justifyContent: 'center'
   },
   percentageText: {
     fontSize: SMALL,
-    fontWeight: 'bold',
+    fontWeight: 'bold'
   },
   textContainerOutside: {
     position: 'absolute',
     top: 0,
     bottom: 0,
     justifyContent: 'center',
-    marginLeft: 8,
+    marginLeft: 8
   },
   percentageTextOutside: {
     fontSize: SMALL,
-    fontWeight: 'bold',
+    fontWeight: 'bold'
   },
   warningContainer: {
     marginTop: 4,
-    alignItems: 'center',
+    alignItems: 'center'
   },
   warningText: {
     fontSize: SMALL - 1,
-    fontWeight: '600',
-  },
+    fontWeight: '600'
+  }
 });

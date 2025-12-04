@@ -1,4 +1,3 @@
-
 export type FinancialRecord = {
   id: number;
   createdAt: string;
@@ -12,19 +11,18 @@ export type FinancialRecord = {
 
 export type GetSavingsByUserQuery = {
   numMonths: number;
-}
- export type Graph =  {
+};
+export type Graph = {
   labels: string[];
   expenses: number[];
   incomes: number[];
   savings: number[];
- }
-export type GetSavingsByUserResponse  = {
+};
+export type GetSavingsByUserResponse = {
   data: FinancialRecord[];
-  graph: Graph
+  graph: Graph;
+};
 
-}
-
-export type GetUpdateAllSavingsByUserQuery= {
+export type GetUpdateAllSavingsByUserQuery = {
   numMonths: number;
-}
+};

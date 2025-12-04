@@ -77,7 +77,10 @@ export default function ManageFeatureFlagsScreen({ navigation }: ManageFeatureFl
       // Refrescar features globales
       await refreshFeatures();
 
-      Alert.alert('Éxito', `Funcionalidad "${featureKey}" ${newStatus ? 'activada' : 'desactivada'} correctamente`);
+      Alert.alert(
+        'Éxito',
+        `Funcionalidad "${featureKey}" ${newStatus ? 'activada' : 'desactivada'} correctamente`
+      );
     } catch (error) {
       showError(error);
     } finally {
@@ -87,7 +90,7 @@ export default function ManageFeatureFlagsScreen({ navigation }: ManageFeatureFl
 
   if (loading) {
     return (
-      <View style={styles.centerContainer}>
+      <View style={[commonStyles.screenContentWithPadding, { backgroundColor: colors.BACKGROUND }]}>
         <ActivityIndicator size="large" color="#9c27b0" />
         <Text style={styles.loadingText}>Cargando funcionalidades...</Text>
       </View>
@@ -109,7 +112,9 @@ export default function ManageFeatureFlagsScreen({ navigation }: ManageFeatureFl
               </View>
             </View>
 
-            {feature.description && <Text style={styles.featureDescription}>{feature.description}</Text>}
+            {feature.description && (
+              <Text style={styles.featureDescription}>{feature.description}</Text>
+            )}
 
             {feature.requiresRole === 1 && (
               <View style={styles.adminBadge}>

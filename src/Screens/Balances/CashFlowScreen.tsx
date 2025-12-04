@@ -116,15 +116,24 @@ export default function CashFlowScreen({ navigation }: CashFlowScreenProps) {
         allDataSavings.length > 0 ? Math.round(sumPercentSaving / allDataSavings.length) : 0;
       const dataTable = allDataSavings.map((e) => {
         const meanSaaving = e.income > 0 ? Math.round((e.saving * 100) / e.income) : 0;
-        return [`${DateFormat(e.date, 'MMMM YYYY')}`, `${meanSaaving} %`, `${NumberFormat(e.saving)}`];
+        return [
+          `${DateFormat(e.date, 'MMMM YYYY')}`,
+          `${meanSaaving} %`,
+          `${NumberFormat(e.saving)}`
+        ];
       });
 
       const sumSaving = allDataSavings.reduce((acu, val) => {
         return acu + val.saving;
       }, 0);
-      const meanSavingsValByNumMonths = allDataSavings.length > 0 ? sumSaving / allDataSavings.length : 0;
+      const meanSavingsValByNumMonths =
+        allDataSavings.length > 0 ? sumSaving / allDataSavings.length : 0;
 
-      dataTable.push(['Promedio', `${meanSavingsByNumMonths} %`, `${NumberFormat(meanSavingsValByNumMonths)}`]);
+      dataTable.push([
+        'Promedio',
+        `${meanSavingsByNumMonths} %`,
+        `${NumberFormat(meanSavingsValByNumMonths)}`
+      ]);
       setTableData(dataTable);
 
       const filterLabels = filterLimitDataForGraph<string>(data.graph.labels, numMonthsQuery);
@@ -227,7 +236,6 @@ export default function CashFlowScreen({ navigation }: CashFlowScreenProps) {
   };
 
   const monthBalance = totalIncomes - totalExpenses;
-  const isPositiveBalance = monthBalance >= 0;
 
   return (
     <View style={[commonStyles.screenContentWithPadding, { backgroundColor: colors.BACKGROUND }]}>
@@ -236,8 +244,12 @@ export default function CashFlowScreen({ navigation }: CashFlowScreenProps) {
       <ScrollView showsVerticalScrollIndicator={false}>
         {/* Header minimalista */}
         <View style={styles.header}>
-          <Text style={[styles.headerMonth, { color: colors.TEXT_PRIMARY }]}>{DateFormat(month, 'MMMM')}</Text>
-          <Text style={[styles.headerYear, { color: colors.TEXT_SECONDARY }]}>{DateFormat(month, 'YYYY')}</Text>
+          <Text style={[styles.headerMonth, { color: colors.TEXT_PRIMARY }]}>
+            {DateFormat(month, 'MMMM')}
+          </Text>
+          <Text style={[styles.headerYear, { color: colors.TEXT_SECONDARY }]}>
+            {DateFormat(month, 'YYYY')}
+          </Text>
         </View>
 
         {loading || loadingGraphql ? (
@@ -247,22 +259,38 @@ export default function CashFlowScreen({ navigation }: CashFlowScreenProps) {
             {/* Cards minimalistas sin iconos */}
             <View style={styles.cardsGrid}>
               <View style={[styles.miniCard, { backgroundColor: colors.CARD_BACKGROUND }]}>
-                <Text style={[styles.miniCardLabel, { color: colors.TEXT_SECONDARY }]}>Ingresos</Text>
-                <Text style={[styles.miniCardValue, { color: colors.SUCCESS }]} numberOfLines={1} adjustsFontSizeToFit>
+                <Text style={[styles.miniCardLabel, { color: colors.TEXT_SECONDARY }]}>
+                  Ingresos
+                </Text>
+                <Text
+                  style={[styles.miniCardValue, { color: colors.SUCCESS }]}
+                  numberOfLines={1}
+                  adjustsFontSizeToFit
+                >
                   {NumberFormat(totalIncomes)}
                 </Text>
               </View>
 
               <View style={[styles.miniCard, { backgroundColor: colors.CARD_BACKGROUND }]}>
                 <Text style={[styles.miniCardLabel, { color: colors.TEXT_SECONDARY }]}>Gastos</Text>
-                <Text style={[styles.miniCardValue, { color: colors.ERROR }]} numberOfLines={1} adjustsFontSizeToFit>
+                <Text
+                  style={[styles.miniCardValue, { color: colors.ERROR }]}
+                  numberOfLines={1}
+                  adjustsFontSizeToFit
+                >
                   {NumberFormat(totalExpenses)}
                 </Text>
               </View>
 
               <View style={[styles.miniCard, { backgroundColor: colors.CARD_BACKGROUND }]}>
-                <Text style={[styles.miniCardLabel, { color: colors.TEXT_SECONDARY }]}>Balance</Text>
-                <Text style={[styles.miniCardValue, { color: colors.INFO }]} numberOfLines={1} adjustsFontSizeToFit>
+                <Text style={[styles.miniCardLabel, { color: colors.TEXT_SECONDARY }]}>
+                  Balance
+                </Text>
+                <Text
+                  style={[styles.miniCardValue, { color: colors.INFO }]}
+                  numberOfLines={1}
+                  adjustsFontSizeToFit
+                >
                   {NumberFormat(totalSavings)}
                 </Text>
               </View>
@@ -303,8 +331,18 @@ export default function CashFlowScreen({ navigation }: CashFlowScreenProps) {
             {showSensitiveInfo && (
               <View style={[styles.sensitiveSection, { backgroundColor: colors.CARD_BACKGROUND }]}>
                 {/* Nota informativa */}
-                <View style={[styles.infoNote, { backgroundColor: colors.INFO + '10', borderColor: colors.INFO }]}>
-                  <Icon type="material-community" name="information" size={14} color={colors.INFO} />
+                <View
+                  style={[
+                    styles.infoNote,
+                    { backgroundColor: colors.INFO + '10', borderColor: colors.INFO }
+                  ]}
+                >
+                  <Icon
+                    type="material-community"
+                    name="information"
+                    size={14}
+                    color={colors.INFO}
+                  />
                   <Text style={[styles.infoNoteText, { color: colors.TEXT_SECONDARY }]}>
                     Promedios calculados con los últimos {numMonthsQuery} meses
                   </Text>
@@ -314,13 +352,17 @@ export default function CashFlowScreen({ navigation }: CashFlowScreenProps) {
                 <View style={styles.historyItem}>
                   <Text style={[styles.historyTitle, { color: colors.SUCCESS }]}>Ingresos</Text>
                   <View style={styles.historyRow}>
-                    <Text style={[styles.historyLabel, { color: colors.TEXT_SECONDARY }]}>Promedio</Text>
+                    <Text style={[styles.historyLabel, { color: colors.TEXT_SECONDARY }]}>
+                      Promedio
+                    </Text>
                     <Text style={[styles.historyValue, { color: colors.TEXT_PRIMARY }]}>
                       {NumberFormat(averageIncomes)}
                     </Text>
                   </View>
                   <View style={styles.historyRow}>
-                    <Text style={[styles.historyLabel, { color: colors.TEXT_SECONDARY }]}>Anterior</Text>
+                    <Text style={[styles.historyLabel, { color: colors.TEXT_SECONDARY }]}>
+                      Anterior
+                    </Text>
                     <Text style={[styles.historyValue, { color: colors.TEXT_PRIMARY }]}>
                       {NumberFormat(previousAverageIncomes)}
                     </Text>
@@ -333,13 +375,17 @@ export default function CashFlowScreen({ navigation }: CashFlowScreenProps) {
                 <View style={styles.historyItem}>
                   <Text style={[styles.historyTitle, { color: colors.ERROR }]}>Gastos</Text>
                   <View style={styles.historyRow}>
-                    <Text style={[styles.historyLabel, { color: colors.TEXT_SECONDARY }]}>Promedio</Text>
+                    <Text style={[styles.historyLabel, { color: colors.TEXT_SECONDARY }]}>
+                      Promedio
+                    </Text>
                     <Text style={[styles.historyValue, { color: colors.TEXT_PRIMARY }]}>
                       {NumberFormat(averageExpenses)}
                     </Text>
                   </View>
                   <View style={styles.historyRow}>
-                    <Text style={[styles.historyLabel, { color: colors.TEXT_SECONDARY }]}>Anterior</Text>
+                    <Text style={[styles.historyLabel, { color: colors.TEXT_SECONDARY }]}>
+                      Anterior
+                    </Text>
                     <Text style={[styles.historyValue, { color: colors.TEXT_PRIMARY }]}>
                       {NumberFormat(previousAverageExpenses)}
                     </Text>
@@ -352,19 +398,25 @@ export default function CashFlowScreen({ navigation }: CashFlowScreenProps) {
                 <View style={styles.historyItem}>
                   <Text style={[styles.historyTitle, { color: colors.INFO }]}>Ahorros</Text>
                   <View style={styles.historyRow}>
-                    <Text style={[styles.historyLabel, { color: colors.TEXT_SECONDARY }]}>Anterior</Text>
+                    <Text style={[styles.historyLabel, { color: colors.TEXT_SECONDARY }]}>
+                      Anterior
+                    </Text>
                     <Text style={[styles.historyValue, { color: colors.TEXT_PRIMARY }]}>
                       {NumberFormat(sumPreviousSavings)}
                     </Text>
                   </View>
                   <View style={styles.historyRow}>
-                    <Text style={[styles.historyLabel, { color: colors.TEXT_SECONDARY }]}>Histórico real</Text>
+                    <Text style={[styles.historyLabel, { color: colors.TEXT_SECONDARY }]}>
+                      Histórico real
+                    </Text>
                     <Text style={[styles.historyValue, { color: colors.TEXT_PRIMARY }]}>
                       {NumberFormat(totalSavingsHistory)}
                     </Text>
                   </View>
                   <View style={styles.historyRow}>
-                    <Text style={[styles.historyLabel, { color: colors.TEXT_SECONDARY }]}>Con préstamos</Text>
+                    <Text style={[styles.historyLabel, { color: colors.TEXT_SECONDARY }]}>
+                      Con préstamos
+                    </Text>
                     <Text style={[styles.historyValue, { color: colors.TEXT_PRIMARY }]}>
                       {NumberFormat(totalSavingsWithLoansHistory)}
                     </Text>
@@ -379,7 +431,9 @@ export default function CashFlowScreen({ navigation }: CashFlowScreenProps) {
               onPress={() => updateAllSavingsByUser()}
               activeOpacity={0.7}
             >
-              <Text style={[styles.refreshText, { color: colors.TEXT_SECONDARY }]}>Actualizar datos</Text>
+              <Text style={[styles.refreshText, { color: colors.TEXT_SECONDARY }]}>
+                Actualizar datos
+              </Text>
               <Icon type="material-community" name="refresh" size={18} color={colors.PRIMARY} />
             </TouchableOpacity>
           </View>
@@ -389,7 +443,9 @@ export default function CashFlowScreen({ navigation }: CashFlowScreenProps) {
         <View style={styles.chartHeader}>
           <View>
             <Text style={[styles.chartTitle, { color: colors.TEXT_PRIMARY }]}>Evolución</Text>
-            <Text style={[styles.chartSubtitle, { color: colors.TEXT_SECONDARY }]}>{numMonthsGraph} meses</Text>
+            <Text style={[styles.chartSubtitle, { color: colors.TEXT_SECONDARY }]}>
+              {numMonthsGraph} meses
+            </Text>
           </View>
           <CheckBoxOptions navigation={navigation} updateNum={updateNum} />
         </View>

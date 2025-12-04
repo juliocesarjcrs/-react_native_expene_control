@@ -1,5 +1,5 @@
-import { DefaultTheme } from "@react-navigation/native";
-import { useThemeColors } from "./useThemeColors";
+import { DefaultTheme } from '@react-navigation/native';
+import { useThemeColors } from './useThemeColors';
 
 export const useNavigationTheme = () => {
   const colors = useThemeColors();
@@ -13,7 +13,7 @@ export const useNavigationTheme = () => {
       primary: colors.PRIMARY,
       card: colors.CARD_BACKGROUND,
       border: colors.BORDER,
-      notification: colors.ERROR,
-    },
+      notification: colors.ERROR
+    }
   };
 };

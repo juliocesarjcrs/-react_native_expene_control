@@ -41,17 +41,17 @@ export default function LastTransactionsCard<T extends Transaction>({
   type,
   navigation,
   navigationScreen,
-  fetchFunction,
+  fetchFunction
 }: LastTransactionsCardProps<T>) {
   const colors = useThemeColors();
-  
+
   const [transactions, setTransactions] = useState<T[]>([]);
   const [take, setTake] = useState<number>(5);
   const [loading, setLoading] = useState<boolean>(false);
   const [checkboxes, setCheckboxes] = useState([
     { id: 1, title: 'Últimas 5 transacciones', checked: true, take: 5 },
     { id: 2, title: 'Últimas 10 transacciones', checked: false, take: 10 },
-    { id: 3, title: 'Últimas 15 transacciones', checked: false, take: 15 },
+    { id: 3, title: 'Últimas 15 transacciones', checked: false, take: 15 }
   ]);
 
   useEffect(() => {
@@ -78,7 +78,7 @@ export default function LastTransactionsCard<T extends Transaction>({
   const toggleCheckbox = (id: number, index: number): void => {
     const checkboxData = checkboxes.map((cb, idx) => ({
       ...cb,
-      checked: idx === index,
+      checked: idx === index
     }));
     setCheckboxes(checkboxData);
     setTake(checkboxData[index].take);
@@ -168,12 +168,7 @@ export default function LastTransactionsCard<T extends Transaction>({
       ) : (
         <View style={styles.transactionsList}>
           {transactions.map((item) => (
-            <TransactionItem
-              key={item.id}
-              item={item}
-              type={type}
-              colors={colors}
-            />
+            <TransactionItem key={item.id} item={item} type={type} colors={colors} />
           ))}
         </View>
       )}
@@ -191,18 +186,18 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 4,
-    elevation: 3,
+    elevation: 3
   },
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 12,
+    marginBottom: 12
   },
   headerLeft: {
     flexDirection: 'row',
     alignItems: 'center',
-    flex: 1,
+    flex: 1
   },
   iconBadge: {
     width: 36,
@@ -210,39 +205,39 @@ const styles = StyleSheet.create({
     borderRadius: 18,
     justifyContent: 'center',
     alignItems: 'center',
-    marginRight: 10,
+    marginRight: 10
   },
   title: {
     fontSize: MEDIUM,
     fontWeight: 'bold',
-    textTransform: 'capitalize',
+    textTransform: 'capitalize'
   },
   headerRight: {
     flexDirection: 'row',
-    alignItems: 'center',
+    alignItems: 'center'
   },
   iconButton: {
     padding: 4,
-    marginLeft: 4,
+    marginLeft: 4
   },
   popoverContent: {
     minWidth: 220,
-    paddingVertical: 8,
+    paddingVertical: 8
   },
   checkboxContainer: {
     marginVertical: 0,
     paddingVertical: 8,
-    borderBottomWidth: 0,
+    borderBottomWidth: 0
   },
   emptyContainer: {
     alignItems: 'center',
-    paddingVertical: 30,
+    paddingVertical: 30
   },
   emptyText: {
     fontSize: SMALL + 1,
-    marginTop: 8,
+    marginTop: 8
   },
   transactionsList: {
-    marginTop: 4,
-  },
+    marginTop: 4
+  }
 });

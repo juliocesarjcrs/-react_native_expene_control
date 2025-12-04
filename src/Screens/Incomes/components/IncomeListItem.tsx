@@ -3,8 +3,8 @@ import { Alert, Modal, StyleSheet, TouchableOpacity, View } from 'react-native';
 import { Text } from 'react-native';
 import { Icon, Divider, Tooltip, TooltipProps } from 'react-native-elements';
 
-import { IncomeModel } from "~/shared/types";
-import { MEDIUM, SMALL } from "~/styles/fonts";
+import { IncomeModel } from '~/shared/types';
+import { MEDIUM, SMALL } from '~/styles/fonts';
 // Utils
 
 import { NumberFormat, DateFormat } from '~/utils/Helpers';
@@ -48,12 +48,12 @@ export const IncomeListItem = ({ item, onDelete, colors }: IncomeListItemProps) 
   };
 
   return (
-    <View 
+    <View
       style={[
         incomeItemStyles.container,
-        { 
+        {
           backgroundColor: colors.CARD_BACKGROUND,
-          borderLeftColor: colors.SUCCESS,
+          borderLeftColor: colors.SUCCESS
         }
       ]}
     >
@@ -94,16 +94,8 @@ export const IncomeListItem = ({ item, onDelete, colors }: IncomeListItemProps) 
       </View>
 
       {/* Botón eliminar */}
-      <TouchableOpacity
-        onPress={() => onDelete(item.id)}
-        style={incomeItemStyles.deleteButton}
-      >
-        <Icon
-          type="material-community"
-          name="delete-outline"
-          size={20}
-          color={colors.ERROR}
-        />
+      <TouchableOpacity onPress={() => onDelete(item.id)} style={incomeItemStyles.deleteButton}>
+        <Icon type="material-community" name="delete-outline" size={20} color={colors.ERROR} />
       </TouchableOpacity>
     </View>
   );
@@ -123,33 +115,33 @@ const incomeItemStyles = StyleSheet.create({
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.05,
     shadowRadius: 2,
-    elevation: 1,
+    elevation: 1
   },
   dateContainer: {
-    flex: 1,
+    flex: 1
   },
   date: {
     fontSize: MEDIUM,
     fontWeight: '600',
-    marginBottom: 2,
+    marginBottom: 2
   },
   time: {
-    fontSize: SMALL,
+    fontSize: SMALL
   },
   amountContainer: {
     flex: 1,
     alignItems: 'flex-end',
-    marginRight: 12,
+    marginRight: 12
   },
   amountWithIcon: {
     flexDirection: 'row',
-    alignItems: 'center',
+    alignItems: 'center'
   },
   amount: {
     fontSize: MEDIUM,
-    fontWeight: 'bold',
+    fontWeight: 'bold'
   },
   deleteButton: {
-    padding: 4,
-  },
+    padding: 4
+  }
 });

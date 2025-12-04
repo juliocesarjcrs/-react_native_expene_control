@@ -81,7 +81,10 @@ export default function CreateLoanScreen() {
   return (
     <View style={[commonStyles.screenContentWithPadding, { backgroundColor: colors.BACKGROUND }]}>
       <ScreenHeader title={config.title} subtitle={config.subtitle} />
-      <RadioButton.Group onValueChange={(newValue) => setType(Number(newValue))} value={String(type)}>
+      <RadioButton.Group
+        onValueChange={(newValue) => setType(Number(newValue))}
+        value={String(type)}
+      >
         <View>
           <Text>Tipo préstamo</Text>
           <RadioButton value="0" />

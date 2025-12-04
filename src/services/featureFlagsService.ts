@@ -1,7 +1,12 @@
 import { AxiosResponse } from 'axios';
 import axios from '../plugins/axiosConfig';
 import { FeatureFlag } from '~/shared/types/models/feature-flags.type';
-import { CreateFeatureDto, DeleteFeatureResponse, FeatureStatusResponse, UpdateFeatureDto } from '~/shared/types/services/feature-flags-service.type';
+import {
+  CreateFeatureDto,
+  DeleteFeatureResponse,
+  FeatureStatusResponse,
+  UpdateFeatureDto
+} from '~/shared/types/services/feature-flags-service.type';
 
 const PREFIX = 'feature-flags';
 
@@ -21,7 +26,9 @@ export const getEnabledFeatures = async (): Promise<FeatureFlag[]> => {
  * Verificar estado del chatbot (público)
  */
 export const getChatbotStatus = async (): Promise<FeatureStatusResponse> => {
-  const response: AxiosResponse<FeatureStatusResponse> = await axios.get(`${PREFIX}/chatbot/status`);
+  const response: AxiosResponse<FeatureStatusResponse> = await axios.get(
+    `${PREFIX}/chatbot/status`
+  );
   return response.data;
 };
 
@@ -62,17 +69,19 @@ export const checkFeatureStatus = async (key: string): Promise<FeatureStatusResp
  * Toggle (activar/desactivar) una feature (solo admin)
  */
 export const toggleFeature = async (key: string, isEnabled: boolean): Promise<FeatureFlag> => {
-  const response: AxiosResponse<FeatureFlag> = await axios.put(
-    `${PREFIX}/${key}/toggle`,
-    { isEnabled }
-  );
+  const response: AxiosResponse<FeatureFlag> = await axios.put(`${PREFIX}/${key}/toggle`, {
+    isEnabled
+  });
   return response.data;
 };
 
 /**
  * Actualizar una feature (solo admin)
  */
-export const updateFeature = async (key: string, updateData: UpdateFeatureDto): Promise<FeatureFlag> => {
+export const updateFeature = async (
+  key: string,
+  updateData: UpdateFeatureDto
+): Promise<FeatureFlag> => {
   const response: AxiosResponse<FeatureFlag> = await axios.put(`${PREFIX}/${key}`, updateData);
   return response.data;
 };

@@ -1,29 +1,29 @@
-import React, { useEffect, useState } from "react";
-import { StyleSheet, Text, View, Image, Platform, Alert } from "react-native";
-import { useForm, Controller } from "react-hook-form";
-import { Input } from "react-native-elements";
-import { StackNavigationProp } from "@react-navigation/stack";
-import { useDispatch } from "react-redux";
-import AsyncStorage from "@react-native-async-storage/async-storage";
-import * as ImagePicker from "expo-image-picker";
-import { setUser } from "~/features/auth/authSlice";
+import React, { useEffect, useState } from 'react';
+import { StyleSheet, Text, View, Image, Platform, Alert } from 'react-native';
+import { useForm, Controller } from 'react-hook-form';
+import { Input } from 'react-native-elements';
+import { StackNavigationProp } from '@react-navigation/stack';
+import { useDispatch } from 'react-redux';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import * as ImagePicker from 'expo-image-picker';
+import { setUser } from '~/features/auth/authSlice';
 
 // Services
-import { editUser, getUser } from "~/services/users";
-import { getUrlSignedAws } from "~/services/files";
+import { editUser, getUser } from '~/services/users';
+import { getUrlSignedAws } from '~/services/files';
 
 // Components
-import { ScreenHeader } from "~/components/ScreenHeader";
-import MyButton from "~/components/MyButton";
-import MyLoading from "~/components/loading/MyLoading";
+import { ScreenHeader } from '~/components/ScreenHeader';
+import MyButton from '~/components/MyButton';
+import MyLoading from '~/components/loading/MyLoading';
 
 // Types
-import { SettingsStackParamList, UserModel } from "~/shared/types";
+import { SettingsStackParamList, UserModel } from '~/shared/types';
 
 // Utils
-import { showError } from "~/utils/showError";
-import { ShowToast } from "~/utils/toastUtils";
-import { EMAIL_REGEX } from "~/constants/regex";
+import { showError } from '~/utils/showError';
+import { ShowToast } from '~/utils/toastUtils';
+import { EMAIL_REGEX } from '~/constants/regex';
 
 // Theme
 import { useThemeColors } from '~/customHooks/useThemeColors';
@@ -34,10 +34,7 @@ import { commonStyles } from '~/styles/common';
 // Configs
 import { screenConfigs } from '~/config/screenConfigs';
 
-export type EditUserScreenNavigationProp = StackNavigationProp<
-  SettingsStackParamList,
-  "editUser"
->;
+export type EditUserScreenNavigationProp = StackNavigationProp<SettingsStackParamList, 'editUser'>;
 
 interface EditUserScreenProps {
   navigation: EditUserScreenNavigationProp;
@@ -56,9 +53,9 @@ export default function EditUserScreen({ navigation }: EditUserScreenProps) {
     handleSubmit,
     control,
     setValue,
-    formState: { errors },
+    formState: { errors }
   } = useForm<EditUserFormData>({
-    defaultValues: { email: "", name: "" },
+    defaultValues: { email: '', name: '' }
   });
 
   const [idUser, setIdUser] = useState<number | null>(null);
@@ -74,19 +71,19 @@ export default function EditUserScreen({ navigation }: EditUserScreenProps) {
 
   useEffect(() => {
     fetchData();
-    const unsubscribe = navigation.addListener("focus", () => {
+    const unsubscribe = navigation.addListener('focus', () => {
       fetchData();
     });
     return unsubscribe;
   }, [navigation]);
 
   const requestPermissions = async (): Promise<void> => {
-    if (Platform.OS !== "web") {
+    if (Platform.OS !== 'web') {
       const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
-      if (status !== "granted") {
+      if (status !== 'granted') {
         Alert.alert(
-          "Permisos requeridos",
-          "Necesitamos permisos para acceder a tu galería de fotos"
+          'Permisos requeridos',
+          'Necesitamos permisos para acceder a tu galería de fotos'
         );
       }
     }
@@ -94,17 +91,17 @@ export default function EditUserScreen({ navigation }: EditUserScreenProps) {
 
   const fetchData = async (): Promise<void> => {
     try {
-      const jsonValue = await AsyncStorage.getItem("user");
+      const jsonValue = await AsyncStorage.getItem('user');
       const user: UserModel | null = jsonValue != null ? JSON.parse(jsonValue) : null;
 
       if (!user) {
-        showError(new Error("No se encontró el usuario"));
+        showError(new Error('No se encontró el usuario'));
         return;
       }
 
       const { data } = await getUser(user.id);
-      setValue("email", data.email);
-      setValue("name", data.name);
+      setValue('email', data.email);
+      setValue('name', data.name);
 
       if (data.image) {
         getUrlAws(data.image);
@@ -134,19 +131,19 @@ export default function EditUserScreen({ navigation }: EditUserScreenProps) {
   const onSubmit = async (payload: EditUserFormData): Promise<void> => {
     try {
       if (!idUser) {
-        showError(new Error("ID de usuario no encontrado"));
+        showError(new Error('ID de usuario no encontrado'));
         return;
       }
 
       const formData = new FormData();
-      formData.append("email", payload.email);
-      formData.append("name", payload.name);
+      formData.append('email', payload.email);
+      formData.append('name', payload.name);
 
       if (image && type && fileName) {
-        formData.append("image", {
+        formData.append('image', {
           type: type,
           uri: image,
-          name: fileName,
+          name: fileName
         } as any);
       }
 
@@ -155,7 +152,7 @@ export default function EditUserScreen({ navigation }: EditUserScreenProps) {
       setLoading(false);
 
       dispatch(setUser(data));
-      ShowToast("Perfil actualizado exitosamente");
+      ShowToast('Perfil actualizado exitosamente');
     } catch (error) {
       setLoading(false);
       showError(error);
@@ -168,7 +165,7 @@ export default function EditUserScreen({ navigation }: EditUserScreenProps) {
         mediaTypes: ImagePicker.MediaTypeOptions.Images,
         allowsEditing: true,
         aspect: [4, 3],
-        quality: 1,
+        quality: 1
       });
 
       if (!result.canceled && result.assets && result.assets.length > 0) {
@@ -176,7 +173,7 @@ export default function EditUserScreen({ navigation }: EditUserScreenProps) {
         setImage(selectedImage.uri);
 
         const localUri = selectedImage.uri;
-        const nameImagen = localUri.split("/").pop() || "image.jpg";
+        const nameImagen = localUri.split('/').pop() || 'image.jpg';
 
         // Inferir el tipo de imagen
         const match = /\.(\w+)$/.exec(nameImagen);
@@ -203,12 +200,12 @@ export default function EditUserScreen({ navigation }: EditUserScreenProps) {
           rules={{
             required: {
               value: true,
-              message: "El email es obligatorio",
+              message: 'El email es obligatorio'
             },
             pattern: {
               value: EMAIL_REGEX,
-              message: "El email no es válido",
-            },
+              message: 'El email no es válido'
+            }
           }}
           render={({ field: { onChange, value } }) => (
             <Input
@@ -229,12 +226,12 @@ export default function EditUserScreen({ navigation }: EditUserScreenProps) {
           rules={{
             required: {
               value: true,
-              message: "El nombre es obligatorio",
+              message: 'El nombre es obligatorio'
             },
             minLength: {
               value: 2,
-              message: "El nombre debe tener al menos 2 caracteres",
-            },
+              message: 'El nombre debe tener al menos 2 caracteres'
+            }
           }}
           render={({ field: { onChange, value } }) => (
             <Input
@@ -254,18 +251,13 @@ export default function EditUserScreen({ navigation }: EditUserScreenProps) {
         )}
 
         <View style={styles.imageSection}>
-          <Text style={[styles.imageLabel, { color: colors.TEXT_PRIMARY }]}>
-            Foto de perfil
-          </Text>
+          <Text style={[styles.imageLabel, { color: colors.TEXT_PRIMARY }]}>Foto de perfil</Text>
 
           <MyButton title="Seleccionar imagen" onPress={pickImage} />
 
           {(image || saveImage) && (
             <View style={[styles.imageContainer, { borderColor: colors.BORDER }]}>
-              <Image
-                source={{ uri: image || saveImage || "" }}
-                style={styles.image}
-              />
+              <Image source={{ uri: image || saveImage || '' }} style={styles.image} />
             </View>
           )}
         </View>
@@ -277,21 +269,21 @@ export default function EditUserScreen({ navigation }: EditUserScreenProps) {
 const styles = StyleSheet.create({
   imageSection: {
     marginTop: 24,
-    alignItems: "center",
+    alignItems: 'center'
   },
   imageLabel: {
     fontSize: 16,
-    fontWeight: "bold",
-    marginBottom: 12,
+    fontWeight: 'bold',
+    marginBottom: 12
   },
   imageContainer: {
     marginTop: 16,
     borderWidth: 2,
     borderRadius: 12,
-    overflow: "hidden",
+    overflow: 'hidden'
   },
   image: {
     width: 200,
-    height: 200,
-  },
+    height: 200
+  }
 });

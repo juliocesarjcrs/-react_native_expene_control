@@ -48,18 +48,22 @@ const MultiExpenseModal: React.FC<MultiExpenseModalProps> = ({
     return expenses.reduce((sum, expense) => sum + (expense.cost || 0), 0);
   }, [expenses]);
 
-  const transformCategories = useCallback((apiCategories: CategoryExpense[]): CategoryDropdown[] => {
-    return apiCategories.map((category) => ({
-      label: category.name,
-      value: category.id,
-      icon: () => (category.icon ? <Icon name={category.icon} type="font-awesome" size={20} /> : <></>),
-      subcategories: category.subcategories?.map((sub) => ({
-        label: sub.name,
-        value: sub.id,
-        icon: () => <></>
-      }))
-    }));
-  }, []);
+  const transformCategories = useCallback(
+    (apiCategories: CategoryExpense[]): CategoryDropdown[] => {
+      return apiCategories.map((category) => ({
+        label: category.name,
+        value: category.id,
+        icon: () =>
+          category.icon ? <Icon name={category.icon} type="font-awesome" size={20} /> : <></>,
+        subcategories: category.subcategories?.map((sub) => ({
+          label: sub.name,
+          value: sub.id,
+          icon: () => <></>
+        }))
+      }));
+    },
+    []
+  );
 
   const loadCategories = useCallback(async () => {
     setLoading(true);
@@ -121,7 +125,9 @@ const MultiExpenseModal: React.FC<MultiExpenseModalProps> = ({
   );
 
   const validateExpenses = useCallback(() => {
-    return expenses.every((exp) => exp.cost > 0 && exp.categoryId !== null && exp.subcategoryId !== null);
+    return expenses.every(
+      (exp) => exp.cost > 0 && exp.categoryId !== null && exp.subcategoryId !== null
+    );
   }, [expenses]);
 
   const handleSave = useCallback(() => {
@@ -150,10 +156,18 @@ const MultiExpenseModal: React.FC<MultiExpenseModalProps> = ({
 
   return (
     <Modal visible={visible} animationType="slide" transparent>
-      <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={styles.keyboardAvoidingView}>
+      <KeyboardAvoidingView
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        style={styles.keyboardAvoidingView}
+      >
         <View style={styles.modalContainer}>
           <View style={styles.modalContent}>
-            <ProductsHeader title="Registrar Gastos" count={expenses.length} onClose={handleBack} imageUri={imageUri} />
+            <ProductsHeader
+              title="Registrar Gastos"
+              count={expenses.length}
+              onClose={handleBack}
+              imageUri={imageUri}
+            />
             <Text style={styles.total}>Total:{NumberFormat(totalAmount)}</Text>
 
             {loading ? (

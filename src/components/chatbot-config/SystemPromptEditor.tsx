@@ -18,7 +18,7 @@ export const SystemPromptEditor: React.FC<SystemPromptEditorProps> = ({
   loading = false
 }) => {
   const colors = useThemeColors();
-  
+
   const [template, setTemplate] = useState(initialValue.template || '');
   const [charCount, setCharCount] = useState(0);
 
@@ -39,16 +39,14 @@ export const SystemPromptEditor: React.FC<SystemPromptEditorProps> = ({
     // Normalizar saltos de línea
     const normalized = text
       .replace(/\r\n/g, '\n') // Windows
-      .replace(/\r/g, '\n');   // Old Mac
+      .replace(/\r/g, '\n'); // Old Mac
     setTemplate(normalized);
   };
 
   return (
     <View style={styles.container}>
       <View style={[styles.header, { borderBottomColor: colors.BORDER }]}>
-        <Text style={[styles.title, { color: colors.TEXT_PRIMARY }]}>
-          Editar System Prompt
-        </Text>
+        <Text style={[styles.title, { color: colors.TEXT_PRIMARY }]}>Editar System Prompt</Text>
         <Text style={[styles.subtitle, { color: colors.TEXT_SECONDARY }]}>
           Escribe o pega el prompt directamente. Los saltos de línea se preservarán automáticamente.
         </Text>
@@ -79,18 +77,10 @@ export const SystemPromptEditor: React.FC<SystemPromptEditorProps> = ({
         <Text style={[styles.charCount, { color: colors.TEXT_SECONDARY }]}>
           {charCount.toLocaleString()} caracteres
         </Text>
-        
+
         <View style={styles.actions}>
-          <MyButton
-            title="Cancelar"
-            variant="cancel"
-            onPress={onCancel}
-          />
-          <MyButton
-            title="Guardar"
-            onPress={handleSave}
-            loading={loading}
-          />
+          <MyButton title="Cancelar" variant="cancel" onPress={onCancel} />
+          <MyButton title="Guardar" onPress={handleSave} loading={loading} />
         </View>
       </View>
     </View>

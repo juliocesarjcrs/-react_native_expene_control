@@ -44,15 +44,9 @@ export const DateSelector: React.FC<DateSelectorProps> = ({
   };
 
   return (
-   <View
-  style={[
-    styles.container,
-    fullWidth
-      ? { width: '100%' }
-      : { alignSelf: getAlignStyle() }
-  ]}
->
-
+    <View
+      style={[styles.container, fullWidth ? { width: '100%' } : { alignSelf: getAlignStyle() }]}
+    >
       <Pressable
         onPress={onPress}
         style={({ pressed }) => [

@@ -12,19 +12,15 @@ interface ModelCardProps {
   onUpdate: () => void;
 }
 
-export const ModelCard: React.FC<ModelCardProps> = ({
-  model,
-  onEdit,
-  onUpdate
-}) => {
+export const ModelCard: React.FC<ModelCardProps> = ({ model, onEdit, onUpdate }) => {
   const colors = useThemeColors();
 
   const healthColor =
     model.health_score > 0.7
       ? colors.SUCCESS
       : model.health_score > 0.4
-      ? colors.WARNING
-      : colors.ERROR;
+        ? colors.WARNING
+        : colors.ERROR;
 
   const handleToggleActive = async () => {
     try {
@@ -37,26 +33,22 @@ export const ModelCard: React.FC<ModelCardProps> = ({
   };
 
   const handleDelete = () => {
-    Alert.alert(
-      'Confirmar',
-      `¿Desactivar el modelo ${model.model_name}?`,
-      [
-        { text: 'Cancelar', style: 'cancel' },
-        {
-          text: 'Desactivar',
-          style: 'destructive',
-          onPress: async () => {
-            try {
-              await deleteModel(model.id);
-              Alert.alert('Éxito', 'Modelo desactivado');
-              onUpdate();
-            } catch (error) {
-              showError(error);
-            }
+    Alert.alert('Confirmar', `¿Desactivar el modelo ${model.model_name}?`, [
+      { text: 'Cancelar', style: 'cancel' },
+      {
+        text: 'Desactivar',
+        style: 'destructive',
+        onPress: async () => {
+          try {
+            await deleteModel(model.id);
+            Alert.alert('Éxito', 'Modelo desactivado');
+            onUpdate();
+          } catch (error) {
+            showError(error);
           }
         }
-      ]
-    );
+      }
+    ]);
   };
 
   return (
@@ -86,8 +78,15 @@ export const ModelCard: React.FC<ModelCardProps> = ({
           </View>
         </View>
 
-        <View style={[styles.statusBadge, { backgroundColor: model.is_active ? colors.SUCCESS + '20' : colors.GRAY + '20' }]}>
-          <Text style={[styles.statusText, { color: model.is_active ? colors.SUCCESS : colors.GRAY }]}>
+        <View
+          style={[
+            styles.statusBadge,
+            { backgroundColor: model.is_active ? colors.SUCCESS + '20' : colors.GRAY + '20' }
+          ]}
+        >
+          <Text
+            style={[styles.statusText, { color: model.is_active ? colors.SUCCESS : colors.GRAY }]}
+          >
             {model.is_active ? 'Activo' : 'Inactivo'}
           </Text>
         </View>
@@ -135,7 +134,10 @@ export const ModelCard: React.FC<ModelCardProps> = ({
         </TouchableOpacity>
 
         <TouchableOpacity
-          style={[styles.actionButton, { backgroundColor: model.is_active ? colors.WARNING + '20' : colors.SUCCESS + '20' }]}
+          style={[
+            styles.actionButton,
+            { backgroundColor: model.is_active ? colors.WARNING + '20' : colors.SUCCESS + '20' }
+          ]}
           onPress={handleToggleActive}
         >
           <Icon
@@ -144,7 +146,12 @@ export const ModelCard: React.FC<ModelCardProps> = ({
             size={18}
             color={model.is_active ? colors.WARNING : colors.SUCCESS}
           />
-          <Text style={[styles.actionText, { color: model.is_active ? colors.WARNING : colors.SUCCESS }]}>
+          <Text
+            style={[
+              styles.actionText,
+              { color: model.is_active ? colors.WARNING : colors.SUCCESS }
+            ]}
+          >
             {model.is_active ? 'Pausar' : 'Activar'}
           </Text>
         </TouchableOpacity>

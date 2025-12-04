@@ -4,7 +4,6 @@ import { useThemeColors } from '~/customHooks/useThemeColors';
 import ModernTableHead from './ModernTableHead';
 import ModernTableRow from './ModernTableRow';
 
-
 export interface ModernTableProps {
   /** Encabezados de las columnas */
   tableHead: string[];
@@ -22,8 +21,8 @@ export interface ModernTableProps {
   defaultColumnWidth?: number;
 }
 
-const ModernTable: React.FC<ModernTableProps> = ({ 
-  tableHead, 
+const ModernTable: React.FC<ModernTableProps> = ({
+  tableHead,
   tableData,
   columnWidths,
   columnAlignments,
@@ -55,23 +54,25 @@ const ModernTable: React.FC<ModernTableProps> = ({
   // Detectar si es la última fila basándose en texto "Promedio" o "Total"
   const isHighlightedRow = (index: number, rowData: string[]): boolean => {
     if (highlightedRows.includes(index)) return true;
-    
+
     // Auto-detectar filas de resumen
     const firstCell = rowData[0]?.toLowerCase() || '';
-    return firstCell.includes('promedio') || 
-           firstCell.includes('total') || 
-           firstCell.includes('suma');
+    return (
+      firstCell.includes('promedio') || firstCell.includes('total') || firstCell.includes('suma')
+    );
   };
 
   const tableContent = (
     // Forzar ancho total del contenido para que ScrollView y los
     // elementos hijos (header + filas) compartan exactamente la misma base
     // y no haya desalineamiento en móviles.
-    <View style={[
-      styles.container,
-      { backgroundColor: colors.CARD_BACKGROUND, width: totalTableWidth }
-    ]}>
-      <ModernTableHead 
+    <View
+      style={[
+        styles.container,
+        { backgroundColor: colors.CARD_BACKGROUND, width: totalTableWidth }
+      ]}
+    >
+      <ModernTableHead
         data={tableHead}
         columnWidths={finalColumnWidths}
         columnAlignments={columnAlignments}
@@ -91,8 +92,8 @@ const ModernTable: React.FC<ModernTableProps> = ({
 
   if (needsScroll) {
     return (
-      <ScrollView 
-        horizontal 
+      <ScrollView
+        horizontal
         showsHorizontalScrollIndicator={true}
         style={styles.scrollContainer}
         // Mantener padding 0 en el content container para que el ancho

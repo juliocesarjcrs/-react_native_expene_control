@@ -18,26 +18,30 @@ const getLastIncomesWithPaginate = incomesService.getLastIncomesWithPaginate as 
 const navigation = {
   ...mockNavigation,
   getId: jest.fn(),
-  getState: jest.fn(),
+  getState: jest.fn()
 } as unknown as LastIncomesScreenNavigationProp;
 // Usa RouteProp para el mockRoute, con el tipo correcto para LastIncomesScreen
 const mockRoute: RouteProp<IncomeStackParamList, 'lastIncomes'> = {
   key: 'mock-key',
   name: 'lastIncomes',
-  params: undefined,
+  params: undefined
 };
 
 describe('LastIncomesScreen flows', () => {
   let store;
   beforeEach(() => {
     store = mockStore({
-      search: { query: null },
+      search: { query: null }
     });
     // Mock para simular paginación real
     getLastIncomesWithPaginate.mockImplementation(({ page }) => {
       if (page === 1) {
         // Simula que hay más datos (por ejemplo, 10 elementos)
-        return Promise.resolve({ data: { data: Array.from({ length: 10 }, (_, i) => ({ id: i + 1, value: `Ingreso ${i + 1}` })) } });
+        return Promise.resolve({
+          data: {
+            data: Array.from({ length: 10 }, (_, i) => ({ id: i + 1, value: `Ingreso ${i + 1}` }))
+          }
+        });
       }
       if (page === 2) {
         // Simula que hay menos datos, indicando que es la última página
@@ -90,7 +94,11 @@ describe('LastIncomesScreen flows', () => {
     );
     // Simulate scroll to end
     fireEvent.scroll(getByTestId('flatlist-incomes'), {
-      nativeEvent: { contentOffset: { y: 1000 }, contentSize: { height: 2000 }, layoutMeasurement: { height: 1000 } }
+      nativeEvent: {
+        contentOffset: { y: 1000 },
+        contentSize: { height: 2000 },
+        layoutMeasurement: { height: 1000 }
+      }
     });
     // Should call fetch for next page
     await waitFor(() => {
@@ -128,7 +136,7 @@ describe('LastIncomesScreen flows', () => {
     // Espera a que se haga fetch para la siguiente página
     await waitFor(() => {
       const calls = getLastIncomesWithPaginate.mock.calls;
-      expect(calls.some(call => call[0].page === 2)).toBe(true);
+      expect(calls.some((call) => call[0].page === 2)).toBe(true);
     });
   });
 

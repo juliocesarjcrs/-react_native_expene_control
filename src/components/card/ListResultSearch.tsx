@@ -31,7 +31,12 @@ export const ListResultSearch: React.FC<ListResultSearchProps> = (item) => {
     >
       {/* Icon */}
       <View style={[styles.iconContainer, { backgroundColor: colors.PRIMARY + '15' }]}>
-        <Icon type="font-awesome" name={item.iconCategory || 'home'} size={20} color={colors.PRIMARY} />
+        <Icon
+          type="font-awesome"
+          name={item.iconCategory || 'home'}
+          size={20}
+          color={colors.PRIMARY}
+        />
       </View>
 
       {/* Info */}

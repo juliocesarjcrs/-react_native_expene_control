@@ -23,11 +23,7 @@ interface ModelEditorProps {
   onClose: (reload?: boolean) => void;
 }
 
-export const ModelEditor: React.FC<ModelEditorProps> = ({
-  visible,
-  model,
-  onClose
-}) => {
+export const ModelEditor: React.FC<ModelEditorProps> = ({ visible, model, onClose }) => {
   const colors = useThemeColors();
   const isEditing = !!model;
 
@@ -91,7 +87,7 @@ export const ModelEditor: React.FC<ModelEditorProps> = ({
 
     try {
       setLoading(true);
-      
+
       if (isEditing) {
         await updateModel(model.id, formData);
         Alert.alert('Éxito', 'Modelo actualizado correctamente');
@@ -117,7 +113,12 @@ export const ModelEditor: React.FC<ModelEditorProps> = ({
     >
       <View style={[styles.container, { backgroundColor: colors.BACKGROUND }]}>
         {/* Header */}
-        <View style={[styles.header, { backgroundColor: colors.CARD_BACKGROUND, borderBottomColor: colors.BORDER }]}>
+        <View
+          style={[
+            styles.header,
+            { backgroundColor: colors.CARD_BACKGROUND, borderBottomColor: colors.BORDER }
+          ]}
+        >
           <TouchableOpacity onPress={() => onClose(false)}>
             <Icon name="close" type="material-community" size={24} color={colors.TEXT_PRIMARY} />
           </TouchableOpacity>
@@ -131,9 +132,7 @@ export const ModelEditor: React.FC<ModelEditorProps> = ({
         <ScrollView style={styles.form}>
           {/* Provider Type */}
           <View style={styles.section}>
-            <Text style={[styles.label, { color: colors.TEXT_PRIMARY }]}>
-              Proveedor *
-            </Text>
+            <Text style={[styles.label, { color: colors.TEXT_PRIMARY }]}>Proveedor *</Text>
             <View style={styles.providerButtons}>
               {(['openrouter', 'openai', 'custom'] as const).map((provider) => (
                 <TouchableOpacity
@@ -154,10 +153,7 @@ export const ModelEditor: React.FC<ModelEditorProps> = ({
                     style={[
                       styles.providerButtonText,
                       {
-                        color:
-                          formData.provider_type === provider
-                            ? '#fff'
-                            : colors.TEXT_PRIMARY
+                        color: formData.provider_type === provider ? '#fff' : colors.TEXT_PRIMARY
                       }
                     ]}
                   >
@@ -170,9 +166,7 @@ export const ModelEditor: React.FC<ModelEditorProps> = ({
 
           {/* Model Name */}
           <View style={styles.section}>
-            <Text style={[styles.label, { color: colors.TEXT_PRIMARY }]}>
-              Nombre del Modelo *
-            </Text>
+            <Text style={[styles.label, { color: colors.TEXT_PRIMARY }]}>Nombre del Modelo *</Text>
             <TextInput
               value={formData.model_name}
               onChangeText={(text) => setFormData({ ...formData, model_name: text })}
@@ -191,9 +185,7 @@ export const ModelEditor: React.FC<ModelEditorProps> = ({
 
           {/* API Endpoint */}
           <View style={styles.section}>
-            <Text style={[styles.label, { color: colors.TEXT_PRIMARY }]}>
-              API Endpoint *
-            </Text>
+            <Text style={[styles.label, { color: colors.TEXT_PRIMARY }]}>API Endpoint *</Text>
             <TextInput
               value={formData.api_endpoint}
               onChangeText={(text) => setFormData({ ...formData, api_endpoint: text })}
@@ -213,9 +205,7 @@ export const ModelEditor: React.FC<ModelEditorProps> = ({
 
           {/* API Key Reference */}
           <View style={styles.section}>
-            <Text style={[styles.label, { color: colors.TEXT_PRIMARY }]}>
-              Referencia API Key *
-            </Text>
+            <Text style={[styles.label, { color: colors.TEXT_PRIMARY }]}>Referencia API Key *</Text>
             <Text style={[styles.hint, { color: colors.TEXT_SECONDARY }]}>
               Nombre de la variable de entorno (ej: OPENROUTER_API_KEY)
             </Text>
@@ -238,9 +228,7 @@ export const ModelEditor: React.FC<ModelEditorProps> = ({
 
           {/* Priority */}
           <View style={styles.section}>
-            <Text style={[styles.label, { color: colors.TEXT_PRIMARY }]}>
-              Prioridad
-            </Text>
+            <Text style={[styles.label, { color: colors.TEXT_PRIMARY }]}>Prioridad</Text>
             <Text style={[styles.hint, { color: colors.TEXT_SECONDARY }]}>
               Menor número = mayor prioridad (1 es la más alta)
             </Text>
@@ -261,12 +249,12 @@ export const ModelEditor: React.FC<ModelEditorProps> = ({
 
           {/* Max Tokens */}
           <View style={styles.section}>
-            <Text style={[styles.label, { color: colors.TEXT_PRIMARY }]}>
-              Max Tokens
-            </Text>
+            <Text style={[styles.label, { color: colors.TEXT_PRIMARY }]}>Max Tokens</Text>
             <TextInput
               value={formData.max_tokens.toString()}
-              onChangeText={(text) => setFormData({ ...formData, max_tokens: parseInt(text) || 2000 })}
+              onChangeText={(text) =>
+                setFormData({ ...formData, max_tokens: parseInt(text) || 2000 })
+              }
               keyboardType="number-pad"
               style={[
                 styles.input,
@@ -307,9 +295,7 @@ export const ModelEditor: React.FC<ModelEditorProps> = ({
 
           {/* Switches */}
           <View style={[styles.switchRow, { borderTopColor: colors.BORDER }]}>
-            <Text style={[styles.label, { color: colors.TEXT_PRIMARY }]}>
-              Soporta Tools
-            </Text>
+            <Text style={[styles.label, { color: colors.TEXT_PRIMARY }]}>Soporta Tools</Text>
             <Switch
               value={formData.supports_tools}
               onValueChange={(value) => setFormData({ ...formData, supports_tools: value })}
@@ -319,9 +305,7 @@ export const ModelEditor: React.FC<ModelEditorProps> = ({
           </View>
 
           <View style={styles.switchRow}>
-            <Text style={[styles.label, { color: colors.TEXT_PRIMARY }]}>
-              Activar modelo
-            </Text>
+            <Text style={[styles.label, { color: colors.TEXT_PRIMARY }]}>Activar modelo</Text>
             <Switch
               value={formData.is_active}
               onValueChange={(value) => setFormData({ ...formData, is_active: value })}
@@ -332,12 +316,13 @@ export const ModelEditor: React.FC<ModelEditorProps> = ({
         </ScrollView>
 
         {/* Footer */}
-        <View style={[styles.footer, { backgroundColor: colors.CARD_BACKGROUND, borderTopColor: colors.BORDER }]}>
-          <MyButton
-            title="Cancelar"
-            variant="cancel"
-            onPress={() => onClose(false)}
-          />
+        <View
+          style={[
+            styles.footer,
+            { backgroundColor: colors.CARD_BACKGROUND, borderTopColor: colors.BORDER }
+          ]}
+        >
+          <MyButton title="Cancelar" variant="cancel" onPress={() => onClose(false)} />
           <MyButton
             title={isEditing ? 'Guardar' : 'Crear'}
             onPress={handleSave}

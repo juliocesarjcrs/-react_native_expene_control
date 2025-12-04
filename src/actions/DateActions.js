@@ -1,8 +1,6 @@
-
-export const setMonthAction = state =>{
+export const setMonthAction = (state) => {
   return {
-    type: "SET_MONTH",
+    type: 'SET_MONTH',
     payload: state
-  }
-}
-
+  };
+};

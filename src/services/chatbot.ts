@@ -9,7 +9,7 @@ import {
   GetConversationsQuery
 } from '~/shared/types/services/chatbot-services.type';
 
-const PREFIX = "chatbot";
+const PREFIX = 'chatbot';
 
 export const chatbotService = {
   async createConversation(): Promise<AxiosResponse<NewConversation>> {
@@ -20,7 +20,9 @@ export const chatbotService = {
     }
   },
 
-  async getConversations(params?: GetConversationsQuery): Promise<AxiosResponse<ConversationsResponse>> {
+  async getConversations(
+    params?: GetConversationsQuery
+  ): Promise<AxiosResponse<ConversationsResponse>> {
     try {
       return await axios.get(`${PREFIX}/conversations`, { params });
     } catch (error: any) {
@@ -28,10 +30,7 @@ export const chatbotService = {
     }
   },
 
-  async sendMessage(
-    message: string,
-    conversationId: number
-  ): Promise<AxiosResponse<ChatResponse>> {
+  async sendMessage(message: string, conversationId: number): Promise<AxiosResponse<ChatResponse>> {
     try {
       return await axios.post(`${PREFIX}/message`, {
         content: message,

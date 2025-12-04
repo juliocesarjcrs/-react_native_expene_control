@@ -33,7 +33,10 @@ import { commonStyles } from '~/styles/common';
 // Configs
 import { screenConfigs } from '~/config/screenConfigs';
 
-export type CreateUserScreenNavigationProp = StackNavigationProp<SettingsStackParamList, 'createUser'>;
+export type CreateUserScreenNavigationProp = StackNavigationProp<
+  SettingsStackParamList,
+  'createUser'
+>;
 
 interface CreateUserScreenProps {
   navigation: CreateUserScreenNavigationProp;
@@ -113,7 +116,9 @@ export default function CreateUserScreen({ navigation }: CreateUserScreenProps) 
     setRole(parseInt(newValue) as UserRole);
   };
 
-  const renderItem: ListRenderItem<UserModel> = ({ item }) => <UserListItem user={item} colors={colors} />;
+  const renderItem: ListRenderItem<UserModel> = ({ item }) => (
+    <UserListItem user={item} colors={colors} />
+  );
 
   return (
     <View style={[commonStyles.screenContainer, { backgroundColor: colors.BACKGROUND }]}>
@@ -205,16 +210,30 @@ export default function CreateUserScreen({ navigation }: CreateUserScreenProps) 
               />
 
               <View style={styles.roleSection}>
-                <Text style={[styles.roleLabel, { color: colors.TEXT_PRIMARY }]}>Rol del usuario:</Text>
+                <Text style={[styles.roleLabel, { color: colors.TEXT_PRIMARY }]}>
+                  Rol del usuario:
+                </Text>
                 <RadioButton.Group onValueChange={handleRoleChange} value={role.toString()}>
                   <View style={styles.radioContainer}>
                     <View style={styles.radioOption}>
-                      <RadioButton.Android value="0" color={colors.PRIMARY} uncheckedColor={colors.TEXT_SECONDARY} />
-                      <Text style={{ color: colors.TEXT_PRIMARY, fontSize: SMALL, marginLeft: 4 }}>Normal</Text>
+                      <RadioButton.Android
+                        value="0"
+                        color={colors.PRIMARY}
+                        uncheckedColor={colors.TEXT_SECONDARY}
+                      />
+                      <Text style={{ color: colors.TEXT_PRIMARY, fontSize: SMALL, marginLeft: 4 }}>
+                        Normal
+                      </Text>
                     </View>
                     <View style={styles.radioOption}>
-                      <RadioButton.Android value="1" color={colors.PRIMARY} uncheckedColor={colors.TEXT_SECONDARY} />
-                      <Text style={{ color: colors.TEXT_PRIMARY, fontSize: SMALL, marginLeft: 4 }}>Admin</Text>
+                      <RadioButton.Android
+                        value="1"
+                        color={colors.PRIMARY}
+                        uncheckedColor={colors.TEXT_SECONDARY}
+                      />
+                      <Text style={{ color: colors.TEXT_PRIMARY, fontSize: SMALL, marginLeft: 4 }}>
+                        Admin
+                      </Text>
                     </View>
                   </View>
                 </RadioButton.Group>

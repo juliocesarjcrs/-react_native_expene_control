@@ -29,7 +29,10 @@ import { commonStyles } from '~/styles/common';
 import { useThemeColors } from '~/customHooks/useThemeColors';
 import { screenConfigs } from '~/config/screenConfigs';
 
-export type SumaryExpenseScreenNavigationProp = StackNavigationProp<ExpenseStackParamList, 'sumary'>;
+export type SumaryExpenseScreenNavigationProp = StackNavigationProp<
+  ExpenseStackParamList,
+  'sumary'
+>;
 
 interface SumaryExpenseScreenProps {
   navigation: SumaryExpenseScreenNavigationProp;
@@ -106,8 +109,12 @@ export default function SumaryExpenseScreen({ navigation }: SumaryExpenseScreenP
         </View>
 
         <View style={[styles.header, { backgroundColor: colors.CARD_BACKGROUND }]}>
-          <Text style={[styles.title, { color: colors.TEXT_PRIMARY }]}>Total gastos: {NumberFormat(total)}</Text>
-          <Text style={[styles.title, { color: colors.TEXT_PRIMARY }]}>Presupuesto: {NumberFormat(totalBudget)}</Text>
+          <Text style={[styles.title, { color: colors.TEXT_PRIMARY }]}>
+            Total gastos: {NumberFormat(total)}
+          </Text>
+          <Text style={[styles.title, { color: colors.TEXT_PRIMARY }]}>
+            Presupuesto: {NumberFormat(totalBudget)}
+          </Text>
         </View>
 
         {loading ? (

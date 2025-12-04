@@ -17,7 +17,7 @@ export default function ComparisonSummary({ data }: ComparisonSummaryProps) {
     new Intl.NumberFormat('es-CO', {
       style: 'currency',
       currency: 'COP',
-      minimumFractionDigits: 0,
+      minimumFractionDigits: 0
     }).format(amount);
 
   const getTrendColor = (trend: string) => {
@@ -44,9 +44,7 @@ export default function ComparisonSummary({ data }: ComparisonSummaryProps) {
 
   return (
     <View style={styles.container}>
-      <Text style={[styles.mainTitle, { color: colors.TEXT_PRIMARY }]}>
-        Análisis Comparativo
-      </Text>
+      <Text style={[styles.mainTitle, { color: colors.TEXT_PRIMARY }]}>Análisis Comparativo</Text>
 
       {/* Selector de vista */}
       <SegmentedButtons
@@ -55,7 +53,7 @@ export default function ComparisonSummary({ data }: ComparisonSummaryProps) {
         buttons={[
           { value: 'both', label: 'Ambos' },
           { value: 'total', label: 'Total' },
-          { value: 'monthly', label: 'Mensual' },
+          { value: 'monthly', label: 'Mensual' }
         ]}
         style={{ marginBottom: 16 }}
       />
@@ -96,9 +94,7 @@ export default function ComparisonSummary({ data }: ComparisonSummaryProps) {
         <Card style={[styles.comparisonCard, { backgroundColor: colors.CARD_BACKGROUND }]}>
           <Card.Content>
             <View style={styles.comparisonHeader}>
-              <Text style={styles.comparisonIcon}>
-                {getTrendIcon(comparison.total.trend)}
-              </Text>
+              <Text style={styles.comparisonIcon}>{getTrendIcon(comparison.total.trend)}</Text>
               <Text style={[styles.comparisonTitle, { color: colors.TEXT_PRIMARY }]}>
                 Total Acumulado
               </Text>
@@ -106,7 +102,7 @@ export default function ComparisonSummary({ data }: ComparisonSummaryProps) {
             <Text
               style={[
                 styles.comparisonDifference,
-                { color: getTrendColor(comparison.total.trend) },
+                { color: getTrendColor(comparison.total.trend) }
               ]}
             >
               {comparison.total.difference > 0 ? '+' : ''}
@@ -115,7 +111,7 @@ export default function ComparisonSummary({ data }: ComparisonSummaryProps) {
             <Text
               style={[
                 styles.comparisonPercentage,
-                { color: getTrendColor(comparison.total.trend) },
+                { color: getTrendColor(comparison.total.trend) }
               ]}
             >
               {comparison.total.percentageChange}%
@@ -142,7 +138,7 @@ export default function ComparisonSummary({ data }: ComparisonSummaryProps) {
             <Text
               style={[
                 styles.comparisonDifference,
-                { color: getTrendColor(comparison.monthlyAverage.trend) },
+                { color: getTrendColor(comparison.monthlyAverage.trend) }
               ]}
             >
               {comparison.monthlyAverage.difference > 0 ? '+' : ''}
@@ -151,7 +147,7 @@ export default function ComparisonSummary({ data }: ComparisonSummaryProps) {
             <Text
               style={[
                 styles.comparisonPercentage,
-                { color: getTrendColor(comparison.monthlyAverage.trend) },
+                { color: getTrendColor(comparison.monthlyAverage.trend) }
               ]}
             >
               {comparison.monthlyAverage.percentageChange}%
@@ -166,9 +162,7 @@ export default function ComparisonSummary({ data }: ComparisonSummaryProps) {
       {/* Explicación */}
       <Card style={[styles.explanationCard, { backgroundColor: colors.INFO + '20' }]}>
         <Card.Content>
-          <Text style={[styles.explanationTitle, { color: colors.INFO }]}>
-            💡 Interpretación
-          </Text>
+          <Text style={[styles.explanationTitle, { color: colors.INFO }]}>💡 Interpretación</Text>
           <Text style={[styles.explanationText, { color: colors.TEXT_PRIMARY }]}>
             {comparison.explanation}
           </Text>
@@ -180,77 +174,77 @@ export default function ComparisonSummary({ data }: ComparisonSummaryProps) {
 
 const styles = StyleSheet.create({
   container: {
-    marginTop: 16,
+    marginTop: 16
   },
   mainTitle: {
     fontSize: 20,
     fontWeight: '700',
-    marginBottom: 16,
+    marginBottom: 16
   },
   periodsRow: {
     flexDirection: 'row',
     gap: 12,
-    marginBottom: 16,
+    marginBottom: 16
   },
   periodCard: {
     flex: 1,
-    elevation: 2,
+    elevation: 2
   },
   periodLabel: {
     fontSize: 12,
     fontWeight: '500',
-    marginBottom: 4,
+    marginBottom: 4
   },
   periodTotal: {
     fontSize: 18,
     fontWeight: '700',
-    marginBottom: 4,
+    marginBottom: 4
   },
   periodAverage: {
-    fontSize: 11,
+    fontSize: 11
   },
   comparisonCard: {
     marginBottom: 12,
-    elevation: 2,
+    elevation: 2
   },
   comparisonHeader: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 8,
+    marginBottom: 8
   },
   comparisonIcon: {
     fontSize: 20,
-    marginRight: 8,
+    marginRight: 8
   },
   comparisonTitle: {
     fontSize: 16,
-    fontWeight: '600',
+    fontWeight: '600'
   },
   comparisonDifference: {
     fontSize: 24,
     fontWeight: '700',
-    marginBottom: 4,
+    marginBottom: 4
   },
   comparisonPercentage: {
     fontSize: 18,
     fontWeight: '600',
-    marginBottom: 8,
+    marginBottom: 8
   },
   comparisonDescription: {
     fontSize: 12,
-    fontStyle: 'italic',
+    fontStyle: 'italic'
   },
   explanationCard: {
     elevation: 1,
-    marginTop: 8,
+    marginTop: 8
   },
   explanationTitle: {
     fontSize: 14,
     fontWeight: '600',
-    marginBottom: 8,
+    marginBottom: 8
   },
   explanationText: {
     fontSize: 13,
-    lineHeight: 20,
-  },
+    lineHeight: 20
+  }
 });

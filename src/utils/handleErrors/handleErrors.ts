@@ -1,8 +1,8 @@
-import { AxiosError } from "axios";
+import { AxiosError } from 'axios';
 import { ShowToast } from '../../utils/toastUtils';
 export type ApiError = {
   error: string;
-}
+};
 
 class CustomError extends Error {
   constructor(message: string) {
@@ -13,15 +13,13 @@ class CustomError extends Error {
 }
 
 // Define una clase para errores de red
-export class NetworkError extends CustomError { }
+export class NetworkError extends CustomError {}
 
 // Define una clase para errores de validación
-export class ValidationError extends CustomError { }
+export class ValidationError extends CustomError {}
 
 export const handleErrors = (error: Error) => {
-
   if (error instanceof AxiosError) {
-
     // AxiosError tiene propiedades específicas
     const axiosError = error as AxiosError;
 
@@ -46,7 +44,6 @@ export const handleErrors = (error: Error) => {
       }
       showGenericErrorToast();
     }
-
   } else if (error instanceof NetworkError) {
     showNetworkErrorToast();
   } else if (error instanceof ValidationError) {
@@ -57,19 +54,18 @@ export const handleErrors = (error: Error) => {
   }
 };
 
-
 const showNetworkErrorToast = () => {
   // Mostrar un mensaje de error para errores de red
   ShowToast('Error de red. Verifica tu conexión.');
-}
+};
 
 const showValidationErrorToast = (message: string) => {
   // Mostrar un mensaje de error para errores de validación
-  console.log('--- messager ---', message)
+  console.log('--- messager ---', message);
   ShowToast(`Error de validación: ${message}`);
-}
+};
 
 const showGenericErrorToast = () => {
   // Mostrar un mensaje de error genérico
   ShowToast('Ocurrió un error. Inténtalo de nuevo.');
-}
+};

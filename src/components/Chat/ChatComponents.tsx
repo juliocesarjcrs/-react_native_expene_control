@@ -21,7 +21,16 @@ export function ChatWindow({ onClose }: { onClose: () => void }) {
   const colors = useThemeColors();
   const styles = createStyles(colors);
 
-  const { messages, isLoading, error, sendMessage, selectConversation, startNewConversation, clearError, loadConversations } = useChat();
+  const {
+    messages,
+    isLoading,
+    error,
+    sendMessage,
+    selectConversation,
+    startNewConversation,
+    clearError,
+    loadConversations
+  } = useChat();
   const [inputText, setInputText] = React.useState('');
   const [showConversations, setShowConversations] = React.useState(false);
   const flatListRef = useRef<FlatList>(null);
@@ -62,8 +71,8 @@ export function ChatWindow({ onClose }: { onClose: () => void }) {
   };
 
   return (
-    <KeyboardAvoidingView 
-      behavior={Platform.OS === 'ios' ? 'padding' : 'height'} 
+    <KeyboardAvoidingView
+      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
       style={styles.container}
       keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 20}
     >
@@ -80,10 +89,7 @@ export function ChatWindow({ onClose }: { onClose: () => void }) {
 
       {showConversations ? (
         <View style={styles.conversationsContainer}>
-          <TouchableOpacity
-            style={styles.newConversationButton}
-            onPress={handleNewConversation}
-          >
+          <TouchableOpacity style={styles.newConversationButton} onPress={handleNewConversation}>
             <MaterialIcons name="add" size={24} color={colors.WHITE} />
             <Text style={styles.newConversationText}>Nueva conversación</Text>
           </TouchableOpacity>
@@ -98,13 +104,8 @@ export function ChatWindow({ onClose }: { onClose: () => void }) {
             renderItem={({ item }) => {
               // No renderizar mensajes del sistema
               if (item.role === 'system') return null;
-              
-              return (
-                <ChatMessage 
-                  content={item.content} 
-                  role={item.role} 
-                />
-              );
+
+              return <ChatMessage content={item.content} role={item.role} />;
             }}
             contentContainerStyle={styles.messagesList}
             removeClippedSubviews={false}
@@ -114,9 +115,7 @@ export function ChatWindow({ onClose }: { onClose: () => void }) {
             initialNumToRender={10}
             ListEmptyComponent={
               <View style={styles.emptyContainer}>
-                <Text style={styles.emptyText}>
-                  Inicia una conversación enviando un mensaje
-                </Text>
+                <Text style={styles.emptyText}>Inicia una conversación enviando un mensaje</Text>
               </View>
             }
           />
@@ -151,12 +150,12 @@ export function ChatWindow({ onClose }: { onClose: () => void }) {
               maxLength={1000}
               editable={!isLoading}
             />
-            <TouchableOpacity 
-              onPress={handleSend} 
+            <TouchableOpacity
+              onPress={handleSend}
               style={[
                 styles.sendButton,
                 (!inputText.trim() || isLoading) && styles.sendButtonDisabled
-              ]} 
+              ]}
               disabled={isLoading || !inputText.trim()}
             >
               {isLoading ? (
@@ -175,7 +174,7 @@ export function ChatWindow({ onClose }: { onClose: () => void }) {
 export function ChatButton({ onPress }: { onPress: () => void }) {
   const colors = useThemeColors();
   const styles = createStyles(colors);
-  
+
   return (
     <TouchableOpacity style={styles.floatingButton} onPress={onPress}>
       <MaterialIcons name="chat" size={30} color={colors.WHITE} />
@@ -187,37 +186,37 @@ const createStyles = (colors: ReturnType<typeof useThemeColors>) =>
   StyleSheet.create({
     container: {
       flex: 1,
-      backgroundColor: colors.WHITE,
+      backgroundColor: colors.WHITE
     },
     header: {
       flexDirection: 'row',
       alignItems: 'center',
       justifyContent: 'space-between',
       padding: 16,
-      backgroundColor: colors.PRIMARY,
+      backgroundColor: colors.PRIMARY
     },
     headerTitle: {
       color: colors.WHITE,
       fontSize: 18,
-      fontWeight: 'bold',
+      fontWeight: 'bold'
     },
     closeButton: {
-      padding: 4,
+      padding: 4
     },
     menuButton: {
-      padding: 4,
+      padding: 4
     },
     messagesList: {
       padding: 16,
       flexGrow: 1,
-      paddingBottom: 20,
+      paddingBottom: 20
     },
     inputContainer: {
       flexDirection: 'row',
       padding: 16,
       borderTopWidth: 1,
       borderTopColor: colors.LIGHT_GRAY,
-      backgroundColor: colors.WHITE,
+      backgroundColor: colors.WHITE
     },
     input: {
       flex: 1,
@@ -226,7 +225,7 @@ const createStyles = (colors: ReturnType<typeof useThemeColors>) =>
       borderRadius: 20,
       backgroundColor: colors.LIGHT_GRAY,
       maxHeight: 100,
-      color: colors.TEXT_PRIMARY,
+      color: colors.TEXT_PRIMARY
     },
     sendButton: {
       width: 48,
@@ -234,10 +233,10 @@ const createStyles = (colors: ReturnType<typeof useThemeColors>) =>
       borderRadius: 24,
       backgroundColor: colors.PRIMARY,
       justifyContent: 'center',
-      alignItems: 'center',
+      alignItems: 'center'
     },
     sendButtonDisabled: {
-      opacity: 0.5,
+      opacity: 0.5
     },
     floatingButton: {
       position: 'absolute',
@@ -253,7 +252,7 @@ const createStyles = (colors: ReturnType<typeof useThemeColors>) =>
       shadowColor: '#000',
       shadowOffset: { width: 0, height: 2 },
       shadowOpacity: 0.25,
-      shadowRadius: 4,
+      shadowRadius: 4
     },
     errorContainer: {
       flexDirection: 'row',
@@ -265,59 +264,59 @@ const createStyles = (colors: ReturnType<typeof useThemeColors>) =>
       marginBottom: 8,
       borderRadius: 8,
       borderLeftWidth: 4,
-      borderLeftColor: '#c62828',
+      borderLeftColor: '#c62828'
     },
     errorContent: {
       flex: 1,
       flexDirection: 'row',
       alignItems: 'center',
-      gap: 8,
+      gap: 8
     },
     errorText: {
       flex: 1,
       color: '#c62828',
-      fontSize: 14,
+      fontSize: 14
     },
     errorCloseButton: {
       padding: 4,
-      marginLeft: 8,
+      marginLeft: 8
     },
     loadingContainer: {
       flexDirection: 'row',
       alignItems: 'center',
       padding: 12,
       marginHorizontal: 16,
-      marginBottom: 8,
+      marginBottom: 8
     },
     loadingText: {
       marginLeft: 8,
       color: colors.TEXT_SECONDARY,
-      fontSize: 14,
+      fontSize: 14
     },
     emptyContainer: {
       flex: 1,
       justifyContent: 'center',
       alignItems: 'center',
-      padding: 32,
+      padding: 32
     },
     emptyText: {
       color: colors.TEXT_SECONDARY,
       fontSize: 16,
-      textAlign: 'center',
+      textAlign: 'center'
     },
     conversationsContainer: {
       flex: 1,
-      backgroundColor: colors.WHITE,
+      backgroundColor: colors.WHITE
     },
     newConversationButton: {
       flexDirection: 'row',
       alignItems: 'center',
       padding: 16,
-      backgroundColor: colors.PRIMARY,
+      backgroundColor: colors.PRIMARY
     },
     newConversationText: {
       color: colors.WHITE,
       marginLeft: 8,
-      fontSize: 16,
-    },
+      fontSize: 16
+    }
   });

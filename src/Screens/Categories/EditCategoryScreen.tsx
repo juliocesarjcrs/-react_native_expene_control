@@ -39,8 +39,8 @@ interface EditCategoryScreenProps {
 export type CategoryFormData = Omit<CategoryModel, 'budget'> & { budget: string };
 
 export default function EditCategoryScreen({ route }: EditCategoryScreenProps) {
-   const screenConfig = screenConfigs.editCategory;
-    const colors = useThemeColors();
+  const screenConfig = screenConfigs.editCategory;
+  const colors = useThemeColors();
   const idCategory = route.params.idCategory;
 
   const [category, setCategory] = useState<CategoryFormData | undefined>(undefined);
@@ -80,7 +80,11 @@ export default function EditCategoryScreen({ route }: EditCategoryScreenProps) {
     console.log('[EditCategoryScreen] onSubmit payload:', payload);
     try {
       setLoading(true);
-      const sendPayload: EditCategoryPayload = { ...payload, icon, budget: parseInt(payload.budget) };
+      const sendPayload: EditCategoryPayload = {
+        ...payload,
+        icon,
+        budget: parseInt(payload.budget)
+      };
       await EditCategory(idCategory, sendPayload);
       setLoading(false);
       Keyboard.dismiss();
@@ -95,8 +99,8 @@ export default function EditCategoryScreen({ route }: EditCategoryScreenProps) {
   };
 
   return (
-   <View style={[commonStyles.screenContainer, { backgroundColor: colors.BACKGROUND }]}>
-        <ScreenHeader title={screenConfig.title} subtitle={screenConfig.subtitle} />
+    <View style={[commonStyles.screenContainer, { backgroundColor: colors.BACKGROUND }]}>
+      <ScreenHeader title={screenConfig.title} subtitle={screenConfig.subtitle} />
       <StatusBar style="auto" />
       <Controller
         name="name"
@@ -118,7 +122,9 @@ export default function EditCategoryScreen({ route }: EditCategoryScreenProps) {
             placeholder="Nombre de la categoria"
             onChangeText={(text) => onChange(text)}
             errorStyle={{ color: 'red' }}
-            errorMessage={typeof errors?.name?.message === 'string' ? errors.name.message : undefined}
+            errorMessage={
+              typeof errors?.name?.message === 'string' ? errors.name.message : undefined
+            }
           />
         )}
         defaultValue=""
@@ -140,7 +146,9 @@ export default function EditCategoryScreen({ route }: EditCategoryScreenProps) {
             placeholder="Ej: 200000"
             onChangeText={(text) => onChange(text)}
             errorStyle={{ color: 'red' }}
-            errorMessage={typeof errors?.budget?.message === 'string' ? errors.budget.message : undefined}
+            errorMessage={
+              typeof errors?.budget?.message === 'string' ? errors.budget.message : undefined
+            }
             keyboardType="numeric"
           />
         )}
@@ -151,4 +159,3 @@ export default function EditCategoryScreen({ route }: EditCategoryScreenProps) {
     </View>
   );
 }
-

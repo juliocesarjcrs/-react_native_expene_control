@@ -120,7 +120,12 @@ export default function MyAcordeon({ data, editCategory, createSubcategory }: My
             <View style={styles.amountsRow}>
               <View style={styles.amountItem}>
                 <Text style={[styles.amountLabel, { color: colors.TEXT_SECONDARY }]}>Gastado</Text>
-                <Text style={[styles.amountValue, { color: isOverBudget ? colors.ERROR : colors.TEXT_PRIMARY }]}>
+                <Text
+                  style={[
+                    styles.amountValue,
+                    { color: isOverBudget ? colors.ERROR : colors.TEXT_PRIMARY }
+                  ]}
+                >
                   {NumberFormat(data.total)}
                 </Text>
               </View>
@@ -128,15 +133,26 @@ export default function MyAcordeon({ data, editCategory, createSubcategory }: My
               <View style={styles.separator} />
 
               <View style={styles.amountItem}>
-                <Text style={[styles.amountLabel, { color: colors.TEXT_SECONDARY }]}>Presupuesto</Text>
-                <Text style={[styles.amountValue, { color: colors.TEXT_PRIMARY }]}>{NumberFormat(budget)}</Text>
+                <Text style={[styles.amountLabel, { color: colors.TEXT_SECONDARY }]}>
+                  Presupuesto
+                </Text>
+                <Text style={[styles.amountValue, { color: colors.TEXT_PRIMARY }]}>
+                  {NumberFormat(budget)}
+                </Text>
               </View>
 
               <View style={styles.separator} />
 
               <View style={styles.amountItem}>
-                <Text style={[styles.amountLabel, { color: colors.TEXT_SECONDARY }]}>Disponible</Text>
-                <Text style={[styles.amountValue, { color: budget - data.total >= 0 ? colors.SUCCESS : colors.ERROR }]}>
+                <Text style={[styles.amountLabel, { color: colors.TEXT_SECONDARY }]}>
+                  Disponible
+                </Text>
+                <Text
+                  style={[
+                    styles.amountValue,
+                    { color: budget - data.total >= 0 ? colors.SUCCESS : colors.ERROR }
+                  ]}
+                >
                   {NumberFormat(budget - data.total)}
                 </Text>
               </View>
@@ -170,7 +186,12 @@ export default function MyAcordeon({ data, editCategory, createSubcategory }: My
                 <Text style={[styles.progressLabel, { color: colors.TEXT_SECONDARY }]}>
                   {percentUsed.toFixed(1)}% usado
                 </Text>
-                <Text style={[styles.progressLabel, { color: isOverDayBudget ? colors.WARNING : colors.SUCCESS }]}>
+                <Text
+                  style={[
+                    styles.progressLabel,
+                    { color: isOverDayBudget ? colors.WARNING : colors.SUCCESS }
+                  ]}
+                >
                   📍 Día {new Date().getDate()} ({percentDay.toFixed(0)}%)
                 </Text>
               </View>
@@ -210,8 +231,12 @@ export default function MyAcordeon({ data, editCategory, createSubcategory }: My
           </View>
         ) : (
           <View style={styles.noBudgetSection}>
-            <Text style={[styles.amountLabel, { color: colors.TEXT_SECONDARY }]}>Total gastado:</Text>
-            <Text style={[styles.amountValue, { color: colors.TEXT_PRIMARY }]}>{NumberFormat(data.total)}</Text>
+            <Text style={[styles.amountLabel, { color: colors.TEXT_SECONDARY }]}>
+              Total gastado:
+            </Text>
+            <Text style={[styles.amountValue, { color: colors.TEXT_PRIMARY }]}>
+              {NumberFormat(data.total)}
+            </Text>
           </View>
         )}
 
@@ -224,7 +249,10 @@ export default function MyAcordeon({ data, editCategory, createSubcategory }: My
       </View>
 
       {/* Lista de subcategorías expandible */}
-      <View>{expanded && data.data.map((item, idx) => <ListSubcategory key={item.id || idx} item={item} />)}</View>
+      <View>
+        {expanded &&
+          data.data.map((item, idx) => <ListSubcategory key={item.id || idx} item={item} />)}
+      </View>
     </View>
   );
 }
@@ -305,7 +333,7 @@ const styles = StyleSheet.create({
   },
   progressBarContainer: {
     position: 'relative',
-    marginBottom: 8,
+    marginBottom: 8
   },
   dayIndicator: {
     position: 'absolute',

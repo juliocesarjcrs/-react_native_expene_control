@@ -27,10 +27,10 @@ const styles = StyleSheet.create({
   grid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    justifyContent: 'space-between',
+    justifyContent: 'space-between'
   },
   item: {
     width: '49%',
-    marginBottom: 5,
-  },
+    marginBottom: 5
+  }
 });

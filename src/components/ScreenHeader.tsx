@@ -15,7 +15,9 @@ export const ScreenHeader: React.FC<ScreenHeaderProps> = ({ title, subtitle, rig
     <View style={[styles.container, { backgroundColor: colors.CARD_BACKGROUND }]}>
       <View style={styles.textContainer}>
         <Text style={[styles.title, { color: colors.TEXT_PRIMARY }]}>{title}</Text>
-        {subtitle && <Text style={[styles.subtitle, { color: colors.TEXT_SECONDARY }]}>{subtitle}</Text>}
+        {subtitle && (
+          <Text style={[styles.subtitle, { color: colors.TEXT_SECONDARY }]}>{subtitle}</Text>
+        )}
       </View>
       {rightComponent && <View style={styles.rightContainer}>{rightComponent}</View>}
     </View>

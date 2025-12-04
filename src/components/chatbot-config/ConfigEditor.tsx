@@ -32,7 +32,7 @@ export const ConfigEditor: React.FC<ConfigEditorProps> = ({
             loading={loading}
           />
         );
-      
+
       case 'tools_config':
         return (
           <ToolsConfigEditor
@@ -42,7 +42,7 @@ export const ConfigEditor: React.FC<ConfigEditorProps> = ({
             loading={loading}
           />
         );
-      
+
       default:
         return (
           <JsonEditor
@@ -66,7 +66,3 @@ export const ConfigEditor: React.FC<ConfigEditorProps> = ({
     </Modal>
   );
 };
-
-const styles = StyleSheet.create({
-  // Estilos si son necesarios
-});

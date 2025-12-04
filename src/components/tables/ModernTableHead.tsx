@@ -8,7 +8,11 @@ interface ModernTableHeadProps {
   columnAlignments?: ('left' | 'center' | 'right')[];
 }
 
-const ModernTableHead: React.FC<ModernTableHeadProps> = ({ data, columnWidths, columnAlignments }) => {
+const ModernTableHead: React.FC<ModernTableHeadProps> = ({
+  data,
+  columnWidths,
+  columnAlignments
+}) => {
   const colors = useThemeColors();
 
   // Si no se especifican anchos, usar 120px por defecto para cada columna
@@ -27,17 +31,19 @@ const ModernTableHead: React.FC<ModernTableHeadProps> = ({ data, columnWidths, c
   };
 
   return (
-    <View style={[styles.container, { backgroundColor: colors.PRIMARY + '15', borderColor: colors.BORDER }]}>
+    <View
+      style={[
+        styles.container,
+        { backgroundColor: colors.PRIMARY + '15', borderColor: colors.BORDER }
+      ]}
+    >
       {data.map((headerText, idx) => (
-        <View 
-          key={idx} 
-          style={[
-            styles.headerCell,
-            { width: getColumnWidth(idx) }
-          ]}
-        >
-          <Text 
-            style={[styles.headerText, { color: colors.TEXT_PRIMARY, textAlign: getTextAlign(idx) }]}
+        <View key={idx} style={[styles.headerCell, { width: getColumnWidth(idx) }]}>
+          <Text
+            style={[
+              styles.headerText,
+              { color: colors.TEXT_PRIMARY, textAlign: getTextAlign(idx) }
+            ]}
             numberOfLines={2}
             adjustsFontSizeToFit
           >

@@ -33,7 +33,7 @@ const DEFAULT_COLORS: ThemeColors = {
   CARD_BACKGROUND: '#ffffff',
   TEXT_PRIMARY: '#333333',
   TEXT_SECONDARY: '#666666',
-  BORDER: '#e0e0e0',
+  BORDER: '#e0e0e0'
 };
 
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
@@ -77,7 +77,7 @@ export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
         colors,
         loading,
         refreshTheme,
-        themeName: theme?.themeName || 'default',
+        themeName: theme?.themeName || 'default'
       }}
     >
       {children}

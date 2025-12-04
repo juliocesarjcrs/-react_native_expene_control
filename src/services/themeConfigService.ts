@@ -9,7 +9,7 @@ import {
   UpdateThemeDto,
   ActivateThemeDto,
   UpdateColorsDto,
-  DeleteThemeResponse,
+  DeleteThemeResponse
 } from '~/shared/types/services/theme-config-service.type';
 import { ThemeConfig } from '~/shared/types/models/theme-config.type';
 
@@ -31,7 +31,9 @@ export const getActiveTheme = async (): Promise<GetActiveThemeResponse> => {
  * Obtener solo los colores del tema activo (público, ligero)
  */
 export const getActiveColors = async (): Promise<GetActiveColorsResponse> => {
-  const response: AxiosResponse<GetActiveColorsResponse> = await axios.get(`${PREFIX}/active/colors`);
+  const response: AxiosResponse<GetActiveColorsResponse> = await axios.get(
+    `${PREFIX}/active/colors`
+  );
   return response.data;
 };
 
@@ -70,8 +72,14 @@ export const createTheme = async (createData: CreateThemeDto): Promise<ThemeConf
 /**
  * Actualizar un tema completo (solo admin)
  */
-export const updateTheme = async (themeName: string, updateData: UpdateThemeDto): Promise<ThemeConfig> => {
-  const response: AxiosResponse<ThemeConfig> = await axios.put(`${PREFIX}/${themeName}`, updateData);
+export const updateTheme = async (
+  themeName: string,
+  updateData: UpdateThemeDto
+): Promise<ThemeConfig> => {
+  const response: AxiosResponse<ThemeConfig> = await axios.put(
+    `${PREFIX}/${themeName}`,
+    updateData
+  );
   return response.data;
 };
 

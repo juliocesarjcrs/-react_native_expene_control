@@ -114,7 +114,11 @@ export default function ExportExpenseScreen({ navigation }: ExportExpenseScreenP
       const lowerHeader = header.toLowerCase();
 
       // Columnas de descripción/nombre más anchas
-      if (lowerHeader.includes('descripción') || lowerHeader.includes('nombre') || lowerHeader.includes('categoría')) {
+      if (
+        lowerHeader.includes('descripción') ||
+        lowerHeader.includes('nombre') ||
+        lowerHeader.includes('categoría')
+      ) {
         return 180;
       }
 
@@ -176,7 +180,9 @@ export default function ExportExpenseScreen({ navigation }: ExportExpenseScreenP
         {/* Header */}
         <View style={[styles.header, { backgroundColor: colors.CARD_BACKGROUND }]}>
           {/* <Text style={[styles.title, { color: colors.TEXT_PRIMARY }]}>Exportar Gastos</Text> */}
-          <Text style={[styles.subtitle, { color: colors.TEXT_SECONDARY }]}>Seleccione el rango de fechas</Text>
+          <Text style={[styles.subtitle, { color: colors.TEXT_SECONDARY }]}>
+            Seleccione el rango de fechas
+          </Text>
         </View>
 
         {/* Selectores de fecha */}
@@ -200,7 +206,12 @@ export default function ExportExpenseScreen({ navigation }: ExportExpenseScreenP
         </View>
 
         {/* Info del rango */}
-        <View style={[styles.infoCard, { backgroundColor: colors.CARD_BACKGROUND, borderColor: colors.BORDER }]}>
+        <View
+          style={[
+            styles.infoCard,
+            { backgroundColor: colors.CARD_BACKGROUND, borderColor: colors.BORDER }
+          ]}
+        >
           <Icon type="material-community" name="calendar-range" size={18} color={colors.INFO} />
           <Text style={[styles.infoText, { color: colors.TEXT_SECONDARY }]}>
             Del {DateFormat(startDate, 'DD/MM/YYYY')} al {DateFormat(endDate, 'DD/MM/YYYY')}
@@ -208,12 +219,26 @@ export default function ExportExpenseScreen({ navigation }: ExportExpenseScreenP
         </View>
 
         {/* Botón de búsqueda */}
-        {loading ? <MyLoading /> : <MyButton onPress={exportDataApi} title="Generar tabla" variant="primary" />}
+        {loading ? (
+          <MyLoading />
+        ) : (
+          <MyButton onPress={exportDataApi} title="Generar tabla" variant="primary" />
+        )}
 
         {/* Mensaje de datos vacíos */}
         {isEmptyData && (
-          <View style={[styles.emptyState, { backgroundColor: colors.WARNING + '10', borderColor: colors.WARNING }]}>
-            <Icon type="material-community" name="alert-circle-outline" size={48} color={colors.WARNING} />
+          <View
+            style={[
+              styles.emptyState,
+              { backgroundColor: colors.WARNING + '10', borderColor: colors.WARNING }
+            ]}
+          >
+            <Icon
+              type="material-community"
+              name="alert-circle-outline"
+              size={48}
+              color={colors.WARNING}
+            />
             <Text style={[styles.emptyTitle, { color: colors.TEXT_PRIMARY }]}>Sin datos</Text>
             <Text style={[styles.emptyText, { color: colors.TEXT_SECONDARY }]}>
               No se encontraron gastos en el rango seleccionado
@@ -225,8 +250,18 @@ export default function ExportExpenseScreen({ navigation }: ExportExpenseScreenP
         {!isEmptyData && tableHead.length > 0 && (
           <View>
             {needsHorizontalScroll && (
-              <View style={[styles.scrollHint, { backgroundColor: colors.INFO + '10', borderColor: colors.INFO }]}>
-                <Icon type="material-community" name="gesture-swipe-horizontal" size={16} color={colors.INFO} />
+              <View
+                style={[
+                  styles.scrollHint,
+                  { backgroundColor: colors.INFO + '10', borderColor: colors.INFO }
+                ]}
+              >
+                <Icon
+                  type="material-community"
+                  name="gesture-swipe-horizontal"
+                  size={16}
+                  color={colors.INFO}
+                />
                 <Text style={[styles.scrollHintText, { color: colors.TEXT_SECONDARY }]}>
                   Desliza horizontalmente para ver todas las columnas
                 </Text>
@@ -245,13 +280,19 @@ export default function ExportExpenseScreen({ navigation }: ExportExpenseScreenP
             {/* Stats */}
             <View style={[styles.statsCard, { backgroundColor: colors.CARD_BACKGROUND }]}>
               <View style={styles.statItem}>
-                <Text style={[styles.statLabel, { color: colors.TEXT_SECONDARY }]}>Total registros</Text>
-                <Text style={[styles.statValue, { color: colors.PRIMARY }]}>{tableData.length}</Text>
+                <Text style={[styles.statLabel, { color: colors.TEXT_SECONDARY }]}>
+                  Total registros
+                </Text>
+                <Text style={[styles.statValue, { color: colors.PRIMARY }]}>
+                  {tableData.length}
+                </Text>
               </View>
               <View style={[styles.statDivider, { backgroundColor: colors.BORDER }]} />
               <View style={styles.statItem}>
                 <Text style={[styles.statLabel, { color: colors.TEXT_SECONDARY }]}>Columnas</Text>
-                <Text style={[styles.statValue, { color: colors.PRIMARY }]}>{tableHead.length}</Text>
+                <Text style={[styles.statValue, { color: colors.PRIMARY }]}>
+                  {tableHead.length}
+                </Text>
               </View>
             </View>
           </View>

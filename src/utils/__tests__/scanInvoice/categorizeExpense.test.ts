@@ -41,9 +41,7 @@ describe('categorizeExpense', () => {
     {
       label: 'Otra Categoría',
       value: 999,
-      subcategories: [
-        { label: 'Subcategoría Genérica', value: 18 }
-      ]
+      subcategories: [{ label: 'Subcategoría Genérica', value: 18 }]
     }
   ];
 

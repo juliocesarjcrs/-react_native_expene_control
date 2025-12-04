@@ -6,4 +6,4 @@ export type ListResultSearchProps = {
   amount: number;
   dateFormat: string;
   createdAt?: string;
-}
+};

@@ -93,7 +93,10 @@ export default function AdvancedSearchScreen() {
         setSumResultSearch(data.sum);
       } else if (searchType === 0 && selectedCategory) {
         if (selectedSubcategories.length === 0) {
-          showError({ message: 'Debe seleccionar al menos una subcategoría' }, 'Debe seleccionar al menos una subcategoría');
+          showError(
+            { message: 'Debe seleccionar al menos una subcategoría' },
+            'Debe seleccionar al menos una subcategoría'
+          );
           return;
         }
 
@@ -135,7 +138,9 @@ export default function AdvancedSearchScreen() {
 
   const toggleSubcategory = (subcategoryId: number) => {
     setSelectedSubcategories((prev) =>
-      prev.includes(subcategoryId) ? prev.filter((id) => id !== subcategoryId) : [...prev, subcategoryId]
+      prev.includes(subcategoryId)
+        ? prev.filter((id) => id !== subcategoryId)
+        : [...prev, subcategoryId]
     );
   };
 
@@ -144,7 +149,10 @@ export default function AdvancedSearchScreen() {
       <ScreenHeader title={config.title} subtitle={config.subtitle} />
       {/* Header fijo con filtros */}
       <View style={[styles.filterSection, { backgroundColor: colors.CARD_BACKGROUND }]}>
-        <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.filterContent}>
+        <ScrollView
+          showsVerticalScrollIndicator={false}
+          contentContainerStyle={styles.filterContent}
+        >
           {/* Tipo de búsqueda */}
           <View style={styles.filterGroup}>
             <Text style={[styles.label, { color: colors.TEXT_PRIMARY }]}>Tipo de búsqueda</Text>
@@ -166,7 +174,11 @@ export default function AdvancedSearchScreen() {
               <Text style={[styles.label, { color: colors.TEXT_PRIMARY }]}>
                 Subcategorías ({selectedSubcategories.length} seleccionadas)
               </Text>
-              <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.subcategoriesScroll}>
+              <ScrollView
+                horizontal
+                showsHorizontalScrollIndicator={false}
+                style={styles.subcategoriesScroll}
+              >
                 <View style={styles.subcategoriesContainer}>
                   {subcategories.map((subcategory) => (
                     <TouchableOpacity
@@ -186,7 +198,9 @@ export default function AdvancedSearchScreen() {
                         style={[
                           styles.subcategoryText,
                           {
-                            color: selectedSubcategories.includes(subcategory.id) ? '#FFFFFF' : colors.TEXT_PRIMARY
+                            color: selectedSubcategories.includes(subcategory.id)
+                              ? '#FFFFFF'
+                              : colors.TEXT_PRIMARY
                           }
                         ]}
                       >
@@ -246,7 +260,12 @@ export default function AdvancedSearchScreen() {
             {/* Header de resultados */}
             <View style={[styles.resultsHeader, { backgroundColor: colors.PRIMARY }]}>
               <View style={styles.resultsHeaderContent}>
-                <Icon name="chart-box-outline" type="material-community" size={20} color="#FFFFFF" />
+                <Icon
+                  name="chart-box-outline"
+                  type="material-community"
+                  size={20}
+                  color="#FFFFFF"
+                />
                 <Text style={styles.resultsHeaderText}>
                   {resultSearch.length} resultado{resultSearch.length !== 1 ? 's' : ''}
                 </Text>
@@ -265,8 +284,15 @@ export default function AdvancedSearchScreen() {
               />
             ) : (
               <View style={styles.emptyState}>
-                <Icon name="magnify" type="material-community" size={64} color={colors.TEXT_SECONDARY} />
-                <Text style={[styles.emptyText, { color: colors.TEXT_SECONDARY }]}>No se encontraron resultados</Text>
+                <Icon
+                  name="magnify"
+                  type="material-community"
+                  size={64}
+                  color={colors.TEXT_SECONDARY}
+                />
+                <Text style={[styles.emptyText, { color: colors.TEXT_SECONDARY }]}>
+                  No se encontraron resultados
+                </Text>
                 <Text style={[styles.emptySubtext, { color: colors.TEXT_SECONDARY }]}>
                   Intenta ajustar los filtros de búsqueda
                 </Text>
@@ -277,7 +303,12 @@ export default function AdvancedSearchScreen() {
 
         {!hasSearched && (
           <View style={styles.emptyState}>
-            <Icon name="file-search-outline" type="material-community" size={64} color={colors.TEXT_SECONDARY} />
+            <Icon
+              name="file-search-outline"
+              type="material-community"
+              size={64}
+              color={colors.TEXT_SECONDARY}
+            />
             <Text style={[styles.emptyText, { color: colors.TEXT_SECONDARY }]}>
               Configura los filtros y presiona buscar
             </Text>

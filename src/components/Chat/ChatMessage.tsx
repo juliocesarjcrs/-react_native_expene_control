@@ -1,5 +1,13 @@
 import React from 'react';
-import { View, StyleSheet, TouchableOpacity, Alert, useWindowDimensions, Platform, Text } from 'react-native';
+import {
+  View,
+  StyleSheet,
+  TouchableOpacity,
+  Alert,
+  useWindowDimensions,
+  Platform,
+  Text
+} from 'react-native';
 import Markdown from 'react-native-markdown-display';
 import * as Clipboard from 'expo-clipboard';
 
@@ -36,7 +44,8 @@ export function ChatMessage({ content, role }: ChatMessageProps) {
 
   const codeBackgroundColor = role === 'user' ? 'rgba(255, 255, 255, 0.2)' : colors.BACKGROUND;
 
-  const blockquoteBackgroundColor = role === 'user' ? 'rgba(255, 255, 255, 0.1)' : colors.BACKGROUND;
+  const blockquoteBackgroundColor =
+    role === 'user' ? 'rgba(255, 255, 255, 0.1)' : colors.BACKGROUND;
 
   const blockquoteBorderColor = role === 'user' ? 'rgba(255, 255, 255, 0.4)' : colors.BORDER;
 
@@ -159,7 +168,12 @@ export function ChatMessage({ content, role }: ChatMessageProps) {
   });
 
   return (
-    <View style={[styles.messageWrapper, role === 'user' ? styles.userWrapper : styles.assistantWrapper]}>
+    <View
+      style={[
+        styles.messageWrapper,
+        role === 'user' ? styles.userWrapper : styles.assistantWrapper
+      ]}
+    >
       <TouchableOpacity
         activeOpacity={0.8}
         onLongPress={handleLongPress}

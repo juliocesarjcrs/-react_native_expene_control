@@ -11,7 +11,10 @@ import { LastExpense } from '~/shared/types/services/expense-service.type';
 import { ExpenseStackParamList } from '~/shared/types';
 import LastTransactionsCard from './LastTransactionsCard';
 
-export type CardLastExpensesNavigationProp = StackNavigationProp<ExpenseStackParamList, 'lastExpenses'>;
+export type CardLastExpensesNavigationProp = StackNavigationProp<
+  ExpenseStackParamList,
+  'lastExpenses'
+>;
 
 interface CardLastExpensesProps {
   navigation: CardLastExpensesNavigationProp;

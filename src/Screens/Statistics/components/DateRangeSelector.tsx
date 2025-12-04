@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { View } from 'react-native';
-import { Text, Button } from 'react-native-paper';
+import { Text } from 'react-native-paper';
 import DateTimePicker, { DateTimePickerEvent } from '@react-native-community/datetimepicker';
 import { useThemeColors } from '~/customHooks/useThemeColors';
 import { DateFormat } from '~/utils/Helpers';
@@ -50,7 +50,7 @@ export default function DateRangeSelector({ label, onChange, value }: Props) {
         {label}
       </Text>
 
-    <MyButton
+      <MyButton
         title={start ? DateFormat(start, 'DD MMM') : 'Inicio'}
         onPress={() => setShowPicker('start')}
         variant="outline"

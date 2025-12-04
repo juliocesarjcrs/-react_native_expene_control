@@ -27,7 +27,6 @@ const FlatListLoans: React.FC<FlatListLoansProps> = ({ loans, updateList }) => {
   const colors = useThemeColors();
   const [deleteLoanMutation] = useMutation(DELETE_LOAN);
   const ListLoan = ({ item }: { item: Loan }) => {
-
     const deleteItem = async (idLoan: string) => {
       try {
         const { data } = await deleteLoanMutation({
@@ -69,7 +68,7 @@ const FlatListLoans: React.FC<FlatListLoansProps> = ({ loans, updateList }) => {
       closeOnlyOnBackdropPress: false
     };
     return (
-      <View style={[styles.header,{ backgroundColor: colors.PRIMARY }]}>
+      <View style={[styles.header, { backgroundColor: colors.PRIMARY }]}>
         <Tooltip {...tooltipProps}>
           <Text style={styles.title}>{NumberFormat(item.amount)}</Text>
         </Tooltip>
@@ -110,7 +109,13 @@ const FlatListLoans: React.FC<FlatListLoansProps> = ({ loans, updateList }) => {
       fontSize: SMALL
     }
   });
-  return <FlatList keyExtractor={(item) => item.id.toString()} data={loans} renderItem={ListLoan}></FlatList>;
+  return (
+    <FlatList
+      keyExtractor={(item) => item.id.toString()}
+      data={loans}
+      renderItem={ListLoan}
+    ></FlatList>
+  );
 };
 
 export default FlatListLoans;

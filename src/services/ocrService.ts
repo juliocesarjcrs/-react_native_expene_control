@@ -1,18 +1,9 @@
-import { OCRSpaceParams, OCRSpaceResponse } from "~/shared/types/services/ocr-services.type";
+import { OCRSpaceParams, OCRSpaceResponse } from '~/shared/types/services/ocr-services.type';
 
+const OCR_API_KEY = process.env.OCR_API_KEY;
 
-
-const OCR_API_KEY = process.env.OCR_API_KEY
-
-export const callOCRSpaceAPI = async (
-  params: OCRSpaceParams
-): Promise<OCRSpaceResponse> => {
-  const {
-    base64Image,
-    language = 'spa',
-    isTable = true,
-    OCREngine = 2
-  } = params;
+export const callOCRSpaceAPI = async (params: OCRSpaceParams): Promise<OCRSpaceResponse> => {
+  const { base64Image, language = 'spa', isTable = true, OCREngine = 2 } = params;
 
   const formData = new FormData();
   formData.append('base64Image', `data:image/jpg;base64,${base64Image}`);
@@ -41,11 +32,14 @@ export const callOCRSpaceAPI = async (
 
 // Mock function remains the same
 export const mockOCRSpaceAPI = async (): Promise<any> => {
-  await new Promise(resolve => setTimeout(resolve, 1000));
+  await new Promise((resolve) => setTimeout(resolve, 1000));
 
   return {
-    ParsedResults: [{
-      ParsedText: 'PRECIO\t\r\nPLU\tDETALLE\t\r\n1 1/u x 23.000 V. Ahorro 0\t\r\n172836 Huevo Napoles De\t23.000\t\r\n2 1/u x 2.350 V. Ahorro 0\t\r\n3343120 Mogolla Integral\t2.350\t\r\nTotal Item :2\t\r\n'
-    }]
+    ParsedResults: [
+      {
+        ParsedText:
+          'PRECIO\t\r\nPLU\tDETALLE\t\r\n1 1/u x 23.000 V. Ahorro 0\t\r\n172836 Huevo Napoles De\t23.000\t\r\n2 1/u x 2.350 V. Ahorro 0\t\r\n3343120 Mogolla Integral\t2.350\t\r\nTotal Item :2\t\r\n'
+      }
+    ]
   };
 };

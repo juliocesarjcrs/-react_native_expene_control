@@ -19,8 +19,15 @@ import { ScreenHeader } from '~/components/ScreenHeader';
 import DateTimePicker, { DateTimePickerEvent } from '@react-native-community/datetimepicker';
 import DropDownPicker, { ItemType } from 'react-native-dropdown-picker';
 import { ExpenseStackParamList, SubcategoryModel } from '~/shared/types';
-import { CategoryOption, FormValues, SubcategoryOption } from '~/shared/types/screens/expenses/edit-expenses.type';
-import { EditExpensePayload, GetOneExpenseResponse } from '~/shared/types/services/expense-service.type';
+import {
+  CategoryOption,
+  FormValues,
+  SubcategoryOption
+} from '~/shared/types/screens/expenses/edit-expenses.type';
+import {
+  EditExpensePayload,
+  GetOneExpenseResponse
+} from '~/shared/types/services/expense-service.type';
 import { StackNavigationProp } from '@react-navigation/stack';
 
 // Utils
@@ -46,8 +53,6 @@ interface EditExpenseScreenProps {
   navigation: EditExpenseScreenNavigationProp;
   route: EditExpenseScreenRouteProp;
 }
-
-
 
 export default function EditExpenseScreen({ route, navigation }: EditExpenseScreenProps) {
   const config = screenConfigs.editExpense;
@@ -177,13 +182,6 @@ export default function EditExpenseScreen({ route, navigation }: EditExpenseScre
     }
   };
 
-  const calculateTotal = (data: any[]) => {
-    const total = data.reduce((acu, val) => {
-      return acu + parseFloat(String(val.cost));
-    }, 0);
-    setSumCost(total);
-  };
-
   const formatOptionsSubcategories = (data: SubcategoryModel[] = []) => {
     return data.map((e) => {
       return { label: e.name, value: e.id };
@@ -233,9 +231,14 @@ export default function EditExpenseScreen({ route, navigation }: EditExpenseScre
   };
 
   return (
-     <View style={[commonStyles.screenContentWithPadding, { backgroundColor: colors.BACKGROUND }]}>
-         <ScreenHeader title={config.title} subtitle={config.subtitle} />
-      <View style={[styles.card, { backgroundColor: colors.CARD_BACKGROUND, borderColor: colors.BORDER }]}>
+    <View style={[commonStyles.screenContentWithPadding, { backgroundColor: colors.BACKGROUND }]}>
+      <ScreenHeader title={config.title} subtitle={config.subtitle} />
+      <View
+        style={[
+          styles.card,
+          { backgroundColor: colors.CARD_BACKGROUND, borderColor: colors.BORDER }
+        ]}
+      >
         {/* COST */}
         <Controller
           name="cost"
@@ -293,7 +296,7 @@ export default function EditExpenseScreen({ route, navigation }: EditExpenseScre
           defaultValue=""
         />
 
-    {/* CATEGORY */}
+        {/* CATEGORY */}
         <Text style={[styles.label, { color: colors.TEXT_PRIMARY }]}>Categoría</Text>
 
         <DropDownPicker
@@ -312,25 +315,27 @@ export default function EditExpenseScreen({ route, navigation }: EditExpenseScre
           activityIndicatorSize={30}
           dropDownContainerStyle={{
             backgroundColor: colors.CARD_BACKGROUND,
-            borderColor: colors.BORDER,
+            borderColor: colors.BORDER
           }}
           listMode="MODAL"
           selectedItemContainerStyle={{
-            backgroundColor: colors.PRIMARY + "22",
+            backgroundColor: colors.PRIMARY + '22'
           }}
           itemSeparator={true}
           itemSeparatorStyle={{
-            backgroundColor: colors.BORDER,
+            backgroundColor: colors.BORDER
           }}
           selectedItemLabelStyle={{
-            fontWeight: "bold",
-            color: colors.TEXT_PRIMARY,
+            fontWeight: 'bold',
+            color: colors.TEXT_PRIMARY
           }}
         />
         {!idCategory ? <ErrorText msg="Necesita seleccionar una  Categoria" /> : null}
 
         {/* SUBCATEGORY */}
-        <Text style={[styles.label, { color: colors.TEXT_PRIMARY, marginTop: 12 }]}>Subcategoría</Text>
+        <Text style={[styles.label, { color: colors.TEXT_PRIMARY, marginTop: 12 }]}>
+          Subcategoría
+        </Text>
 
         <DropDownPicker
           open={open2}
@@ -347,18 +352,18 @@ export default function EditExpenseScreen({ route, navigation }: EditExpenseScre
           listMode="MODAL"
           dropDownContainerStyle={{
             backgroundColor: colors.CARD_BACKGROUND,
-            borderColor: colors.BORDER,
+            borderColor: colors.BORDER
           }}
           selectedItemContainerStyle={{
-            backgroundColor: colors.PRIMARY + "22",
+            backgroundColor: colors.PRIMARY + '22'
           }}
           itemSeparator={true}
           itemSeparatorStyle={{
-            backgroundColor: colors.BORDER,
+            backgroundColor: colors.BORDER
           }}
           selectedItemLabelStyle={{
-            fontWeight: "bold",
-            color: colors.TEXT_PRIMARY,
+            fontWeight: 'bold',
+            color: colors.TEXT_PRIMARY
           }}
         />
         {!subcategoryId ? <ErrorText msg="Necesita seleccionar una subcategoria" /> : null}
@@ -368,11 +373,20 @@ export default function EditExpenseScreen({ route, navigation }: EditExpenseScre
           <MyButton
             title="Fecha"
             onPress={showDatepicker}
-            icon={<Icon type="material-community" name="calendar" size={20} color={colors.TEXT_PRIMARY} />}
+            icon={
+              <Icon
+                type="material-community"
+                name="calendar"
+                size={20}
+                color={colors.TEXT_PRIMARY}
+              />
+            }
             variant="primary"
             size="medium"
           />
-          <Text style={[styles.textDate, { backgroundColor: colors.PRIMARY, color: colors.WHITE }]}>{dateString}</Text>
+          <Text style={[styles.textDate, { backgroundColor: colors.PRIMARY, color: colors.WHITE }]}>
+            {dateString}
+          </Text>
         </View>
 
         {show && (

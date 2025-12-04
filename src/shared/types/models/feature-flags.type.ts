@@ -9,4 +9,4 @@ export type FeatureFlag = {
   updatedBy: number | null;
   createdAt: string;
   updatedAt: string;
-}
+};

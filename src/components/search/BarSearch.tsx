@@ -24,8 +24,8 @@ interface BarSearchProps {
   placeholder?: string;
 }
 
-export default function BarSearch({ 
-  shouldDispatch = true, 
+export default function BarSearch({
+  shouldDispatch = true,
   onQueryChange,
   placeholder = 'Buscar...'
 }: BarSearchProps) {
@@ -70,9 +70,9 @@ export default function BarSearch({
         <TextInput
           style={[
             styles.input,
-            { 
+            {
               color: colors.TEXT_PRIMARY,
-              flex: 1,
+              flex: 1
             }
           ]}
           onChangeText={handleSearch}
@@ -98,11 +98,7 @@ export default function BarSearch({
 
       {/* Botón Buscar */}
       <View style={styles.buttonContainer}>
-        <MyButton 
-          title="Buscar" 
-          onPress={handleSubmit} 
-          variant="primary"
-        />
+        <MyButton title="Buscar" onPress={handleSubmit} variant="primary" />
       </View>
     </View>
   );
@@ -114,7 +110,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: 16,
     paddingVertical: 8,
-    gap: 10,
+    gap: 10
   },
   searchContainer: {
     flex: 1,
@@ -127,20 +123,20 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.1,
     shadowRadius: 2,
-    elevation: 2,
+    elevation: 2
   },
   searchIcon: {
-    marginRight: 8,
+    marginRight: 8
   },
   input: {
     fontSize: SMALL + 1,
-    padding: 0,
+    padding: 0
   },
   clearButton: {
     marginLeft: 8,
-    padding: 4,
+    padding: 4
   },
   buttonContainer: {
-    minWidth: 90,
-  },
+    minWidth: 90
+  }
 });

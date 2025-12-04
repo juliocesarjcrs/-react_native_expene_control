@@ -1,5 +1,5 @@
-import { Product } from "~/shared/types/components/receipt-scanner.type";
-import { formatDescription } from "./formatDescription";
+import { Product } from '~/shared/types/components/receipt-scanner.type';
+import { formatDescription } from './formatDescription';
 
 export function parseDollarCity(lines: string[]): Product[] {
   const products: Product[] = [];
@@ -9,7 +9,12 @@ export function parseDollarCity(lines: string[]): Product[] {
     const line = lines[i].trim();
 
     // Saltar líneas de totales y siguientes
-    if (line.startsWith('TOTAL') || line.startsWith('MASTERCARD') || line.startsWith('COP') || line.startsWith('REGISTRO')) {
+    if (
+      line.startsWith('TOTAL') ||
+      line.startsWith('MASTERCARD') ||
+      line.startsWith('COP') ||
+      line.startsWith('REGISTRO')
+    ) {
       break;
     }
 

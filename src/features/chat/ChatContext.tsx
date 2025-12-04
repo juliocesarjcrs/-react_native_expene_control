@@ -129,7 +129,9 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
       const response = await chatbotService.getConversationHistory(conversationId);
 
       // Filtrar mensajes del sistema y solo mostrar user y assistant
-      const filteredMessages = response.data.data.filter((msg: ChatMessage) => msg.role !== 'system');
+      const filteredMessages = response.data.data.filter(
+        (msg: ChatMessage) => msg.role !== 'system'
+      );
 
       setMessages(filteredMessages);
       setCurrentConversationId(conversationId);

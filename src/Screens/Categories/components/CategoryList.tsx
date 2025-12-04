@@ -1,5 +1,13 @@
 import React from 'react';
-import { Alert, FlatList, StyleSheet, Text, View, ListRenderItem, TouchableOpacity } from 'react-native';
+import {
+  Alert,
+  FlatList,
+  StyleSheet,
+  Text,
+  View,
+  ListRenderItem,
+  TouchableOpacity
+} from 'react-native';
 import { Icon } from 'react-native-elements';
 
 // Services
@@ -28,21 +36,17 @@ export default function CategoryList({ data, updateList }: CategoryListProps) {
   const colors = useThemeColors();
 
   const confirmDelete = (id: number, name: string): void => {
-    Alert.alert(
-      'Eliminar categoría',
-      `¿Estás seguro de que deseas eliminar "${name}"?`,
-      [
-        {
-          text: 'Cancelar',
-          style: 'cancel'
-        },
-        {
-          text: 'Eliminar',
-          onPress: () => deleteItem(id),
-          style: 'destructive'
-        }
-      ]
-    );
+    Alert.alert('Eliminar categoría', `¿Estás seguro de que deseas eliminar "${name}"?`, [
+      {
+        text: 'Cancelar',
+        style: 'cancel'
+      },
+      {
+        text: 'Eliminar',
+        onPress: () => deleteItem(id),
+        style: 'destructive'
+      }
+    ]);
   };
 
   const deleteItem = async (idCategory: number): Promise<void> => {
@@ -55,11 +59,7 @@ export default function CategoryList({ data, updateList }: CategoryListProps) {
   };
 
   const renderItem: ListRenderItem<CategoryModel> = ({ item }) => (
-    <CategoryListItem
-      item={item}
-      onDelete={confirmDelete}
-      colors={colors}
-    />
+    <CategoryListItem item={item} onDelete={confirmDelete} colors={colors} />
   );
 
   if (data.length === 0) {
@@ -91,17 +91,16 @@ export default function CategoryList({ data, updateList }: CategoryListProps) {
 const styles = StyleSheet.create({
   listContainer: {
     paddingHorizontal: 8,
-    paddingTop: 16,
+    paddingTop: 16
   },
   emptyContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    paddingVertical: 60,
+    paddingVertical: 60
   },
   emptyText: {
     fontSize: MEDIUM,
-    marginTop: 12,
-  },
+    marginTop: 12
+  }
 });
-

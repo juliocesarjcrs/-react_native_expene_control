@@ -164,7 +164,7 @@ export default function MyButton({
           borderRadius: sizeStyles.borderRadius,
           opacity: isDisabled ? 0.5 : pressed ? 0.8 : 1,
           width: fullWidth ? '100%' : 'auto',
-          alignSelf: fullWidth ? 'stretch' : 'center',
+          alignSelf: fullWidth ? 'stretch' : 'center'
         },
         style
       ]}
@@ -200,7 +200,7 @@ const styles = StyleSheet.create({
     marginVertical: 6
   },
   text: {
-    fontWeight: '500',
+    fontWeight: '500'
     // letterSpacing: 0.5
   }
 });

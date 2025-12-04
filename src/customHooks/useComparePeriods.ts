@@ -2,11 +2,11 @@ import { useState } from 'react';
 import { getComparePeriods } from '~/services/expenses';
 import {
   ComparePeriodsPayload,
-  ComparePeriodsResponse,
+  ComparePeriodsResponse
 } from '~/shared/types/services/expense-service.type';
 
 export function useComparePeriods() {
-   const [compareResults, setCompareResults] = useState<ComparePeriodsResponse | null>(null);
+  const [compareResults, setCompareResults] = useState<ComparePeriodsResponse | null>(null);
   const [isLoading, setIsLoading] = useState(false);
 
   const comparePeriods = async (payload: ComparePeriodsPayload) => {
@@ -29,6 +29,6 @@ export function useComparePeriods() {
     compareResults,
     isLoading,
     comparePeriods,
-    resetComparison,
+    resetComparison
   };
 }

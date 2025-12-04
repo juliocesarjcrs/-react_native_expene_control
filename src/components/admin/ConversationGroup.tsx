@@ -23,8 +23,8 @@ export default function ConversationGroup({ conversationId, logs }: Props) {
         styles.container,
         {
           backgroundColor: colors.CARD_BACKGROUND,
-          borderColor: colors.BORDER,
-        },
+          borderColor: colors.BORDER
+        }
       ]}
     >
       {/* Group Header */}
@@ -38,8 +38,8 @@ export default function ConversationGroup({ conversationId, logs }: Props) {
             style={[
               styles.conversationBadge,
               {
-                backgroundColor: colors.PRIMARY,
-              },
+                backgroundColor: colors.PRIMARY
+              }
             ]}
           >
             <Icon name="message-text" type="material-community" color="#fff" size={16} />
@@ -49,8 +49,8 @@ export default function ConversationGroup({ conversationId, logs }: Props) {
               Conversación #{conversationId}
             </Text>
             <Text style={[styles.conversationMeta, { color: colors.TEXT_SECONDARY }]}>
-              {logs.length} iteraciones • {totalTime}ms total • {successCount}/
-              {logs.length} exitosas
+              {logs.length} iteraciones • {totalTime}ms total • {successCount}/{logs.length}{' '}
+              exitosas
             </Text>
           </View>
         </View>
@@ -80,37 +80,37 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     marginBottom: 16,
     borderWidth: 1,
-    overflow: 'hidden',
+    overflow: 'hidden'
   },
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    padding: 12,
+    padding: 12
   },
   headerLeft: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 12,
-    flex: 1,
+    flex: 1
   },
   conversationBadge: {
     width: 40,
     height: 40,
     borderRadius: 20,
     justifyContent: 'center',
-    alignItems: 'center',
+    alignItems: 'center'
   },
   conversationTitle: {
     fontSize: 15,
-    fontWeight: '700',
+    fontWeight: '700'
   },
   conversationMeta: {
     fontSize: 11,
-    marginTop: 2,
+    marginTop: 2
   },
   interactions: {
     padding: 12,
-    paddingTop: 0,
-  },
+    paddingTop: 0
+  }
 });

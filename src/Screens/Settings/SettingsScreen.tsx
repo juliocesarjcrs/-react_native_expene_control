@@ -59,8 +59,11 @@ export default function SettingsScreen({ navigation }: SettingsScreenProps) {
   const go = (route: any) => () => navigation.navigate(route);
 
   return (
-    <ScrollView style={[commonStyles.screenContentWithPadding, { backgroundColor: colors.BACKGROUND }]}showsVerticalScrollIndicator={false}>
-       <ScreenHeader title={config.title} subtitle={config.subtitle} />
+    <ScrollView
+      style={[commonStyles.screenContentWithPadding, { backgroundColor: colors.BACKGROUND }]}
+      showsVerticalScrollIndicator={false}
+    >
+      <ScreenHeader title={config.title} subtitle={config.subtitle} />
 
       {/* --- GENERAL --- */}
       <View style={styles.section}>
@@ -78,14 +81,25 @@ export default function SettingsScreen({ navigation }: SettingsScreenProps) {
           <MenuCardButton title="Editar Perfil" onPress={go('editUser')} color="#009688" />
           <MenuCardButton title="Crear Usuario" onPress={go('createUser')} color="#009688" />
           <MenuCardButton title="Gestionar CSV" onPress={go('manageCSV')} color="#009688" />
-          <MenuCardButton title="Gestionar Funcionalidades" onPress={go('manageFeatureFlags')} color="#009688" />
-          <MenuCardButton title="Configurar Chatbot" onPress={go('chatbotConfig')} color="#009688" />
+          <MenuCardButton
+            title="Gestionar Funcionalidades"
+            onPress={go('manageFeatureFlags')}
+            color="#009688"
+          />
+          <MenuCardButton
+            title="Configurar Chatbot"
+            onPress={go('chatbotConfig')}
+            color="#009688"
+          />
           <MenuCardButton title="Gestionar Modelos IA" onPress={go('aiModels')} color="#009688" />
           <MenuCardButton title="Gestionar Temas" onPress={go('manageThemes')} color="#009688" />
-          <MenuCardButton title="Panel de Administración" onPress={go('adminDashboard')} color="#009688" />
+          <MenuCardButton
+            title="Panel de Administración"
+            onPress={go('adminDashboard')}
+            color="#009688"
+          />
         </View>
       )}
-
     </ScrollView>
   );
 }

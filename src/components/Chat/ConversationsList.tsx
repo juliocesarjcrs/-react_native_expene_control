@@ -21,17 +21,17 @@ export function ConversationsList({ onSelect }: ConversationsListProps) {
     if (!selectedConversation) return;
 
     Alert.alert(
-      "Eliminar conversación",
-      "¿Estás seguro de que deseas eliminar esta conversación?",
+      'Eliminar conversación',
+      '¿Estás seguro de que deseas eliminar esta conversación?',
       [
         {
-          text: "Cancelar",
-          style: "cancel",
+          text: 'Cancelar',
+          style: 'cancel',
           onPress: () => setShowMenu(false)
         },
         {
-          text: "Eliminar",
-          style: "destructive",
+          text: 'Eliminar',
+          style: 'destructive',
           onPress: async () => {
             try {
               await deleteConversation(selectedConversation);
@@ -53,7 +53,10 @@ export function ConversationsList({ onSelect }: ConversationsListProps) {
         renderItem={({ item }) => (
           <View style={styles.conversationContainer}>
             <TouchableOpacity
-              style={[styles.conversationItem, currentConversationId === item.id && styles.selectedConversation]}
+              style={[
+                styles.conversationItem,
+                currentConversationId === item.id && styles.selectedConversation
+              ]}
               onPress={() => onSelect(item.id)}
             >
               <Text style={styles.conversationText} numberOfLines={1}>
@@ -61,10 +64,7 @@ export function ConversationsList({ onSelect }: ConversationsListProps) {
               </Text>
               <Text style={styles.messageCount}>{item.messageCount} mensajes</Text>
             </TouchableOpacity>
-            <TouchableOpacity
-              style={styles.menuButton}
-              onPress={() => handleMenuPress(item.id)}
-            >
+            <TouchableOpacity style={styles.menuButton} onPress={() => handleMenuPress(item.id)}>
               <Text style={styles.menuButtonText}>⋯</Text>
             </TouchableOpacity>
           </View>
@@ -83,10 +83,7 @@ export function ConversationsList({ onSelect }: ConversationsListProps) {
           onPress={() => setShowMenu(false)}
         >
           <View style={styles.menuContainer}>
-            <TouchableOpacity
-              style={styles.menuItem}
-              onPress={handleDelete}
-            >
+            <TouchableOpacity style={styles.menuItem} onPress={handleDelete}>
               <Text style={styles.menuItemTextDelete}>Eliminar conversación</Text>
             </TouchableOpacity>
           </View>

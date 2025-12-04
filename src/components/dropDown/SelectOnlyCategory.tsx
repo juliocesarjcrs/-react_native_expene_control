@@ -23,7 +23,10 @@ interface SelectOnlyCategoryProps {
   selectedCategoryId?: number | null;
 }
 const SelectOnlyCategory = forwardRef(
-  ({ handleCategoryChange, searchType, selectedCategoryId }: SelectOnlyCategoryProps, ref: Ref<any>) => {
+  (
+    { handleCategoryChange, searchType, selectedCategoryId }: SelectOnlyCategoryProps,
+    ref: Ref<any>
+  ) => {
     const colors = useThemeColors();
     const [categoriesFormat, setCategoriesFormat] = useState<CateroryFormat[]>([]);
     const [loading, setLoading] = useState(false);
@@ -68,7 +71,14 @@ const SelectOnlyCategory = forwardRef(
             value: e.id,
             iconName: e.icon,
             //bsubcategories: e.subcategories,
-            icon: () => <Icon type="font-awesome" name={e.icon ? e.icon : 'home'} size={35} color={colors.PRIMARY} />
+            icon: () => (
+              <Icon
+                type="font-awesome"
+                name={e.icon ? e.icon : 'home'}
+                size={35}
+                color={colors.PRIMARY}
+              />
+            )
           };
         });
         setCategoriesFormat(dataFormat);

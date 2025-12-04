@@ -1,9 +1,9 @@
-import React, { useEffect, useState } from "react";
-import { StyleSheet, Text, View } from "react-native";
-import { Icon, Input } from "react-native-elements";
-import { NumberFormat } from "~/utils/Helpers";
-import { useThemeColors } from "~/customHooks/useThemeColors";
-import type { Product } from "../CalculeProductsScreen";
+import React, { useEffect, useState } from 'react';
+import { StyleSheet, Text, View } from 'react-native';
+import { Icon, Input } from 'react-native-elements';
+import { NumberFormat } from '~/utils/Helpers';
+import { useThemeColors } from '~/customHooks/useThemeColors';
+import type { Product } from '../CalculeProductsScreen';
 
 interface RowInputProps {
   prod: Product;
@@ -107,34 +107,34 @@ const styles = StyleSheet.create({
     marginVertical: 4,
     marginHorizontal: 8,
     borderRadius: 8,
-    paddingVertical: 4,
+    paddingVertical: 4
   },
   row: {
-    flexDirection: "row",
-    alignItems: "center",
+    flexDirection: 'row',
+    alignItems: 'center'
   },
   inputContainer: {
     flex: 1,
-    maxWidth: 120,
+    maxWidth: 120
   },
   inputDiscount: {
-    width: 80,
+    width: 80
   },
   input: {
-    paddingHorizontal: 0,
+    paddingHorizontal: 0
   },
   resultContainer: {
     flex: 1,
-    justifyContent: "center",
-    paddingHorizontal: 8,
+    justifyContent: 'center',
+    paddingHorizontal: 8
   },
   resultText: {
     fontSize: 14,
-    fontWeight: "600",
+    fontWeight: '600'
   },
   actionContainer: {
     width: 50,
-    alignItems: "center",
-    justifyContent: "center",
-  },
+    alignItems: 'center',
+    justifyContent: 'center'
+  }
 });

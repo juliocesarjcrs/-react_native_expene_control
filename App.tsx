@@ -51,7 +51,9 @@ export default function App() {
           showToast(message);
           // await AsyncStorage.setItem("access_token",null);
         } else if (status === 403) {
-          const message = error.response.data.message ? error.response.data.message : 'Sin definir 1';
+          const message = error.response.data.message
+            ? error.response.data.message
+            : 'Sin definir 1';
           showToast(message);
         } else if (status === 400) {
           // No mostrar toast para errores del chatbot (se manejan en su UI)

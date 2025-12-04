@@ -38,7 +38,7 @@ export default function TransactionItemWithActions<T extends BaseTransaction>({
   type,
   onEdit,
   onDelete,
-  updateList,
+  updateList
 }: TransactionItemWithActionsProps<T>) {
   const colors = useThemeColors();
   const [showPopover, setShowPopover] = useState(false);
@@ -71,13 +71,13 @@ export default function TransactionItemWithActions<T extends BaseTransaction>({
     Alert.alert('Eliminar', message, [
       {
         text: 'Cancelar',
-        style: 'cancel',
+        style: 'cancel'
       },
       {
         text: 'Eliminar',
         onPress: handleDelete,
-        style: 'destructive',
-      },
+        style: 'destructive'
+      }
     ]);
   };
 
@@ -87,12 +87,7 @@ export default function TransactionItemWithActions<T extends BaseTransaction>({
     <View style={[styles.container, { borderBottomColor: colors.BORDER }]}>
       {/* Icon */}
       <View style={[styles.iconContainer, { backgroundColor: typeColor + '15' }]}>
-        <Icon
-          type="font-awesome"
-          name={item.iconCategory || 'home'}
-          size={20}
-          color={typeColor}
-        />
+        <Icon type="font-awesome" name={item.iconCategory || 'home'} size={20} color={typeColor} />
       </View>
 
       {/* Info */}
@@ -134,9 +129,7 @@ export default function TransactionItemWithActions<T extends BaseTransaction>({
 
       {/* Amount */}
       <View style={styles.amountContainer}>
-        <Text style={[styles.amount, { color: typeColor }]}>
-          {NumberFormat(item.cost)}
-        </Text>
+        <Text style={[styles.amount, { color: typeColor }]}>{NumberFormat(item.cost)}</Text>
       </View>
 
       {/* Actions Popover */}
@@ -145,10 +138,7 @@ export default function TransactionItemWithActions<T extends BaseTransaction>({
         onRequestClose={() => setShowPopover(false)}
         popoverStyle={{ backgroundColor: colors.CARD_BACKGROUND }}
         from={
-          <TouchableOpacity
-            onPress={() => setShowPopover(true)}
-            style={styles.menuButton}
-          >
+          <TouchableOpacity onPress={() => setShowPopover(true)} style={styles.menuButton}>
             <Icon
               type="material-community"
               name="dots-vertical"
@@ -170,9 +160,7 @@ export default function TransactionItemWithActions<T extends BaseTransaction>({
               color={colors.INFO}
               containerStyle={{ marginRight: 10 }}
             />
-            <Text style={[styles.popoverText, { color: colors.TEXT_PRIMARY }]}>
-              Editar
-            </Text>
+            <Text style={[styles.popoverText, { color: colors.TEXT_PRIMARY }]}>Editar</Text>
           </TouchableOpacity>
 
           <TouchableOpacity style={styles.popoverItem} onPress={confirmDelete}>
@@ -183,9 +171,7 @@ export default function TransactionItemWithActions<T extends BaseTransaction>({
               color={colors.ERROR}
               containerStyle={{ marginRight: 10 }}
             />
-            <Text style={[styles.popoverText, { color: colors.TEXT_PRIMARY }]}>
-              Eliminar
-            </Text>
+            <Text style={[styles.popoverText, { color: colors.TEXT_PRIMARY }]}>Eliminar</Text>
           </TouchableOpacity>
         </View>
       </Popover>
@@ -199,7 +185,7 @@ const styles = StyleSheet.create({
     alignItems: 'flex-start',
     paddingVertical: 12,
     paddingHorizontal: 4,
-    borderBottomWidth: 1,
+    borderBottomWidth: 1
   },
   iconContainer: {
     width: 40,
@@ -208,59 +194,59 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: 12,
-    paddingTop: 2,
+    paddingTop: 2
   },
   infoContainer: {
     flex: 1,
-    marginRight: 8,
+    marginRight: 8
   },
   title: {
     fontSize: SMALL + 2,
     fontWeight: '600',
-    marginBottom: 3,
+    marginBottom: 3
   },
   commentary: {
     fontSize: SMALL,
     marginBottom: 4,
     fontStyle: 'italic',
-    lineHeight: 16,
+    lineHeight: 16
   },
   dateRow: {
     flexDirection: 'row',
-    alignItems: 'center',
+    alignItems: 'center'
   },
   date: {
-    fontSize: SMALL - 1,
+    fontSize: SMALL - 1
   },
   separator: {
     marginHorizontal: 4,
-    fontSize: SMALL - 1,
+    fontSize: SMALL - 1
   },
   amountContainer: {
     alignItems: 'flex-end',
-    marginRight: 8,
+    marginRight: 8
   },
   amount: {
     fontSize: MEDIUM,
-    fontWeight: 'bold',
+    fontWeight: 'bold'
   },
   menuButton: {
-    padding: 4,
+    padding: 4
   },
   popoverContainer: {
     minWidth: 160,
     paddingVertical: 4,
-    borderRadius: 8,
+    borderRadius: 8
   },
   popoverItem: {
     flexDirection: 'row',
     alignItems: 'center',
     paddingVertical: 12,
     paddingHorizontal: 16,
-    borderBottomWidth: 1,
+    borderBottomWidth: 1
   },
   popoverText: {
     fontSize: SMALL + 1,
-    fontWeight: '500',
-  },
+    fontWeight: '500'
+  }
 });

@@ -39,7 +39,12 @@ export const UserListItem = ({ user, colors }: UserListItemProps) => {
         <Text style={[userItemStyles.email, { color: colors.TEXT_SECONDARY }]}>{user.email}</Text>
 
         {/* Badge de rol */}
-        <View style={[userItemStyles.roleBadge, { backgroundColor: getRoleBadgeColor(user.role) + '20' }]}>
+        <View
+          style={[
+            userItemStyles.roleBadge,
+            { backgroundColor: getRoleBadgeColor(user.role) + '20' }
+          ]}
+        >
           <Text style={[userItemStyles.roleText, { color: getRoleBadgeColor(user.role) }]}>
             {getRoleText(user.role)}
           </Text>

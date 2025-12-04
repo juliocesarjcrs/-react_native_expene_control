@@ -1,7 +1,13 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { View, Text, StyleSheet, useWindowDimensions, Pressable } from 'react-native';
 import { Defs, LinearGradient, Stop } from 'react-native-svg';
-import { VictoryChart, VictoryLine, VictoryAxis, VictoryScatter, VictoryArea } from 'victory-native';
+import {
+  VictoryChart,
+  VictoryLine,
+  VictoryAxis,
+  VictoryScatter,
+  VictoryArea
+} from 'victory-native';
 import { useThemeColors } from '~/customHooks/useThemeColors';
 import { NumberFormat } from '~/utils/Helpers';
 
@@ -20,7 +26,12 @@ interface ChartPoint {
   savings: number;
 }
 
-export default function CashFlowLineChart({ labels, dataExpenses, dataIncomes, dataSavings }: CashFlowLineChartProps) {
+export default function CashFlowLineChart({
+  labels,
+  dataExpenses,
+  dataIncomes,
+  dataSavings
+}: CashFlowLineChartProps) {
   const colors = useThemeColors();
   const [activePoint, setActivePoint] = useState<ChartPoint | null>(null);
   const [activeSeries, setActiveSeries] = useState<'expenses' | 'incomes' | 'savings' | null>(null);
@@ -37,7 +48,9 @@ export default function CashFlowLineChart({ labels, dataExpenses, dataIncomes, d
   }, [labels, dataExpenses, dataIncomes, dataSavings]);
 
   const hasValidData = chartData.length > 0 && chartData.some((d) => d.label !== '');
-  const safeChartData = hasValidData ? chartData : [{ x: 0, label: 'Sin datos', expenses: 0, incomes: 0, savings: 0 }];
+  const safeChartData = hasValidData
+    ? chartData
+    : [{ x: 0, label: 'Sin datos', expenses: 0, incomes: 0, savings: 0 }];
 
   const expensesSeries = safeChartData.map((d) => ({ x: d.x, y: d.expenses }));
   const incomesSeries = safeChartData.map((d) => ({ x: d.x, y: d.incomes }));
@@ -131,8 +144,8 @@ export default function CashFlowLineChart({ labels, dataExpenses, dataIncomes, d
                 activeSeries === 'incomes'
                   ? activePoint.incomes
                   : activeSeries === 'expenses'
-                  ? activePoint.expenses
-                  : activePoint.savings
+                    ? activePoint.expenses
+                    : activePoint.savings
               )}
             </Text>
           </View>
@@ -251,7 +264,9 @@ export default function CashFlowLineChart({ labels, dataExpenses, dataIncomes, d
           />
           <VictoryScatter
             data={incomesSeries}
-            size={({ datum }) => (isActive && activePoint?.x === datum.x && activeSeries === 'incomes' ? 11 : 6)}
+            size={({ datum }) =>
+              isActive && activePoint?.x === datum.x && activeSeries === 'incomes' ? 11 : 6
+            }
             style={{
               data: {
                 fill: colors.SUCCESS,
@@ -295,7 +310,9 @@ export default function CashFlowLineChart({ labels, dataExpenses, dataIncomes, d
           />
           <VictoryScatter
             data={expensesSeries}
-            size={({ datum }) => (isActive && activePoint?.x === datum.x && activeSeries === 'expenses' ? 11 : 6)}
+            size={({ datum }) =>
+              isActive && activePoint?.x === datum.x && activeSeries === 'expenses' ? 11 : 6
+            }
             style={{
               data: {
                 fill: colors.ERROR,
@@ -339,7 +356,9 @@ export default function CashFlowLineChart({ labels, dataExpenses, dataIncomes, d
           />
           <VictoryScatter
             data={savingsSeries}
-            size={({ datum }) => (isActive && activePoint?.x === datum.x && activeSeries === 'savings' ? 11 : 6)}
+            size={({ datum }) =>
+              isActive && activePoint?.x === datum.x && activeSeries === 'savings' ? 11 : 6
+            }
             style={{
               data: {
                 fill: colors.INFO,

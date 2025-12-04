@@ -1,4 +1,4 @@
-import { ThemeColors } from "../services/theme-config-service.type";
+import { ThemeColors } from '../services/theme-config-service.type';
 
 export type ThemeConfig = {
   id: number;

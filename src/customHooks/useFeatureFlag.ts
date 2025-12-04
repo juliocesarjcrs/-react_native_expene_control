@@ -11,6 +11,6 @@ export const useFeatureFlag = (featureKey: string) => {
   return {
     isEnabled: isFeatureEnabled(featureKey),
     loading,
-    feature: features.find((f) => f.featureKey === featureKey),
+    feature: features.find((f) => f.featureKey === featureKey)
   };
 };

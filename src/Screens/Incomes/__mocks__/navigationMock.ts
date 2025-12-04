@@ -9,5 +9,5 @@ export const mockNavigation = {
   canGoBack: jest.fn().mockReturnValue(true),
   getParent: jest.fn(),
   addListener: jest.fn(),
-  removeListener: jest.fn(),
+  removeListener: jest.fn()
 };

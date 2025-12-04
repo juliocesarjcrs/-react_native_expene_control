@@ -9,7 +9,7 @@ import { NumberFormat } from '~/utils/Helpers';
 import { useThemeColors } from '~/customHooks/useThemeColors';
 
 // Styles
-import { MEDIUM, SMALL } from '~/styles/fonts';
+import { MEDIUM } from '~/styles/fonts';
 
 // Types
 import { SubcategoryExpense } from '~/shared/types/services';
@@ -46,7 +46,9 @@ export default function ListSubcategory({ item, index }: ListSubcategoryProps) {
 
       {/* Monto gastado */}
       <View style={styles.amountContainer}>
-        <Text style={[styles.amount, { color: colors.TEXT_PRIMARY }]}>{NumberFormat(item.total)}</Text>
+        <Text style={[styles.amount, { color: colors.TEXT_PRIMARY }]}>
+          {NumberFormat(item.total)}
+        </Text>
       </View>
     </View>
   );

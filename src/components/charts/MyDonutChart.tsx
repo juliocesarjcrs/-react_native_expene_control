@@ -1,16 +1,16 @@
-import React, { useState } from "react";
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView } from "react-native";
-import Svg, { Circle, G } from "react-native-svg";
-import { Icon } from "react-native-elements";
+import React, { useState } from 'react';
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView } from 'react-native';
+import Svg, { Circle, G } from 'react-native-svg';
+import { Icon } from 'react-native-elements';
 
 // Theme
-import { useThemeColors } from "~/customHooks/useThemeColors";
+import { useThemeColors } from '~/customHooks/useThemeColors';
 
 // Utils
-import { NumberFormat } from "~/utils/Helpers";
+import { NumberFormat } from '~/utils/Helpers';
 
 // Styles
-import { MEDIUM, SMALL } from "~/styles/fonts";
+import { MEDIUM, SMALL } from '~/styles/fonts';
 
 type CategoryData = {
   name: string;
@@ -51,7 +51,7 @@ export default function MyDonutChart({ data, total }: MyDonutChartProps) {
 
   const donutData =
     rest.length > 0
-      ? [...top5, { name: "Otros", population: othersTotal, color: colors.GRAY }]
+      ? [...top5, { name: 'Otros', population: othersTotal, color: colors.GRAY }]
       : top5;
 
   // Calcular segmentos del donut
@@ -72,7 +72,7 @@ export default function MyDonutChart({ data, total }: MyDonutChartProps) {
       ...item,
       percentage,
       startAngle,
-      angle,
+      angle
     };
   });
 
@@ -105,15 +105,13 @@ export default function MyDonutChart({ data, total }: MyDonutChartProps) {
         </Svg>
 
         <View style={styles.centerLabel}>
-          <Text style={[styles.totalLabel, { color: colors.TEXT_SECONDARY }]}>
-            Total
-          </Text>
+          <Text style={[styles.totalLabel, { color: colors.TEXT_SECONDARY }]}>Total</Text>
           <Text style={[styles.totalValue, { color: colors.TEXT_PRIMARY }]}>
             {NumberFormat(total)}
           </Text>
           <Icon
             type="material-community"
-            name={isExpanded ? "chevron-up" : "chevron-down"}
+            name={isExpanded ? 'chevron-up' : 'chevron-down'}
             size={20}
             color={colors.TEXT_SECONDARY}
             containerStyle={{ marginTop: 4 }}
@@ -122,7 +120,7 @@ export default function MyDonutChart({ data, total }: MyDonutChartProps) {
       </TouchableOpacity>
 
       <Text style={[styles.tapHint, { color: colors.TEXT_SECONDARY }]}>
-        {isExpanded ? "Toca para ocultar" : "Toca para ver detalles"}
+        {isExpanded ? 'Toca para ocultar' : 'Toca para ver detalles'}
       </Text>
 
       {/* INSIGHTS COMPACTOS */}
@@ -155,9 +153,7 @@ export default function MyDonutChart({ data, total }: MyDonutChartProps) {
                 color={colors.SUCCESS}
                 containerStyle={{ marginRight: 6 }}
               />
-              <Text style={[styles.insightLabel, { color: colors.TEXT_SECONDARY }]}>
-                Monto:
-              </Text>
+              <Text style={[styles.insightLabel, { color: colors.TEXT_SECONDARY }]}>Monto:</Text>
             </View>
             <Text style={[styles.insightValue, { color: colors.TEXT_PRIMARY }]}>
               {NumberFormat(sorted[0].population)}
@@ -206,27 +202,18 @@ export default function MyDonutChart({ data, total }: MyDonutChartProps) {
                   {
                     backgroundColor: colors.CARD_BACKGROUND,
                     borderColor: isSelected ? colors.PRIMARY : colors.BORDER,
-                    borderWidth: isSelected ? 2 : 1,
-                  },
+                    borderWidth: isSelected ? 2 : 1
+                  }
                 ]}
-                onPress={() =>
-                  setSelectedCategory(isSelected ? null : cat.name)
-                }
+                onPress={() => setSelectedCategory(isSelected ? null : cat.name)}
                 activeOpacity={0.7}
               >
                 <View style={styles.rankHeader}>
-                  <View
-                    style={[styles.colorDot, { backgroundColor: cat.color }]}
-                  />
-                  <Text 
-                    style={[styles.rankName, { color: colors.TEXT_PRIMARY }]} 
-                    numberOfLines={1}
-                  >
+                  <View style={[styles.colorDot, { backgroundColor: cat.color }]} />
+                  <Text style={[styles.rankName, { color: colors.TEXT_PRIMARY }]} numberOfLines={1}>
                     {cat.name}
                   </Text>
-                  <Text style={[styles.rankPercent, { color: colors.PRIMARY }]}>
-                    {percent}%
-                  </Text>
+                  <Text style={[styles.rankPercent, { color: colors.PRIMARY }]}>{percent}%</Text>
                 </View>
 
                 <View style={[styles.barBackground, { backgroundColor: colors.BORDER }]}>
@@ -235,8 +222,8 @@ export default function MyDonutChart({ data, total }: MyDonutChartProps) {
                       styles.barFill,
                       {
                         width: `${percent}%` as any,
-                        backgroundColor: cat.color,
-                      },
+                        backgroundColor: cat.color
+                      }
                     ]}
                   />
                 </View>
@@ -246,9 +233,7 @@ export default function MyDonutChart({ data, total }: MyDonutChartProps) {
                     {NumberFormat(cat.population)}
                   </Text>
                   <View style={[styles.positionBadge, { backgroundColor: colors.INFO + '20' }]}>
-                    <Text style={[styles.rankPosition, { color: colors.INFO }]}>
-                      #{idx + 1}
-                    </Text>
+                    <Text style={[styles.rankPosition, { color: colors.INFO }]}>#{idx + 1}</Text>
                   </View>
                 </View>
 
@@ -270,7 +255,7 @@ export default function MyDonutChart({ data, total }: MyDonutChartProps) {
                       <View style={styles.detailRight}>
                         <Icon
                           type="material-community"
-                          name={isAboveAvg ? "arrow-up" : "arrow-down"}
+                          name={isAboveAvg ? 'arrow-up' : 'arrow-down'}
                           size={14}
                           color={isAboveAvg ? colors.ERROR : colors.SUCCESS}
                           containerStyle={{ marginRight: 4 }}
@@ -278,10 +263,10 @@ export default function MyDonutChart({ data, total }: MyDonutChartProps) {
                         <Text
                           style={[
                             styles.detailValue,
-                            { color: isAboveAvg ? colors.ERROR : colors.SUCCESS },
+                            { color: isAboveAvg ? colors.ERROR : colors.SUCCESS }
                           ]}
                         >
-                          {isAboveAvg ? "+" : ""}
+                          {isAboveAvg ? '+' : ''}
                           {NumberFormat(Math.abs(Math.round(diffAmount)))}
                         </Text>
                       </View>
@@ -299,157 +284,157 @@ export default function MyDonutChart({ data, total }: MyDonutChartProps) {
 
 const styles = StyleSheet.create({
   wrapper: {
-    flex: 1,
+    flex: 1
   },
   emptyContainer: {
-    alignItems: "center",
-    paddingVertical: 40,
+    alignItems: 'center',
+    paddingVertical: 40
   },
   emptyText: {
     fontSize: SMALL + 1,
-    marginTop: 12,
+    marginTop: 12
   },
   donutWrapper: {
-    alignItems: "center",
-    justifyContent: "center",
-    marginBottom: 8,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 8
   },
   centerLabel: {
-    position: "absolute",
-    alignItems: "center",
-    justifyContent: "center",
+    position: 'absolute',
+    alignItems: 'center',
+    justifyContent: 'center'
   },
   totalLabel: {
     fontSize: SMALL,
-    marginBottom: 2,
+    marginBottom: 2
   },
   totalValue: {
     fontSize: MEDIUM + 3,
-    fontWeight: "700",
-    textAlign: "center",
+    fontWeight: '700',
+    textAlign: 'center'
   },
   tapHint: {
-    textAlign: "center",
+    textAlign: 'center',
     fontSize: SMALL,
     marginBottom: 12,
-    fontStyle: "italic",
+    fontStyle: 'italic'
   },
   insightsBox: {
     marginHorizontal: 16,
     marginBottom: 16,
     padding: 16,
     borderRadius: 12,
-    shadowColor: "#000",
+    shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 4,
-    elevation: 2,
+    elevation: 2
   },
   insightRow: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    marginBottom: 10,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 10
   },
   insightLeft: {
-    flexDirection: "row",
-    alignItems: "center",
+    flexDirection: 'row',
+    alignItems: 'center'
   },
   insightLabel: {
-    fontSize: SMALL + 1,
+    fontSize: SMALL + 1
   },
   insightValue: {
     fontSize: SMALL + 1,
-    fontWeight: "600",
+    fontWeight: '600'
   },
   rankingBox: {
     marginTop: 8,
-    paddingHorizontal: 16,
+    paddingHorizontal: 16
   },
   rankingTitle: {
     fontSize: MEDIUM,
-    fontWeight: "700",
-    marginBottom: 12,
+    fontWeight: '700',
+    marginBottom: 12
   },
   rankRow: {
     marginBottom: 12,
     padding: 12,
     borderRadius: 12,
-    shadowColor: "#000",
+    shadowColor: '#000',
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.08,
     shadowRadius: 2,
-    elevation: 2,
+    elevation: 2
   },
   rankHeader: {
-    flexDirection: "row",
-    alignItems: "center",
-    marginBottom: 8,
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 8
   },
   colorDot: {
     width: 14,
     height: 14,
     borderRadius: 7,
-    marginRight: 10,
+    marginRight: 10
   },
   rankName: {
     flex: 1,
     fontSize: SMALL + 2,
-    fontWeight: "600",
+    fontWeight: '600'
   },
   rankPercent: {
     fontSize: SMALL + 1,
     marginLeft: 8,
-    fontWeight: "700",
+    fontWeight: '700'
   },
   barBackground: {
     height: 8,
     borderRadius: 4,
-    overflow: "hidden",
-    marginBottom: 8,
+    overflow: 'hidden',
+    marginBottom: 8
   },
   barFill: {
     height: 8,
-    borderRadius: 4,
+    borderRadius: 4
   },
   rankFooter: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center'
   },
   rankAmount: {
     fontSize: SMALL + 1,
-    fontWeight: "600",
+    fontWeight: '600'
   },
   positionBadge: {
     paddingHorizontal: 8,
     paddingVertical: 3,
-    borderRadius: 10,
+    borderRadius: 10
   },
   rankPosition: {
     fontSize: SMALL,
-    fontWeight: "600",
+    fontWeight: '600'
   },
   detailsBox: {
     marginTop: 12,
     paddingTop: 12,
-    borderTopWidth: 1,
+    borderTopWidth: 1
   },
   detailRow: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    marginBottom: 8,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 8
   },
   detailLabel: {
-    fontSize: SMALL,
+    fontSize: SMALL
   },
   detailRight: {
-    flexDirection: "row",
-    alignItems: "center",
+    flexDirection: 'row',
+    alignItems: 'center'
   },
   detailValue: {
     fontSize: SMALL,
-    fontWeight: "600",
-  },
+    fontWeight: '600'
+  }
 });

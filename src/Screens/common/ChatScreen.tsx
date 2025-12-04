@@ -11,11 +11,7 @@ export function ChatScreen() {
       <View style={{ flex: 1 }}>
         {/* Your existing screen content */}
 
-        <Modal
-          visible={isChatVisible}
-          animationType="slide"
-          presentationStyle="formSheet"
-        >
+        <Modal visible={isChatVisible} animationType="slide" presentationStyle="formSheet">
           <ChatWindow onClose={() => setIsChatVisible(false)} />
         </Modal>
 

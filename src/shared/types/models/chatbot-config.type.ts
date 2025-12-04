@@ -1,4 +1,3 @@
-
 /**
  * Configuración del Chatbot
  */
@@ -17,7 +16,7 @@ export type ChatbotConfig = {
     name: string;
     email: string;
   };
-}
+};
 
 /**
  * Historial de cambios de configuración
@@ -36,7 +35,7 @@ export type ChatbotConfigHistory = {
     name: string;
     email: string;
   };
-}
+};
 
 /**
  * Estructura del System Prompt
@@ -57,14 +56,14 @@ export type SystemPromptConfig = {
   };
   active_sections?: string[];
   active: boolean;
-}
+};
 
 /**
  * Estructura de configuración de Tools
  */
 export type ToolsConfig = {
   tools: ToolConfig[];
-}
+};
 
 export type ToolConfig = {
   name: string;
@@ -74,7 +73,7 @@ export type ToolConfig = {
   executor: string;
   cache_ttl_seconds?: number;
   parameters?: Record<string, any>;
-}
+};
 
 /**
  * Estructura de estilo de respuesta
@@ -86,7 +85,7 @@ export type ResponseStyleConfig = {
   bullet_points_preference: boolean;
   contextual_comparisons: boolean;
   language: 'es' | 'en';
-}
+};
 
 /**
  * DTO para crear configuración
@@ -96,7 +95,7 @@ export type CreateChatbotConfigDto = {
   config_value: any;
   description?: string;
   is_active?: boolean;
-}
+};
 
 /**
  * DTO para actualizar configuración
@@ -104,4 +103,4 @@ export type CreateChatbotConfigDto = {
 export type UpdateChatbotConfigDto = {
   config_value: any;
   change_reason?: string;
-}
+};

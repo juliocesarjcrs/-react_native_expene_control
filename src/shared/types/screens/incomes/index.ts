@@ -1,1 +1,1 @@
-export { IncomesPayloadOnSubmit } from './create-incomes.type'
+export { IncomesPayloadOnSubmit } from './create-incomes.type';

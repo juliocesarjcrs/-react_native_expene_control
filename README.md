@@ -15,7 +15,9 @@ Start the Expo development server:
 ```sh
 npm start
 ```
+
 or
+
 ```sh
 expo start
 ```
@@ -77,19 +79,19 @@ eas build --platform android --profile preview --local
 
 ## Useful Commands
 
-- **Clear cache:**  
+- **Clear cache:**
   ```sh
   npm run clear:cache
   ```
-- **Lint:**  
+- **Lint:**
   ```sh
   npm run lint
   ```
-- **Run on Android (Expo Go):**  
+- **Run on Android (Expo Go):**
   ```sh
   npm run android
   ```
-- **Run on Web:**  
+- **Run on Web:**
   ```sh
   npm run web
   ```

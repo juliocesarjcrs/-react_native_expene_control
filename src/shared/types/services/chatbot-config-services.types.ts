@@ -1,4 +1,4 @@
-import { ChatbotConfig, ChatbotConfigHistory } from "../models/chatbot-config.type";
+import { ChatbotConfig, ChatbotConfigHistory } from '../models/chatbot-config.type';
 
 /**
  * Response al obtener todas las configs

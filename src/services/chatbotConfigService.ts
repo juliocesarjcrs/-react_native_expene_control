@@ -2,7 +2,7 @@ import axios from '../plugins/axiosConfig';
 import {
   ChatbotConfig,
   ChatbotConfigHistory,
-  CreateChatbotConfigDto,
+  CreateChatbotConfigDto
 } from '~/shared/types/models/chatbot-config.type';
 import {
   GetAllConfigsResponse,
@@ -15,7 +15,7 @@ import {
   RevertConfigResponse,
   InvalidateCacheResponse,
   ExportConfigsResponse,
-  ImportConfigsResponse,
+  ImportConfigsResponse
 } from '~/shared/types/services/chatbot-config-services.types';
 
 const PREFIX = 'chatbot/config';
@@ -56,11 +56,11 @@ export const createChatbotConfig = async (
 export const updateChatbotConfig = async (
   configKey: string,
   configValue: any,
-  changeReason?: string,
+  changeReason?: string
 ): Promise<ChatbotConfig> => {
   const response = await axios.patch<UpdateConfigResponse>(`${PREFIX}/${configKey}`, {
     config_value: configValue,
-    change_reason: changeReason,
+    change_reason: changeReason
   });
   return response.data.data;
 };
@@ -70,12 +70,11 @@ export const updateChatbotConfig = async (
  */
 export const toggleChatbotConfig = async (
   configKey: string,
-  isActive: boolean,
+  isActive: boolean
 ): Promise<ChatbotConfig> => {
-  const response = await axios.patch<ToggleChatbotConfigResponse>(
-    `${PREFIX}/${configKey}/toggle`,
-    { is_active: isActive },
-  );
+  const response = await axios.patch<ToggleChatbotConfigResponse>(`${PREFIX}/${configKey}/toggle`, {
+    is_active: isActive
+  });
   return response.data.data;
 };
 
@@ -83,7 +82,7 @@ export const toggleChatbotConfig = async (
  * Eliminar una configuración (soft delete)
  */
 export const deleteChatbotConfig = async (
-  configKey: string,
+  configKey: string
 ): Promise<DeleteChatbotConfigResponse> => {
   const response = await axios.delete<DeleteChatbotConfigResponse>(`${PREFIX}/${configKey}`);
   return response.data;
@@ -94,7 +93,7 @@ export const deleteChatbotConfig = async (
  */
 export const getChatbotConfigHistory = async (
   configKey: string,
-  limit: number = 10,
+  limit: number = 10
 ): Promise<ChatbotConfigHistory[]> => {
   const response = await axios.get<GetConfigHistoryResponse>(
     `${PREFIX}/${configKey}/history?limit=${limit}`
@@ -107,7 +106,7 @@ export const getChatbotConfigHistory = async (
  */
 export const revertChatbotConfig = async (
   configKey: string,
-  historyId: number,
+  historyId: number
 ): Promise<ChatbotConfig> => {
   const response = await axios.post<RevertConfigResponse>(
     `${PREFIX}/${configKey}/revert/${historyId}`
@@ -134,9 +133,7 @@ export const exportChatbotConfigs = async (): Promise<ExportConfigsResponse> => 
 /**
  * Importar configuraciones desde backup
  */
-export const importChatbotConfigs = async (
-  configs: any[]
-): Promise<ImportConfigsResponse> => {
+export const importChatbotConfigs = async (configs: any[]): Promise<ImportConfigsResponse> => {
   const response = await axios.post<ImportConfigsResponse>(`${PREFIX}/import`, configs);
   return response.data;
 };

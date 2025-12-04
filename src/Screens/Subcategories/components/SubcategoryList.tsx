@@ -1,5 +1,13 @@
 import React from 'react';
-import { Alert, FlatList, StyleSheet, Text, View, TouchableOpacity, ListRenderItem } from 'react-native';
+import {
+  Alert,
+  FlatList,
+  StyleSheet,
+  Text,
+  View,
+  TouchableOpacity,
+  ListRenderItem
+} from 'react-native';
 import { Icon } from 'react-native-elements';
 
 // Services
@@ -56,14 +64,26 @@ export default function SubcategoryList({ data, updateList, navigation }: Subcat
   };
 
   const renderItem: ListRenderItem<SubcategoriesWithExpenses> = ({ item }) => (
-    <SubcategoryListItem item={item} onEdit={sendEditSubcategoryScreen} onDelete={confirmDelete} colors={colors} />
+    <SubcategoryListItem
+      item={item}
+      onEdit={sendEditSubcategoryScreen}
+      onDelete={confirmDelete}
+      colors={colors}
+    />
   );
 
   if (data.length === 0) {
     return (
       <View style={styles.emptyContainer}>
-        <Icon type="material-community" name="folder-open-outline" size={48} color={colors.TEXT_SECONDARY} />
-        <Text style={[styles.emptyText, { color: colors.TEXT_SECONDARY }]}>No hay subcategorías creadas</Text>
+        <Icon
+          type="material-community"
+          name="folder-open-outline"
+          size={48}
+          color={colors.TEXT_SECONDARY}
+        />
+        <Text style={[styles.emptyText, { color: colors.TEXT_SECONDARY }]}>
+          No hay subcategorías creadas
+        </Text>
       </View>
     );
   }
@@ -177,7 +197,9 @@ const SubcategoryListItem = ({ item, onEdit, onDelete, colors }: SubcategoryList
             color={colors.WARNING}
             containerStyle={{ marginRight: 4 }}
           />
-          <Text style={[itemStyles.warningText, { color: colors.WARNING }]}>No se puede eliminar (tiene gastos)</Text>
+          <Text style={[itemStyles.warningText, { color: colors.WARNING }]}>
+            No se puede eliminar (tiene gastos)
+          </Text>
         </View>
       )}
     </View>
@@ -196,7 +218,7 @@ const itemStyles = StyleSheet.create({
     elevation: 3,
     overflow: 'hidden',
     flexDirection: 'row', // ← AGREGA ESTO (faltaba!)
-    alignItems: 'center', // ← AGREGA ESTO
+    alignItems: 'center' // ← AGREGA ESTO
   },
   iconContainer: {
     width: 36, // ← Reduce de 40 a 36
@@ -205,7 +227,7 @@ const itemStyles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     margin: 12, // ← Reduce de 12 a 10
-    marginRight: 10,
+    marginRight: 10
   },
   infoContainer: {
     flex: 1,

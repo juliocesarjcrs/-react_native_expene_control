@@ -16,10 +16,7 @@ import SubcategoryList from './components/SubcategoryList';
 
 // Types
 import { ExpenseStackParamList } from '~/shared/types';
-import {
-  CreateSubcategoryPayload,
-  SubcategoriesWithExpenses
-} from '~/shared/types/services/subcategories-services.type';
+import { SubcategoriesWithExpenses } from '~/shared/types/services/subcategories-services.type';
 
 // Utils
 import { showError } from '~/utils/showError';
@@ -34,7 +31,10 @@ import { commonStyles } from '~/styles/common';
 // Configs
 import { screenConfigs } from '~/config/screenConfigs';
 
-type CreateSubcategoryScreenNavigationProp = StackNavigationProp<ExpenseStackParamList, 'createSubcategory'>;
+type CreateSubcategoryScreenNavigationProp = StackNavigationProp<
+  ExpenseStackParamList,
+  'createSubcategory'
+>;
 type CreateSubcategoryScreenRouteProp = RouteProp<ExpenseStackParamList, 'createSubcategory'>;
 
 interface CreateSubcategoryScreenProps {
@@ -46,7 +46,10 @@ type FormData = {
   name: string;
 };
 
-export default function CreateSubcategoryScreen({ route, navigation }: CreateSubcategoryScreenProps) {
+export default function CreateSubcategoryScreen({
+  route,
+  navigation
+}: CreateSubcategoryScreenProps) {
   const screenConfig = screenConfigs.createSubcategory;
   const colors = useThemeColors();
   const idCategory = route.params.idCategory;
@@ -144,7 +147,11 @@ export default function CreateSubcategoryScreen({ route, navigation }: CreateSub
           )}
         />
 
-        {loading ? <MyLoading /> : <MyButton onPress={handleSubmit(create)} title="Crear subcategoría" />}
+        {loading ? (
+          <MyLoading />
+        ) : (
+          <MyButton onPress={handleSubmit(create)} title="Crear subcategoría" />
+        )}
 
         <SubcategoryList data={subcategories} updateList={updateList} navigation={navigation} />
       </View>

@@ -1,9 +1,8 @@
-import { ExpenseModel, SubcategoryModel } from "../models";
+import { ExpenseModel, SubcategoryModel } from '../models';
 
 export type CreateExpensePayload = Omit<ExpenseModel, 'id' | 'createdAt' | 'userId'> &
   Partial<Pick<ExpenseModel, 'commentary'>>;
 export type EditExpensePayload = Partial<ExpenseModel>;
-
 
 export type ExpenseSearchOptionsQuery = {
   subcategoriesId: string;
@@ -12,17 +11,15 @@ export type ExpenseSearchOptionsQuery = {
   searchValue?: string;
   orderBy?: 'date' | 'amount';
   order?: 'ASC' | 'DESC';
-}
-
+};
 
 export type GetExpensesLastMonthsFromSubcategoryQuery = {
   numMonths: number;
-}
-
+};
 
 export type FindLastMonthsFromOnlyCategoryQuery = {
   numMonths: number;
-}
+};
 
 export type ExpenseModelWithSubcategories = {
   id: number;
@@ -42,8 +39,8 @@ export type SubcategoryShortModel = {
 
 export type FindExpensesBySubcategoriesResponse = {
   expenses: ExpenseModelWithSubcategories[];
-  sum: number
-}
+  sum: number;
+};
 
 // getLastExpensesWithPaginate
 
@@ -52,7 +49,7 @@ export type GetLastExpensesWithPaginateQuery = {
   page?: number;
   query?: string | null;
   orderBy?: string;
-}
+};
 
 export type LastExpense = {
   id: number;
@@ -71,8 +68,7 @@ export type GetLastExpensesWithPaginateResponse = {
 };
 
 export type GetExpensesFromSubcategoryResponse = ExpenseModel[];
-export type CreateExpenseResponse = ExpenseModel
-
+export type CreateExpenseResponse = ExpenseModel;
 
 export type ComparePeriodsResponse = {
   periodA: {
@@ -116,7 +112,6 @@ export type ComparePeriodsResponse = {
   };
 };
 
-
 export type ComparePeriodsPayload = {
   categories: {
     categoryId: number;
@@ -135,5 +130,3 @@ export type ComparePeriodsPayload = {
 export type GetOneExpenseResponse = ExpenseModel & {
   subcategory: SubcategoryModel;
 };
-
-

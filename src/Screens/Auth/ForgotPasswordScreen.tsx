@@ -13,7 +13,6 @@ import { setUser } from '../../features/auth/authSlice';
 import MyLoading from '../../components/loading/MyLoading';
 import MyButton from '../../components/MyButton';
 
-
 // Types
 import { ForgotPasswordPayload } from '../../shared/types/services';
 import { AppDispatch } from '../../shared/types/reducers/root-state.type';
@@ -61,8 +60,9 @@ export default function ForgotPasswordScreen({ navigation }: forgotPasswordProps
         <View style={styles.container2}>
           <Text>Restablecer su contraseña</Text>
           <Text>
-            Proporcione la dirección de correo electrónico de su cuenta para solicitar un código de restablecimineto de
-            contraseña. Usted recibirá un código a su dirección de correo electrónico, si este es válido.
+            Proporcione la dirección de correo electrónico de su cuenta para solicitar un código de
+            restablecimineto de contraseña. Usted recibirá un código a su dirección de correo
+            electrónico, si este es válido.
           </Text>
           <Controller
             name="email"
@@ -88,7 +88,11 @@ export default function ForgotPasswordScreen({ navigation }: forgotPasswordProps
             )}
             defaultValue=""
           />
-          {loading ? <MyLoading /> : <MyButton title="Solicitar código de reinicio" onPress={handleSubmit(onSubmit)} />}
+          {loading ? (
+            <MyLoading />
+          ) : (
+            <MyButton title="Solicitar código de reinicio" onPress={handleSubmit(onSubmit)} />
+          )}
         </View>
       )}
     </View>

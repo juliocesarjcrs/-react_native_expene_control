@@ -3,11 +3,11 @@ export type ChatMessage = {
   content: string;
   role: 'user' | 'assistant' | 'system';
   createdAt: string;
-}
+};
 
 export type ChatResponse = {
   data: ChatMessage;
-}
+};
 
 export type ConversationHistoryResponse = {
   data: ChatMessage[];
@@ -17,14 +17,14 @@ export type ConversationHistoryResponse = {
     limit: number;
     totalPages: number;
   };
-}
+};
 
 export type Conversation = {
   id: number;
   createdAt: string;
   lastMessage: string;
   messageCount: number;
-}
+};
 
 export type ConversationsResponse = {
   data: Conversation[];
@@ -34,7 +34,7 @@ export type ConversationsResponse = {
     limit: number;
     totalPages: number;
   };
-}
+};
 
 export type NewConversation = {
   provider: string;

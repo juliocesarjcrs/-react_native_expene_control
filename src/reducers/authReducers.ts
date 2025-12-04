@@ -1,10 +1,10 @@
-import { AuthAction, AuthState } from "../shared/types/reducers"
+import { AuthAction, AuthState } from '../shared/types/reducers';
 
 const initialProps = {
   user: null,
   isAuth: false,
   loadingAuth: false
-}
+};
 
 const authReducers = (state = initialProps, action: AuthAction): AuthState => {
   switch (action.type) {

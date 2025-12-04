@@ -7,4 +7,4 @@ export type BudgetModel = {
   categoryId: number;
   subcategoryId: number | null;
   userId: number;
-}
+};

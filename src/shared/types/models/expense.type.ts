@@ -6,8 +6,7 @@ export type ExpenseModel = {
   date: string;
   userId: number;
   subcategoryId: number;
-
-}
+};
 
 export type ExtendedExpenseModel = ExpenseModel & {
   category: string;

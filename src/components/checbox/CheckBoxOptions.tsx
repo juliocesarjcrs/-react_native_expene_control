@@ -34,7 +34,7 @@ interface CheckBoxOptionsProps<T extends StackNavigationProp<ParamListBase>> {
 
 export default function CheckBoxOptions<T extends StackNavigationProp<ParamListBase>>({
   navigation,
-  updateNum,
+  updateNum
 }: CheckBoxOptionsProps<T>) {
   const colors = useThemeColors();
   const [initialMonth, setInitialMonth] = useState<number>(0);
@@ -47,32 +47,32 @@ export default function CheckBoxOptions<T extends StackNavigationProp<ParamListB
       id: 1,
       title: 'Últimos 3 meses',
       checked: true,
-      numMonths: 3,
+      numMonths: 3
     },
     {
       id: 2,
       title: 'Últimos 6 meses',
       checked: false,
-      numMonths: 6,
+      numMonths: 6
     },
     {
       id: 3,
       title: 'Últimos 12 meses',
       checked: false,
-      numMonths: 12,
+      numMonths: 12
     },
     {
       id: 4,
       title: `Desde registro`,
       checked: false,
-      numMonths: 0,
+      numMonths: 0
     },
     {
       id: 5,
       title: 'Personalizada',
       checked: false,
-      numMonths: 0,
-    },
+      numMonths: 0
+    }
   ]);
 
   useEffect(() => {
@@ -99,7 +99,7 @@ export default function CheckBoxOptions<T extends StackNavigationProp<ParamListB
             ? {
                 ...cb,
                 title: `Desde registro (${tempInitialMonth} meses)`,
-                numMonths: tempInitialMonth,
+                numMonths: tempInitialMonth
               }
             : cb
         )
@@ -121,7 +121,7 @@ export default function CheckBoxOptions<T extends StackNavigationProp<ParamListB
             ? {
                 ...cb,
                 title: `Personalizada (${DateFormat(selectedDate, 'DD MMM YYYY')})`,
-                numMonths: customMonths,
+                numMonths: customMonths
               }
             : cb
         )
@@ -134,7 +134,7 @@ export default function CheckBoxOptions<T extends StackNavigationProp<ParamListB
   const toggleCheckbox = (index: number): void => {
     const updatedCheckboxes = checkboxes.map((cb, idx) => ({
       ...cb,
-      checked: idx === index,
+      checked: idx === index
     }));
 
     setCheckboxes(updatedCheckboxes);
@@ -166,10 +166,7 @@ export default function CheckBoxOptions<T extends StackNavigationProp<ParamListB
           {checkboxes.map((cb, index) => (
             <TouchableOpacity
               key={cb.id}
-              style={[
-                styles.checkboxItem,
-                { borderBottomColor: colors.BORDER }
-              ]}
+              style={[styles.checkboxItem, { borderBottomColor: colors.BORDER }]}
               onPress={() => toggleCheckbox(index)}
               activeOpacity={0.7}
             >
@@ -182,10 +179,10 @@ export default function CheckBoxOptions<T extends StackNavigationProp<ParamListB
                   containerStyle={styles.checkboxIcon}
                 />
                 <View style={styles.textContainer}>
-                  <Text 
+                  <Text
                     style={[
-                      styles.checkboxTitle, 
-                      { 
+                      styles.checkboxTitle,
+                      {
                         color: cb.checked ? colors.PRIMARY : colors.TEXT_PRIMARY,
                         fontWeight: cb.checked ? '600' : 'normal'
                       }
@@ -221,34 +218,34 @@ export default function CheckBoxOptions<T extends StackNavigationProp<ParamListB
 
 const styles = StyleSheet.create({
   menuButton: {
-    padding: 4,
+    padding: 4
   },
   popoverContainer: {
     minWidth: 250,
     paddingVertical: 8,
-    borderRadius: 12,
+    borderRadius: 12
   },
   checkboxItem: {
     paddingVertical: 12,
     paddingHorizontal: 16,
-    borderBottomWidth: 1,
+    borderBottomWidth: 1
   },
   checkboxContent: {
     flexDirection: 'row',
-    alignItems: 'center',
+    alignItems: 'center'
   },
   checkboxIcon: {
-    marginRight: 12,
+    marginRight: 12
   },
   textContainer: {
-    flex: 1,
+    flex: 1
   },
   checkboxTitle: {
     fontSize: SMALL + 1,
-    lineHeight: 20,
+    lineHeight: 20
   },
   monthsLabel: {
     fontSize: SMALL - 1,
-    marginTop: 2,
-  },
+    marginTop: 2
+  }
 });

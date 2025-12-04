@@ -25,7 +25,11 @@ interface MyAcordeonIncomeProps {
   updateList: () => void;
 }
 
-export default function MyAcordeonIncome({ data, editCategory, updateList }: MyAcordeonIncomeProps) {
+export default function MyAcordeonIncome({
+  data,
+  editCategory,
+  updateList
+}: MyAcordeonIncomeProps) {
   const colors = useThemeColors();
   const { id, icon, name } = data;
   const [expanded, setExpanded] = useState<boolean>(false);
@@ -85,7 +89,9 @@ export default function MyAcordeonIncome({ data, editCategory, updateList }: MyA
               {name}
             </Text>
             <View style={[styles.badge, { backgroundColor: colors.SUCCESS + '20' }]}>
-              <Text style={[styles.badgeText, { color: colors.SUCCESS }]}>{data.incomes.length}</Text>
+              <Text style={[styles.badgeText, { color: colors.SUCCESS }]}>
+                {data.incomes.length}
+              </Text>
             </View>
           </View>
 
@@ -112,7 +118,9 @@ export default function MyAcordeonIncome({ data, editCategory, updateList }: MyA
         {/* Total de ingresos */}
         <View style={styles.totalSection}>
           <Text style={[styles.totalLabel, { color: colors.TEXT_SECONDARY }]}>Total ingresos:</Text>
-          <Text style={[styles.totalAmount, { color: colors.SUCCESS }]}>{NumberFormat(data.total)}</Text>
+          <Text style={[styles.totalAmount, { color: colors.SUCCESS }]}>
+            {NumberFormat(data.total)}
+          </Text>
         </View>
 
         <Divider style={{ backgroundColor: colors.BORDER, marginTop: 8 }} />

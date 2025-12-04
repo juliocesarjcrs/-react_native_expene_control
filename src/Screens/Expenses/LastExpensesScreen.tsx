@@ -29,7 +29,10 @@ import { commonStyles } from '~/styles/common';
 import { screenConfigs } from '~/config/screenConfigs';
 import { useThemeColors } from '~/customHooks/useThemeColors';
 
-export type LastExpenseScreenNavigationProp = StackNavigationProp<ExpenseStackParamList, 'lastExpenses'>;
+export type LastExpenseScreenNavigationProp = StackNavigationProp<
+  ExpenseStackParamList,
+  'lastExpenses'
+>;
 
 interface LastExpenseScreenProps {
   navigation: LastExpenseScreenNavigationProp;
@@ -88,9 +91,9 @@ export default function LastExpensesScreen({ navigation }: LastExpenseScreenProp
       }
       let newList: ExtendedExpenseModel[] = [];
       if (reset) {
-        newList = data.data.map((e) => ({ ...e } as ExtendedExpenseModel));
+        newList = data.data.map((e) => ({ ...e }) as ExtendedExpenseModel);
       } else {
-        newList = [...lastExpenses, ...data.data.map((e) => ({ ...e } as ExtendedExpenseModel))];
+        newList = [...lastExpenses, ...data.data.map((e) => ({ ...e }) as ExtendedExpenseModel)];
       }
       setLastExpenses(newList);
     } catch (e) {
@@ -116,14 +119,22 @@ export default function LastExpensesScreen({ navigation }: LastExpenseScreenProp
   };
 
   return (
-    <SafeAreaView style={[commonStyles.screenContentWithPadding, { backgroundColor: colors.BACKGROUND }]}>
+    <SafeAreaView
+      style={[commonStyles.screenContentWithPadding, { backgroundColor: colors.BACKGROUND }]}
+    >
       <ScreenHeader title={config.title} subtitle={config.subtitle} />
       <FlatList
         testID="flatlist-expenses"
         data={lastExpenses}
-        renderItem={({ item }) => <RenderItemExpense item={item} navigation={navigation} updateList={updateList} />}
+        renderItem={({ item }) => (
+          <RenderItemExpense item={item} navigation={navigation} updateList={updateList} />
+        )}
         keyExtractor={(item) => item.id.toString()}
-        ListEmptyComponent={() => <Text style={[styles.textMuted, { color: colors.DARK_GRAY}]}>No se registran últimos gastos</Text>}
+        ListEmptyComponent={() => (
+          <Text style={[styles.textMuted, { color: colors.DARK_GRAY }]}>
+            No se registran últimos gastos
+          </Text>
+        )}
         initialNumToRender={10}
         onEndReached={loadMoreData}
         onEndReachedThreshold={0.1}

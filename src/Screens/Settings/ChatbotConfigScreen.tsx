@@ -38,8 +38,8 @@ import { commonStyles } from '~/styles/common';
 import { screenConfigs } from '~/config/screenConfigs';
 import { ScreenHeader } from '~/components/ScreenHeader';
 export const ChatbotConfigScreen = () => {
-   const config = screenConfigs.chatbotConfig;
-   const colors = useThemeColors();
+  const config = screenConfigs.chatbotConfig;
+  const colors = useThemeColors();
 
   const [configs, setConfigs] = useState<ChatbotConfig[]>([]);
   const [selectedConfig, setSelectedConfig] = useState<ChatbotConfig | null>(null);
@@ -97,11 +97,7 @@ export const ChatbotConfigScreen = () => {
 
     try {
       setLoading(true);
-      await updateChatbotConfig(
-        selectedConfig.config_key,
-        newValue,
-        'Ajuste desde admin panel'
-      );
+      await updateChatbotConfig(selectedConfig.config_key, newValue, 'Ajuste desde admin panel');
       Alert.alert('Éxito', 'Configuración actualizada correctamente');
       await loadConfigs();
       await invalidateConfigCache();
@@ -139,7 +135,9 @@ export const ChatbotConfigScreen = () => {
   }
 
   return (
-    <ScrollView style={[commonStyles.screenContentWithPadding, { backgroundColor: colors.BACKGROUND }]}>
+    <ScrollView
+      style={[commonStyles.screenContentWithPadding, { backgroundColor: colors.BACKGROUND }]}
+    >
       <ScreenHeader title={config.title} subtitle={config.subtitle} />
 
       {/* Botón de recarga global */}

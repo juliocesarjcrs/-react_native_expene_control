@@ -1,5 +1,5 @@
-import { AIModel, HealthStatusModel, ModelInfoModel } from "../models/ai-model.type";
-import { ConversationLogModel } from "../models/conversation-log.type";
+import { AIModel, HealthStatusModel, ModelInfoModel } from '../models/ai-model.type';
+import { ConversationLogModel } from '../models/conversation-log.type';
 
 export type getCurrentModelResponse = {
   model: ModelInfoModel;
@@ -33,7 +33,6 @@ export type ModelErrorModel = {
 
 export type GetModelErrorsResponse = ModelErrorModel[];
 
-
 export type CreateAIModelDto = {
   provider_type: 'openrouter' | 'openai' | 'custom';
   model_name: string;
@@ -45,7 +44,7 @@ export type CreateAIModelDto = {
   temperature?: number;
   supports_tools?: boolean;
   metadata?: Record<string, any>;
-}
+};
 
 export type UpdateAIModelDto = {
   provider_type?: 'openrouter' | 'openai' | 'custom';
@@ -58,4 +57,4 @@ export type UpdateAIModelDto = {
   temperature?: number;
   supports_tools?: boolean;
   metadata?: Record<string, any>;
-}
+};

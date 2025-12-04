@@ -1,4 +1,4 @@
-import { CategoryModel } from "./category.type";
+import { CategoryModel } from './category.type';
 
 export type SubcategoryModel = {
   id: number;
@@ -9,4 +9,4 @@ export type SubcategoryModel = {
 
   // RELACIÓN
   category?: CategoryModel;
-}
+};

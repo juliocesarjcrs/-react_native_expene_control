@@ -1,12 +1,12 @@
-import { URL_BASE } from "@env";
+import { URL_BASE } from '@env';
 import { ApolloClient, ApolloLink, HttpLink, InMemoryCache } from '@apollo/client';
 import { SetContextLink } from '@apollo/client/link/context';
 import { ErrorLink, onError } from '@apollo/client/link/error';
-import { getToken } from "./auth";
-import { ToastAndroid } from "react-native";
+import { getToken } from './auth';
+import { ToastAndroid } from 'react-native';
 // Crea el enlace HTTP
 const httpLink = new HttpLink({
-  uri: `${URL_BASE}graphql`,
+  uri: `${URL_BASE}graphql`
 });
 // Manejo global de errores
 const errorLink = new ErrorLink(({ error, result }) => {
@@ -19,7 +19,6 @@ const errorLink = new ErrorLink(({ error, result }) => {
   }
 });
 
-
 const showToast = (msg: string) => {
   ToastAndroid.show(msg, ToastAndroid.SHORT);
 };
@@ -31,18 +30,15 @@ const authLink = new SetContextLink(async (prevContext, operation) => {
     ...prevContext,
     headers: {
       ...prevContext.headers,
-      authorization: token ? `Bearer ${token}` : '',
+      authorization: token ? `Bearer ${token}` : ''
     }
   };
 });
 
-
 // Combina los enlaces
 const client = new ApolloClient({
   link: ApolloLink.from([authLink, errorLink, httpLink]), // Concatenación de los enlaces
-  cache: new InMemoryCache(),
+  cache: new InMemoryCache()
 });
 
-
 export default client;
-

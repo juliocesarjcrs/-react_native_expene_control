@@ -1,9 +1,8 @@
-export type  Loan = {
+export type Loan = {
   id: number;
-  date: string,
-  createdAt: string,
+  date: string;
+  createdAt: string;
   type: number;
-  commentary: string | null
-  loan: string
-}
-
+  commentary: string | null;
+  loan: string;
+};

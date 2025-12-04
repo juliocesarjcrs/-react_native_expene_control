@@ -7,19 +7,19 @@ export type ExpenseModal = {
   categoryId: number | null;
   subcategoryId: number | null;
   date?: Date;
-}
+};
 
 export type CategoryDropdown = {
   label: string;
   value: number;
   icon?: () => React.ReactElement;
   subcategories?: SubcategoryDropdown[];
-}
+};
 
 export type SubcategoryDropdown = {
   label: string;
   value: number;
-}
+};
 
 export type MultiExpenseModalProps = {
   imageUri?: string | null;
@@ -27,7 +27,7 @@ export type MultiExpenseModalProps = {
   onSave: (expenses: CreateExpensePayload[]) => void;
   onClose: (updatedProducts?: ExpenseModal[]) => void;
   initialExpenses?: ExpenseModal[];
-}
+};
 
 export type ExpenseItemProps = {
   item: ExpenseModal;
@@ -37,4 +37,4 @@ export type ExpenseItemProps = {
   onUpdate: <K extends keyof ExpenseModal>(index: number, field: K, value: ExpenseModal[K]) => void;
   isDropdownOpen: number | null;
   setIsDropdownOpen: (index: number | null) => void;
-}
+};

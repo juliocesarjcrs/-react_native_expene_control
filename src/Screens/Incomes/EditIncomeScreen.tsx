@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
-import { Keyboard, StyleSheet, View } from 'react-native';
+import { Keyboard, View } from 'react-native';
 import { useForm, Controller } from 'react-hook-form';
-import { Input, Button } from 'react-native-elements';
+import { Input } from 'react-native-elements';
 import { RouteProp } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
 
@@ -12,7 +12,8 @@ import { editIncome } from '../../services/incomes';
 import { DateSelector } from '../../components/datePicker';
 import SelectOnlyCategory from '../../components/dropDown/SelectOnlyCategory';
 import MyLoading from '../../components/loading/MyLoading';
-import ShowToast from '../../utils/toastUtils';
+import MyButton from '~/components/MyButton';
+import { ScreenHeader } from '~/components/ScreenHeader';
 
 // Types
 import { EditIncomePayload } from '../../shared/types/services/income-service.type';
@@ -22,10 +23,17 @@ import { IncomesPayloadOnSubmit } from '~/shared/types/screens/incomes';
 
 // Utils
 import { DateFormat } from '../../utils/Helpers';
-import { Errors } from '../../utils/Errors';
+import { showError } from '~/utils/showError';
+import { ShowToast } from '../../utils/toastUtils';
+
+// Theme
+import { useThemeColors } from '~/customHooks/useThemeColors';
 
 // Styles
-import { SECUNDARY } from '../../styles/colors';
+import { commonStyles } from '~/styles/common';
+
+// Configs
+import { screenConfigs } from '~/config/screenConfigs';
 
 type EditIncomeScreenNavigationProp = StackNavigationProp<IncomeStackParamList, 'editIncome'>;
 type EditIncomeScreenRouteProp = RouteProp<IncomeStackParamList, 'editIncome'>;
@@ -36,114 +44,119 @@ interface EditIncomeScreenProps {
 }
 
 export default function EditIncomeScreen({ navigation, route }: EditIncomeScreenProps) {
-  const idIncome = route.params.objectIncome.id;
-  const objectIncome = route.params.objectIncome;
+  const config = screenConfigs.editIncome;
+  const colors = useThemeColors();
+
+  const { objectIncome } = route.params;
+  const idIncome = objectIncome.id;
+
   const [initialCategoryId] = useState<number | null>(objectIncome.idCategory);
   const [idCategory, setIdCategory] = useState<number | null>(null);
 
-  const [incomeEdit] = useState({
-    amount: objectIncome.cost.toString(),
-    commentary: objectIncome.commentary
-  });
-  const {
-    handleSubmit,
-    control,
-    reset,
-
-    formState: { errors }
-  } = useForm({
-    defaultValues: incomeEdit
-  });
-
   const [loading, setLoading] = useState(false);
 
-  //   DATE pIKER ---------------  ///////////////
+  // Default form values
+  const {
+    control,
+    handleSubmit,
+    reset,
+    formState: { errors }
+  } = useForm({
+    defaultValues: {
+      amount: objectIncome.cost.toString(),
+      commentary: objectIncome.commentary
+    }
+  });
+
+  // DATE PICKER ------------------------------------
   const loadDate = new Date(objectIncome.date);
   loadDate.setMinutes(loadDate.getMinutes() + loadDate.getTimezoneOffset());
-  const [date, setDate] = useState<Date>(loadDate);
 
+  const [date, setDate] = useState<Date>(loadDate);
   const [showDate, setShowDate] = useState(false);
 
   const handleStartDateChange = (selectedDate?: Date) => {
     setShowDate(false);
-    if (selectedDate) {
-      setDate(selectedDate);
-    }
-  };
-  const showStartDatePicker = () => {
-    setShowDate(true);
+    if (selectedDate) setDate(selectedDate);
   };
 
-  const handleCategoryChange = async (foundCategory: DropDownSelectFormat) => {
-    setIdCategory(foundCategory.id);
+  const handleCategoryChange = (found: DropDownSelectFormat) => {
+    setIdCategory(found.id);
   };
 
   const onSubmit = async (payload: IncomesPayloadOnSubmit) => {
     try {
-      if (!idCategory) {
-        return;
-      }
-      const payloadSend = {
-        ...payload,
-        amount: parseInt(payload.amount)
-      };
+      if (!idCategory) return;
+
+      setLoading(true);
+
       const dataSend: EditIncomePayload = {
-        ...payloadSend,
+        ...payload,
+        amount: parseInt(payload.amount),
         categoryId: idCategory,
         date: DateFormat(date, 'YYYY-MM-DD')
       };
-      setLoading(true);
+
       await editIncome(idIncome, dataSend);
+
       setLoading(false);
-      ShowToast();
       reset();
       Keyboard.dismiss();
+      ShowToast();
+
       navigation.goBack();
-      // navigation.navigate('lastIncomes');
-      // navigation.navigate('lastIncomes', { data });
     } catch (error) {
       setLoading(false);
-      Errors(error);
+      showError(error);
     }
   };
+
   return (
-    <View style={styles.container}>
+    <View style={[commonStyles.screenContentWithPadding, { backgroundColor: colors.BACKGROUND }]}>
+      <ScreenHeader title={config.title} subtitle={config.subtitle} />
+
       <SelectOnlyCategory
         searchType={1}
         handleCategoryChange={handleCategoryChange}
         selectedCategoryId={initialCategoryId}
       />
+
+      {/* AMOUNT */}
       <Controller
         name="amount"
         control={control}
         rules={{
-          required: { value: true, message: 'El costo es obligatorio' },
-          min: { value: 1, message: 'El minimó valor aceptado es 1' },
-          max: {
-            value: 99999999,
-            message: 'El costo no puede superar el valor de 99.999.999 '
-          }
+          required: { value: true, message: 'El ingreso es obligatorio' },
+          min: { value: 1, message: 'Valor mínimo: 1' },
+          max: { value: 99999999, message: 'Máximo permitido: 99.999.999' }
         }}
         render={({ field: { onChange, value } }) => (
           <Input
             label="Ingreso"
             value={value}
             placeholder="Ej: 20000"
-            onChangeText={(text) => onChange(text)}
-            errorStyle={{ color: 'red' }}
-            errorMessage={errors?.amount?.message}
+            onChangeText={onChange}
             keyboardType="numeric"
+            inputStyle={{ color: colors.TEXT_PRIMARY }}
+            labelStyle={{ color: colors.TEXT_PRIMARY }}
+            placeholderTextColor={colors.GRAY}
+            errorStyle={{ color: colors.ERROR }}
+            errorMessage={errors.amount?.message}
+            inputContainerStyle={{
+              borderBottomColor: colors.GRAY
+            }}
           />
         )}
-        defaultValue=""
       />
+
+      {/* COMMENTARY */}
       <Controller
         name="commentary"
         control={control}
         rules={{
           maxLength: {
             value: 200,
-            message: 'El comenatario no puede superar los 200 carácteres '
+            message: 'Máximo 200 caracteres'
           }
         }}
         render={({ field: { onChange, value } }) => (
@@ -151,44 +164,33 @@ export default function EditIncomeScreen({ navigation, route }: EditIncomeScreen
             label="Comentario"
             value={value}
             placeholder="Ej: Nómina, quincena"
-            onChangeText={(text) => onChange(text)}
+            onChangeText={onChange}
             multiline
-            numberOfLines={2}
-            errorStyle={{ color: 'red' }}
-            errorMessage={errors?.commentary?.message}
+            numberOfLines={3}
+            inputStyle={{ color: colors.TEXT_PRIMARY }}
+            labelStyle={{ color: colors.TEXT_PRIMARY }}
+            placeholderTextColor={colors.GRAY}
+            errorStyle={{ color: colors.ERROR }}
+            errorMessage={errors.commentary?.message}
+            inputContainerStyle={{
+              borderBottomColor: colors.GRAY
+            }}
           />
         )}
-        defaultValue=""
       />
+
+      {/* DATE SELECTOR */}
       <DateSelector
-        label="  Fecha "
+        label="Fecha"
         date={date}
         showDatePicker={showDate}
-        onPress={showStartDatePicker}
+        onPress={() => setShowDate(true)}
         onDateChange={handleStartDateChange}
         onCancel={() => setShowDate(false)}
       />
-      {loading ? (
-        <MyLoading />
-      ) : (
-        <Button title="Guardar" buttonStyle={{ backgroundColor: SECUNDARY }} onPress={handleSubmit(onSubmit)} />
-      )}
+
+      {/* BUTTON */}
+      {loading ? <MyLoading /> : <MyButton title="Guardar" onPress={handleSubmit(onSubmit)} />}
     </View>
   );
 }
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#fff'
-  },
-  containerDate: {
-    display: 'flex',
-    flexDirection: 'row'
-  },
-  textDate: {
-    paddingVertical: 10,
-    paddingHorizontal: 10,
-    color: 'white',
-    backgroundColor: '#c5c5c5'
-  }
-});

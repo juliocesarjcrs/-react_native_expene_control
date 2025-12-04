@@ -1,33 +1,32 @@
-import { CategoryModel, IncomeModel } from "../models";
+import { CategoryModel, IncomeModel } from '../models';
 
-export type AllExpensesByRangeDatesResponse  = {
-  tableHead: string[]
+export type AllExpensesByRangeDatesResponse = {
+  tableHead: string[];
   rows: (string | number)[][];
-}
+};
 
 export type GetCategoriesParams = {
-  type: number
-}
+  type: number;
+};
 
-export type GetCategoriesResponse  =  CategoryModel[];
+export type GetCategoriesResponse = CategoryModel[];
 
-export type CreateCategoryPayload = Omit<CategoryModel, 'id'>;
+export type CreateCategoryPayload = Omit<CategoryModel, 'id' | 'userId' | 'createdAt' | 'budget'>;
 export type EditCategoryPayload = Partial<CategoryModel>;
 
-
 // GetAllSubcategoriesExpensesByMonth
-export type GetAllSubcategoriesExpensesByMonthResponse  = {
-  data: Category[];
+export type GetAllSubcategoriesExpensesByMonthResponse = {
+  data: CategoryExpense[];
   total: number;
-}
+};
 
-export type Subcategory = {
+export type SubcategoryExpense = {
   id: number;
   name: string;
   total: number;
-}
+};
 
-export type Category = {
+export type CategoryExpense = {
   id: number;
   name: string;
   icon: string;
@@ -35,8 +34,8 @@ export type Category = {
   budget: number;
   userId: number;
   total: number;
-  subcategories: Subcategory[];
-}
+  subcategories: SubcategoryExpense[];
+};
 
 export type CategoryIncomesSumary = {
   id: number;
@@ -50,23 +49,22 @@ export type CategoryIncomesSumary = {
   incomes: IncomeModel[];
 };
 // getCategoryTypeIncome
-export type GetCategoryTypeIncomeResponse  =  {
+export type GetCategoryTypeIncomeResponse = {
   data: CategoryIncomesSumary[];
   total: number;
-}
+};
 
 export type CateroryFormatIncome = {
-  label: string
-  value: number,
+  label: string;
+  value: number;
   // iconName?: string | null
-
-}
+};
 // GetCategoryWithSubcategories
 export type GetCategoryWithSubcategoriesResponse = {
-  data: Category[];
-}
+  data: CategoryExpense[];
+};
 
-export type CategoryWithoutTypeAndSubcategories = Omit<Category, 'type' | 'subcategories'>;
+export type CategoryWithoutTypeAndSubcategories = Omit<CategoryExpense, 'type' | 'subcategories'>;
 
 export type GetAllExpensesByMonthResponse = {
   data: CategoryWithoutTypeAndSubcategories[];

@@ -1,1 +1,1 @@
-export { CateroryFormat, DropDownSelectFormat} from './SelectOnlyCategory.type'
+export { CateroryFormat, DropDownSelectFormat } from './SelectOnlyCategory.type';

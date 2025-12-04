@@ -1,8 +1,8 @@
-import { SetQueryAction } from "../shared/types/actions/search-actions";
+import { SetQueryAction } from '../shared/types/actions/search-actions';
 
-export const setQueryAction = (state: string  | null ): SetQueryAction => {
+export const setQueryAction = (state: string | null): SetQueryAction => {
   return {
-    type: "SET_QUERY",
-    payload: state,
+    type: 'SET_QUERY',
+    payload: state
   };
 };

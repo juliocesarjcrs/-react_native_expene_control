@@ -7,7 +7,7 @@ export type SearchExpensesState = {
 
 const initialState: SearchExpensesState = {
   query: null,
-  fullData: [],
+  fullData: []
 };
 
 const searchExpensesSlice = createSlice({
@@ -19,8 +19,8 @@ const searchExpensesSlice = createSlice({
     },
     setFullData: (state, action: PayloadAction<any[]>) => {
       state.fullData = action.payload;
-    },
-  },
+    }
+  }
 });
 
 export const { setQuery, setFullData } = searchExpensesSlice.actions;

@@ -1,4 +1,4 @@
-import { extractProducts } from "~/utils/parsers";
+import { extractProducts } from '~/utils/parsers';
 describe('extractProducts', () => {
   describe('Carulla receipts', () => {
     it('should parse multiple products from Carulla receipt (case 1)', () => {
@@ -30,17 +30,61 @@ describe('extractProducts', () => {
     it('should handle multiple(11) products from invoice type Carulla (case 4)', () => {
       const ocr = `PLU\tDETALLE\tPRECIO\t\r\n1 0.305/KGM x 9.340 V. Ahorro 854\t\r\n1138\tRemolacha A Gran\t1.995\t\r\n2 0.750/KGM x 3.060 V. Ahorro 689\t\r\n1862\tAHUYAMA ENTERA\t1.606\t\r\n3 0.800/KGM x 6.600 V. Ahorro 1.584\t\r\n1279\tCebolla Roja.\t3.696\t\r\n4 1.140/KGM x 4.060 V. Ahorro 1.389\t\r\n1025\tChocolo Tierno(M\t3.239\t\r\n5 2. 415/KGM x 3.040 V. Ahorro 2.203\t\r\n1179\tPapaya Comun\t5.139\t\r\n6 0. 435/KGM x 7.460 V. Ahorro 974\t\r\n1002\tAcelga\t2.271\t\r\n7 0.475/KGM x 8.120 V. Ahorro 1.157\t\r\n1188\tPepino Zukini\t2.700\t\r\n8 0.860/KGM x 5.980 V. Ahorro 1.543\t\r\n1098\tTomate Chonto (A\t3.600\t\r\n9\t0.860/KGM x 3.980 V. Ahorro 1.026\t\r\n1141\tZanahoria A Gran\t2,397\t\r\n10 1.455/KGM x 2.960 V. Ahorro 1.292\t\r\n1161\tPlatano Maduro\t3. 015\t\r\n11 1.795/KGM x 4.800 V. Ahorro 2.584\t\r\n1260\tYuca fresca\t6.032\t\r\nTotal Item :11\t\r\nSUBTOTAL\t50.985\t\r\nDESCUENTO\t15.295\t\r\nAHORRO\t15.295\t\r\nVALOR TOTAL\t35.690\t\r\n`;
       expect(extractProducts(ocr)).toEqual([
-        { description: 'Remolacha A Gran — 0.305 kg (Precio original: $9.340/kg) con 30% de descuento Precio final: $6.540/kg', price: 1995 },
-        { description: 'Ahuyama Entera — 0.750 kg (Precio original: $3.060/kg) con 30% de descuento Precio final: $2.141/kg', price: 1606 },
-        { description: 'Cebolla Roja — 0.800 kg (Precio original: $6.600/kg) con 30% de descuento Precio final: $4.620/kg', price: 3696 },
-        { description: 'Chocolo Tierno(M — 1.140 kg (Precio original: $4.060/kg) con 30% de descuento Precio final: $2.842/kg', price: 3239 },
-        { description: 'Papaya Comun — 2.415 kg (Precio original: $3.040/kg) con 30% de descuento Precio final: $2.128/kg', price: 5139 },
-        { description: "Acelga — 0.435 kg (Precio original: $7.460/kg) con 30% de descuento Precio final: $5.221/kg", price: 2271 },
-        { description: 'Pepino Zukini — 0.475 kg (Precio original: $8.120/kg) con 30% de descuento Precio final: $5.684/kg', price: 2700 },
-        { description: 'Tomate Chonto (A — 0.860 kg (Precio original: $5.980/kg) con 30% de descuento Precio final: $4.186/kg', price: 3600 },
-        { description: 'Zanahoria A Gran — 0.860 kg (Precio original: $3.980/kg) con 30% de descuento Precio final: $2.787/kg', price: 2397 },
-        { description: 'Platano Maduro — 1.455 kg (Precio original: $2.960/kg) con 30% de descuento Precio final: $2.072/kg', price: 3015 },
-        { description: 'Yuca Fresca — 1.795 kg (Precio original: $4.800/kg) con 30% de descuento Precio final: $3.360/kg', price: 6032 }
+        {
+          description:
+            'Remolacha A Gran — 0.305 kg (Precio original: $9.340/kg) con 30% de descuento Precio final: $6.540/kg',
+          price: 1995
+        },
+        {
+          description:
+            'Ahuyama Entera — 0.750 kg (Precio original: $3.060/kg) con 30% de descuento Precio final: $2.141/kg',
+          price: 1606
+        },
+        {
+          description:
+            'Cebolla Roja — 0.800 kg (Precio original: $6.600/kg) con 30% de descuento Precio final: $4.620/kg',
+          price: 3696
+        },
+        {
+          description:
+            'Chocolo Tierno(M — 1.140 kg (Precio original: $4.060/kg) con 30% de descuento Precio final: $2.842/kg',
+          price: 3239
+        },
+        {
+          description:
+            'Papaya Comun — 2.415 kg (Precio original: $3.040/kg) con 30% de descuento Precio final: $2.128/kg',
+          price: 5139
+        },
+        {
+          description:
+            'Acelga — 0.435 kg (Precio original: $7.460/kg) con 30% de descuento Precio final: $5.221/kg',
+          price: 2271
+        },
+        {
+          description:
+            'Pepino Zukini — 0.475 kg (Precio original: $8.120/kg) con 30% de descuento Precio final: $5.684/kg',
+          price: 2700
+        },
+        {
+          description:
+            'Tomate Chonto (A — 0.860 kg (Precio original: $5.980/kg) con 30% de descuento Precio final: $4.186/kg',
+          price: 3600
+        },
+        {
+          description:
+            'Zanahoria A Gran — 0.860 kg (Precio original: $3.980/kg) con 30% de descuento Precio final: $2.787/kg',
+          price: 2397
+        },
+        {
+          description:
+            'Platano Maduro — 1.455 kg (Precio original: $2.960/kg) con 30% de descuento Precio final: $2.072/kg',
+          price: 3015
+        },
+        {
+          description:
+            'Yuca Fresca — 1.795 kg (Precio original: $4.800/kg) con 30% de descuento Precio final: $3.360/kg',
+          price: 6032
+        }
       ]);
     });
     it('should handle invoice type Carulla with broken header (case 5)', () => {
@@ -59,12 +103,32 @@ describe('extractProducts', () => {
         1290	Lechuga	Batavia	2.412
         Total Item :6`;
       expect(extractProducts(ocr)).toEqual([
-        { description: 'Habichuela A Gra — 0.345 kg (Precio original: $10.480/kg) con 30% de descuento Precio final: $7.335/kg', price: 2531 },
+        {
+          description:
+            'Habichuela A Gra — 0.345 kg (Precio original: $10.480/kg) con 30% de descuento Precio final: $7.335/kg',
+          price: 2531
+        },
         { description: 'Champi#%N Tajado', price: 5250 },
-        { description: 'Pepino Cohombro — 0.945 kg (Precio original: $2.040/kg) con 30% de descuento Precio final: $1.428/kg', price: 1350 },
-        { description: 'Zanahoria A Gran — 1.065 kg (Precio original: $5.700/kg) con 30% de descuento Precio final: $3.990/kg', price: 4250 },
-        { description: 'Yuca Fresca — 1.560 kg (Precio original: $4.700/kg) con 30% de descuento Precio final: $3.290/kg', price: 5132 },
-        { description: 'Lechuga Batavia — 0.480 kg (Precio original: $7.180/kg) con 30% de descuento Precio final: $5.026/kg', price: 2412 }
+        {
+          description:
+            'Pepino Cohombro — 0.945 kg (Precio original: $2.040/kg) con 30% de descuento Precio final: $1.428/kg',
+          price: 1350
+        },
+        {
+          description:
+            'Zanahoria A Gran — 1.065 kg (Precio original: $5.700/kg) con 30% de descuento Precio final: $3.990/kg',
+          price: 4250
+        },
+        {
+          description:
+            'Yuca Fresca — 1.560 kg (Precio original: $4.700/kg) con 30% de descuento Precio final: $3.290/kg',
+          price: 5132
+        },
+        {
+          description:
+            'Lechuga Batavia — 0.480 kg (Precio original: $7.180/kg) con 30% de descuento Precio final: $5.026/kg',
+          price: 2412
+        }
       ]);
     });
     it('should handle Carulla (case 6)', () => {
@@ -75,7 +139,11 @@ describe('extractProducts', () => {
         1486	Aguacate Und	3.780
         Total Item :26`;
       expect(extractProducts(ocr)).toEqual([
-        { description: 'Carne Asar Freir — 0.265 kg (Precio original: $26.600/kg) con 0% de descuento.', price: 7049 },
+        {
+          description:
+            'Carne Asar Freir — 0.265 kg (Precio original: $26.600/kg) con 0% de descuento.',
+          price: 7049
+        },
         { description: 'Aguacate Und', price: 3780 }
       ]);
     });
@@ -103,16 +171,23 @@ describe('extractProducts', () => {
         3649296 Choco Cookies Ch	6. 140A
         Total Item :9`;
       expect(extractProducts(ocr)).toEqual([
-        { description: "Sixpack Cola&Pol", price: 10625 },
-        { description: "Galletas Antojos", price: 3132 },
-        { description: "Galletas Antojos", price: 3132 },
-        { description: "Pechuga Blanca M — 1.085 kg (Precio original: $19.900/kg) con 15% de descuento Precio final: $16.915/kg", price: 18353 },
-        { description: "Galletas Yogurt", price: 4640 },
-        { description: "Salsa Sabor Ajo", price: 7210 },
-        { description: "Cebolla Blanca S — 0.555 kg (Precio original: $6.280/kg) con 0% de descuento.", price: 3485 },
-        { description: "Chorizo Santarro", price: 4620 },
-        { description: "Choco Cookies Ch", price: 6140 },
-
+        { description: 'Sixpack Cola&Pol', price: 10625 },
+        { description: 'Galletas Antojos', price: 3132 },
+        { description: 'Galletas Antojos', price: 3132 },
+        {
+          description:
+            'Pechuga Blanca M — 1.085 kg (Precio original: $19.900/kg) con 15% de descuento Precio final: $16.915/kg',
+          price: 18353
+        },
+        { description: 'Galletas Yogurt', price: 4640 },
+        { description: 'Salsa Sabor Ajo', price: 7210 },
+        {
+          description:
+            'Cebolla Blanca S — 0.555 kg (Precio original: $6.280/kg) con 0% de descuento.',
+          price: 3485
+        },
+        { description: 'Chorizo Santarro', price: 4620 },
+        { description: 'Choco Cookies Ch', price: 6140 }
       ]);
     });
     it('should handle Carulla (case 8)', () => {
@@ -170,13 +245,33 @@ describe('extractProducts', () => {
         876865 PECHO CORRIENTE
         - Total Item :6`;
       expect(extractProducts(ocr)).toEqual([
-        { description: 'Pechuga Campesin — 0.965 kg (Precio original: $21.500/kg) con 20% de descuento Precio final: $17.199/kg', price: 16598 },
-        { description: 'Pechuga Blanca M — 1.140 kg (Precio original: $19.900/kg) con 20% de descuento Precio final: $15.920/kg', price: 18149 },
-        { description: 'Lomo Caracha* — 0.500 kg (Precio original: $46.280/kg) con 20% de descuento Precio final: $37.024/kg', price: 18512 },
+        {
+          description:
+            'Pechuga Campesin — 0.965 kg (Precio original: $21.500/kg) con 20% de descuento Precio final: $17.199/kg',
+          price: 16598
+        },
+        {
+          description:
+            'Pechuga Blanca M — 1.140 kg (Precio original: $19.900/kg) con 20% de descuento Precio final: $15.920/kg',
+          price: 18149
+        },
+        {
+          description:
+            'Lomo Caracha* — 0.500 kg (Precio original: $46.280/kg) con 20% de descuento Precio final: $37.024/kg',
+          price: 18512
+        },
         { description: 'Estuche Surtido', price: 19900 },
-        { description: 'Limon Tahiti A G — 0.905 kg (Precio original: $2.400/kg) con 0% de descuento.', price: 2172 },
-        { description: 'Pecho Corriente — 0.570 kg (Precio original: $29.280/kg) con 20% de descuento Precio final: $23.424/kg', price: 0 },
-      ])
+        {
+          description:
+            'Limon Tahiti A G — 0.905 kg (Precio original: $2.400/kg) con 0% de descuento.',
+          price: 2172
+        },
+        {
+          description:
+            'Pecho Corriente — 0.570 kg (Precio original: $29.280/kg) con 20% de descuento Precio final: $23.424/kg',
+          price: 0
+        }
+      ]);
     });
     it('should handle Carulla (case 12)', () => {
       const ocr = `PLU	DETALLE	PRECIO
@@ -188,10 +283,17 @@ describe('extractProducts', () => {
         942160 Panela 4 Und	6.770
         Total Item :3`;
       expect(extractProducts(ocr)).toEqual([
-        { description: "Banano — 0.995 kg (Precio original: $4.260/kg) con 20% de descuento Precio final: $3.408/kg", price: 3391 },
-        { description: "Zanahoria A Gran — 1.345 kg (Precio original: $2.720/kg) con 0% de descuento.", price: 3658 },
+        {
+          description:
+            'Banano — 0.995 kg (Precio original: $4.260/kg) con 20% de descuento Precio final: $3.408/kg',
+          price: 3391
+        },
+        {
+          description:
+            'Zanahoria A Gran — 1.345 kg (Precio original: $2.720/kg) con 0% de descuento.',
+          price: 3658
+        }
         // { description: 'Panela 4 Und', price: 6770 },
-
       ]);
     });
     it('should handle Carulla (case 13)', () => {
@@ -200,9 +302,7 @@ describe('extractProducts', () => {
         3524902 Patitos	Humedos	4. 130A
         Total Item :1
         `;
-      expect(extractProducts(ocr)).toEqual([
-        { description: "Patitos Humedos", price: 4130 }
-      ]);
+      expect(extractProducts(ocr)).toEqual([{ description: 'Patitos Humedos', price: 4130 }]);
     });
     // it('should handle Carulla (case 14)', () => {
     //   const ocr = `PRECIO
@@ -215,7 +315,8 @@ describe('extractProducts', () => {
     //     { description: 'Huevo 12Und Rojo', price: 10900 },// Revisar: Quedó Separado el precio por eso No lo detectó
     //   ]);
     // });
-    it('should handle Carulla (case 15)', () => { // antes era exito
+    it('should handle Carulla (case 15)', () => {
+      // antes era exito
       const exitoText =
         '202b 10191\t\r\nDETALLE\tPRECIO\t\r\nPLU\tV. Ahorro\t6.225\t\r\n1 0.944/KGM x 21.980\t14.524\t\r\n737288 Tilapia Roja\t\r\n2 1/u x 14.950 V. Ahorro 3.738\t11.212A\t\r\n608937 Lavaplatos en Cr\t\r\nTotal Item :2\t\r\n35.699\t\r\n';
 
@@ -238,9 +339,17 @@ describe('extractProducts', () => {
        `;
 
       expect(extractProducts(ocr)).toEqual([
-        { description: 'Pechuga Blanca M — 1.990 kg (Precio original: $19.900/kg) con 20% de descuento Precio final: $15.920/kg', price: 31581 },
-        { description: 'Pepino Res* — 0.590 kg (Precio original: $21.640/kg) con 5% de descuento Precio final: $20.559/kg', price: 12130 },
-        { description: 'Pecho Corriente', price: 25591 },
+        {
+          description:
+            'Pechuga Blanca M — 1.990 kg (Precio original: $19.900/kg) con 20% de descuento Precio final: $15.920/kg',
+          price: 31581
+        },
+        {
+          description:
+            'Pepino Res* — 0.590 kg (Precio original: $21.640/kg) con 5% de descuento Precio final: $20.559/kg',
+          price: 12130
+        },
+        { description: 'Pecho Corriente', price: 25591 }
       ]);
     });
   });
@@ -259,9 +368,10 @@ describe('extractProducts', () => {
           Total Item :1
           `;
 
-      expect(extractProducts(carullaText)).toEqual([{ description: 'Galleta Wafer Si', price: 4349 }]);
+      expect(extractProducts(carullaText)).toEqual([
+        { description: 'Galleta Wafer Si', price: 4349 }
+      ]);
     });
-
   });
 
   describe('D1 receipts', () => {
@@ -321,14 +431,15 @@ describe('extractProducts', () => {
   });
   describe('DolarCity receipts', () => {
     it('should handle multiple products DollarCity case(1)', () => {
-      const ocr = "1\tBOLSA RECICLADA\t\r\n1112\t430.00 B\t\r\n1 @\t430.00\t\r\n2\tSCRUBBER-CLEANZ ESPONJA QUITAM\t\r\n220810003773\t5000.00 B\t\r\n1\t5000.00\t\r\n3\tCANDELA GRANDE DE CUMPLEAÑOS #\t\r\n667888278244\t2500.00 B\t\r\n1\t2500.00\t\r\n4\tALFOMBRA DE BAÑO DE ESPUMA\t\r\n667888388400\t18000.00 B\t\r\n1@\t18000.00\t\r\n5\tMARCADORES MAGNETICOS C/BORRAD\t\r\n667888463459\t12000.00 B\t\r\n1 @ 12000.00\t\r\n6\tGOL BARRA CON ARROZ INFLADO 3U\t\r\n7702007080612\t4000.00 B\t\r\n1 0\t4000.00\t\r\n7 GALLETAS CON ALMENDRA KURABIE\t\r\n7703963056086\t10000.00 B\t\r\n1 @ 10000.00\t\r\n8\tImpuesto Bolsa Plástica\t\r\n999999\t70.00 P\t\r\n1\t70.00\t\r\nTOTAL\tCOP 52000,00\t\r\nMASTERCARD\t\r\nCOP 52000.00\t\r\nREGISTRO DE LA TRANSACCION\t\r\n";
+      const ocr =
+        '1\tBOLSA RECICLADA\t\r\n1112\t430.00 B\t\r\n1 @\t430.00\t\r\n2\tSCRUBBER-CLEANZ ESPONJA QUITAM\t\r\n220810003773\t5000.00 B\t\r\n1\t5000.00\t\r\n3\tCANDELA GRANDE DE CUMPLEAÑOS #\t\r\n667888278244\t2500.00 B\t\r\n1\t2500.00\t\r\n4\tALFOMBRA DE BAÑO DE ESPUMA\t\r\n667888388400\t18000.00 B\t\r\n1@\t18000.00\t\r\n5\tMARCADORES MAGNETICOS C/BORRAD\t\r\n667888463459\t12000.00 B\t\r\n1 @ 12000.00\t\r\n6\tGOL BARRA CON ARROZ INFLADO 3U\t\r\n7702007080612\t4000.00 B\t\r\n1 0\t4000.00\t\r\n7 GALLETAS CON ALMENDRA KURABIE\t\r\n7703963056086\t10000.00 B\t\r\n1 @ 10000.00\t\r\n8\tImpuesto Bolsa Plástica\t\r\n999999\t70.00 P\t\r\n1\t70.00\t\r\nTOTAL\tCOP 52000,00\t\r\nMASTERCARD\t\r\nCOP 52000.00\t\r\nREGISTRO DE LA TRANSACCION\t\r\n';
       expect(extractProducts(ocr)).toEqual([
         { description: 'Bolsa Reciclada', price: 430 },
         { description: 'Scrubber-Cleanz Esponja Quitam', price: 5000 },
         { description: 'Candela Grande De CumpleañOs #', price: 2500 },
         { description: 'Alfombra De BañO De Espuma', price: 18000 },
         { description: 'Marcadores Magneticos C/Borrad', price: 12000 },
-        { description: 'Gol Barra Con Arroz Inflado 3u', price: 0 },//4000
+        { description: 'Gol Barra Con Arroz Inflado 3u', price: 0 }, //4000
         { description: 'Galletas Con Almendra Kurabie', price: 10000 },
         { description: 'Impuesto Bolsa PláStica', price: 1 } // 70
       ]);
@@ -336,14 +447,16 @@ describe('extractProducts', () => {
   });
   describe('Ara receipts', () => {
     it('should handle Ara receipsts (case 1)', () => {
-      const ocr = "Jeronimo Martins Colombia S. A. S.\t\r\nNIT: 900. 480. 569-1\t\r\nComprobante de entrega\t\r\nArtículo\tDescripción\tValor\t\r\n07704269659070 CEPIL DENTAL\t4.490 G\t\r\n07704269131675 REMOV BEBEAU\t5. 490 G\t\r\n07704269474024 ROD DESM B. B\t3. 150 G\t\r\n17704269613539 TOAL HUME BB\t7. 680 G\t\r\n2 UN X\t3. 840\t\r\n07704269374454 LIMP AGENTEX\t2. 250 G\t\r\n07706261000072 PANDERO MINI\t5. 990 D\t\r\nTotal\t\r\n29. 050\t\r\nEfectivo\t50. 000\t\r\nCambio:\t20. 950$\t\r\nArticulos Vendidos: 7\t\r\n";
+      const ocr =
+        'Jeronimo Martins Colombia S. A. S.\t\r\nNIT: 900. 480. 569-1\t\r\nComprobante de entrega\t\r\nArtículo\tDescripción\tValor\t\r\n07704269659070 CEPIL DENTAL\t4.490 G\t\r\n07704269131675 REMOV BEBEAU\t5. 490 G\t\r\n07704269474024 ROD DESM B. B\t3. 150 G\t\r\n17704269613539 TOAL HUME BB\t7. 680 G\t\r\n2 UN X\t3. 840\t\r\n07704269374454 LIMP AGENTEX\t2. 250 G\t\r\n07706261000072 PANDERO MINI\t5. 990 D\t\r\nTotal\t\r\n29. 050\t\r\nEfectivo\t50. 000\t\r\nCambio:\t20. 950$\t\r\nArticulos Vendidos: 7\t\r\n';
       expect(extractProducts(ocr)).toEqual([
         { description: 'Cepil Dental', price: 4490 },
         { description: 'Remov Bebeau', price: 5490 },
         { description: 'Rod Desm B B', price: 3150 },
         { description: 'Toal Hume Bb', price: 7680 },
         { description: 'Limp Agentex', price: 2250 },
-        { description: 'Pandero Mini', price: 5990 }]);
+        { description: 'Pandero Mini', price: 5990 }
+      ]);
     });
     it('should handle Ara receipsts (case 2)', () => {
       const ocr = `alle de
@@ -357,7 +470,7 @@ describe('extractProducts', () => {
       expect(extractProducts(ocr)).toEqual([
         { description: 'Maq Afe Ski/', price: 2990 },
         { description: 'Pan Perro', price: 373600 }, // mejora cuando tiene números
-        { description: "Tostones Pla", price: 4400 }
+        { description: 'Tostones Pla', price: 4400 }
       ]);
     });
     it('should handle Ara receipsts (case 3)', () => {
@@ -379,14 +492,12 @@ describe('extractProducts', () => {
           SUB TOTAL:	44. 946
           TATAI.`;
       expect(extractProducts(ocr)).toEqual([
-
-        { description: "Fusilli Arri", price: 3990 },
-        { description: "Velas Medita", price: 18990 },
-        { description: "Queso Sabane", price: 9990 },
-        { description: "Queso Holand", price: 8300 },
-        { description: "Maiz Ducle X", price: 5990 },
-        { description: "Lenteja Dl", price: 3190 }
-
+        { description: 'Fusilli Arri', price: 3990 },
+        { description: 'Velas Medita', price: 18990 },
+        { description: 'Queso Sabane', price: 9990 },
+        { description: 'Queso Holand', price: 8300 },
+        { description: 'Maiz Ducle X', price: 5990 },
+        { description: 'Lenteja Dl', price: 3190 }
       ]);
     });
 
@@ -400,10 +511,8 @@ describe('extractProducts', () => {
         Ð¢Ð¾Ñ‚Ð»Ñ– .
         `;
       expect(extractProducts(ocr)).toEqual([
-
-        { description: "Leche Desl Valor Imp", price: 2890 },
-        { description: "Colada Vaini", price: 3500 }
-
+        { description: 'Leche Desl Valor Imp', price: 2890 },
+        { description: 'Colada Vaini', price: 3500 }
       ]);
     });
   });
@@ -420,7 +529,7 @@ describe('extractProducts', () => {
           TOTAL FACTURA	62. 900
         `;
       expect(extractProducts(ocr)).toEqual([
-        { description: "Dagynfil (2+2) % Ctx20gr 0%", price: 62900 }
+        { description: 'Dagynfil (2+2) % Ctx20gr 0%', price: 62900 }
       ]);
     });
     it('cruz verde case(2)', () => {
@@ -437,7 +546,7 @@ describe('extractProducts', () => {
         TOTAL FACTURA	73541
         `;
       expect(extractProducts(ocr)).toEqual([
-        { description: "Amoxidal 1000mg Tab 7 0%", price: 123570 }
+        { description: 'Amoxidal 1000mg Tab 7 0%', price: 123570 }
       ]);
     });
   });
@@ -460,11 +569,9 @@ describe('extractProducts', () => {
         CHOCOLATE
         `;
       expect(extractProducts(ocr)).toEqual([
-        { description: "Petit Dejeuner", price: 26500 },
-        { description: "Tortas Porcion", price: 14000 }
-
+        { description: 'Petit Dejeuner', price: 26500 },
+        { description: 'Tortas Porcion', price: 14000 }
       ]);
     });
   });
-
 });

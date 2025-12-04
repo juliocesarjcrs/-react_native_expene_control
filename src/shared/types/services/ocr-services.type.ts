@@ -3,7 +3,7 @@ export type OCRSpaceParams = {
   language?: string;
   isTable?: boolean;
   OCREngine?: number;
-}
+};
 export type OCRSpaceResponse = {
   ParsedResults?: ParsedResult[];
   OCRExitCode: number;
@@ -11,7 +11,7 @@ export type OCRSpaceResponse = {
   ErrorMessage?: string | string[];
   ErrorDetails?: string;
   ProcessingTimeInMilliseconds?: string;
-}
+};
 
 export type ParsedResult = {
   TextOverlay?: {
@@ -24,10 +24,10 @@ export type ParsedResult = {
   ParsedText: string;
   ErrorMessage?: string;
   ErrorDetails?: string;
-}
+};
 
 export type OCRSpaceError = {
   IsErroredOnProcessing: true;
   ErrorMessage: string | string[];
   ErrorDetails?: string;
-}
+};

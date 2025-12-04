@@ -12,5 +12,5 @@ type FontWeightType =
   | '900';
 
 export const FONT_WEIGHTS: Record<string, FontWeightType> = {
-  semiBold: '600',
+  semiBold: '600'
 };

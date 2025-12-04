@@ -5,5 +5,4 @@ export type IncomeModel = {
   date: string;
   commentary: string | null;
   createdAt?: string;
-
-}
+};

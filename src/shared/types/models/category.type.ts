@@ -6,4 +6,4 @@ export type CategoryModel = {
   type: number;
   budget: number | null;
   userId: number;
-}
+};

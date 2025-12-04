@@ -1,1 +1,1 @@
-export { categorizeExpense } from './categorizeExpense'
+export { categorizeExpense } from './categorizeExpense';

@@ -1,11 +1,11 @@
-import { IncomeModel } from "../models";
+import { IncomeModel } from '../models';
 
 export type CreateIncomePayload = Omit<IncomeModel, 'id'>;
 export type EditIncomePayload = Partial<IncomeModel>;
 
 export type FindLastIncomesMonthsFromOnlyCategoryQuery = {
   numMonths: number;
-}
+};
 
 export type FindLastIncomesMonthsFromOnlyCategoryResponse = {
   graph: number[];
@@ -13,8 +13,7 @@ export type FindLastIncomesMonthsFromOnlyCategoryResponse = {
   average: number;
   previosAverage: number;
   sum: number;
-}
-
+};
 
 export type IncomeSearchOptionsQuery = {
   startDate?: Date;
@@ -22,18 +21,18 @@ export type IncomeSearchOptionsQuery = {
   searchValue?: string;
   orderBy?: 'date' | 'amount';
   order?: 'ASC' | 'DESC';
-}
+};
 
 export type FindIncomesByCategoryIdResponse = {
   incomes: IncomeModel[];
-  sum: number
-}
+  sum: number;
+};
 // getLastIncomesWithPaginate
 export type GetLastIncomesWithPaginateQuery = {
   take?: number;
   page?: number;
   query?: string | null;
-}
+};
 
 export type LastIncomes = {
   id: number;

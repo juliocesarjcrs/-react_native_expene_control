@@ -2,7 +2,16 @@ import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, TextInput } from 'react-native';
 import { OcrAccuracy, ReceiptType } from '~/shared/types/components/receipt-scanner.type';
 
-const RECEIPT_TYPES: ReceiptType[] = ['D1', 'Carulla', 'Exito', 'DollarCity', 'Ara', 'Falabella', 'CruzVerde', 'Otros'];
+const RECEIPT_TYPES: ReceiptType[] = [
+  'D1',
+  'Carulla',
+  'Exito',
+  'DollarCity',
+  'Ara',
+  'Falabella',
+  'CruzVerde',
+  'Otros'
+];
 
 interface OcrEvaluationSectionProps {
   ocrAccuracy: OcrAccuracy | '';
@@ -31,14 +40,19 @@ const OcrEvaluationSection: React.FC<OcrEvaluationSectionProps> = ({
           {[0, 1, 2, 3, 4].map((score) => (
             <TouchableOpacity
               key={score}
-              style={[styles.accuracyButton, ocrAccuracy === String(score) && styles.selectedAccuracy]}
+              style={[
+                styles.accuracyButton,
+                ocrAccuracy === String(score) && styles.selectedAccuracy
+              ]}
               onPress={() => setOcrAccuracy(String(score) as OcrAccuracy)}
             >
               <Text>{score}</Text>
             </TouchableOpacity>
           ))}
         </View>
-        <Text style={styles.accuracyLegend}>0=Falló | 1=Malo | 2=Regular | 3=Bueno | 4=Excelente</Text>
+        <Text style={styles.accuracyLegend}>
+          0=Falló | 1=Malo | 2=Regular | 3=Bueno | 4=Excelente
+        </Text>
       </View>
 
       <Text style={styles.sectionTitle}>Tipo de Factura</Text>

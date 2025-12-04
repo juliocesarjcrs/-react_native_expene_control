@@ -1,18 +1,24 @@
 import React from 'react';
-import { TouchableOpacity, Text, View, StyleSheet, Image } from 'react-native';
+import { View, StyleSheet, Image } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
 import * as ImageManipulator from 'expo-image-manipulator';
-import { Colors } from '~/styles';
+import { useThemeColors } from '~/customHooks/useThemeColors';
+import MyButton from '~/components/MyButton';
 
 interface ImagePickerComponentProps {
   onImageSelected: (base64: string, uri: string) => void;
-  onError: (error: string) => void;
+  onError: (error: string) => void; // <- Mantengo onError como solicitaste
   resetTrigger?: boolean;
 }
 
 const OCR_IMAGE_MAX_WIDTH = 1000;
 
-const ImagePickerComponent: React.FC<ImagePickerComponentProps> = ({ onImageSelected, onError, resetTrigger }) => {
+const ImagePickerComponent: React.FC<ImagePickerComponentProps> = ({
+  onImageSelected,
+  onError,
+  resetTrigger
+}) => {
+  const colors = useThemeColors();
   const [imageUri, setImageUri] = React.useState<string | null>(null);
 
   React.useEffect(() => {
@@ -28,6 +34,7 @@ const ImagePickerComponent: React.FC<ImagePickerComponentProps> = ({ onImageSele
 
       if (base64) {
         const sizeInBytes = (base64.length * 3) / 4;
+
         if (sizeInBytes <= 1000000) {
           onImageSelected(base64, uri);
         } else {
@@ -37,6 +44,7 @@ const ImagePickerComponent: React.FC<ImagePickerComponentProps> = ({ onImageSele
               [{ resize: { width: OCR_IMAGE_MAX_WIDTH } }],
               { compress: 0.7, format: ImageManipulator.SaveFormat.JPEG, base64: true }
             );
+
             if (manipResult.base64) {
               onImageSelected(manipResult.base64, manipResult.uri);
             }
@@ -54,8 +62,7 @@ const ImagePickerComponent: React.FC<ImagePickerComponentProps> = ({ onImageSele
   const pickImage = async () => {
     const result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ['images'],
-      allowsEditing: false,
-      aspect: undefined,
+      allowsEditing: true,
       quality: 1,
       base64: true,
       // presentationStyle: ImagePicker.UIImagePickerPresentationStyle.FULL_SCREEN,
@@ -72,26 +79,28 @@ const ImagePickerComponent: React.FC<ImagePickerComponentProps> = ({ onImageSele
 
     const result = await ImagePicker.launchCameraAsync({
       mediaTypes: ['images'],
-      allowsEditing: false,
-      aspect: undefined,
+      allowsEditing: true,
       quality: 1,
       base64: true
     });
+
     await processImageResult(result);
   };
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { backgroundColor: colors.BACKGROUND }]}>
       <View style={styles.buttonGroup}>
-        <TouchableOpacity style={styles.actionButton} onPress={takePhoto}>
-          <Text style={styles.buttonText}>Tomar Foto</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.actionButton} onPress={pickImage}>
-          <Text style={styles.buttonText}>Seleccionar Imagen</Text>
-        </TouchableOpacity>
+        <MyButton title="Tomar Foto" onPress={takePhoto} />
+        <MyButton title="Seleccionar Imagen" onPress={pickImage} />
       </View>
 
-      {imageUri && <Image source={{ uri: imageUri }} style={styles.image} resizeMode="contain" />}
+      {imageUri && (
+        <Image
+          source={{ uri: imageUri }}
+          style={[styles.image, { backgroundColor: colors.CARD_BACKGROUND }]}
+          resizeMode="contain"
+        />
+      )}
     </View>
   );
 };
@@ -104,26 +113,15 @@ const styles = StyleSheet.create({
   },
   buttonGroup: {
     flexDirection: 'row',
-    justifyContent: 'space-around',
+    justifyContent: 'space-between',
     width: '100%',
-    marginBottom: 10
-  },
-  actionButton: {
-    backgroundColor: Colors.PRIMARY,
-    padding: 15,
-    borderRadius: 8,
-    minWidth: '45%',
-    alignItems: 'center'
-  },
-  buttonText: {
-    color: 'white',
-    fontWeight: 'bold'
+    gap: 12,
+    marginBottom: 12
   },
   image: {
     width: '90%',
     height: 250,
-    borderRadius: 8,
-    backgroundColor: '#f5f5f5'
+    borderRadius: 10
   }
 });
 

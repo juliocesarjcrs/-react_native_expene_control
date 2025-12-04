@@ -4,11 +4,10 @@ import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 import { AuthState } from '../../shared/types/reducers';
 import { UserModel } from '../../shared/types';
 
-
 const initialState: AuthState = {
   user: null,
   isAuth: false,
-  loadingAuth: false,
+  loadingAuth: false
 };
 
 const authSlice = createSlice({
@@ -27,8 +26,8 @@ const authSlice = createSlice({
     },
     setLoadingAuth: (state, action: PayloadAction<boolean>) => {
       state.loadingAuth = action.payload;
-    },
-  },
+    }
+  }
 });
 
 export const { setUser, setIsAuth, logout, setLoadingAuth } = authSlice.actions;

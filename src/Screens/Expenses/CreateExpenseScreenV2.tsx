@@ -1,8 +1,22 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import { View } from 'react-native';
+
+// Components
+import { ScreenHeader } from '~/components/ScreenHeader';
 import ReceiptScanner from '../../components/ocr/ReceiptScanner';
 
+// Theme
+import { useThemeColors } from '~/customHooks/useThemeColors';
+
+// Styles
+import { commonStyles } from '~/styles/common';
+
+// Configs
+import { screenConfigs } from '~/config/screenConfigs';
+
 const CreateExpenseScreenV2: React.FC = () => {
+  const config = screenConfigs.scanInvoiceExpense;
+  const colors = useThemeColors();
   const [extracted, setExtracted] = useState<{
     price: string;
     category?: string;
@@ -10,23 +24,12 @@ const CreateExpenseScreenV2: React.FC = () => {
     rawText: string;
   } | null>(null);
 
-
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>Crear Gasto (con OCR)</Text>
+    <View style={[commonStyles.screenContentWithPadding, { backgroundColor: colors.BACKGROUND }]}>
+      <ScreenHeader title={config.title} subtitle={config.subtitle} />
       <ReceiptScanner onExtractedData={setExtracted} />
     </View>
   );
 };
-
-const styles = StyleSheet.create({
-  container: { flex: 1, padding: 16, backgroundColor: '#fff' },
-  title: { fontSize: 22, fontWeight: 'bold', marginBottom: 16 },
-  resultBox: { marginTop: 24, padding: 12, backgroundColor: '#f2f2f2', borderRadius: 8 },
-  label: { fontWeight: 'bold', marginTop: 8 },
-  value: { fontWeight: 'normal', color: '#333' },
-  textScroll: { maxHeight: 250, marginTop: 8, backgroundColor: '#fff', borderRadius: 8, padding: 8 },
-  text: {},
-});
 
 export default CreateExpenseScreenV2;

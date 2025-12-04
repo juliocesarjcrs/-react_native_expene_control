@@ -4,7 +4,21 @@ import { Directory, File, Paths } from 'expo-file-system';
 import * as Sharing from 'expo-sharing';
 import { Icon } from 'react-native-elements';
 
+// Components
+import { ScreenHeader } from '~/components/ScreenHeader';
+
+// Theme
+import { useThemeColors } from '~/customHooks/useThemeColors';
+
+// Styles
+import { commonStyles } from '~/styles/common';
+
+// Configs
+import { screenConfigs } from '~/config/screenConfigs';
+
 export default function ManageCSVsScreen(): React.JSX.Element {
+  const config = screenConfigs.manageCSV;
+  const colors = useThemeColors();
   const [csvFiles, setCsvFiles] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
 
@@ -60,7 +74,8 @@ export default function ManageCSVsScreen(): React.JSX.Element {
   };
 
   return (
-    <View style={styles.container}>
+    <View style={[commonStyles.screenContentWithPadding, { backgroundColor: colors.BACKGROUND }]}>
+      <ScreenHeader title={config.title} subtitle={config.subtitle} />
       <Text style={styles.title}>Archivos CSV guardados</Text>
       <FlatList
         data={csvFiles}
@@ -78,18 +93,24 @@ export default function ManageCSVsScreen(): React.JSX.Element {
                 containerStyle={{ marginRight: 16 }}
                 onPress={() => handleShare(item)}
               />
-              <Icon name="trash" type="font-awesome" color="#d11a2a" onPress={() => handleDelete(item)} />
+              <Icon
+                name="trash"
+                type="font-awesome"
+                color="#d11a2a"
+                onPress={() => handleDelete(item)}
+              />
             </View>
           </View>
         )}
-        ListEmptyComponent={<Text style={{ textAlign: 'center', marginTop: 20 }}>No hay archivos CSV</Text>}
+        ListEmptyComponent={
+          <Text style={{ textAlign: 'center', marginTop: 20 }}>No hay archivos CSV</Text>
+        }
       />
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#fff', padding: 16 },
   title: { fontSize: 20, fontWeight: 'bold', marginBottom: 16, textAlign: 'center' },
   row: {
     flexDirection: 'row',

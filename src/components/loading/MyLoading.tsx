@@ -1,9 +1,10 @@
 import React from 'react';
 import { ActivityIndicator } from 'react-native';
-import { LOADING } from '../../styles/colors';
+import { useThemeColors } from '~/customHooks/useThemeColors';
 
 const MyLoading: React.FC<{ testID?: string }> = ({ testID }) => {
-  return <ActivityIndicator testID={testID} size="large" color={LOADING} />;
+  const colors = useThemeColors();
+  return <ActivityIndicator testID={testID} size="large" color={colors.PRIMARY} />;
 };
 
 export default MyLoading;

@@ -1,1 +1,6 @@
-export { SetLoadingAuthAction, SetAuthAction, SetUserAction, LogoutAction } from './auth-actions.type';
+export {
+  SetLoadingAuthAction,
+  SetAuthAction,
+  SetUserAction,
+  LogoutAction
+} from './auth-actions.type';

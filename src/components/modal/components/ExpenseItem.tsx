@@ -5,7 +5,13 @@ import DropDownPicker from 'react-native-dropdown-picker';
 import { ExpenseItemProps } from '~/shared/types/components/modal/MultiExpenseModal.type';
 import { categorizeExpense } from '~/utils';
 
-const ExpenseItem: React.FC<ExpenseItemProps> = ({ item, index, categories, onRemove, onUpdate }) => {
+const ExpenseItem: React.FC<ExpenseItemProps> = ({
+  item,
+  index,
+  categories,
+  onRemove,
+  onUpdate
+}) => {
   // 1. Primero, añade estados locales para cada picker
   const [isCategoryOpen, setIsCategoryOpen] = useState(false);
   const [isSubcategoryOpen, setIsSubcategoryOpen] = useState(false);
@@ -31,7 +37,9 @@ const ExpenseItem: React.FC<ExpenseItemProps> = ({ item, index, categories, onRe
   useEffect(() => {
     if (item.categoryId && item.subcategoryId) {
       const currentCategory = categories.find((c) => c.value === item.categoryId);
-      const isValidSubcategory = currentCategory?.subcategories?.some((s) => s.value === item.subcategoryId);
+      const isValidSubcategory = currentCategory?.subcategories?.some(
+        (s) => s.value === item.subcategoryId
+      );
       if (!isValidSubcategory) {
         onUpdate(index, 'subcategoryId', null);
       }

@@ -1,24 +1,23 @@
-import { UserModel } from "../models"
-
+import { UserModel } from '../models';
 
 export type PayloadLogin = {
-  email: string,
-  password: string
-}
+  email: string;
+  password: string;
+};
 
 export type ForgotPasswordPayload = {
-  email: string
-}
+  email: string;
+};
 
 export type CheckRecoverycodeParams = {
-  recoveryCode: number
-}
+  recoveryCode: number;
+};
 
 export type PasswordRecoveryPayload = {
-  password: string
-}
+  password: string;
+};
 
-export type LoginResponse  = {
+export type LoginResponse = {
   access_token: string;
   user: UserModel;
-}
+};

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { StyleSheet, View, Keyboard } from 'react-native';
+import { View, Keyboard } from 'react-native';
 import { Input } from 'react-native-elements';
 import { useForm, Controller } from 'react-hook-form';
 import { StackNavigationProp } from '@react-navigation/stack';
@@ -10,20 +10,30 @@ import { EditSubcategory } from '../../services/subcategories';
 
 // Components
 import MyLoading from '../../components/loading/MyLoading';
-import ShowToast from '../../utils/toastUtils';
+import { ShowToast } from '../../utils/toastUtils';
 import MyButton from '../../components/MyButton';
+import { ScreenHeader } from '~/components/ScreenHeader';
 
 // Types
 import { ExpenseStackParamList } from '../../shared/types';
 
 // Utils
-import { Errors } from '../../utils/Errors';
+import { showError } from '~/utils/showError';
+
+// Theme
+import { useThemeColors } from '~/customHooks/useThemeColors';
 
 // Styles
-import { MEDIUM } from '../../styles/fonts';
+import { commonStyles } from '~/styles/common';
 import { EditSubcategoryPayload } from '../../shared/types/services/subcategories-services.type';
 
-type EditSubcategoryScreenNavigationProp = StackNavigationProp<ExpenseStackParamList, 'editSubcategory'>;
+// Configs
+import { screenConfigs } from '~/config/screenConfigs';
+
+type EditSubcategoryScreenNavigationProp = StackNavigationProp<
+  ExpenseStackParamList,
+  'editSubcategory'
+>;
 type EditSubcategoryScreenRouteProp = RouteProp<ExpenseStackParamList, 'editSubcategory'>;
 
 interface EditSubcategoryScreenProps {
@@ -31,6 +41,8 @@ interface EditSubcategoryScreenProps {
   route: EditSubcategoryScreenRouteProp;
 }
 export default function EditSubcategoryScreen({ route, navigation }: EditSubcategoryScreenProps) {
+  const screenConfig = screenConfigs.editSubcategory;
+  const colors = useThemeColors();
   const subcategoryObj = route.params.subcategoryObject;
   const {
     handleSubmit,
@@ -59,11 +71,13 @@ export default function EditSubcategoryScreen({ route, navigation }: EditSubcate
       navigation.navigate('createSubcategory', { idCategory });
     } catch (error) {
       setLoading(false);
-      Errors(error);
+      showError(error);
     }
   };
   return (
-    <View style={styles.container}>
+    <View style={[commonStyles.screenContainer, { backgroundColor: colors.BACKGROUND }]}>
+      <ScreenHeader title={screenConfig.title} subtitle={screenConfig.subtitle} />
+
       <Controller
         name="name"
         control={control}
@@ -93,17 +107,3 @@ export default function EditSubcategoryScreen({ route, navigation }: EditSubcate
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#fff',
-    alignItems: 'center',
-    justifyContent: 'center'
-  },
-  item: {
-    padding: 10,
-    fontSize: MEDIUM,
-    height: 44
-  }
-});

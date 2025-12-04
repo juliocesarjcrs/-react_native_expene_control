@@ -37,6 +37,18 @@ import CreateLoanScreen from '~/Screens/Loans/CreateLoanScreen';
 import AdvancedSearchScreen from '../Screens/common/advance-search';
 // budgets
 import VirtualBudgetScreen from '../Screens/Budgest/VirtualBudgetScreen';
+// Settings
+import ManageFeatureFlagsScreen from '~/Screens/Settings/ManageFeatureFlagsScreen';
+import { ChatbotConfigScreen } from '~/Screens/Settings/ChatbotConfigScreen';
+import ManageThemesScreen from '~/Screens/Settings/ManageThemesScreen';
+import EditThemeScreen from '~/Screens/Settings/ManageThemes/EditThemeScreen';
+import AdminDashboardScreen from '~/Screens/Settings/AdminDashboard/AdminDashboardScreen';
+
+// Statistics
+import ComparePeriodsScreen from '~/Screens/Statistics/ComparePeriodsScreen';
+
+// Admin
+import AIModelsScreen from '~/Screens/Admin/AIModelsScreen';
 
 export interface StackRoutesType {
   LoginScreen: typeof LoginScreen;
@@ -70,6 +82,13 @@ export interface StackRoutesType {
   CreateLoanScreen: typeof CreateLoanScreen;
   VirtualBudgetScreen: typeof VirtualBudgetScreen;
   ManageCSVsScreen: typeof ManageCSVsScreen;
+  ManageFeatureFlagsScreen: typeof ManageFeatureFlagsScreen;
+  ChatbotConfigScreen: typeof ChatbotConfigScreen;
+  ManageThemesScreen: typeof ManageThemesScreen;
+  EditThemeScreen: typeof EditThemeScreen;
+  AdminDashboardScreen: typeof AdminDashboardScreen;
+  ComparePeriodsScreen: typeof ComparePeriodsScreen;
+  AIModelsScreen: typeof AIModelsScreen;
 }
 
 const stackRoutes: StackRoutesType = {
@@ -103,7 +122,14 @@ const stackRoutes: StackRoutesType = {
   AdvancedSearchScreen,
   CreateLoanScreen,
   VirtualBudgetScreen,
-  ManageCSVsScreen
+  ManageCSVsScreen,
+  ManageFeatureFlagsScreen,
+  ChatbotConfigScreen,
+  ManageThemesScreen,
+  EditThemeScreen,
+  AdminDashboardScreen,
+  ComparePeriodsScreen,
+  AIModelsScreen
 };
 
 export default stackRoutes;

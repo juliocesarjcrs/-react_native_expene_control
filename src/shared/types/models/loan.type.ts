@@ -3,4 +3,4 @@ export type LoanModel = {
   amount: number;
   commentary: string | null;
   createdAt: string;
-}
+};

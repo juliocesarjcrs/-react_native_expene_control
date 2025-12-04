@@ -1,5 +1,6 @@
-import { IncomeModel } from "../models";
-import { ExtendedExpenseModel } from "../models/expense.type";
+import { IncomeModel } from '../models';
+import { ExtendedExpenseModel } from '../models/expense.type';
+import { SubcategoriesWithExpenses } from '../services/subcategories-services.type';
 
 export type MainTabParamList = {
   Gastos: undefined;
@@ -9,37 +10,11 @@ export type MainTabParamList = {
 };
 
 export type EditSubcategoryScreenRouteParams = {
-  subcategoryObject: {
-    category: {
-      budget: number;
-      createdAt: string;
-      icon: string | null;
-      id: number;
-      name: string;
-      type: number;
-      userId: number;
-    };
-    categoryId: number;
-    createdAt: string;
-    expenses?: Array<{
-      commentary: string;
-      cost: number;
-      createdAt: string;
-      date: string;
-      id: number;
-      subcategoryId: number;
-      userId: number;
-    }>;
-    icon: string | null;
-    id: number;
-    name: string;
-    userId?: number;
-  };
-
-}
+  subcategoryObject: SubcategoriesWithExpenses;
+};
 
 export type CreateSubcategoryScreenRouteParams = {
-  idCategory: number
+  idCategory: number;
 };
 export type ExpenseStackParamList = {
   main: undefined;
@@ -50,8 +25,12 @@ export type ExpenseStackParamList = {
   createCategory: undefined;
   editCategory: { idCategory: number };
   lastExpenses: undefined;
-  editExpense: { objectExpense: ExtendedExpenseModel };
+  editExpense: EditExpenseScreenRouteParams;
   editSubcategory: EditSubcategoryScreenRouteParams;
+};
+
+export type EditExpenseScreenRouteParams = {
+  objectExpense: ExtendedExpenseModel;
 };
 
 export type EditIncomeScreenRouteParams = {
@@ -66,7 +45,7 @@ export type EditIncomeScreenRouteParams = {
     id: number;
     idCategory: number;
   };
-}
+};
 
 export type IncomeStackParamList = {
   sumaryIncomes: undefined;
@@ -93,4 +72,10 @@ export type SettingsStackParamList = {
   advancedSearch: undefined;
   virtualBudget: undefined;
   manageCSV: undefined;
+  manageFeatureFlags: undefined;
+  chatbotConfig: undefined;
+  manageThemes: undefined;
+  editTheme: { themeName: string };
+  adminDashboard: undefined;
+  aiModels: undefined;
 };

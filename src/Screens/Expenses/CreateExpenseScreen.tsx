@@ -1,68 +1,87 @@
 import React, { useRef, useState } from 'react';
-import { Keyboard, StyleSheet, Text, View } from 'react-native';
+import { Keyboard, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSelector } from 'react-redux';
 import { useForm, Controller } from 'react-hook-form';
-import { Input, FAB } from 'react-native-elements';
+import { Input } from 'react-native-elements';
 
 // Services
-import { CreateExpense, getExpensesFromSubcategory } from '../../services/expenses';
-
-import { getExchangeCurrency } from '../../services/external';
+import { CreateExpense, getExpensesFromSubcategory } from '~/services/expenses';
+import { getExchangeCurrency } from '~/services/external';
 
 // Components
-import FlatListData from '../../components/card/FlatListData';
 import MyLoading from '~/components/loading/MyLoading';
 import SelectJoinCategory from '~/components/dropDown/SelectJoinCategory';
+import { ScreenHeader } from '~/components/ScreenHeader';
+import { DateSelector } from '~/components/datePicker';
+import MyButton from '~/components/MyButton';
+import ExpenseList from './components/ExpenseList';
 
 // Types
 import { RootState } from '~/shared/types/reducers';
 import { ExpenseModel } from '~/shared/types';
 import { FormExpensesValues } from '~/shared/types/screens/expenses/create-expenses.type';
-import { CreateExpensePayload, GetExpensesFromSubcategoryResponse } from '~/shared/types/services/expense-service.type';
+import {
+  CreateExpensePayload,
+  GetExpensesFromSubcategoryResponse
+} from '~/shared/types/services/expense-service.type';
 import { DropDownSelectJoinCategoryFormat } from '~/shared/types/components/dropDown/SelectOnlyCategory.type';
 
 // Utils
-import { Errors } from '../../utils/Errors';
-import ShowToast from '../../utils/toastUtils';
-import { NumberFormat, DateFormat } from '../../utils/Helpers';
-import { DateSelector } from '~/components/datePicker';
+import { ShowToast } from '~/utils/toastUtils';
+import { NumberFormat, DateFormat } from '~/utils/Helpers';
+import { showError } from '~/utils/showError';
+
+// Theme
+import { useThemeColors } from '~/customHooks/useThemeColors';
 
 // Styles
+import { commonStyles } from '~/styles/common';
+import { MEDIUM } from '~/styles/fonts';
+
+// Configs
+import { screenConfigs } from '~/config/screenConfigs';
 
 export default function CreateExpenseScreen(): React.JSX.Element {
-  const selectJoinCategoryRef = useRef();
+  const config = screenConfigs.createExpense;
+  const colors = useThemeColors();
+  const selectJoinCategoryRef = useRef<any>(null);
 
   const month = useSelector((state: RootState) => state.date.month);
   const {
     handleSubmit,
     control,
     reset,
-
     formState: { errors }
   } = useForm({
-    defaultValues: { cost: '', commentary: '' }
+    mode: 'onTouched'
   });
 
   const [subcategoryId, setSubcategoryId] = useState<number | null>(null);
-  const [sumCost, setSumCost] = useState(0);
+  const [sumCost, setSumCost] = useState<number>(0);
   const [expenses, setExpenses] = useState<ExpenseModel[]>([]);
-  const [loading, setLoading] = useState(false);
-  // date picker
-  const [date, setDate] = useState(new Date());
-  const [showDate, setShowDate] = useState(false);
-  const handleStartDateChange = (selectedDate?: Date) => {
+  const [loading, setLoading] = useState<boolean>(false);
+
+  // Date picker
+  const [date, setDate] = useState<Date>(new Date());
+  const [showDate, setShowDate] = useState<boolean>(false);
+
+  const handleStartDateChange = (selectedDate?: Date): void => {
     setShowDate(false);
     if (selectedDate) {
       setDate(selectedDate);
     }
   };
-  const showStartDatePicker = () => {
+
+  const showStartDatePicker = (): void => {
     setShowDate(true);
   };
-  // convertidor de moneda
-  const [currencySymbol] = useState('COP');
 
-  const fetchExpensesSubcategory = async (foundSubcategory: DropDownSelectJoinCategoryFormat) => {
+  // Currency converter
+  const [currencySymbol] = useState<string>('COP');
+
+  const fetchExpensesSubcategory = async (
+    foundSubcategory: DropDownSelectJoinCategoryFormat
+  ): Promise<void> => {
     try {
       setLoading(true);
       setSubcategoryId(foundSubcategory.value);
@@ -70,190 +89,218 @@ export default function CreateExpenseScreen(): React.JSX.Element {
       setLoading(false);
       setExpenses(data);
       calculateTotal(data);
-    } catch (e) {
+    } catch (error) {
       setLoading(false);
-      Errors(e);
+      showError(error);
     }
   };
-  const fetchExpensesOnlyCategory = async () => {
-    // setDataCategory(foundCategory);
+
+  const fetchExpensesOnlyCategory = async (): Promise<void> => {
+    // Implementation pending
   };
-  const calculateTotal = (data: GetExpensesFromSubcategoryResponse) => {
+
+  const calculateTotal = (data: GetExpensesFromSubcategoryResponse): void => {
     const total = data.reduce((acu: number, val: ExpenseModel) => {
       return acu + val.cost;
     }, 0);
     setSumCost(total);
   };
 
-  const onSubmit = async (payload: FormExpensesValues) => {
-    let newAmount = null;
+  const onSubmit = async (payload: FormExpensesValues): Promise<void> => {
+    let newAmount: number | string = payload.cost;
+
     if (currencySymbol !== 'COP') {
       try {
         const values = {
-          amount: payload.cost,
+          amount: parseInt(String(payload.cost)),
           from: currencySymbol,
           to: 'COP'
         };
         const { data } = await getExchangeCurrency(values);
         newAmount = data.result;
-        payload.cost = newAmount;
       } catch (error) {
         console.log('error---', error);
       }
     }
+
     try {
       if (!subcategoryId) {
+        ShowToast('Debes seleccionar una subcategoría');
         return;
       }
+
       const dataSend: CreateExpensePayload = {
         ...payload,
-        cost: parseInt(payload.cost),
+        cost: parseInt(String(newAmount)),
         subcategoryId,
         date: DateFormat(date, 'YYYY-MM-DD')
       };
+
       setLoading(true);
       const { data } = await CreateExpense(dataSend);
       setLoading(false);
+
       const newExpense = [data, ...expenses];
       setExpenses(newExpense);
       calculateTotal(newExpense);
-      ShowToast();
+      ShowToast('Gasto creado exitosamente');
       reset();
       Keyboard.dismiss();
     } catch (error) {
       setLoading(false);
-      Errors(error);
+      showError(error);
     }
   };
-  const updateList = () => {
+
+  const updateList = (): void => {
     if (!subcategoryId) {
       return;
     }
     fetchExpenses(subcategoryId);
   };
-  const fetchExpenses = async (idSubcategory: number) => {
+
+  const fetchExpenses = async (idSubcategory: number): Promise<void> => {
     const { data } = await getExpensesFromSubcategory(idSubcategory, month);
     setExpenses(data);
     calculateTotal(data);
   };
 
   return (
-    <View style={styles.mainContainer}>
-      <Controller
-        name="cost"
-        control={control}
-        rules={{
-          required: { value: true, message: 'El gasto es obligatorio' },
-          min: { value: 1, message: 'El mínimo valor aceptado es 1' },
-          max: {
-            value: 99999999,
-            message: 'El gasto no puede superar el valor de 99.999.999 '
-          }
-        }}
-        render={({ field: { onChange, value } }) => (
-          <Input
-            label="Gasto"
-            value={value}
-            placeholder="Ej: 20000"
-            onChangeText={(text) => onChange(text)}
-            errorMessage={errors?.cost ? errors.cost.message : undefined}
-            keyboardType="numeric"
-            style={{ margin: 0, padding: 0 }}
-            errorStyle={{ color: 'red', margin: 0, padding: 0 }} // Ajusta el estilo del error
-            containerStyle={{ margin: 0, padding: 0 }} // Ajusta el contenedor principal
+    <View style={[commonStyles.screenContainer, { backgroundColor: colors.BACKGROUND }]}>
+      <ScreenHeader title={config.title} subtitle={config.subtitle} />
+
+      <ScrollView
+        style={{ flex: 1 }}
+        contentContainerStyle={styles.scrollContent}
+        keyboardShouldPersistTaps="handled"
+      >
+        <View style={styles.formContainer}>
+          <Controller
+            name="cost"
+            control={control}
+            rules={{
+              required: { value: true, message: 'El gasto es obligatorio' },
+              min: { value: 1, message: 'El mínimo valor aceptado es 1' },
+              max: {
+                value: 99999999,
+                message: 'El gasto no puede superar 99.999.999'
+              }
+            }}
+            render={({ field: { onChange, value } }) => (
+              <Input
+                label="Gasto"
+                value={value}
+                placeholder="Ej: 20000"
+                placeholderTextColor={colors.TEXT_SECONDARY}
+                onChangeText={onChange}
+                errorMessage={errors?.cost?.message as string}
+                keyboardType="numeric"
+                errorStyle={{ color: colors.ERROR }}
+                inputStyle={{ color: colors.TEXT_PRIMARY }}
+                labelStyle={{ color: colors.TEXT_PRIMARY }}
+              />
+            )}
+            defaultValue=""
           />
-        )}
-        defaultValue=""
-      />
-      <Controller
-        name="commentary"
-        control={control}
-        rules={{
-          maxLength: {
-            value: 200,
-            message: 'El comenatario no puede superar los 200 carácteres '
-          }
-        }}
-        render={({ field: { onChange, value } }) => (
-          <Input
-            label="Comentario"
-            value={value}
-            placeholder="Ej: Compra de una camisa"
-            onChangeText={(text) => onChange(text)}
-            multiline
-            numberOfLines={2}
-            errorMessage={errors?.commentary?.message}
-            style={{ margin: 0, padding: 0 }}
-            errorStyle={{ color: 'red', margin: 0, padding: 0 }} // Ajusta el estilo del error
-            containerStyle={{ margin: 0, padding: 0 }} // Ajusta el contenedor principal
+
+          <Controller
+            name="commentary"
+            control={control}
+            rules={{
+              maxLength: {
+                value: 200,
+                message: 'El comentario no puede superar 200 caracteres'
+              }
+            }}
+            render={({ field: { onChange, value } }) => (
+              <Input
+                label="Comentario"
+                value={value}
+                placeholder="Ej: Compra de una camisa"
+                placeholderTextColor={colors.TEXT_SECONDARY}
+                onChangeText={onChange}
+                multiline
+                numberOfLines={2}
+                errorMessage={errors?.commentary?.message as string}
+                errorStyle={{ color: colors.ERROR }}
+                inputStyle={{ color: colors.TEXT_PRIMARY }}
+                labelStyle={{ color: colors.TEXT_PRIMARY }}
+              />
+            )}
+            defaultValue=""
           />
-        )}
-        defaultValue=""
-      />
 
-      <SelectJoinCategory
-        fetchExpensesSubcategory={fetchExpensesSubcategory}
-        fetchExpensesOnlyCategory={fetchExpensesOnlyCategory}
-        ref={selectJoinCategoryRef}
-      />
+          <SelectJoinCategory
+            fetchExpensesSubcategory={fetchExpensesSubcategory}
+            fetchExpensesOnlyCategory={fetchExpensesOnlyCategory}
+            ref={selectJoinCategoryRef}
+          />
 
-      {/* <View style={styles.rows}>
-              {checkboxes.map((cb, index) => {
-                  return (
-                      <CheckBox
-                          center
-                          key={cb.id}
-                          title={cb.title}
-                          iconType="material"
-                          checkedIcon="check-box"
-                          uncheckedIcon="check-box-outline-blank"
-                          checked={cb.checked}
-                          onPress={() => toggleCheckbox(cb.id, index)}
-                          containerStyle={styles.containerCheckbox}
-                      />
-                  );
-              })}
-          </View> */}
-      <DateSelector
-        label="  Fecha "
-        date={date}
-        showDatePicker={showDate}
-        onPress={showStartDatePicker}
-        onDateChange={handleStartDateChange}
-        onCancel={() => setShowDate(false)}
-      />
-      {/* Sección inferior (total y lista) */}
-      <View style={styles.bottomSection}>
-        {loading ? (
-          <MyLoading />
-        ) : (
-          <FAB title="Guardar gasto" onPress={handleSubmit(onSubmit)} style={styles.saveButton} />
-        )}
+          <DateSelector
+            label="Fecha"
+            date={date}
+            showDatePicker={showDate}
+            onPress={showStartDatePicker}
+            onDateChange={handleStartDateChange}
+            onCancel={() => setShowDate(false)}
+          />
 
-        <Text style={styles.totalText}>Total: {NumberFormat(sumCost)}</Text>
-        <FlatListData expenses={expenses} updateList={updateList} />
-      </View>
+          {loading ? (
+            <MyLoading />
+          ) : (
+            <MyButton
+              title="Guardar gasto"
+              onPress={handleSubmit(onSubmit as any)}
+              variant="primary"
+            />
+          )}
+
+          {/* Total */}
+          <View style={[styles.totalContainer, { backgroundColor: colors.CARD_BACKGROUND }]}>
+            <Text style={[styles.totalLabel, { color: colors.TEXT_SECONDARY }]}>
+              Total del mes:
+            </Text>
+            <Text style={[styles.totalAmount, { color: colors.WARNING }]}>
+              {NumberFormat(sumCost)}
+            </Text>
+          </View>
+
+          {/* Lista de gastos */}
+          <ExpenseList expenses={expenses} updateList={updateList} />
+        </View>
+      </ScrollView>
     </View>
   );
 }
+
 const styles = StyleSheet.create({
-  mainContainer: {
-    flex: 1,
+  scrollContent: {
+    flexGrow: 1,
+    paddingBottom: 20
+  },
+  formContainer: {
     paddingHorizontal: 16,
-    paddingVertical: 0,
-    backgroundColor: '#fff'
+    paddingTop: 10
   },
-  bottomSection: {
-    flex: 1
+  totalContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    borderRadius: 12,
+    marginVertical: 16,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 2
   },
-  saveButton: {
-    alignSelf: 'center',
-    marginBottom: 1
+  totalLabel: {
+    fontSize: MEDIUM
   },
-  totalText: {
-    fontSize: 14,
-    fontWeight: 'bold',
-    textAlign: 'left',
-    marginBottom: 0
+  totalAmount: {
+    fontSize: MEDIUM,
+    fontWeight: 'bold'
   }
 });

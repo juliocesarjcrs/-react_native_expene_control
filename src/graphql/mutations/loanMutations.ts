@@ -16,5 +16,5 @@ export const CREATE_LOAN = gql`
 export const DELETE_LOAN = gql`
   mutation DeleteLoan($deleteLoanId: Int!) {
     deleteLoan(id: $deleteLoanId)
-}
+  }
 `;

@@ -1,1 +1,0 @@
-export { BarSearch} from './BarSearch';

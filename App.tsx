@@ -3,6 +3,7 @@ import React from 'react';
 import store from './src/store/store';
 import { Provider } from 'react-redux';
 import { userSignOut } from './src/actions/authActions';
+import { ChatProvider } from './src/features/chat/ChatContext';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { ToastAndroid } from 'react-native';
 import axiosInstance from './src/plugins/axiosConfig';
@@ -11,6 +12,7 @@ import { AxiosError } from 'axios';
 
 import { ApolloProvider } from '@apollo/client/react';
 import client from './src/plugins/ApolloClient';
+import { ThemeProvider } from '~/contexts/ThemeContext';
 
 export type ApiError = {
   error: string;
@@ -32,6 +34,16 @@ export default function App() {
         // console.log('----ERROR, INTERCEPT ---- ',error, );
         // console.log(error.response);
         const { status } = error.response;
+        const url = error.config?.url || '';
+
+        // Excluir chatbot de toasts automáticos
+        const isChatbotError = url.includes('chatbot/');
+
+        // Si el servidor respondió pero no cae en 400/401/403:
+        if (![400, 401, 403].includes(status) && !isChatbotError) {
+          const msg = error.response.data?.message || 'Error en el servidor';
+          ToastAndroid.show(msg, ToastAndroid.SHORT);
+        }
         if (status === 401) {
           dispatch(userSignOut());
           await AsyncStorage.removeItem('access_token');
@@ -39,9 +51,16 @@ export default function App() {
           showToast(message);
           // await AsyncStorage.setItem("access_token",null);
         } else if (status === 403) {
-          const message = error.response.data.message ? error.response.data.message : 'Sin definir 1';
+          const message = error.response.data.message
+            ? error.response.data.message
+            : 'Sin definir 1';
           showToast(message);
         } else if (status === 400) {
+          // No mostrar toast para errores del chatbot (se manejan en su UI)
+          const url = error.config?.url || '';
+          if (url.includes('chatbot/')) {
+            return Promise.reject(error);
+          }
           console.log('::: type :::', typeof error);
           if (error instanceof AxiosError) {
             console.log('::: Error :::', error);
@@ -83,7 +102,11 @@ export default function App() {
   return (
     <ApolloProvider client={client}>
       <Provider store={store}>
-        <MyStack />
+        <ChatProvider>
+          <ThemeProvider>
+            <MyStack />
+          </ThemeProvider>
+        </ChatProvider>
       </Provider>
     </ApolloProvider>
   );

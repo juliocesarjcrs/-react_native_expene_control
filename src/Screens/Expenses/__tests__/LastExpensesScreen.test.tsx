@@ -27,7 +27,7 @@ const navigation = {
   replace: jest.fn(),
   push: jest.fn(),
   pop: jest.fn(),
-  popToTop: jest.fn(),
+  popToTop: jest.fn()
 };
 
 describe('LastExpensesScreen behaviors', () => {
@@ -36,16 +36,38 @@ describe('LastExpensesScreen behaviors', () => {
     store = mockStore({ search: { query: null } });
     getLastExpensesWithPaginate.mockImplementation(({ page, query }) => {
       if (page === 1 && !query) {
-        return Promise.resolve({ data: { data: Array.from({ length: 10 }, (_, i) => ({ id: i + 1, value: `Expense ${i + 1}` })) } });
+        return Promise.resolve({
+          data: {
+            data: Array.from({ length: 10 }, (_, i) => ({ id: i + 1, value: `Expense ${i + 1}` }))
+          }
+        });
       }
       if (page === 2 && !query) {
-        return Promise.resolve({ data: { data: Array.from({ length: 5 }, (_, i) => ({ id: 11 + i, value: `Expense ${11 + i}` })) } });
+        return Promise.resolve({
+          data: {
+            data: Array.from({ length: 5 }, (_, i) => ({ id: 11 + i, value: `Expense ${11 + i}` }))
+          }
+        });
       }
       if (page === 1 && query) {
-        return Promise.resolve({ data: { data: Array.from({ length: 7 }, (_, i) => ({ id: 100 + i, value: `Filtered ${query} ${i}` })) } });
+        return Promise.resolve({
+          data: {
+            data: Array.from({ length: 7 }, (_, i) => ({
+              id: 100 + i,
+              value: `Filtered ${query} ${i}`
+            }))
+          }
+        });
       }
       if (page === 2 && query) {
-        return Promise.resolve({ data: { data: Array.from({ length: 3 }, (_, i) => ({ id: 200 + i, value: `Filtered ${query} ${i + 7}` })) } });
+        return Promise.resolve({
+          data: {
+            data: Array.from({ length: 3 }, (_, i) => ({
+              id: 200 + i,
+              value: `Filtered ${query} ${i + 7}`
+            }))
+          }
+        });
       }
       return Promise.resolve({ data: { data: [] } });
     });

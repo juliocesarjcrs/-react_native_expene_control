@@ -3,12 +3,12 @@ import configureStore from 'redux-mock-store';
 // Default initial state for searchExpenses reducer
 export const initialSearchExpensesState = {
   query: null,
-  fullData: [],
+  fullData: []
 };
 
 // Root state mock (add more reducers as needed)
 export const initialRootState = {
-  search: initialSearchExpensesState,
+  search: initialSearchExpensesState
 };
 
 const mockStore = configureStore([]);

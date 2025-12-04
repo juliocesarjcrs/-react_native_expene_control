@@ -7,4 +7,4 @@ export type UserModel = {
   password?: string;
   recoveryCode: string | null;
   role: number;
-}
+};

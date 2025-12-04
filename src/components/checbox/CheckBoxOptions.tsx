@@ -37,8 +37,8 @@ export default function CheckBoxOptions<T extends StackNavigationProp<ParamListB
   updateNum
 }: CheckBoxOptionsProps<T>) {
   const colors = useThemeColors();
-  const [initialMonth, setInitialMonth] = useState<number>(0);
-  const [initialDateMonth, setInitialDateMonth] = useState<string>('');
+  const [, setInitialMonth] = useState<number>(0);
+  const [, setInitialDateMonth] = useState<string>('');
   const [showDatePicker, setShowDatePicker] = useState<boolean>(false);
   const [customDate, setCustomDate] = useState<Date | null>(null);
 

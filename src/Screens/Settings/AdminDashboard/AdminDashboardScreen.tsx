@@ -1,4 +1,3 @@
-// screens/AdminDashboardScreen.tsx
 import React, { useState, useEffect } from 'react';
 import {
   View,
@@ -25,9 +24,7 @@ import {
   reloadModels
 } from '~/services/aiConfigService';
 
-// Types
-import { ConversationLogModel } from '~/shared/types/models/conversation-log.type';
-
+// Utils
 import { showError } from '~/utils/showError';
 
 // Theme

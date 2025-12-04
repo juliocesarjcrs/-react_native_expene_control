@@ -1,5 +1,5 @@
 import React from 'react';
-import { Modal, StyleSheet } from 'react-native';
+import { Modal } from 'react-native';
 import { SystemPromptEditor } from './SystemPromptEditor';
 import { ToolsConfigEditor } from './ToolsConfigEditor';
 import { JsonEditor } from './JsonEditor';

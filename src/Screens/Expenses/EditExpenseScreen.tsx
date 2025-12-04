@@ -17,7 +17,7 @@ import { ScreenHeader } from '~/components/ScreenHeader';
 
 // Types
 import DateTimePicker, { DateTimePickerEvent } from '@react-native-community/datetimepicker';
-import DropDownPicker, { ItemType } from 'react-native-dropdown-picker';
+import DropDownPicker from 'react-native-dropdown-picker';
 import { ExpenseStackParamList, SubcategoryModel } from '~/shared/types';
 import {
   CategoryOption,
@@ -25,13 +25,12 @@ import {
   SubcategoryOption
 } from '~/shared/types/screens/expenses/edit-expenses.type';
 import {
-  EditExpensePayload,
-  GetOneExpenseResponse
+  EditExpensePayload
 } from '~/shared/types/services/expense-service.type';
 import { StackNavigationProp } from '@react-navigation/stack';
 
 // Utils
-import { NumberFormat, DateFormat } from '../../utils/Helpers';
+import { DateFormat } from '../../utils/Helpers';
 import { showError } from '~/utils/showError';
 import { ShowToast } from '../../utils/toastUtils';
 
@@ -79,8 +78,8 @@ export default function EditExpenseScreen({ route, navigation }: EditExpenseScre
   const [categories, setCategories] = useState<CategoryOption[]>([]);
   const [subcategories, setSubcategories] = useState<SubcategoryOption[]>([]);
   const [subcategoryId, setSubcategoryId] = useState<number | null>(null);
-  const [sumCost, setSumCost] = useState<number>(0);
-  const [expenses, setExpenses] = useState<any[]>([]);
+  const [, setSumCost] = useState<number>(0);
+  const [, setExpenses] = useState<any[]>([]);
   const [loading, setLoading] = useState<boolean>(false);
 
   const ITEM_HEIGHT = 42;

@@ -17,7 +17,7 @@ import { screenConfigs } from '~/config/screenConfigs';
 const CreateExpenseScreenV2: React.FC = () => {
   const config = screenConfigs.scanInvoiceExpense;
   const colors = useThemeColors();
-  const [extracted, setExtracted] = useState<{
+  const [, setExtracted] = useState<{
     price: string;
     category?: string;
     subcategory?: string;

@@ -175,10 +175,3 @@ export default function CreateIncomeScreen({ navigation }: CreateIncomeScreenPro
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    padding: 16
-  }
-});

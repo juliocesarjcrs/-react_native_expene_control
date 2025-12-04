@@ -1,16 +1,5 @@
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import {
-  StyleSheet,
-  Text,
-  View,
-  FlatList,
-  SafeAreaView,
-  ListRenderItemInfo,
-  ActivityIndicator,
-  KeyboardAvoidingView,
-  Platform,
-  ListRenderItem
-} from 'react-native';
+import React, {useEffect, useState } from 'react';
+import { StyleSheet, Text, View, FlatList, SafeAreaView, ListRenderItem } from 'react-native';
 import { useForm, Controller } from 'react-hook-form';
 import { Input } from 'react-native-elements';
 import { StackNavigationProp } from '@react-navigation/stack';

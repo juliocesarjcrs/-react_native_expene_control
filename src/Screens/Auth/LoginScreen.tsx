@@ -1,10 +1,9 @@
 import React, { useState } from 'react';
 import { View, StyleSheet } from 'react-native';
 import { useForm, Controller } from 'react-hook-form';
-import { useDispatch } from 'react-redux';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Input } from 'react-native-elements';
-import { useSelector } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
 
 import { StackNavigationProp } from '@react-navigation/stack';
 

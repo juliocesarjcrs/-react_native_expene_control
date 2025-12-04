@@ -35,14 +35,6 @@ export const SystemPromptEditor: React.FC<SystemPromptEditorProps> = ({
     onSave(updatedConfig);
   };
 
-  const handlePaste = (text: string) => {
-    // Normalizar saltos de línea
-    const normalized = text
-      .replace(/\r\n/g, '\n') // Windows
-      .replace(/\r/g, '\n'); // Old Mac
-    setTemplate(normalized);
-  };
-
   return (
     <View style={styles.container}>
       <View style={[styles.header, { borderBottomColor: colors.BORDER }]}>

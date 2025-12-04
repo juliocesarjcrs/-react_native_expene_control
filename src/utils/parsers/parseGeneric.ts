@@ -1,4 +1,3 @@
-/* eslint-disable no-useless-escape */
 import { Product } from '~/shared/types/components/receipt-scanner.type';
 import { formatDescription } from './formatDescription';
 

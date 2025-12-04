@@ -40,7 +40,6 @@ export default function MyProgressBar({
   }, [percentage, completedColor, backgroundColor, colors]);
 
   // Calcular el ancho mínimo para que el texto quepa
-  const textMinWidth = 50; // px mínimos para el texto
   const barWidthPercent = progressData.displayPercentage;
   const showTextInside = barWidthPercent >= 15; // Mostrar texto dentro solo si hay suficiente espacio
 

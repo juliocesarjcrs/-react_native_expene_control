@@ -41,7 +41,7 @@ export default function ModalIcon({ icon, setIcon }: ModalIconProps) {
   return (
     <View>
       <Button
-        icon={<Icon type="font-awesome" name={icon} size={20} color="white" />}
+        icon={<Icon type="font-awesome" name={icon} size={20} color={colors.PRIMARY} />}
         iconRight
         title="Seleccionar un icono"
         onPress={() => setIsVisible(true)}

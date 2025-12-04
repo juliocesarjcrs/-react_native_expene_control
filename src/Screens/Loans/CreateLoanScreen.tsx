@@ -61,8 +61,7 @@ export default function CreateLoanScreen() {
         commentary: payload.commentary,
         type
       };
-      console.log('varai', variables);
-      const { data } = await createLoanMutation({
+      await createLoanMutation({
         variables
       });
 

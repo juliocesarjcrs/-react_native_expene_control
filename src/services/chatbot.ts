@@ -1,7 +1,6 @@
 import { AxiosResponse } from 'axios';
 import axios from '../plugins/axiosConfig';
 import {
-  ChatMessage,
   ChatResponse,
   ConversationsResponse,
   ConversationHistoryResponse,

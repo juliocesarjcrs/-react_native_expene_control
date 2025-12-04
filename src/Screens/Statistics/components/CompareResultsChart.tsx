@@ -1,15 +1,15 @@
 import React, { useState } from 'react';
-import { View, StyleSheet, ScrollView } from 'react-native';
-import { useWindowDimensions } from 'react-native';
+import { View, StyleSheet, ScrollView, useWindowDimensions } from 'react-native';
 import { SegmentedButtons, Text } from 'react-native-paper';
 import {
   VictoryBar,
   VictoryChart,
   VictoryTheme,
   VictoryAxis,
-  VictoryTooltip
+  VictoryTooltip,
+  VictoryGroup,
+  VictoryLabel
 } from 'victory-native';
-import { VictoryGroup, VictoryLabel } from 'victory-native';
 
 import { useThemeColors } from '~/customHooks/useThemeColors';
 import { ComparePeriodsResponse } from '~/shared/types/services/expense-service.type';

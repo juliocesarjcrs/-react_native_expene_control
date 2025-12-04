@@ -1,7 +1,6 @@
 import React from 'react';
-import { Alert, Modal, StyleSheet, TouchableOpacity, View } from 'react-native';
-import { Text } from 'react-native';
-import { Icon, Divider, Tooltip, TooltipProps } from 'react-native-elements';
+import { Text, Modal, StyleSheet, TouchableOpacity, View } from 'react-native';
+import { Icon, Tooltip, TooltipProps } from 'react-native-elements';
 
 import { IncomeModel } from '~/shared/types';
 import { MEDIUM, SMALL } from '~/styles/fonts';

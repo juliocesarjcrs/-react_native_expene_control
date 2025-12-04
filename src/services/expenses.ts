@@ -15,7 +15,6 @@ import {
   GetLastExpensesWithPaginateResponse,
   GetOneExpenseResponse
 } from '../shared/types/services/expense-service.type';
-import { AllExpensesByRangeDatesResponse } from '../shared/types/services';
 import { ExpenseModel } from '~/shared/types';
 const PREFIX = 'expenses';
 export const getLastExpenses = async (params: any) => {

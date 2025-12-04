@@ -151,7 +151,3 @@ export default function ChangePasswordScreen({ navigation }: ChangePasswordScree
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  // Estilos adicionales si son necesarios
-});

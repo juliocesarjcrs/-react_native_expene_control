@@ -2,7 +2,6 @@ import { CategoryModel } from '~/shared/types';
 import axios from '../plugins/axiosConfig';
 import {
   AllExpensesByRangeDatesResponse,
-  CategoryExpense,
   CreateCategoryPayload,
   EditCategoryPayload,
   GetAllExpensesByMonthResponse,

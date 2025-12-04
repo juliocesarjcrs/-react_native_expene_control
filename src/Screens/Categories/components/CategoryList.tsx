@@ -5,8 +5,7 @@ import {
   StyleSheet,
   Text,
   View,
-  ListRenderItem,
-  TouchableOpacity
+  ListRenderItem
 } from 'react-native';
 import { Icon } from 'react-native-elements';
 
@@ -25,7 +24,7 @@ import { useThemeColors } from '~/customHooks/useThemeColors';
 import { CategoryModel } from '~/shared/types';
 
 // Styles
-import { MEDIUM, SMALL } from '~/styles/fonts';
+import { MEDIUM } from '~/styles/fonts';
 
 interface CategoryListProps {
   data: CategoryModel[];

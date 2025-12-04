@@ -119,4 +119,3 @@ export default function SumaryIncomesScreen({ navigation }: SumaryIncomesScreenP
     </View>
   );
 }
-const styles = StyleSheet.create({});

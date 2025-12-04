@@ -1,10 +1,9 @@
 import React, { useEffect, useState } from 'react';
-import { ScrollView, StyleSheet, Text, View, Image, TouchableOpacity } from 'react-native';
+import { ScrollView, StyleSheet, Text, View, Image } from 'react-native';
 import { Icon } from 'react-native-elements';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useDispatch, useSelector } from 'react-redux';
 import Constants from 'expo-constants';
-import { URL_BASE } from '@env';
 import { StackNavigationProp } from '@react-navigation/stack';
 
 // Redux
@@ -31,7 +30,7 @@ import { RootState } from '~/shared/types/reducers';
 import { AppDispatch } from '~/shared/types/reducers/root-state.type';
 
 // Utils
-import { AsignColor, compareValues, NumberFormat } from '~/utils/Helpers';
+import { AsignColor, compareValues } from '~/utils/Helpers';
 import { showError } from '~/utils/showError';
 
 // Hooks
@@ -188,7 +187,6 @@ export default function MainScreen({ navigation }: MainScreenProps) {
             <Text style={[styles.name, { color: colors.TEXT_PRIMARY }]}>
               {userLoggued?.name ?? 'Usuario'}
             </Text>
-            <Text style={[styles.env, { color: colors.TEXT_SECONDARY }]}>{URL_BASE}</Text>
           </View>
         </View>
 
@@ -310,9 +308,6 @@ const styles = StyleSheet.create({
     fontSize: MEDIUM + 2,
     fontWeight: '600',
     marginBottom: 4
-  },
-  env: {
-    fontSize: SMALL
   },
   section: {
     marginBottom: 16

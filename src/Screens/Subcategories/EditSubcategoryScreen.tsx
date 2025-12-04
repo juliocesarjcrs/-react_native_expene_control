@@ -60,7 +60,7 @@ export default function EditSubcategoryScreen({ route, navigation }: EditSubcate
       const idCategory = subcategoryObj.category.id;
       setLoading(true);
 
-      const { data } = await EditSubcategory(subcategoryObj.id, {
+      await EditSubcategory(subcategoryObj.id, {
         ...payload,
         categoryId: idCategory
       });

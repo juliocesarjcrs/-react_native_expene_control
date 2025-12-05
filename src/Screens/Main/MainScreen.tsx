@@ -168,28 +168,33 @@ export default function MainScreen({ navigation }: MainScreenProps) {
 
   return (
     <View style={[commonStyles.screenContainer, { backgroundColor: colors.BACKGROUND }]}>
-      <ScreenHeader title={config.title} subtitle={config.subtitle} />
-
-      <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
-        {/* USER HEADER */}
-        <View style={[styles.header, { backgroundColor: colors.CARD_BACKGROUND }]}>
-          <View style={[styles.avatarContainer, { borderColor: colors.PRIMARY }]}>
-            {userLoggued?.image && userImgSigned ? (
-              <Image source={{ uri: userImgSigned }} style={styles.avatar} />
-            ) : (
-              <View style={[styles.avatarPlaceholder, { backgroundColor: colors.PRIMARY + '20' }]}>
-                <Icon type="material-community" name="account" size={32} color={colors.PRIMARY} />
-              </View>
-            )}
-          </View>
-
-          <View style={styles.userInfo}>
-            <Text style={[styles.name, { color: colors.TEXT_PRIMARY }]}>
+      <ScreenHeader
+        title={config.title}
+        subtitle={config.subtitle}
+        rightComponent={
+          <View style={styles.userHeaderCompact}>
+            <View style={[styles.avatarSmall, { borderColor: colors.PRIMARY }]}>
+              {userLoggued?.image && userImgSigned ? (
+                <Image source={{ uri: userImgSigned }} style={styles.avatarSmallImage} />
+              ) : (
+                <View
+                  style={[
+                    styles.avatarSmallPlaceholder,
+                    { backgroundColor: colors.PRIMARY + '20' }
+                  ]}
+                >
+                  <Icon type="material-community" name="account" size={20} color={colors.PRIMARY} />
+                </View>
+              )}
+            </View>
+            <Text style={[styles.userName, { color: colors.TEXT_PRIMARY }]} numberOfLines={1}>
               {userLoggued?.name ?? 'Usuario'}
             </Text>
           </View>
-        </View>
+        }
+      />
 
+      <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
         {/* MONTH PICKER */}
         <View style={styles.section}>
           <MyMonthPicker />
@@ -201,28 +206,11 @@ export default function MainScreen({ navigation }: MainScreenProps) {
             <OptionsGrid
               actions={[
                 { title: 'Ingresar gasto', onPress: sendcreateExpenseScreen },
-                { title: 'Scanear factura', onPress: sendScanInvoiceExpenseScreen }
+                { title: 'Escanear', onPress: sendScanInvoiceExpenseScreen }
               ]}
             />
           </View>
         </View>
-
-        {/* TOTAL CARD */}
-        {/* {total > 0 && (
-          <View style={[styles.totalCard, { backgroundColor: colors.CARD_BACKGROUND }]}>
-            <View style={styles.totalHeader}>
-              <Icon
-                type="material-community"
-                name="wallet"
-                size={24}
-                color={colors.WARNING}
-                containerStyle={{ marginRight: 8 }}
-              />
-              <Text style={[styles.totalLabel, { color: colors.TEXT_SECONDARY }]}>Total gastado este mes</Text>
-            </View>
-            <Text style={[styles.total, { color: colors.WARNING }]}>{NumberFormat(total)}</Text>
-          </View>
-        )} */}
 
         {/* CHART SECTION */}
         <View style={styles.section}>
@@ -359,5 +347,33 @@ const styles = StyleSheet.create({
     marginTop: 20,
     marginBottom: 10,
     fontSize: SMALL
+  },
+  userHeaderCompact: {
+    alignItems: 'flex-end',
+    maxWidth: 160 // Limita el ancho
+  },
+  avatarSmall: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    borderWidth: 2,
+    marginBottom: 4
+  },
+  avatarSmallImage: {
+    width: 36,
+    height: 36,
+    borderRadius: 18
+  },
+  avatarSmallPlaceholder: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    justifyContent: 'center',
+    alignItems: 'center'
+  },
+  userName: {
+    fontSize: SMALL,
+    fontWeight: '600',
+    textAlign: 'right'
   }
 });

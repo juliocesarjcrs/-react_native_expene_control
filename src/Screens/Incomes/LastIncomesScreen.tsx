@@ -55,13 +55,11 @@ export default function LastIncomesScreen({ navigation }: LastIncomesScreenProps
   useFocusEffect(
     React.useCallback(() => {
       // Refresca la lista cada vez que el screen gana foco
-      console.log('[LastIncomesScreen] useFocusEffect: dispatch setQuery(null)');
       fetchData(1, true);
     }, [query])
   );
   // Resetear query solo al montar
   useEffect(() => {
-    console.log('[LastIncomesScreen] useEffect mount: dispatch setQuery(null)');
     dispatch(setQuery(null));
   }, []);
 
@@ -71,17 +69,9 @@ export default function LastIncomesScreen({ navigation }: LastIncomesScreenProps
       isFirstRender.current = false;
       // Si el query es distinto de null, espera a que el reset lo limpie
       if (query !== null) {
-        console.log(
-          '[LastIncomesScreen] useEffect [query]: Detenido porque query !== null:',
-          query
-        );
         return;
       }
     }
-    console.log(
-      '[LastIncomesScreen] useEffect [query]: Reiniciando paginación y datos. Query:',
-      query
-    );
     // Reinicia todos los flags de paginación y datos
     setLastIncomes([]);
     setPage(1);
@@ -93,18 +83,8 @@ export default function LastIncomesScreen({ navigation }: LastIncomesScreenProps
   // Manejar paginación (solo si no es búsqueda nueva)
   useEffect(() => {
     if (page > 1 && query !== null) {
-      console.log(
-        '[LastIncomesScreen] useEffect [page]: page > 1 y query !== null, fetchData',
-        page,
-        query
-      );
       fetchData(page, false); // false: no reset
     } else if (page > 1 && query === null) {
-      console.log(
-        '[LastIncomesScreen] useEffect [page]: page > 1 y query === null, fetchData',
-        page,
-        query
-      );
       fetchData(page, false);
     }
   }, [page]);
@@ -112,13 +92,6 @@ export default function LastIncomesScreen({ navigation }: LastIncomesScreenProps
   // fetchData recibe page y reset flag
   const fetchData = useCallback(
     async (pageToFetch: number, reset: boolean) => {
-      console.log('[LastIncomesScreen] fetchData called with', {
-        pageToFetch,
-        reset,
-        query,
-        lastIncomesLength: lastIncomes.length,
-        stopeFetch
-      });
       try {
         setLoadingFotter(true);
         const params = {
@@ -130,22 +103,14 @@ export default function LastIncomesScreen({ navigation }: LastIncomesScreenProps
         setLoadingFotter(false);
         if (data.data.length <= 0) {
           setStopeFetch(true);
-          console.log('[LastIncomesScreen] fetchData: No más datos, stopeFetch=true');
         }
         let newList = [];
         if (reset) {
-          console.log(
-            '[LastIncomesScreen] fetchData: Resetting lastIncomes',
-            params.query,
-            prevQuery,
-            params.page
-          );
           newList = handlerDataSearch(data.data, [], params.query, prevQuery, params.page);
         } else {
           newList = handlerDataSearch(data.data, lastIncomes, params.query, prevQuery, params.page);
         }
         setLastIncomes(newList);
-        console.log('[LastIncomesScreen] fetchData: setLastIncomes, length:', newList.length);
       } catch (e) {
         setLoadingFotter(false);
         showError(e);
@@ -156,20 +121,11 @@ export default function LastIncomesScreen({ navigation }: LastIncomesScreenProps
 
   // Paginador
   const loadMoreData = () => {
-    console.log(
-      '[LastIncomesScreen] loadMoreData: stopeFetch:',
-      stopeFetch,
-      'loadingFooter:',
-      loadingFooter,
-      'page:',
-      page
-    );
     if (!stopeFetch && !loadingFooter) {
       setPage((prev) => prev + 1);
     }
   };
   const updateList = () => {
-    console.log('[LastIncomesScreen] updateList called');
     fetchData(1, true);
   };
   const renderFooter = () => {

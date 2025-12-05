@@ -24,9 +24,7 @@ import {
   FormValues,
   SubcategoryOption
 } from '~/shared/types/screens/expenses/edit-expenses.type';
-import {
-  EditExpensePayload
-} from '~/shared/types/services/expense-service.type';
+import { EditExpensePayload } from '~/shared/types/services/expense-service.type';
 import { StackNavigationProp } from '@react-navigation/stack';
 
 // Utils

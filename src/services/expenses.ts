@@ -84,6 +84,5 @@ export const findExpensesBySubcategories = async (
 export const getComparePeriods = async (
   payload: ComparePeriodsPayload
 ): Promise<AxiosResponse<ComparePeriodsResponse>> => {
-  console.log('ini', payload.categories[0]);
   return axios.post(`${PREFIX}/analysis/compare-periods`, payload);
 };

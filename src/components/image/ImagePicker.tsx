@@ -64,7 +64,7 @@ const ImagePickerComponent: React.FC<ImagePickerComponentProps> = ({
       mediaTypes: ['images'],
       allowsEditing: true,
       quality: 1,
-      base64: true,
+      base64: true
       // presentationStyle: ImagePicker.UIImagePickerPresentationStyle.FULL_SCREEN,
     });
     await processImageResult(result);

@@ -19,7 +19,7 @@ module.exports = function (api) {
           blocklist: null,
           allowlist: null,
           safe: false,
-          allowUndefined: true,
+          allowUndefined: true
         }
       ],
       'react-native-reanimated/plugin'

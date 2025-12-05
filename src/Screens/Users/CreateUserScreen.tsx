@@ -1,4 +1,4 @@
-import React, {useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { StyleSheet, Text, View, FlatList, SafeAreaView, ListRenderItem } from 'react-native';
 import { useForm, Controller } from 'react-hook-form';
 import { Input } from 'react-native-elements';

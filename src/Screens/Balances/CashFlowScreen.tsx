@@ -92,82 +92,82 @@ export default function CashFlowScreen({ navigation }: CashFlowScreenProps) {
     }
   }, [error]);
 
-// eslint-disable-next-line react-hooks/exhaustive-deps
- const fetchSavingsByUser = useCallback(async () => {
-  try {
-    setLoading(true);
-    const query = { numMonths: numMonthsQuery };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  const fetchSavingsByUser = useCallback(async () => {
+    try {
+      setLoading(true);
+      const query = { numMonths: numMonthsQuery };
 
-    const { data } = await getSavingsByUser(query);
-    setLoading(false);
+      const { data } = await getSavingsByUser(query);
+      setLoading(false);
 
-    const allDataSavings = filterLimitDataForGraph<FinancialRecord>(data.data, numMonthsQuery);
+      const allDataSavings = filterLimitDataForGraph<FinancialRecord>(data.data, numMonthsQuery);
 
-    const sumPercentSaving = allDataSavings.reduce(
-      (acu, val) => acu + (val.income > 0 ? (val.saving * 100) / val.income : 0),
-      0
-    );
-    const meanSavingsByNumMonths =
-      allDataSavings.length > 0 ? Math.round(sumPercentSaving / allDataSavings.length) : 0;
+      const sumPercentSaving = allDataSavings.reduce(
+        (acu, val) => acu + (val.income > 0 ? (val.saving * 100) / val.income : 0),
+        0
+      );
+      const meanSavingsByNumMonths =
+        allDataSavings.length > 0 ? Math.round(sumPercentSaving / allDataSavings.length) : 0;
 
-    const dataTable = allDataSavings.map((e) => {
-      const meanSaaving = e.income > 0 ? Math.round((e.saving * 100) / e.income) : 0;
-      return [
-        `${DateFormat(e.date, "MMMM YYYY")}`,
-        `${meanSaaving} %`,
-        `${NumberFormat(e.saving)}`
-      ];
-    });
+      const dataTable = allDataSavings.map((e) => {
+        const meanSaaving = e.income > 0 ? Math.round((e.saving * 100) / e.income) : 0;
+        return [
+          `${DateFormat(e.date, 'MMMM YYYY')}`,
+          `${meanSaaving} %`,
+          `${NumberFormat(e.saving)}`
+        ];
+      });
 
-    const sumSaving = allDataSavings.reduce((acu, val) => acu + val.saving, 0);
-    const meanSavingsValByNumMonths =
-      allDataSavings.length > 0 ? sumSaving / allDataSavings.length : 0;
+      const sumSaving = allDataSavings.reduce((acu, val) => acu + val.saving, 0);
+      const meanSavingsValByNumMonths =
+        allDataSavings.length > 0 ? sumSaving / allDataSavings.length : 0;
 
-    dataTable.push([
-      "Promedio",
-      `${meanSavingsByNumMonths} %`,
-      `${NumberFormat(meanSavingsValByNumMonths)}`
-    ]);
+      dataTable.push([
+        'Promedio',
+        `${meanSavingsByNumMonths} %`,
+        `${NumberFormat(meanSavingsValByNumMonths)}`
+      ]);
 
-    setTableData(dataTable);
+      setTableData(dataTable);
 
-    const filterLabels = filterLimitDataForGraph(data.graph.labels, numMonthsQuery);
-    const filterExpenses = filterLimitDataForGraph(data.graph.expenses, numMonthsQuery);
-    const filterIncomes = filterLimitDataForGraph(data.graph.incomes, numMonthsQuery);
-    const filterSavings = filterLimitDataForGraph(data.graph.savings, numMonthsQuery);
+      const filterLabels = filterLimitDataForGraph(data.graph.labels, numMonthsQuery);
+      const filterExpenses = filterLimitDataForGraph(data.graph.expenses, numMonthsQuery);
+      const filterIncomes = filterLimitDataForGraph(data.graph.incomes, numMonthsQuery);
+      const filterSavings = filterLimitDataForGraph(data.graph.savings, numMonthsQuery);
 
-    const previosExpenses = filterExpenses.slice(0, -1);
-    const previosIncomes = filterIncomes.slice(0, -1);
-    const previosSavings = filterSavings.slice(0, -1);
+      const previosExpenses = filterExpenses.slice(0, -1);
+      const previosIncomes = filterIncomes.slice(0, -1);
+      const previosSavings = filterSavings.slice(0, -1);
 
-    setLabels(filterLabels);
-    setSearchTotalInMonth(data.data);
+      setLabels(filterLabels);
+      setSearchTotalInMonth(data.data);
 
-    setDataExpenses(filterExpenses);
-    setAverageExpenses(calculateAverage(filterExpenses));
-    setPreviousAverageExpenses(calculateAverage(previosExpenses));
+      setDataExpenses(filterExpenses);
+      setAverageExpenses(calculateAverage(filterExpenses));
+      setPreviousAverageExpenses(calculateAverage(previosExpenses));
 
-    setDataIncomes(filterIncomes);
-    setAverageIncomes(calculateAverage(filterIncomes));
-    setPreviousAverageIncomes(calculateAverage(previosIncomes));
+      setDataIncomes(filterIncomes);
+      setAverageIncomes(calculateAverage(filterIncomes));
+      setPreviousAverageIncomes(calculateAverage(previosIncomes));
 
-    setDataSavings(filterSavings);
-    setSumPreviousSavings(previosSavings.reduce((acu, val) => acu + val, 0));
+      setDataSavings(filterSavings);
+      setSumPreviousSavings(previosSavings.reduce((acu, val) => acu + val, 0));
 
-    historySaving(data.graph.savings);
-  } catch (e) {
-    setLoading(false);
-    showError(e);
-  }
-}, [numMonthsQuery]);
+      historySaving(data.graph.savings);
+    } catch (e) {
+      setLoading(false);
+      showError(e);
+    }
+  }, [numMonthsQuery]);
 
   useEffect(() => {
-  fetchSavingsByUser();
+    fetchSavingsByUser();
 
-  const unsubscribe = navigation.addListener("focus", fetchSavingsByUser);
+    const unsubscribe = navigation.addListener('focus', fetchSavingsByUser);
 
-  return unsubscribe;
-}, [fetchSavingsByUser, navigation]);
+    return unsubscribe;
+  }, [fetchSavingsByUser, navigation]);
 
   const historySaving = async (history: number[]) => {
     let totalHistory = 0;

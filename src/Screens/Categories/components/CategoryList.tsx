@@ -1,12 +1,5 @@
 import React from 'react';
-import {
-  Alert,
-  FlatList,
-  StyleSheet,
-  Text,
-  View,
-  ListRenderItem
-} from 'react-native';
+import { Alert, FlatList, StyleSheet, Text, View, ListRenderItem } from 'react-native';
 import { Icon } from 'react-native-elements';
 
 // Services

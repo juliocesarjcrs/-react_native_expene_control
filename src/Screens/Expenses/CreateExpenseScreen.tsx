@@ -119,7 +119,7 @@ export default function CreateExpenseScreen(): React.JSX.Element {
         const { data } = await getExchangeCurrency(values);
         newAmount = data.result;
       } catch (error) {
-        console.log('error---', error);
+        showError(error);
       }
     }
 

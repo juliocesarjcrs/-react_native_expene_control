@@ -37,7 +37,7 @@ export default function ManageCSVsScreen(): React.JSX.Element {
         .filter((name) => name.endsWith('.csv'));
       setCsvFiles(csvs);
     } catch (error: unknown) {
-      console.log('Error fetching CSV files:', error);
+      showError(error);
       Alert.alert('Error', 'No se pudieron listar los archivos CSV');
     }
     setLoading(false);
@@ -67,8 +67,8 @@ export default function ManageCSVsScreen(): React.JSX.Element {
     try {
       const file = new File(Paths.document, fileName);
       await Sharing.shareAsync(file.uri);
-    } catch (e) {
-      console.log('Error sharing CSV file:', e);
+    } catch (error) {
+      showError(error);
       Alert.alert('Error', 'No se pudo compartir el archivo');
     }
   };

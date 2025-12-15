@@ -41,7 +41,7 @@ export const TransactionItem = ({ item, type, colors }: TransactionItemProps) =>
         </Text>
 
         {hasCommentary && (
-          <Text style={[itemStyles.commentary, { color: colors.TEXT_SECONDARY }]} numberOfLines={1}>
+          <Text style={[itemStyles.commentary, { color: colors.TEXT_SECONDARY }]} numberOfLines={3}>
             {item.commentary}
           </Text>
         )}
@@ -89,7 +89,7 @@ export const TransactionItem = ({ item, type, colors }: TransactionItemProps) =>
 const itemStyles = StyleSheet.create({
   container: {
     flexDirection: 'row',
-    alignItems: 'center',
+    alignItems: 'flex-start',
     paddingVertical: 10,
     borderBottomWidth: 1
   },
@@ -103,7 +103,8 @@ const itemStyles = StyleSheet.create({
   },
   infoContainer: {
     flex: 1,
-    marginRight: 8
+    marginRight: 8,
+    paddingTop: 2,
   },
   name: {
     fontSize: SMALL + 2,
@@ -112,8 +113,9 @@ const itemStyles = StyleSheet.create({
   },
   commentary: {
     fontSize: SMALL,
-    marginBottom: 3,
-    fontStyle: 'italic'
+    marginBottom: 4,
+    fontStyle: 'italic',
+    lineHeight: 16,
   },
   dateRow: {
     flexDirection: 'row',

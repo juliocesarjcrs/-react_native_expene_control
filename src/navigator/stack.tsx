@@ -254,6 +254,11 @@ export default function MyStack() {
           component={Routes.AIModelsScreen}
           options={{ title: 'Modelos de IA' }}
         />
+        <SettingsStack.Screen name="userThemeSettings" component={Routes.UserThemeSettingsScreen} />
+        <SettingsStack.Screen
+          name="customizeThemeColors"
+          component={Routes.CustomizeThemeColorsScreen}
+        />
       </SettingsStack.Navigator>
     );
   }

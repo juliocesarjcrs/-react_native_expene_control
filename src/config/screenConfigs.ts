@@ -132,6 +132,14 @@ export const screenConfigs = {
     title: 'Panel administración',
     subtitle: 'Gestión avanzada del sistema'
   },
+  userThemeSettings: {
+    title: 'Mi Tema',
+    subtitle: 'Personaliza la apariencia de tu aplicación'
+  },
+  customizeThemeColors: {
+    title: 'Personalizar Colores',
+    subtitle: 'Crea tu tema único modificando cada color'
+  },
 
   // STATISTICS
   comparePeriods: {

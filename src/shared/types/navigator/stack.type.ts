@@ -78,4 +78,6 @@ export type SettingsStackParamList = {
   editTheme: { themeName: string };
   adminDashboard: undefined;
   aiModels: undefined;
+  userThemeSettings: undefined;
+  customizeThemeColors: undefined;
 };

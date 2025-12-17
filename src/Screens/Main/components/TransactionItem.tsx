@@ -104,7 +104,7 @@ const itemStyles = StyleSheet.create({
   infoContainer: {
     flex: 1,
     marginRight: 8,
-    paddingTop: 2,
+    paddingTop: 2
   },
   name: {
     fontSize: SMALL + 2,
@@ -115,7 +115,7 @@ const itemStyles = StyleSheet.create({
     fontSize: SMALL,
     marginBottom: 4,
     fontStyle: 'italic',
-    lineHeight: 16,
+    lineHeight: 16
   },
   dateRow: {
     flexDirection: 'row',

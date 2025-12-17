@@ -153,21 +153,25 @@ npx expo-doctor
 ## Useful Commands
 
 - **Clear cache**
+
 ```sh
 npm run clear:cache
 ```
 
 - **Lint**
+
 ```sh
 npm run lint
 ```
 
 - **Run on Android (Expo Go)**
+
 ```sh
 npm run android
 ```
 
 - **Run on Web**
+
 ```sh
 npm run web
 ```

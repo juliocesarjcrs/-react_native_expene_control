@@ -1,15 +1,19 @@
 import React, { createContext, useState, useEffect, useContext, ReactNode } from 'react';
-import { getActiveTheme } from '../services/themeConfigService';
 import { ThemeColors } from '../shared/types/services/theme-config-service.type';
 import { ThemeConfig } from '~/shared/types/models/theme-config.type';
 import { showError } from '~/utils/showError';
+import { getAvailableThemes, getMyTheme } from '~/services/UserThemePreferenceService';
+import { UserThemeConfig } from '~/shared/types/services/user-theme-preference-service.type';
 
 type ThemeContextType = {
-  theme: ThemeConfig | null;
+  userTheme: UserThemeConfig | null;
   colors: ThemeColors;
   loading: boolean;
   refreshTheme: () => Promise<void>;
   themeName: string;
+  isCustomTheme: boolean;
+  availableThemes: ThemeConfig[];
+  loadAvailableThemes: () => Promise<void>;
 };
 
 // Colores por defecto (fallback si no se puede cargar desde el backend)
@@ -43,9 +47,10 @@ type ThemeProviderProps = {
 };
 
 export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
-  const [theme, setTheme] = useState<ThemeConfig | null>(null);
+  const [userTheme, setUserTheme] = useState<UserThemeConfig | null>(null);
   const [colors, setColors] = useState<ThemeColors>(DEFAULT_COLORS);
   const [loading, setLoading] = useState<boolean>(true);
+  const [availableThemes, setAvailableThemes] = useState<ThemeConfig[]>([]);
 
   useEffect(() => {
     loadTheme();
@@ -54,15 +59,25 @@ export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
   const loadTheme = async () => {
     try {
       setLoading(true);
-      const activeTheme = await getActiveTheme();
-      setTheme(activeTheme);
-      setColors(activeTheme.colors);
+      // Obtener el tema configurado para el usuario actual
+      const themeConfig = await getMyTheme();
+      setUserTheme(themeConfig);
+      setColors(themeConfig.colors);
     } catch (error) {
       showError(error);
       // En caso de error, usar colores por defecto
       setColors(DEFAULT_COLORS);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const loadAvailableThemes = async () => {
+    try {
+      const themes = await getAvailableThemes();
+      setAvailableThemes(themes);
+    } catch (error) {
+      showError(error);
     }
   };
 
@@ -73,11 +88,14 @@ export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
   return (
     <ThemeContext.Provider
       value={{
-        theme,
+        userTheme,
         colors,
         loading,
         refreshTheme,
-        themeName: theme?.themeName || 'default'
+        themeName: userTheme?.themeName || 'default',
+        isCustomTheme: userTheme?.isCustom || false,
+        availableThemes,
+        loadAvailableThemes
       }}
     >
       {children}

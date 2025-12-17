@@ -49,6 +49,8 @@ import ComparePeriodsScreen from '~/Screens/Statistics/ComparePeriodsScreen';
 
 // Admin
 import AIModelsScreen from '~/Screens/Admin/AIModelsScreen';
+import UserThemeSettingsScreen from '~/Screens/Settings/UserThemeSettingsScreen';
+import CustomizeThemeColorsScreen from '~/Screens/Settings/CustomizeThemeColorsScreen';
 
 export interface StackRoutesType {
   LoginScreen: typeof LoginScreen;
@@ -89,6 +91,8 @@ export interface StackRoutesType {
   AdminDashboardScreen: typeof AdminDashboardScreen;
   ComparePeriodsScreen: typeof ComparePeriodsScreen;
   AIModelsScreen: typeof AIModelsScreen;
+  UserThemeSettingsScreen: typeof UserThemeSettingsScreen;
+  CustomizeThemeColorsScreen: typeof CustomizeThemeColorsScreen;
 }
 
 const stackRoutes: StackRoutesType = {
@@ -129,7 +133,9 @@ const stackRoutes: StackRoutesType = {
   EditThemeScreen,
   AdminDashboardScreen,
   ComparePeriodsScreen,
-  AIModelsScreen
+  AIModelsScreen,
+  UserThemeSettingsScreen,
+  CustomizeThemeColorsScreen
 };
 
 export default stackRoutes;

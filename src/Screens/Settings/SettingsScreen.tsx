@@ -79,6 +79,11 @@ export default function SettingsScreen({ navigation }: SettingsScreenProps) {
       {/* --- SOLO ADMIN --- */}
       {userLoggued?.role === 1 && (
         <View style={styles.section}>
+          <MenuCardButton
+            title="Gestionar permisos usuario"
+            onPress={go('manageUserPermissions')}
+            color="#009688"
+          />
           <MenuCardButton title="Editar Perfil" onPress={go('editUser')} color="#009688" />
           <MenuCardButton title="Crear Usuario" onPress={go('createUser')} color="#009688" />
           <MenuCardButton title="Gestionar CSV" onPress={go('manageCSV')} color="#009688" />

@@ -1,6 +1,6 @@
 import { AxiosResponse } from 'axios';
 import axios from '../plugins/axiosConfig';
-import { FeatureFlag } from '~/shared/types/models/feature-flags.type';
+import { FeatureFlag, UserFeaturePermission } from '~/shared/types/models/feature-flags.type';
 import {
   CreateFeatureDto,
   DeleteFeatureResponse,
@@ -35,6 +35,25 @@ export const getChatbotStatus = async (): Promise<FeatureStatusResponse> => {
 // ============================================
 // ENDPOINTS AUTENTICADOS
 // ============================================
+
+/**
+ * NUEVO: Obtener features accesibles para el usuario actual
+ * Este es el endpoint principal que debe usar el frontend
+ */
+export const getMyFeatures = async (): Promise<FeatureFlag[]> => {
+  const response: AxiosResponse<FeatureFlag[]> = await axios.get(`${PREFIX}/my-features`);
+  return response.data;
+};
+
+/**
+ * NUEVO: Verificar si el usuario actual puede acceder a una feature
+ */
+export const canAccessFeature = async (
+  featureKey: string
+): Promise<{ featureKey: string; canAccess: boolean }> => {
+  const response = await axios.get(`${PREFIX}/${featureKey}/can-access`);
+  return response.data;
+};
 
 /**
  * Obtener todas las features (requiere auth)
@@ -94,10 +113,82 @@ export const createFeature = async (createData: CreateFeatureDto): Promise<Featu
   return response.data;
 };
 
+
 /**
  * Eliminar una feature (solo admin)
  */
 export const deleteFeature = async (key: string): Promise<DeleteFeatureResponse> => {
   const response: AxiosResponse<DeleteFeatureResponse> = await axios.delete(`${PREFIX}/${key}`);
+  return response.data;
+};
+
+// ============================================
+// ENDPOINTS SOLO ADMIN (User Permissions)
+// ============================================
+
+export const getUserPermissions = async (userId: number): Promise<UserFeaturePermission[]> => {
+  const response: AxiosResponse<UserFeaturePermission[]> = await axios.get(
+    `${PREFIX}/permissions/user/${userId}`
+  );
+  return response.data;
+};
+
+export const getFeaturePermissions = async (
+  featureKey: string
+): Promise<UserFeaturePermission[]> => {
+  const response: AxiosResponse<UserFeaturePermission[]> = await axios.get(
+    `${PREFIX}/permissions/feature/${featureKey}`
+  );
+  return response.data;
+};
+
+export const grantUserPermission = async (data: {
+  userId: number;
+  featureKey: string;
+  isAllowed: boolean;
+  reason?: string;
+  expiresAt?: string;
+}): Promise<UserFeaturePermission> => {
+  const response: AxiosResponse<UserFeaturePermission> = await axios.post(
+    `${PREFIX}/permissions`,
+    data
+  );
+  return response.data;
+};
+
+export const updateUserPermission = async (
+  userId: number,
+  featureKey: string,
+  data: {
+    isAllowed?: boolean;
+    reason?: string;
+    expiresAt?: string;
+  }
+): Promise<UserFeaturePermission> => {
+  const response: AxiosResponse<UserFeaturePermission> = await axios.put(
+    `${PREFIX}/permissions/${userId}/${featureKey}`,
+    data
+  );
+  return response.data;
+};
+
+export const revokeUserPermission = async (
+  userId: number,
+  featureKey: string
+): Promise<{ message: string }> => {
+  const response = await axios.delete(`${PREFIX}/permissions/${userId}/${featureKey}`);
+  return response.data;
+};
+
+export const bulkGrantPermissions = async (data: {
+  userIds: number[];
+  featureKey: string;
+  isAllowed: boolean;
+  reason?: string;
+}): Promise<UserFeaturePermission[]> => {
+  const response: AxiosResponse<UserFeaturePermission[]> = await axios.post(
+    `${PREFIX}/permissions/bulk`,
+    data
+  );
   return response.data;
 };

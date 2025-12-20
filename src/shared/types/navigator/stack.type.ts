@@ -73,6 +73,7 @@ export type SettingsStackParamList = {
   virtualBudget: undefined;
   manageCSV: undefined;
   manageFeatureFlags: undefined;
+  createEditFeatureFlag: { featureKey?: string };
   chatbotConfig: undefined;
   manageThemes: undefined;
   editTheme: { themeName: string };
@@ -80,4 +81,5 @@ export type SettingsStackParamList = {
   aiModels: undefined;
   userThemeSettings: undefined;
   customizeThemeColors: undefined;
+  manageUserPermissions: undefined;
 };

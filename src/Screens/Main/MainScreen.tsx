@@ -34,7 +34,7 @@ import { AsignColor, compareValues } from '~/utils/Helpers';
 import { showError } from '~/utils/showError';
 
 // Hooks
-import { useFeatureFlag } from '~/customHooks/useFeatureFlag';
+import { useFeatureFlag } from '~/contexts/FeatureFlagsContext';
 
 // Theme
 import { useThemeColors } from '~/customHooks/useThemeColors';
@@ -206,7 +206,7 @@ export default function MainScreen({ navigation }: MainScreenProps) {
             <OptionsGrid
               actions={[
                 { title: 'Ingresar gasto', onPress: sendcreateExpenseScreen },
-                { title: 'Escanear', onPress: sendScanInvoiceExpenseScreen }
+                { title: 'Escanear', onPress: sendScanInvoiceExpenseScreen, featureKey: 'invoice_scanner' }
               ]}
             />
           </View>

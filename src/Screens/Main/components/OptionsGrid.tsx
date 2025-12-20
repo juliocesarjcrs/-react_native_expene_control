@@ -1,10 +1,12 @@
 import React from 'react';
 import { View, StyleSheet } from 'react-native';
 import MyButton from '~/components/MyButton';
+import { useFeatureFlag } from '~/contexts/FeatureFlagsContext';
 
 type ActionItem = {
   title: string;
   onPress: () => void;
+  featureKey?: string;
 };
 
 type OptionsGridProps = {
@@ -14,11 +16,25 @@ type OptionsGridProps = {
 export default function OptionsGrid({ actions }: OptionsGridProps) {
   return (
     <View style={styles.grid}>
-      {actions.map((a, index) => (
-        <View style={styles.item} key={index}>
-          <MyButton title={a.title} onPress={a.onPress} />
-        </View>
+      {actions.map((action, index) => (
+        <ActionButton key={index} action={action} />
       ))}
+    </View>
+  );
+}
+
+// 🆕 Componente interno que verifica permisos
+function ActionButton({ action }: { action: ActionItem }) {
+  const { isEnabled, loading } = useFeatureFlag(action.featureKey || '');
+
+  // Si tiene featureKey y no está habilitada, no mostrar
+  if (action.featureKey && !isEnabled && !loading) {
+    return null;
+  }
+
+  return (
+    <View style={styles.item}>
+      <MyButton title={action.title} onPress={action.onPress} disabled={loading} />
     </View>
   );
 }

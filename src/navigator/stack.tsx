@@ -259,6 +259,18 @@ export default function MyStack() {
           name="customizeThemeColors"
           component={Routes.CustomizeThemeColorsScreen}
         />
+        <SettingsStack.Screen
+          name="manageUserPermissions"
+          component={Routes.ManageUserPermissionsScreen}
+        />
+        <SettingsStack.Screen
+          name="createEditFeatureFlag"
+          component={Routes.CreateEditFeatureFlagScreen}
+          options={({ route }) => ({
+            title: route.params?.featureKey ? 'Editar Funcionalidad' : 'Nueva Funcionalidad',
+            headerBackTitle: 'Volver'
+          })}
+        />
       </SettingsStack.Navigator>
     );
   }

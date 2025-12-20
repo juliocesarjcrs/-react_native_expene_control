@@ -16,7 +16,8 @@ export type CreateFeatureDto = {
   featureName: string;
   description?: string;
   isEnabled?: boolean;
-  requiresRole?: number;
+  defaultForUsers?: boolean;
+  requiresRole?: number | null;
   metadata?: Record<string, any>;
 };
 
@@ -24,6 +25,7 @@ export type UpdateFeatureDto = {
   featureName?: string;
   description?: string;
   isEnabled?: boolean;
-  requiresRole?: number;
+  defaultForUsers?: boolean;
+  requiresRole?: number | null;
   metadata?: Record<string, any>;
 };

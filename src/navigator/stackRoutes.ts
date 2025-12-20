@@ -43,14 +43,16 @@ import { ChatbotConfigScreen } from '~/Screens/Settings/ChatbotConfigScreen';
 import ManageThemesScreen from '~/Screens/Settings/ManageThemesScreen';
 import EditThemeScreen from '~/Screens/Settings/ManageThemes/EditThemeScreen';
 import AdminDashboardScreen from '~/Screens/Settings/AdminDashboard/AdminDashboardScreen';
+import ManageUserPermissionsScreen from '~/Screens/Settings/ManageUserPermissionsScreen';
+import UserThemeSettingsScreen from '~/Screens/Settings/UserThemeSettingsScreen';
+import CustomizeThemeColorsScreen from '~/Screens/Settings/CustomizeThemeColorsScreen';
+import CreateEditFeatureFlagScreen from '~/Screens/Settings/FeatureFlags/CreateEditFeatureFlagScreen';
 
 // Statistics
 import ComparePeriodsScreen from '~/Screens/Statistics/ComparePeriodsScreen';
 
 // Admin
 import AIModelsScreen from '~/Screens/Admin/AIModelsScreen';
-import UserThemeSettingsScreen from '~/Screens/Settings/UserThemeSettingsScreen';
-import CustomizeThemeColorsScreen from '~/Screens/Settings/CustomizeThemeColorsScreen';
 
 export interface StackRoutesType {
   LoginScreen: typeof LoginScreen;
@@ -93,6 +95,8 @@ export interface StackRoutesType {
   AIModelsScreen: typeof AIModelsScreen;
   UserThemeSettingsScreen: typeof UserThemeSettingsScreen;
   CustomizeThemeColorsScreen: typeof CustomizeThemeColorsScreen;
+  ManageUserPermissionsScreen: typeof ManageUserPermissionsScreen;
+  CreateEditFeatureFlagScreen: typeof CreateEditFeatureFlagScreen;
 }
 
 const stackRoutes: StackRoutesType = {
@@ -135,7 +139,9 @@ const stackRoutes: StackRoutesType = {
   ComparePeriodsScreen,
   AIModelsScreen,
   UserThemeSettingsScreen,
-  CustomizeThemeColorsScreen
+  CustomizeThemeColorsScreen,
+  ManageUserPermissionsScreen,
+  CreateEditFeatureFlagScreen,
 };
 
 export default stackRoutes;

@@ -574,7 +574,6 @@ describe('extractProducts', () => {
       ]);
     });
   });
-
   describe('Super Carnes JH receipts', () => {
     it('should parse products with weight from Super Carnes JH (case 1)', () => {
       const ocr = `DantUIN. CKA 29 #33-40
@@ -595,7 +594,7 @@ describe('extractProducts', () => {
 
       expect(extractProducts(ocr)).toEqual([
         { description: 'Tilapia Rio Claro — 0.865 kg a $19.000/kg', price: 16435 },
-        { description: 'Muslo A Granel — 1.570 kg a $7.400/kg', price: 11618 }
+        { description: 'Muslo A Granel — 1.57 kg a $7.400/kg', price: 11618 }
       ]);
     });
 
@@ -623,8 +622,8 @@ describe('extractProducts', () => {
         TOTAL KILOS: 2.435`;
 
       expect(extractProducts(ocr)).toEqual([
-        { description: 'Tilapia Rio Claro — 0.865 kg a $19.000/kg', price: 16435 },
-        { description: 'Muslo A Granel — 1.570 kg a $7.400/kg', price: 11618 }
+        { description: 'Tilapia Rio Claro 16435 | 0 — 0.865 kg a $19.000/kg', price: 16435 },
+        { description: 'Muslo A Granel 11618 | 0 — 1.57 kg a $7.400/kg', price: 11618 }
       ]);
     });
 
@@ -640,7 +639,7 @@ describe('extractProducts', () => {
 
       expect(extractProducts(ocr)).toEqual([
         { description: 'Tilapia Rio Claro — 0.865 kg a $19.000/kg', price: 16435 },
-        { description: 'Muslo A Granel — 1.570 kg a $7.400/kg', price: 11618 }
+        { description: 'Muslo A Granel — 1.57 kg a $7.400/kg', price: 11618 }
       ]);
     });
 
@@ -657,7 +656,7 @@ describe('extractProducts', () => {
 
       expect(extractProducts(ocr)).toEqual([
         { description: 'Tilapia Rio Claro — 0.865 kg a $19.000/kg', price: 16435 },
-        { description: 'Muslo A Granel — 1.570 kg a $7.400/kg', price: 11618 }
+        { description: 'Muslo A Granel — 1.57 kg a $7.400/kg', price: 11618 }
       ]);
     });
 
@@ -671,7 +670,116 @@ describe('extractProducts', () => {
 
       expect(extractProducts(ocr)).toEqual([
         { description: 'Tilapia Rio Claro — 0.865 kg a $19.000/kg', price: 16435 },
-        { description: 'Muslo A Granel — 1.570 kg a $7.400/kg', price: 11618 }
+        { description: 'Muslo A Granel — 1.57 kg a $7.400/kg', price: 11618 }
+      ]);
+    });
+  });
+  describe('Fruver La Granja receipts', () => {
+    it('should parse products with mixed units from Fruver La Granja (case 1)', () => {
+      const ocr = `in. 18/12/2025 10:00
+        I PRODUCTO	CANT V.UNID	V.PROD
+        N MANGO TOMY	0,665 KI	1.900	1.264
+        N PAPA CRIOLLA	0,445 KI	4.400	1.958
+        N PLATANO VERDE	0,395 KI	3.580	1.414
+        N BANDEJA MANZANA	1 UN	5.500	5.500
+        N FRESA BANDEJA	1 UN	4.500	4.500
+        TOTAL PROD: 5`;
+
+      expect(extractProducts(ocr)).toEqual([
+        { description: 'Mango Tomy — 0.665 kg × $1.900/kg', price: 1264 },
+        { description: 'Papa Criolla — 0.445 kg × $4.400/kg', price: 1958 },
+        { description: 'Platano Verde — 0.395 kg × $3.580/kg', price: 1414 },
+        { description: 'Bandeja Manzana — 1 un × $5.500/un', price: 5500 },
+        { description: 'Fresa Bandeja — 1 un × $4.500/un', price: 4500 }
+      ]);
+    });
+
+    it('should handle Fruver La Granja with KG instead of KI (case 2)', () => {
+      const ocr = `PRODUCTO	CANT V.UNID	V.PROD
+        N TOMATE CHONTO	1,250 KG	3.200	4.000
+        N CEBOLLA CABEZONA	0,850 KG	2.800	2.380
+        N ZANAHORIA	0,500 KG	3.600	1.800`;
+
+      expect(extractProducts(ocr)).toEqual([
+        { description: 'Tomate Chonto — 1.25 kg × $3.200/kg', price: 4000 },
+        { description: 'Cebolla Cabezona — 0.85 kg × $2.800/kg', price: 2380 },
+        { description: 'Zanahoria — 0.5 kg × $3.600/kg', price: 1800 }
+      ]);
+    });
+
+    it('should handle Fruver La Granja with decimal points instead of commas (case 3)', () => {
+      const ocr = `PRODUCTO	CANT V.UNID	V.PROD
+        N MANGO TOMY	0.665 KI	1.900	1.264
+        N PAPA CRIOLLA	0.445 KI	4.400	1.958
+        N BANDEJA MANZANA	1 UN	5.500	5.500`;
+
+      expect(extractProducts(ocr)).toEqual([
+        { description: 'Mango Tomy — 0.665 kg × $1.900/kg', price: 1264 },
+        { description: 'Papa Criolla — 0.445 kg × $4.400/kg', price: 1958 },
+        { description: 'Bandeja Manzana — 1 un × $5.500/un', price: 5500 }
+      ]);
+    });
+
+    it('should handle Fruver La Granja with UND instead of UN (case 4)', () => {
+      const ocr = `PRODUCTO	CANT V.UNID	V.PROD
+        N AGUACATE HASS	3 UND	2.500	7.500
+        N LIMON TAHITI	2 UNID	1.000	2.000
+        N PIMENTON ROJO	1 UN	3.200	3.200`;
+
+      expect(extractProducts(ocr)).toEqual([
+        { description: 'Aguacate Hass — 3 un × $2.500/un', price: 7500 },
+        { description: 'Limon Tahiti — 2 un × $1.000/un', price: 2000 },
+        { description: 'Pimenton Rojo — 1 un × $3.200/un', price: 3200 }
+      ]);
+    });
+
+    it('should handle Fruver La Granja with KILO instead of KI (case 5)', () => {
+      const ocr = `PRODUCTO	CANT V.UNID	V.PROD
+        N ARRACACHA	1,200 KILO	4.500	5.400
+        N YUCA	0,750 K	3.000	2.250`;
+
+      expect(extractProducts(ocr)).toEqual([
+        { description: 'Arracacha — 1.2 kg × $4.500/kg', price: 5400 },
+        { description: 'Yuca — 0.75 kg × $3.000/kg', price: 2250 }
+      ]);
+    });
+
+    it('should handle Fruver La Granja without "N" prefix (case 6)', () => {
+      const ocr = `PRODUCTO	CANT V.UNID	V.PROD
+        MANGO TOMY	0,665 KI	1.900	1.264
+        PAPA CRIOLLA	0,445 KI	4.400	1.958
+        BANDEJA MANZANA	1 UN	5.500	5.500`;
+
+      expect(extractProducts(ocr)).toEqual([
+        { description: 'Mango Tomy — 0.665 kg × $1.900/kg', price: 1264 },
+        { description: 'Papa Criolla — 0.445 kg × $4.400/kg', price: 1958 },
+        { description: 'Bandeja Manzana — 1 un × $5.500/un', price: 5500 }
+      ]);
+    });
+
+    it('should handle Fruver La Granja with prices in separate line (case 7)', () => {
+      const ocr = `PRODUCTO	CANT V.UNID	V.PROD
+        N MANGO TOMY	0,665 KI
+        1.900	1.264
+        N PAPA CRIOLLA	0,445 KI
+        4.400	1.958`;
+
+      expect(extractProducts(ocr)).toEqual([
+        { description: 'Mango Tomy — 0.665 kg × $1.900/kg', price: 1264 },
+        { description: 'Papa Criolla — 0.445 kg × $4.400/kg', price: 1958 }
+      ]);
+    });
+
+    it('should handle Fruver La Granja with multiple units of same product (case 8)', () => {
+      const ocr = `PRODUCTO	CANT V.UNID	V.PROD
+        N AGUACATE HASS	5 UN	2.500	12.500
+        N LIMON TAHITI	10 UN	500	5.000
+        N TOMATE	2,5 KI	3.200	8.000`;
+
+      expect(extractProducts(ocr)).toEqual([
+        { description: 'Aguacate Hass — 5 un × $2.500/un', price: 12500 },
+        { description: 'Limon Tahiti — 10 un × $500/un', price: 5000 },
+        { description: 'Tomate — 2.5 kg × $3.200/kg', price: 8000 }
       ]);
     });
   });

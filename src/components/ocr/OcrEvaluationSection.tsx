@@ -11,6 +11,7 @@ const RECEIPT_TYPES: ReceiptType[] = [
   'Falabella',
   'CruzVerde',
   'SuperCarnesJH',
+  'FruverLaGranja',
   'Otros'
 ];
 

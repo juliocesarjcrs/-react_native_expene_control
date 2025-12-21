@@ -54,7 +54,8 @@ export const categorizeExpense = (
           'café',
           'integral',
           'atun',
-          'harina'
+          'harina',
+          'lech'
         ],
         subcategory: 'Desayunos y cenas'
       },
@@ -71,7 +72,9 @@ export const categorizeExpense = (
           'pecho',
           'lomo',
           'trucha',
-          'contramuslo'
+          'contramuslo',
+          'sobrebarrigax',
+          'sobrebarriga'
         ],
         subcategory: 'Proteinas'
       },
@@ -89,11 +92,15 @@ export const categorizeExpense = (
           'pepino',
           'coliflor',
           'brocoli',
-          'spacghetti'
+          'spacghetti',
+          'fresa'
         ],
         subcategory: 'Mercado'
       },
-      { keywords: ['gaseosa', 'refresco', 'pony', 'coca', 'pepsi'], subcategory: 'Gaseosas' },
+      {
+        keywords: ['gaseosa', 'refresco', 'pony', 'coca', 'pepsi', 'gas'],
+        subcategory: 'Gaseosas'
+      },
       {
         keywords: [
           'chuchería',
@@ -103,7 +110,9 @@ export const categorizeExpense = (
           'snack',
           'papas',
           'chocorramo',
-          'chocolatina'
+          'chocolatina',
+          'wafer',
+          'cocoset'
         ],
         subcategory: 'Chucherias'
       },
@@ -142,7 +151,8 @@ export const categorizeExpense = (
           'jabón',
           'blanqueador',
           'toalla',
-          'esponja'
+          'esponja',
+          'lavaloz'
         ],
         subcategory: 'Artículos limpieza hogar'
       },
@@ -186,7 +196,8 @@ export const categorizeExpense = (
           'algodon',
           'hume',
           'toal',
-          'dental'
+          'dental',
+          'protectores'
         ],
         subcategory: 'Artículos aseo personal'
       }

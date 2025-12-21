@@ -20,6 +20,7 @@ export type ReceiptType =
   | 'Falabella'
   | 'CruzVerde'
   | 'SuperCarnesJH'
+  | 'FruverLaGranja'
   | 'Otros';
 
 export type CsvData = {

@@ -6,6 +6,7 @@ import { parseDollarCity } from './dollarCity';
 import { parseAra } from './ara';
 import { parseCruzVerde } from './cruzVerde';
 import { isSuperCarnesJH, parseSuperCarnesJH } from './Supercarnesjh';
+import { isFruverLaGranja, parseFruverLaGranja } from './Fruverlagranja';
 
 export function extractProducts(ocr: string): Product[] {
   const lines = ocr
@@ -20,9 +21,13 @@ export function extractProducts(ocr: string): Product[] {
   const isAra = ocr.includes('Artículo') || ocr.includes('Articulo');
   const isCruzVerde = ocr.includes('TARIFA') && ocr.includes('IVA');
   const isSuperCarnes = isSuperCarnesJH(ocr);
+  const isFruver = isFruverLaGranja(ocr);
 
   console.log('🧾 OCR:', joined.slice(0, 300));
-  if (isSuperCarnes) {
+  if (isFruver) {
+    console.log('🍎 isFruverLaGranja:', isFruver);
+    return parseFruverLaGranja(lines, joined);
+  } else if (isSuperCarnes) {
     console.log('🥩 isSuperCarnesJH:', isSuperCarnes);
     return parseSuperCarnesJH(lines, joined);
   } else if (isCruzVerde) {

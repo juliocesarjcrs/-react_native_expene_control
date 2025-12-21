@@ -19,11 +19,7 @@ import { RouteProp } from '@react-navigation/native';
 import { ScreenHeader } from '~/components/ScreenHeader';
 
 // Services
-import {
-  createFeature,
-  updateFeature,
-  getFeatureByKey
-} from '~/services/featureFlagsService';
+import { createFeature, updateFeature, getFeatureByKey } from '~/services/featureFlagsService';
 
 // Types
 import { FeatureFlag } from '~/shared/types/models/feature-flags.type';
@@ -75,8 +71,22 @@ const INITIAL_FORM: FormData = {
 };
 
 const ICON_OPTIONS = [
-  '⚙️', '🤖', '📄', '📊', '💰', '📈', '🔔', '🎨', 
-  '🔒', '👥', '📱', '💡', '🚀', '⭐', '🎯', '📝'
+  '⚙️',
+  '🤖',
+  '📄',
+  '📊',
+  '💰',
+  '📈',
+  '🔔',
+  '🎨',
+  '🔒',
+  '👥',
+  '📱',
+  '💡',
+  '🚀',
+  '⭐',
+  '🎯',
+  '📝'
 ];
 
 const CATEGORY_OPTIONS = [
@@ -99,7 +109,7 @@ export default function CreateEditFeatureFlagScreen({
   const [loading, setLoading] = useState<boolean>(false);
   const [isEditMode, setIsEditMode] = useState<boolean>(false);
   const [originalKey, setOriginalKey] = useState<string>('');
-  
+
   // Parámetros de navegación
   const featureKey = route.params?.featureKey;
 
@@ -115,7 +125,7 @@ export default function CreateEditFeatureFlagScreen({
     try {
       setLoading(true);
       const feature = await getFeatureByKey(key);
-      
+
       setFormData({
         featureKey: feature.featureKey,
         featureName: feature.featureName,
@@ -135,10 +145,10 @@ export default function CreateEditFeatureFlagScreen({
   };
 
   const updateField = (field: keyof FormData, value: any) => {
-    setFormData(prev => ({ ...prev, [field]: value }));
+    setFormData((prev) => ({ ...prev, [field]: value }));
     // Limpiar error del campo al editar
     if (errors[field]) {
-      setErrors(prev => ({ ...prev, [field]: undefined }));
+      setErrors((prev) => ({ ...prev, [field]: undefined }));
     }
   };
 
@@ -190,18 +200,14 @@ export default function CreateEditFeatureFlagScreen({
 
       if (isEditMode) {
         await updateFeature(originalKey, payload);
-        Alert.alert(
-          'Éxito',
-          'Funcionalidad actualizada correctamente',
-          [{ text: 'OK', onPress: () => navigation.goBack() }]
-        );
+        Alert.alert('Éxito', 'Funcionalidad actualizada correctamente', [
+          { text: 'OK', onPress: () => navigation.goBack() }
+        ]);
       } else {
         await createFeature(payload);
-        Alert.alert(
-          'Éxito',
-          'Funcionalidad creada correctamente',
-          [{ text: 'OK', onPress: () => navigation.goBack() }]
-        );
+        Alert.alert('Éxito', 'Funcionalidad creada correctamente', [
+          { text: 'OK', onPress: () => navigation.goBack() }
+        ]);
       }
     } catch (error) {
       showError(error);
@@ -228,9 +234,7 @@ export default function CreateEditFeatureFlagScreen({
         <ScreenHeader
           title={isEditMode ? 'Editar Funcionalidad' : 'Nueva Funcionalidad'}
           subtitle={
-            isEditMode
-              ? 'Modifica la configuración de la feature'
-              : 'Crea una nueva feature flag'
+            isEditMode ? 'Modifica la configuración de la feature' : 'Crea una nueva feature flag'
           }
         />
 
@@ -241,9 +245,7 @@ export default function CreateEditFeatureFlagScreen({
               <Text style={styles.label}>
                 Feature Key <Text style={styles.required}>*</Text>
               </Text>
-              <Text style={styles.hint}>
-                Identificador único (solo minúsculas y guiones bajos)
-              </Text>
+              <Text style={styles.hint}>Identificador único (solo minúsculas y guiones bajos)</Text>
               <TextInput
                 style={[styles.input, errors.featureKey && styles.inputError]}
                 value={formData.featureKey}
@@ -253,9 +255,7 @@ export default function CreateEditFeatureFlagScreen({
                 autoCapitalize="none"
                 autoCorrect={false}
               />
-              {errors.featureKey && (
-                <Text style={styles.errorText}>{errors.featureKey}</Text>
-              )}
+              {errors.featureKey && <Text style={styles.errorText}>{errors.featureKey}</Text>}
             </View>
           )}
 
@@ -271,9 +271,7 @@ export default function CreateEditFeatureFlagScreen({
               placeholder="ej: Chatbot AI, Escanear Facturas"
               placeholderTextColor="#999"
             />
-            {errors.featureName && (
-              <Text style={styles.errorText}>{errors.featureName}</Text>
-            )}
+            {errors.featureName && <Text style={styles.errorText}>{errors.featureName}</Text>}
           </View>
 
           {/* Description */}
@@ -290,9 +288,7 @@ export default function CreateEditFeatureFlagScreen({
               multiline
               numberOfLines={4}
             />
-            {errors.description && (
-              <Text style={styles.errorText}>{errors.description}</Text>
-            )}
+            {errors.description && <Text style={styles.errorText}>{errors.description}</Text>}
           </View>
 
           {/* Icon Selector */}
@@ -306,10 +302,7 @@ export default function CreateEditFeatureFlagScreen({
               {ICON_OPTIONS.map((icon) => (
                 <TouchableOpacity
                   key={icon}
-                  style={[
-                    styles.iconOption,
-                    formData.icon === icon && styles.iconOptionSelected
-                  ]}
+                  style={[styles.iconOption, formData.icon === icon && styles.iconOptionSelected]}
                   onPress={() => updateField('icon', icon)}
                 >
                   <Text style={styles.iconText}>{icon}</Text>
@@ -355,9 +348,7 @@ export default function CreateEditFeatureFlagScreen({
             <View style={styles.switchRow}>
               <View style={styles.switchInfo}>
                 <Text style={styles.switchLabel}>Funcionalidad Habilitada</Text>
-                <Text style={styles.switchHint}>
-                  Si está deshabilitada, nadie podrá usarla
-                </Text>
+                <Text style={styles.switchHint}>Si está deshabilitada, nadie podrá usarla</Text>
               </View>
               <Switch
                 value={formData.isEnabled}
@@ -434,9 +425,7 @@ export default function CreateEditFeatureFlagScreen({
               {loading ? (
                 <ActivityIndicator color="white" />
               ) : (
-                <Text style={styles.submitButtonText}>
-                  {isEditMode ? 'Actualizar' : 'Crear'}
-                </Text>
+                <Text style={styles.submitButtonText}>{isEditMode ? 'Actualizar' : 'Crear'}</Text>
               )}
             </TouchableOpacity>
           </View>

@@ -26,10 +26,7 @@ import { getUsersList } from '~/services/users';
 
 // Types
 import { SettingsStackParamList, UserModel } from '../../shared/types';
-import {
-  UserFeaturePermission,
-  FeatureFlag
-} from '~/shared/types/models/feature-flags.type';
+import { UserFeaturePermission, FeatureFlag } from '~/shared/types/models/feature-flags.type';
 
 // Utils
 import { showError } from '~/utils/showError';
@@ -44,7 +41,6 @@ type ManageUserPermissionsScreenRouteProp = RouteProp<
   SettingsStackParamList,
   'manageUserPermissions'
 >;
-
 
 interface ManageUserPermissionsScreenProps {
   navigation: ManageUserPermissionsScreenNavigationProp;
@@ -117,7 +113,7 @@ export default function ManageUserPermissionsScreen({
       // Si no tiene permiso específico (null), crear permiso denegado
       // Si está denegado (false), crear permiso permitido
       // Si está permitido (true), revocar permiso (volver a default)
-      
+
       if (currentValue === null) {
         // Denegar
         await grantUserPermission({
@@ -181,10 +177,7 @@ export default function ManageUserPermissionsScreen({
           {users.map((user) => (
             <TouchableOpacity
               key={user.id}
-              style={[
-                styles.userCard,
-                selectedUser?.id === user.id && styles.userCardSelected
-              ]}
+              style={[styles.userCard, selectedUser?.id === user.id && styles.userCardSelected]}
               onPress={() => handleSelectUser(user)}
             >
               <Text style={styles.userName}>{user.name}</Text>
@@ -197,9 +190,7 @@ export default function ManageUserPermissionsScreen({
       {/* Lista de Permisos */}
       {selectedUser && (
         <View style={styles.permissionsContainer}>
-          <Text style={styles.sectionTitle}>
-            Permisos de {selectedUser.name}:
-          </Text>
+          <Text style={styles.sectionTitle}>Permisos de {selectedUser.name}:</Text>
 
           {features.map((feature) => {
             const permissionStatus = getPermissionStatus(feature.featureKey);
@@ -208,16 +199,12 @@ export default function ManageUserPermissionsScreen({
             return (
               <View key={feature.id} style={styles.permissionCard}>
                 <View style={styles.featureInfo}>
-                  <Text style={styles.featureIcon}>
-                    {feature.metadata?.icon || '⚙️'}
-                  </Text>
+                  <Text style={styles.featureIcon}>{feature.metadata?.icon || '⚙️'}</Text>
                   <View style={styles.featureTitles}>
                     <Text style={styles.featureName}>{feature.featureName}</Text>
                     <Text style={styles.featureKey}>Key: {feature.featureKey}</Text>
                     {feature.description && (
-                      <Text style={styles.featureDescription}>
-                        {feature.description}
-                      </Text>
+                      <Text style={styles.featureDescription}>{feature.description}</Text>
                     )}
                     <Text
                       style={[
@@ -238,16 +225,14 @@ export default function ManageUserPermissionsScreen({
                   ) : (
                     <TouchableOpacity
                       style={styles.toggleButton}
-                      onPress={() =>
-                        handleTogglePermission(feature.featureKey, permissionStatus)
-                      }
+                      onPress={() => handleTogglePermission(feature.featureKey, permissionStatus)}
                     >
                       <Text style={styles.toggleButtonText}>
                         {permissionStatus === null
                           ? '🚫 Denegar'
                           : permissionStatus === false
-                          ? '✅ Permitir'
-                          : '🔄 Resetear'}
+                            ? '✅ Permitir'
+                            : '🔄 Resetear'}
                       </Text>
                     </TouchableOpacity>
                   )}

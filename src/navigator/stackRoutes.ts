@@ -141,7 +141,7 @@ const stackRoutes: StackRoutesType = {
   UserThemeSettingsScreen,
   CustomizeThemeColorsScreen,
   ManageUserPermissionsScreen,
-  CreateEditFeatureFlagScreen,
+  CreateEditFeatureFlagScreen
 };
 
 export default stackRoutes;

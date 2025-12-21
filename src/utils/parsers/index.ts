@@ -5,6 +5,7 @@ import { parseGeneric } from './parseGeneric';
 import { parseDollarCity } from './dollarCity';
 import { parseAra } from './ara';
 import { parseCruzVerde } from './cruzVerde';
+import { isSuperCarnesJH, parseSuperCarnesJH } from './Supercarnesjh';
 
 export function extractProducts(ocr: string): Product[] {
   const lines = ocr
@@ -18,10 +19,13 @@ export function extractProducts(ocr: string): Product[] {
   const isDollarCity = ocr.includes('@');
   const isAra = ocr.includes('Artículo') || ocr.includes('Articulo');
   const isCruzVerde = ocr.includes('TARIFA') && ocr.includes('IVA');
+  const isSuperCarnes = isSuperCarnesJH(ocr);
 
   console.log('🧾 OCR:', joined.slice(0, 300));
-
-  if (isCruzVerde) {
+  if (isSuperCarnes) {
+    console.log('🥩 isSuperCarnesJH:', isSuperCarnes);
+    return parseSuperCarnesJH(lines, joined);
+  } else if (isCruzVerde) {
     console.log('🔍 isCruzVerde:', isCruzVerde);
     return parseCruzVerde(lines);
   } else if (isCarulla) {

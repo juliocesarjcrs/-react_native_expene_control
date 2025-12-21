@@ -574,4 +574,105 @@ describe('extractProducts', () => {
       ]);
     });
   });
+
+  describe('Super Carnes JH receipts', () => {
+    it('should parse products with weight from Super Carnes JH (case 1)', () => {
+      const ocr = `DantUIN. CKA 29 #33-40
+        CODIGO	PRODUCTO	TOTAL | IVA
+        4040 Tilapia rio claro	16.435 | 0
+        0,865 KGS X $19.000
+        3003 Muslo A Granel	11.618 | 0
+        1,570 KGS X	$7.400
+        TOTAL KILOS: 2.435
+        TOTAL UNIDADES: 0
+        SUBTOTAL	$28.053
+        $0
+        DESCUENTO
+        $0
+        IVA
+        $28.053
+        TOTAL`;
+
+      expect(extractProducts(ocr)).toEqual([
+        { description: 'Tilapia Rio Claro — 0.865 kg a $19.000/kg', price: 16435 },
+        { description: 'Muslo A Granel — 1.570 kg a $7.400/kg', price: 11618 }
+      ]);
+    });
+
+    it('should handle Super Carnes JH with gramos instead of kilos (case 2)', () => {
+      const ocr = `CODIGO	PRODUCTO	TOTAL | IVA
+        5020 Carne Molida Premium	8.500 | 0
+        500 GRS X $17.000
+        2010 Pechuga Sin Hueso	12.750 | 0
+        750 GRAMOS X $17.000
+        TOTAL KILOS: 1.250
+        TOTAL UNIDADES: 0`;
+
+      expect(extractProducts(ocr)).toEqual([
+        { description: 'Carne Molida Premium — 0.5 kg a $17.000/kg', price: 8500 },
+        { description: 'Pechuga Sin Hueso — 0.75 kg a $17.000/kg', price: 12750 }
+      ]);
+    });
+
+    it('should handle Super Carnes JH with OCR errors (case 3)', () => {
+      const ocr = `CODIGO	PRODUCTO	TOTAL | IVA
+        4040 Tilapia rio claro	16435 | 0
+        0.865 KG X $19000
+        3003 Muslo A Granel	11618 | 0
+        1.570 KILOS X 7400
+        TOTAL KILOS: 2.435`;
+
+      expect(extractProducts(ocr)).toEqual([
+        { description: 'Tilapia Rio Claro — 0.865 kg a $19.000/kg', price: 16435 },
+        { description: 'Muslo A Granel — 1.570 kg a $7.400/kg', price: 11618 }
+      ]);
+    });
+
+    it('should handle Super Carnes JH without total price on same line (case 4)', () => {
+      const ocr = `CODIGO	PRODUCTO
+        4040 Tilapia rio claro
+        0,865 KGS X $19.000
+        16.435
+        3003 Muslo A Granel
+        1,570 KGS X $7.400
+        11.618
+        TOTAL KILOS: 2.435`;
+
+      expect(extractProducts(ocr)).toEqual([
+        { description: 'Tilapia Rio Claro — 0.865 kg a $19.000/kg', price: 16435 },
+        { description: 'Muslo A Granel — 1.570 kg a $7.400/kg', price: 11618 }
+      ]);
+    });
+
+    it('should limit products by TOTAL UNIDADES when present (case 5)', () => {
+      const ocr = `CODIGO	PRODUCTO	TOTAL | IVA
+        4040 Tilapia rio claro	16.435 | 0
+        0,865 KGS X $19.000
+        3003 Muslo A Granel	11.618 | 0
+        1,570 KGS X	$7.400
+        5050 Extra Product	5.000 | 0
+        0.500 KGS X $10.000
+        TOTAL KILOS: 2.935
+        TOTAL UNIDADES: 2`;
+
+      expect(extractProducts(ocr)).toEqual([
+        { description: 'Tilapia Rio Claro — 0.865 kg a $19.000/kg', price: 16435 },
+        { description: 'Muslo A Granel — 1.570 kg a $7.400/kg', price: 11618 }
+      ]);
+    });
+
+    it('should handle Super Carnes JH with mixed spacing (case 6)', () => {
+      const ocr = `CODIGO PRODUCTO TOTAL|IVA
+        4040 Tilapia rio claro 16.435|0
+        0,865KGS X$19.000
+        3003 Muslo A Granel 11.618|0
+        1,570 KGS X $7.400
+        TOTAL KILOS:2.435`;
+
+      expect(extractProducts(ocr)).toEqual([
+        { description: 'Tilapia Rio Claro — 0.865 kg a $19.000/kg', price: 16435 },
+        { description: 'Muslo A Granel — 1.570 kg a $7.400/kg', price: 11618 }
+      ]);
+    });
+  });
 });

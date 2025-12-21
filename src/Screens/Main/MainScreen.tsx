@@ -206,7 +206,11 @@ export default function MainScreen({ navigation }: MainScreenProps) {
             <OptionsGrid
               actions={[
                 { title: 'Ingresar gasto', onPress: sendcreateExpenseScreen },
-                { title: 'Escanear', onPress: sendScanInvoiceExpenseScreen, featureKey: 'invoice_scanner' }
+                {
+                  title: 'Escanear',
+                  onPress: sendScanInvoiceExpenseScreen,
+                  featureKey: 'invoice_scanner'
+                }
               ]}
             />
           </View>

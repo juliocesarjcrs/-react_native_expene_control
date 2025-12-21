@@ -10,9 +10,9 @@ export type FeatureFlag = {
   updatedBy: number | null;
   createdAt: string;
   updatedAt: string;
-}
+};
 
-export type  UserFeaturePermission = {
+export type UserFeaturePermission = {
   id: number;
   userId: number;
   featureKey: string;
@@ -28,4 +28,4 @@ export type  UserFeaturePermission = {
     name: string;
     email: string;
   };
-}
+};

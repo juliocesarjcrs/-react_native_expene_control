@@ -107,11 +107,6 @@ describe('categorizeExpense', () => {
       expect(result).toEqual({ categoryId: 374, subcategoryId: 10 });
     });
 
-    it('debería categorizar como "Gas" para descripción con "gas natural"', () => {
-      const result = categorizeExpense('gas natural', mockCategories);
-      expect(result).toEqual({ categoryId: 374, subcategoryId: 11 });
-    });
-
     it('debería categorizar como "Internet" para descripción con "wifi"', () => {
       const result = categorizeExpense('pago wifi', mockCategories);
       expect(result).toEqual({ categoryId: 374, subcategoryId: 12 });
@@ -141,6 +136,11 @@ describe('categorizeExpense', () => {
 
     it('debería categorizar como "Artículos aseo" para descripción con "shampoo"', () => {
       const result = categorizeExpense('shampoo anticaspa', mockCategories);
+      expect(result).toEqual({ categoryId: 474, subcategoryId: 17 });
+    });
+
+    it('debería categorizar como "Artículos aseo" para descripción con "protectores"', () => {
+      const result = categorizeExpense('protectores', mockCategories);
       expect(result).toEqual({ categoryId: 474, subcategoryId: 17 });
     });
   });

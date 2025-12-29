@@ -9,6 +9,12 @@ const DESC_PATTERN = /^\d+\s+(\d{6,})\s+([A-Z].+)/;
 const SIMPLE_PRICE_PATTERN = /^(\d{1,3}[.,]\d{3})[A-Z]?$/;
 const KGM_PATTERN = /(\d+(?:\.\s?\d+)?)\/(KGM)\s+[x*]\s+([\d.,]+)\s+V\.\s+Ahorro\s+([\d.,]+)/i;
 
+// Nuevos patrones para manejar OCR inconsistente
+const CODE_PRODUCT_PRICE_PATTERN = /(\d{6,})\s+(.+?)\s+(\d{1,3}[.,]\d{3})/;
+const WEIGHT_INFO_PATTERN =
+  /^\d+\s+(\d+(?:\.\s?\d+)?)\/(KGM)\s+[x*]\s+([\d.,]+)\s+V\.\s+Ahorro\s+([\d.,]+)/i;
+const PRICE_AT_START_PATTERN = /^(\d{1,3}[.,]\d{3})[A-Z]?\s*$/;
+
 export function parseCarulla(lines: string[], joined: string): Product[] {
   console.log('📄 Procesando como tipo Carulla...');
 
@@ -29,7 +35,6 @@ export function parseCarulla(lines: string[], joined: string): Product[] {
   }
 
   if (isCarullaCase6(joined)) {
-    // caso(16)
     console.log('🛠️ Procesando como caso especial Carulla 6');
     return processCarullaCase6(lines, joined);
   }
@@ -75,11 +80,12 @@ function isExitoFormat(joined: string): boolean {
 }
 
 function isCarullaCase6(joined: string): boolean {
-  return (
-    (joined.includes('PLU\tDETALLE\tPRECIO') || joined.includes('PLU DETALLE PRECIO')) &&
-    joined.match(/\d+\s+[\d.]+\/KGM/gm) !== null &&
-    joined.includes('Total Item :')
-  );
+  const hasPLUHeader =
+    joined.includes('PLU\tDETALLE\tPRECIO') || joined.includes('PLU DETALLE PRECIO');
+  const hasKGMPattern = joined.match(/\d+\s+[\d.]+\/KGM/gm) !== null;
+
+  // Caso 6 si tiene header PLU y patrón KGM (con o sin Total Item)
+  return hasPLUHeader && hasKGMPattern;
 }
 
 function isCarullaCase5(joined: string): boolean {
@@ -145,11 +151,102 @@ function processExitoFormat(lines: string[]): Product[] {
 function processCarullaCase6(lines: string[], joined: string): Product[] {
   console.log('🛠️ Procesando como caso 6 Carulla con precios en línea');
   const products: Product[] = [];
+  let i = 0;
 
-  for (let i = 0; i < lines.length; i++) {
+  while (i < lines.length) {
     const line = lines[i].trim();
 
-    // Patrón principal (PLU + Descripción + Precio)
+    // PRIORIDAD 1: Línea de peso/KGM sin precio al final, seguida de código+producto+precio
+    // Esto DEBE tomar precedencia para mantener la info de peso
+    // Ejemplo: "1 0.305/KGM x 9.340 V. Ahorro 854" seguido de "1138 Remolacha A Gran 1.995"
+    const weightInfoNoPrice = line.match(
+      /^\d+\s+([\d.]+\/KGM)\s+[x*]\s+([\d.,]+)\s+V\.\s*Ahorro\s+([\d.,]+)$/i
+    );
+    if (weightInfoNoPrice && i + 1 < lines.length) {
+      const nextLine = lines[i + 1].trim();
+      const productMatch = nextLine.match(/^(\d{4,})\s+(.+?)\s+(\d{1,3}[.,]\s?\d{3})[A-Za-z]?$/);
+
+      if (productMatch) {
+        const description = formatDescription(productMatch[2].trim());
+        const price = parseInt(productMatch[3].replace(/[.,\s]/g, ''), 10);
+        const descWithWeight = processWeightAndSavings(line, description);
+
+        products.push({ description: descWithWeight, price });
+        i += 2;
+        continue;
+      }
+
+      // Caso especial: producto sin precio en siguiente línea (Case 11)
+      const productNoPriceMatch = nextLine.match(/^(\d{4,})\s+(.+?)$/);
+      if (productNoPriceMatch && !nextLine.match(/\d{1,3}[.,]\d{3}/)) {
+        const description = formatDescription(productNoPriceMatch[2].trim());
+        const descWithWeight = processWeightAndSavings(line, description);
+
+        products.push({ description: descWithWeight, price: 0 });
+        i += 2;
+        continue;
+      }
+    }
+
+    // PRIORIDAD 2: Línea de peso CON precio al final, producto en siguiente línea
+    // Ejemplo: "15 0.625/KGM x 4.180 V. Ahorro 0 2.613" seguido de "1166 Cebolla Blanca S"
+    const weightWithPriceMatch = line.match(
+      /^\d+\s+([\d.]+\/KGM)\s+[x*]\s+([\d.,]+)\s+V\.\s*Ahorro\s+\d+\s+(\d{1,3}[.,]\d{3})/i
+    );
+    if (weightWithPriceMatch && i + 1 < lines.length) {
+      const nextLine = lines[i + 1].trim();
+      const productOnlyMatch = nextLine.match(/^(\d{4,})\s+(.+?)$/);
+
+      if (productOnlyMatch && !nextLine.match(/\d{1,3}[.,]\d{3}/)) {
+        const description = formatDescription(productOnlyMatch[2].trim());
+        const price = parseInt(weightWithPriceMatch[3].replace(/[.,]/g, ''), 10);
+        const descWithWeight = processWeightAndSavings(line, description);
+
+        products.push({ description: descWithWeight, price });
+        i += 2;
+        continue;
+      }
+    }
+
+    // PRIORIDAD 3: Info unidad CON precio, producto en siguiente línea
+    // Ejemplo: "8 1/u x 2.980 V. Ahorro 0 2.980" seguido de "3750923 Leche Semid Desl"
+    const unitWithPriceMatch = line.match(
+      /^\d+\s+(?:1\/u|\d+\.?\d*\/\w+)\s+[x*]\s+([\d.,]+)\s+V\.?\s*Ahorro\s+\d+\s+(\d{1,3}[.,]\d{3})/i
+    );
+    if (unitWithPriceMatch && i + 1 < lines.length) {
+      const nextLine = lines[i + 1].trim();
+      const productOnlyMatch = nextLine.match(/^(\d{4,})\s+(.+?)$/);
+
+      if (productOnlyMatch && !nextLine.match(/\d{1,3}[.,]\d{3}/)) {
+        const description = formatDescription(productOnlyMatch[2].trim());
+        const price = parseInt(unitWithPriceMatch[2].replace(/[.,]/g, ''), 10);
+
+        products.push({ description, price });
+        i += 2;
+        continue;
+      }
+    }
+
+    // PRIORIDAD 4: Info unidad SIN precio, seguida de código+producto+precio
+    // Ejemplo: "1 1/u x 6.770 V. Ahorro 0" seguido de "942160 Panela 4 Und 6.770"
+    const unitInfoMatch = line.match(
+      /^\d+\s+(?:1\/u|\d+\.?\d*\/\w+)\s+[x*]\s+([\d.,]+)\s+V\.\s*Ahorro\s+\d+$/i
+    );
+    if (unitInfoMatch && i + 1 < lines.length) {
+      const nextLine = lines[i + 1].trim();
+      const productMatch = nextLine.match(/^(\d{4,})\s+(.+?)\s+(\d{1,3}[.,]\s?\d{3})[A-Za-z]?$/);
+
+      if (productMatch) {
+        const description = formatDescription(productMatch[2].trim());
+        const price = parseInt(productMatch[3].replace(/[.,\s]/g, ''), 10);
+
+        products.push({ description, price });
+        i += 2;
+        continue;
+      }
+    }
+
+    // LÓGICA ORIGINAL RESTAURADA: Patrón principal (PLU + Descripción + Precio)
     const match = line.match(PRODUCT_PATTERN);
     if (match) {
       let description = formatDescription(match[1].replace(/\.$/, ''));
@@ -173,11 +270,14 @@ function processCarullaCase6(lines: string[], joined: string): Product[] {
         }
       }
 
-      products.push({ description, price });
+      if (price > 0) {
+        products.push({ description, price });
+      }
+      i++;
       continue;
     }
 
-    // Descripción seguida de precio en línea siguiente
+    // LÓGICA ORIGINAL: Descripción seguida de precio en línea siguiente
     const descMatch = line.match(DESC_PATTERN);
     if (descMatch && i + 1 < lines.length) {
       const nextLine = lines[i + 1].trim();
@@ -196,9 +296,12 @@ function processCarullaCase6(lines: string[], joined: string): Product[] {
           description,
           price: parseInt(priceMatch[1].replace(/[.,]/g, ''), 10)
         });
-        i++; // Saltar la línea del precio
+        i += 2;
+        continue;
       }
     }
+
+    i++;
   }
 
   return limitProducts(products, joined);

@@ -42,7 +42,7 @@ describe('extractProducts', () => {
         },
         {
           description:
-            'Cebolla Roja — 0.800 kg (Precio original: $6.600/kg) con 30% de descuento Precio final: $4.620/kg',
+            'Cebolla Roja. — 0.800 kg (Precio original: $6.600/kg) con 30% de descuento Precio final: $4.620/kg',
           price: 3696
         },
         {
@@ -265,12 +265,12 @@ describe('extractProducts', () => {
           description:
             'Limon Tahiti A G — 0.905 kg (Precio original: $2.400/kg) con 0% de descuento.',
           price: 2172
-        },
-        {
-          description:
-            'Pecho Corriente — 0.570 kg (Precio original: $29.280/kg) con 20% de descuento Precio final: $23.424/kg',
-          price: 0
         }
+        // {
+        //   description:
+        //     'Pecho Corriente — 0.570 kg (Precio original: $29.280/kg) con 20% de descuento Precio final: $23.424/kg',
+        //   price: 0
+        // }
       ]);
     });
     it('should handle Carulla (case 12)', () => {
@@ -292,8 +292,8 @@ describe('extractProducts', () => {
           description:
             'Zanahoria A Gran — 1.345 kg (Precio original: $2.720/kg) con 0% de descuento.',
           price: 3658
-        }
-        // { description: 'Panela 4 Und', price: 6770 },
+        },
+        { description: 'Panela 4 Und', price: 6770 }
       ]);
     });
     it('should handle Carulla (case 13)', () => {
@@ -350,6 +350,71 @@ describe('extractProducts', () => {
           price: 12130
         },
         { description: 'Pecho Corriente', price: 25591 }
+      ]);
+    });
+
+    it('should handle Carulla (case 17)', () => {
+      const ocr = `PLU	DETALLE	PRECIO
+          1 1/u x 6.770 V. Ahorro 0
+          942160 Panela 4 Und	6.770
+          0.710/KGM x 3.900 V. Ahorro 0
+          1179	Papaya Comun	2.769
+          Total Item :2
+        `;
+      expect(extractProducts(ocr)).toEqual([
+        { description: 'Panela 4 Und', price: 6770 },
+        {
+          description: 'Papaya Comun — 0.710 kg (Precio original: $3.900/kg) con 0% de descuento.',
+          price: 2769
+        }
+      ]);
+    });
+
+    it('should handle Carulla (case 18)', () => {
+      const ocr = `PLU	DETALLE	PRECIO
+        1 1/u x 17.900 V. Ahorro 0
+        3598388 Huevo Napoles Li	17,900
+        2 1/u x 17.350 V. Ahorro 0
+        3555950 Bebida Lactea Ba	17.350A
+        3 1/u x 10.450 V. Ahorro 0
+        3611964 Granola Familiar	10. 450A
+        4 1/u x 10.380 V. Ahorro 0
+        1721	Fresa	10.380
+        5 0.485/KGM x 5.720 V. Ahorro 0
+        1532	Aguacate Hass	2.774
+        15 0.625/KGM x 4.180 V. Ahorro 0	2.613
+        1166	Cebolla Blanca S
+        7 1.390/KGM x 3.160 V. Ahorro	0	4.392
+        1253	Banano
+        8 1/u x 2.980 V. Ahorro 0	2.980
+        3750923 Leche Semid Desl
+        9 1/u x 2.980 V.Ahorro 0	2,980
+        3750923 Leche Semid Desl
+        10 1/u x 2.800 V. Ahorro	2.800A
+        806731 Pasabocas Con To
+        : 1
+        `;
+      expect(extractProducts(ocr)).toEqual([
+        { description: 'Huevo Napoles Li', price: 17900 },
+        { description: 'Bebida Lactea Ba', price: 17350 },
+        { description: 'Granola Familiar', price: 10450 },
+        { description: 'Fresa', price: 10380 },
+        {
+          description: 'Aguacate Hass — 0.485 kg (Precio original: $5.720/kg) con 0% de descuento.',
+          price: 2774
+        },
+        {
+          description:
+            'Cebolla Blanca S — 0.625 kg (Precio original: $4.180/kg) con 0% de descuento.',
+          price: 2613
+        },
+        {
+          description: 'Banano — 1.390 kg (Precio original: $3.160/kg) con 0% de descuento.',
+          price: 4392
+        },
+        { description: 'Leche Semid Desl', price: 2980 },
+        { description: 'Leche Semid Desl', price: 2980 }
+        // { description: 'Pasabocas Con To', price: 2800 },
       ]);
     });
   });

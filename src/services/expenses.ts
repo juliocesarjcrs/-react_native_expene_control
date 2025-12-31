@@ -9,6 +9,8 @@ import {
   ExpenseSearchOptionsQuery,
   FindExpensesBySubcategoriesResponse,
   FindLastMonthsFromOnlyCategoryQuery,
+  GetAverageBySubcategoriesQuery,
+  GetAverageBySubcategoriesResponse,
   GetExpensesFromSubcategoryResponse,
   GetExpensesLastMonthsFromSubcategoryQuery,
   GetLastExpensesWithPaginateQuery,
@@ -85,4 +87,11 @@ export const getComparePeriods = async (
   payload: ComparePeriodsPayload
 ): Promise<AxiosResponse<ComparePeriodsResponse>> => {
   return axios.post(`${PREFIX}/analysis/compare-periods`, payload);
+};
+
+
+export const getAverageBySubcategories = async (
+  params: GetAverageBySubcategoriesQuery
+): Promise<AxiosResponse<GetAverageBySubcategoriesResponse>> => {
+  return axios.get(`${PREFIX}/average/by-subcategories`, { params });
 };

@@ -130,3 +130,33 @@ export type ComparePeriodsPayload = {
 export type GetOneExpenseResponse = ExpenseModel & {
   subcategory: SubcategoryModel;
 };
+
+
+export type SubcategoryAverage = {
+  subcategoryId: number;
+  subcategoryName: string;
+  totalCost: number;
+  monthsWithExpenses: number;
+  averageMonthly: number;
+};
+
+export type CategoryAverage = {
+  categoryId: number;
+  categoryName: string;
+  categoryIcon: string;
+  totalCost: number;
+  averageMonthly: number;
+  subcategories: SubcategoryAverage[];
+};
+
+export type GetAverageBySubcategoriesQuery = {
+  year: number;
+  referenceYear?: number;
+};
+
+export type GetAverageBySubcategoriesResponse = {
+  data: CategoryAverage[];
+  referenceYear: number;
+  totalCategories: number;
+  totalSubcategories: number;
+};

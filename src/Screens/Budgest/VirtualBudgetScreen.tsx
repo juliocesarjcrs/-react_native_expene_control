@@ -1,11 +1,12 @@
 import React, { useEffect, useState } from 'react';
-import { ScrollView, StyleSheet, Text, TextInput, View, TouchableOpacity } from 'react-native';
+import { ScrollView, StyleSheet, Text, TextInput, View, TouchableOpacity, Alert } from 'react-native';
 import { StackNavigationProp } from '@react-navigation/stack';
 import { Icon } from 'react-native-elements';
 
 // Services
 import { getCategoryWithSubcategories } from '~/services/categories';
 import { createBudgets, getBudgets } from '~/services/budgets';
+import { getAverageBySubcategories } from '~/services/expenses';
 
 // Components
 import MyLoading from '~/components/loading/MyLoading';
@@ -45,9 +46,13 @@ export default function VirtualBudgetScreen({ navigation }: VirtualBudgetScreenP
   const [loading, setLoading] = useState<boolean>(false);
   const [categories, setCategories] = useState<CategoryExpense[]>([]);
   const [budgetValues, setBudgetValues] = useState<CreateBudgetPayload[]>([]);
-  const [selectedYear, setSelectedYear] = useState<number>(2025);
+  const [selectedYear, setSelectedYear] = useState<number>(new Date().getFullYear());
   const [selectedCity, setSelectedCity] = useState<string>('Pereira');
   const [expandedCategories, setExpandedCategories] = useState<number[]>([]);
+  const [hasUnsavedChanges, setHasUnsavedChanges] = useState<boolean>(false);
+  const [referenceYear, setReferenceYear] = useState<number>(new Date().getFullYear() - 1);
+  const [loadingAverage, setLoadingAverage] = useState<boolean>(false);
+  const [categoryAverages, setCategoryAverages] = useState<Map<number, number>>(new Map());
 
   useEffect(() => {
     fetchData();
@@ -57,12 +62,18 @@ export default function VirtualBudgetScreen({ navigation }: VirtualBudgetScreenP
     return unsubscribe;
   }, [navigation]);
 
+  // Actualizar año de referencia cuando cambia el año seleccionado
+  useEffect(() => {
+    setReferenceYear(selectedYear - 1);
+  }, [selectedYear]);
+
   const fetchData = async (): Promise<void> => {
     try {
       setLoading(true);
       const { data } = await getCategoryWithSubcategories();
       setCategories(data.data);
       await fetchGetBudgets();
+      await fetchCurrentYearAverages(); // Cargar promedios del año en curso
       setLoading(false);
     } catch (error) {
       setLoading(false);
@@ -104,6 +115,7 @@ export default function VirtualBudgetScreen({ navigation }: VirtualBudgetScreenP
     }
 
     setBudgetValues(updatedBudgets);
+    setHasUnsavedChanges(true); // Marcar cambios pendientes
   };
 
   const calculateTotal = (): string => {
@@ -123,10 +135,110 @@ export default function VirtualBudgetScreen({ navigation }: VirtualBudgetScreenP
       await createBudgets(budgetValues);
       await fetchGetBudgets();
       setLoading(false);
+      setHasUnsavedChanges(false); // Quitar marca de cambios pendientes
       ShowToast('Presupuesto guardado exitosamente');
     } catch (error) {
       setLoading(false);
       showError(error);
+    }
+  };
+
+  const handleAutoComplete = (): void => {
+    Alert.alert(
+      'Auto-completar desde Gastos',
+      `¿Calcular el presupuesto basado en el promedio de gastos del año ${referenceYear}?`,
+      [
+        {
+          text: 'Cancelar',
+          style: 'cancel'
+        },
+        {
+          text: 'Cambiar año',
+          onPress: () => showYearPicker()
+        },
+        {
+          text: 'Continuar',
+          onPress: () => fetchAverageAndFill(referenceYear),
+          style: 'default'
+        }
+      ]
+    );
+  };
+
+  const showYearPicker = (): void => {
+    // Generar últimos 5 años
+    const currentYear = new Date().getFullYear();
+    const years = Array.from({ length: 5 }, (_, i) => currentYear - i);
+    
+    const yearOptions = years.map((year) => ({
+      text: year.toString(),
+      onPress: () => fetchAverageAndFill(year)
+    }));
+
+    Alert.alert(
+      'Seleccionar Año de Referencia',
+      'Elige el año del cual calcular los promedios:',
+      [
+        ...yearOptions,
+        { text: 'Cancelar', style: 'cancel' }
+      ]
+    );
+  };
+
+  const fetchAverageAndFill = async (year: number): Promise<void> => {
+    try {
+      setLoadingAverage(true);
+      const { data } = await getAverageBySubcategories({
+        year: selectedYear,
+        referenceYear: year
+      });
+
+      // Crear nuevos valores de presupuesto basados en los promedios
+      const newBudgetValues: CreateBudgetPayload[] = [];
+
+      data.data.forEach((category) => {
+        category.subcategories.forEach((subcategory) => {
+          if (subcategory.averageMonthly > 0) {
+            newBudgetValues.push({
+              budget: subcategory.averageMonthly,
+              year: selectedYear,
+              city: selectedCity,
+              categoryId: category.categoryId,
+              subcategoryId: subcategory.subcategoryId
+            });
+          }
+        });
+      });
+
+      setBudgetValues(newBudgetValues);
+      setHasUnsavedChanges(true);
+      setReferenceYear(year);
+      setLoadingAverage(false);
+      ShowToast(`Presupuesto calculado desde año ${year}`);
+    } catch (error) {
+      setLoadingAverage(false);
+      showError(error);
+    }
+  };
+
+  const fetchCurrentYearAverages = async (): Promise<void> => {
+    try {
+      const currentYear = new Date().getFullYear();
+      const { data } = await getAverageBySubcategories({
+        year: currentYear,
+        referenceYear: currentYear
+      });
+
+      // Crear mapa de promedios por categoría
+      const averagesMap = new Map<number, number>();
+      data.data.forEach((category) => {
+        averagesMap.set(category.categoryId, category.averageMonthly);
+      });
+
+      setCategoryAverages(averagesMap);
+    } catch (error) {
+      // Silencioso - no mostrar error si falla la carga de promedios
+      console.error('Error loading current year averages:', error);
     }
   };
 
@@ -157,8 +269,40 @@ export default function VirtualBudgetScreen({ navigation }: VirtualBudgetScreenP
           />
 
           <View style={styles.actionButtons}>
-            <MyButton title="Consultar" onPress={fetchData} variant="secondary" />
-            <MyButton title="Guardar" onPress={handleSaveBudget} variant="primary" />
+            <View style={styles.buttonRow}>
+              <View style={{ flex: 1, marginRight: 4 }}>
+                <MyButton 
+                  title="Consultar" 
+                  onPress={fetchData} 
+                  variant="secondary"
+                  size="small"
+                />
+              </View>
+              <View style={{ flex: 1, marginLeft: 4 }}>
+                <MyButton
+                  title="Auto-completar"
+                  onPress={handleAutoComplete}
+                  variant="outline"
+                  icon={<Icon type="material-community" name="calculator" size={16} color={colors.PRIMARY} />}
+                  disabled={loadingAverage}
+                  loading={loadingAverage}
+                  size="small"
+                />
+              </View>
+            </View>
+            <View style={{ position: 'relative', marginTop: 8 }}>
+              <MyButton 
+                title="Guardar Presupuesto" 
+                onPress={handleSaveBudget} 
+                variant="primary"
+                fullWidth
+              />
+              {hasUnsavedChanges && (
+                <View style={[styles.unsavedBadge, { backgroundColor: colors.WARNING }]}>
+                  <Text style={styles.unsavedText}>●</Text>
+                </View>
+              )}
+            </View>
           </View>
 
           <View style={[styles.totalCard, { backgroundColor: colors.CARD_BACKGROUND }]}>
@@ -183,6 +327,7 @@ export default function VirtualBudgetScreen({ navigation }: VirtualBudgetScreenP
                     expanded={expandedCategories.includes(category.id)}
                     onToggle={toggleCategory}
                     categoryTotal={calculateCategoryTotal(category.id)}
+                    currentYearAverage={categoryAverages.get(category.id) || 0}
                     getBudgetValue={getBudgetValue}
                     onBudgetChange={handleBudgetChange}
                     colors={colors}
@@ -208,10 +353,12 @@ const styles = StyleSheet.create({
     paddingTop: 10
   },
   actionButtons: {
+    marginVertical: 16
+  },
+  buttonRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginVertical: 16,
-    gap: 12
+    alignItems: 'center'
   },
   totalCard: {
     flexDirection: 'row',
@@ -237,6 +384,26 @@ const styles = StyleSheet.create({
   },
   categoriesContainer: {
     marginTop: 8
+  },
+  unsavedBadge: {
+    position: 'absolute',
+    top: -4,
+    right: -4,
+    width: 12,
+    height: 12,
+    borderRadius: 6,
+    justifyContent: 'center',
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.3,
+    shadowRadius: 2,
+    elevation: 2
+  },
+  unsavedText: {
+    color: '#fff',
+    fontSize: 8,
+    fontWeight: 'bold'
   }
 });
 
@@ -249,6 +416,7 @@ interface CategoryBudgetCardProps {
   expanded: boolean;
   onToggle: (id: number) => void;
   categoryTotal: number;
+  currentYearAverage: number;
   getBudgetValue: (categoryId: number, subcategoryId: number | null) => string;
   onBudgetChange: (categoryId: number, subcategoryId: number | null, text: string) => void;
   colors: ReturnType<typeof useThemeColors>;
@@ -259,10 +427,22 @@ const CategoryBudgetCard = ({
   expanded,
   onToggle,
   categoryTotal,
+  currentYearAverage,
   getBudgetValue,
   onBudgetChange,
   colors
 }: CategoryBudgetCardProps) => {
+  const [showTooltip, setShowTooltip] = useState(false);
+  const currentYear = new Date().getFullYear();
+
+  const handleInfoPress = (): void => {
+    Alert.alert(
+      `Promedio ${category.name}`,
+      `Promedio mensual del año ${currentYear}:\n${NumberFormat(currentYearAverage)}\n\nEste promedio se calcula solo con los meses que tienen gastos registrados.`,
+      [{ text: 'Entendido', style: 'default' }]
+    );
+  };
+
   return (
     <View style={[cardStyles.container, { backgroundColor: colors.CARD_BACKGROUND }]}>
       <TouchableOpacity
@@ -278,9 +458,32 @@ const CategoryBudgetCard = ({
             color={colors.PRIMARY}
             containerStyle={cardStyles.icon}
           />
-          <Text style={[cardStyles.categoryName, { color: colors.TEXT_PRIMARY }]}>
-            {category.name}
-          </Text>
+          
+          <View style={cardStyles.nameAndInfoContainer}>
+            <Text 
+              style={[cardStyles.categoryName, { color: colors.TEXT_PRIMARY }]}
+              numberOfLines={1}
+            >
+              {category.name}
+            </Text>
+            
+            {/* Ícono de info para mostrar promedio actual */}
+            {currentYearAverage > 0 && (
+              <TouchableOpacity
+                onPress={handleInfoPress}
+                style={cardStyles.infoButton}
+                activeOpacity={0.7}
+              >
+                <Icon
+                  type="material-community"
+                  name="information-outline"
+                  size={18}
+                  color={colors.INFO}
+                />
+              </TouchableOpacity>
+            )}
+          </View>
+          
           <View style={[cardStyles.badge, { backgroundColor: colors.INFO + '20' }]}>
             <Text style={[cardStyles.badgeText, { color: colors.INFO }]}>
               {category.subcategories.length}
@@ -341,21 +544,33 @@ const cardStyles = StyleSheet.create({
   headerLeft: {
     flexDirection: 'row',
     alignItems: 'center',
-    flex: 1
+    flex: 1,
+    marginRight: 8
   },
   icon: {
     marginRight: 12
   },
+  nameAndInfoContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flex: 1,
+    marginRight: 8
+  },
   categoryName: {
     fontSize: MEDIUM,
     fontWeight: '600',
-    flex: 1
+    flexShrink: 1
+  },
+  infoButton: {
+    marginLeft: 6,
+    padding: 2,
+    flexShrink: 0
   },
   badge: {
     paddingHorizontal: 8,
     paddingVertical: 3,
     borderRadius: 10,
-    marginLeft: 8
+    flexShrink: 0
   },
   badgeText: {
     fontSize: SMALL,

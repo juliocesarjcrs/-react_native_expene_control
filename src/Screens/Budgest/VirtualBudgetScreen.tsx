@@ -1,5 +1,13 @@
 import React, { useEffect, useState } from 'react';
-import { ScrollView, StyleSheet, Text, TextInput, View, TouchableOpacity, Alert } from 'react-native';
+import {
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  View,
+  TouchableOpacity,
+  Alert
+} from 'react-native';
 import { StackNavigationProp } from '@react-navigation/stack';
 import { Icon } from 'react-native-elements';
 
@@ -169,20 +177,16 @@ export default function VirtualBudgetScreen({ navigation }: VirtualBudgetScreenP
     // Generar últimos 5 años
     const currentYear = new Date().getFullYear();
     const years = Array.from({ length: 5 }, (_, i) => currentYear - i);
-    
+
     const yearOptions = years.map((year) => ({
       text: year.toString(),
       onPress: () => fetchAverageAndFill(year)
     }));
 
-    Alert.alert(
-      'Seleccionar Año de Referencia',
-      'Elige el año del cual calcular los promedios:',
-      [
-        ...yearOptions,
-        { text: 'Cancelar', style: 'cancel' }
-      ]
-    );
+    Alert.alert('Seleccionar Año de Referencia', 'Elige el año del cual calcular los promedios:', [
+      ...yearOptions,
+      { text: 'Cancelar', style: 'cancel' }
+    ]);
   };
 
   const fetchAverageAndFill = async (year: number): Promise<void> => {
@@ -271,19 +275,21 @@ export default function VirtualBudgetScreen({ navigation }: VirtualBudgetScreenP
           <View style={styles.actionButtons}>
             <View style={styles.buttonRow}>
               <View style={{ flex: 1, marginRight: 4 }}>
-                <MyButton 
-                  title="Consultar" 
-                  onPress={fetchData} 
-                  variant="secondary"
-                  size="small"
-                />
+                <MyButton title="Consultar" onPress={fetchData} variant="secondary" size="small" />
               </View>
               <View style={{ flex: 1, marginLeft: 4 }}>
                 <MyButton
                   title="Auto-completar"
                   onPress={handleAutoComplete}
                   variant="outline"
-                  icon={<Icon type="material-community" name="calculator" size={16} color={colors.PRIMARY} />}
+                  icon={
+                    <Icon
+                      type="material-community"
+                      name="calculator"
+                      size={16}
+                      color={colors.PRIMARY}
+                    />
+                  }
                   disabled={loadingAverage}
                   loading={loadingAverage}
                   size="small"
@@ -291,9 +297,9 @@ export default function VirtualBudgetScreen({ navigation }: VirtualBudgetScreenP
               </View>
             </View>
             <View style={{ position: 'relative', marginTop: 8 }}>
-              <MyButton 
-                title="Guardar Presupuesto" 
-                onPress={handleSaveBudget} 
+              <MyButton
+                title="Guardar Presupuesto"
+                onPress={handleSaveBudget}
                 variant="primary"
                 fullWidth
               />
@@ -458,15 +464,15 @@ const CategoryBudgetCard = ({
             color={colors.PRIMARY}
             containerStyle={cardStyles.icon}
           />
-          
+
           <View style={cardStyles.nameAndInfoContainer}>
-            <Text 
+            <Text
               style={[cardStyles.categoryName, { color: colors.TEXT_PRIMARY }]}
               numberOfLines={1}
             >
               {category.name}
             </Text>
-            
+
             {/* Ícono de info para mostrar promedio actual */}
             {currentYearAverage > 0 && (
               <TouchableOpacity
@@ -483,7 +489,7 @@ const CategoryBudgetCard = ({
               </TouchableOpacity>
             )}
           </View>
-          
+
           <View style={[cardStyles.badge, { backgroundColor: colors.INFO + '20' }]}>
             <Text style={[cardStyles.badgeText, { color: colors.INFO }]}>
               {category.subcategories.length}

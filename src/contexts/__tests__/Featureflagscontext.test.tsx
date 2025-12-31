@@ -56,7 +56,6 @@ const mockFeatures: FeatureFlag[] = [
   }
 ];
 
-
 // ============================================
 // HELPER: Wrapper Component
 // ============================================
@@ -297,7 +296,7 @@ describe('FeatureFlagsContext', () => {
 
       // Verificar que se llamó 2 veces (mount + refresh)
       expect(mockedGetMyFeatures).toHaveBeenCalledTimes(2);
-      
+
       // Las features siguen siendo las mismas (porque el mock retorna lo mismo)
       expect(result.current.features).toEqual(mockFeatures);
     });

@@ -89,7 +89,6 @@ export const getComparePeriods = async (
   return axios.post(`${PREFIX}/analysis/compare-periods`, payload);
 };
 
-
 export const getAverageBySubcategories = async (
   params: GetAverageBySubcategoriesQuery
 ): Promise<AxiosResponse<GetAverageBySubcategoriesResponse>> => {

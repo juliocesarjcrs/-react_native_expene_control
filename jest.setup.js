@@ -15,7 +15,7 @@ jest.mock('react-native-reanimated', () => {
 
 // Mock expo-status-bar
 jest.mock('expo-status-bar', () => ({
-  StatusBar: 'StatusBar',
+  StatusBar: 'StatusBar'
 }));
 
 // Suppress specific warnings
@@ -28,22 +28,21 @@ beforeAll(() => {
     // Only suppress specific warnings
     if (
       typeof message === 'string' &&
-      (message.includes('Animated:') || 
-       message.includes('useNativeDriver') ||
-       message.includes('ViewPropTypes'))
+      (message.includes('Animated:') ||
+        message.includes('useNativeDriver') ||
+        message.includes('ViewPropTypes'))
     ) {
       return;
     }
     originalWarn(...args);
   });
-  
+
   console.error = jest.fn((...args) => {
     const message = args[0];
     // Only suppress specific errors
     if (
       typeof message === 'string' &&
-      (message.includes('Warning: ReactDOM.render') ||
-       message.includes('not wrapped in act'))
+      (message.includes('Warning: ReactDOM.render') || message.includes('not wrapped in act'))
     ) {
       return;
     }

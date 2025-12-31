@@ -111,8 +111,8 @@ describe('LastIncomesScreen flows', () => {
       if (page === 1 && !query) {
         return Promise.resolve({
           data: {
-            data: Array.from({ length: 10 }, (_, i) => ({ 
-              id: i + 1, 
+            data: Array.from({ length: 10 }, (_, i) => ({
+              id: i + 1,
               value: `Ingreso ${i + 1}`,
               description: `Ingreso ${i + 1}`,
               date: new Date().toISOString()
@@ -121,15 +121,17 @@ describe('LastIncomesScreen flows', () => {
         });
       }
       if (page === 2 && !query) {
-        return Promise.resolve({ 
-          data: { 
-            data: [{ 
-              id: 11, 
-              value: 'Ingreso 11',
-              description: 'Ingreso 11',
-              date: new Date().toISOString()
-            }] 
-          } 
+        return Promise.resolve({
+          data: {
+            data: [
+              {
+                id: 11,
+                value: 'Ingreso 11',
+                description: 'Ingreso 11',
+                date: new Date().toISOString()
+              }
+            ]
+          }
         });
       }
       if (page === 1 && query) {
@@ -150,13 +152,13 @@ describe('LastIncomesScreen flows', () => {
 
   it('should reset query on mount', () => {
     store = mockStore({ search: { query: 'something' } });
-    
+
     render(
       <Provider store={store}>
         <LastIncomesScreen navigation={mockNavigation} route={mockRoute} />
       </Provider>
     );
-    
+
     // The first dispatched action should be setQuery(null)
     const actions = store.getActions();
     expect(actions[0].type).toBe(setQuery.type);
@@ -165,17 +167,17 @@ describe('LastIncomesScreen flows', () => {
 
   it('should fetch data on mount with query null', async () => {
     store = mockStore({ search: { query: null } });
-    
+
     render(
       <Provider store={store}>
         <LastIncomesScreen navigation={mockNavigation} route={mockRoute} />
       </Provider>
     );
-    
+
     await waitFor(() => {
       expect(getLastIncomesWithPaginate).toHaveBeenCalledWith(
-        expect.objectContaining({ 
-          query: null, 
+        expect.objectContaining({
+          query: null,
           page: 1,
           take: 25
         })
@@ -185,23 +187,23 @@ describe('LastIncomesScreen flows', () => {
 
   it('should fetch data when query changes', async () => {
     store = mockStore({ search: { query: null } });
-    
+
     const { rerender } = render(
       <Provider store={store}>
         <LastIncomesScreen navigation={mockNavigation} route={mockRoute} />
       </Provider>
     );
-    
+
     // Wait for initial fetch
     await waitFor(() => {
       expect(getLastIncomesWithPaginate).toHaveBeenCalledWith(
         expect.objectContaining({ query: null })
       );
     });
-    
+
     // Clear mock
     getLastIncomesWithPaginate.mockClear();
-    
+
     // Simulate query change
     store = mockStore({ search: { query: 'new-query' } });
     rerender(
@@ -209,7 +211,7 @@ describe('LastIncomesScreen flows', () => {
         <LastIncomesScreen navigation={mockNavigation} route={mockRoute} />
       </Provider>
     );
-    
+
     await waitFor(() => {
       expect(getLastIncomesWithPaginate).toHaveBeenCalledWith(
         expect.objectContaining({ query: 'new-query', page: 1 })
@@ -219,23 +221,21 @@ describe('LastIncomesScreen flows', () => {
 
   it('should paginate on scroll to end', async () => {
     store = mockStore({ search: { query: null } });
-    
+
     const { getByTestId } = render(
       <Provider store={store}>
         <LastIncomesScreen navigation={mockNavigation} route={mockRoute} />
       </Provider>
     );
-    
+
     // Wait for initial fetch
     await waitFor(() => {
-      expect(getLastIncomesWithPaginate).toHaveBeenCalledWith(
-        expect.objectContaining({ page: 1 })
-      );
+      expect(getLastIncomesWithPaginate).toHaveBeenCalledWith(expect.objectContaining({ page: 1 }));
     });
-    
+
     // Clear previous calls
     getLastIncomesWithPaginate.mockClear();
-    
+
     // Simulate scroll to end
     const flatList = getByTestId('flatlist-incomes');
     await act(async () => {
@@ -243,12 +243,10 @@ describe('LastIncomesScreen flows', () => {
         flatList.props.onEndReached();
       }
     });
-    
+
     // Should call fetch for next page
     await waitFor(() => {
-      expect(getLastIncomesWithPaginate).toHaveBeenCalledWith(
-        expect.objectContaining({ page: 2 })
-      );
+      expect(getLastIncomesWithPaginate).toHaveBeenCalledWith(expect.objectContaining({ page: 2 }));
     });
   });
 
@@ -321,8 +319,8 @@ describe('LastIncomesScreen flows', () => {
       if (page === 1) {
         return Promise.resolve({
           data: {
-            data: Array.from({ length: 10 }, (_, i) => ({ 
-              id: i + 1, 
+            data: Array.from({ length: 10 }, (_, i) => ({
+              id: i + 1,
               value: `Ingreso ${i + 1}`,
               date: new Date().toISOString()
             }))
@@ -341,9 +339,7 @@ describe('LastIncomesScreen flows', () => {
     );
 
     await waitFor(() => {
-      expect(getLastIncomesWithPaginate).toHaveBeenCalledWith(
-        expect.objectContaining({ page: 1 })
-      );
+      expect(getLastIncomesWithPaginate).toHaveBeenCalledWith(expect.objectContaining({ page: 1 }));
     });
 
     // Trigger pagination
@@ -355,9 +351,7 @@ describe('LastIncomesScreen flows', () => {
     });
 
     await waitFor(() => {
-      expect(getLastIncomesWithPaginate).toHaveBeenCalledWith(
-        expect.objectContaining({ page: 2 })
-      );
+      expect(getLastIncomesWithPaginate).toHaveBeenCalledWith(expect.objectContaining({ page: 2 }));
     });
 
     // Clear and try to paginate again

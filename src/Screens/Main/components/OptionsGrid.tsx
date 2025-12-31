@@ -32,7 +32,6 @@ export default function OptionsGrid({ actions }: OptionsGridProps) {
   const visibleCount = visibilityStates.filter(Boolean).length;
   const isSingleButton = visibleCount === 1;
 
-
   return (
     <View style={[styles.grid, isSingleButton && styles.gridCentered]}>
       {actions.map((action, index) => (

@@ -131,7 +131,6 @@ export type GetOneExpenseResponse = ExpenseModel & {
   subcategory: SubcategoryModel;
 };
 
-
 export type SubcategoryAverage = {
   subcategoryId: number;
   subcategoryName: string;

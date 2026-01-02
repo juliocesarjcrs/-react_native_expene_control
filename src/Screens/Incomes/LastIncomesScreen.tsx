@@ -3,7 +3,7 @@ import { FlatList, SafeAreaView, StyleSheet, Text, View } from 'react-native';
 import { getLastIncomesWithPaginate } from '../../services/incomes';
 
 import { useDispatch, useSelector } from 'react-redux';
-import usePrevious from '../../customHooks/usePrevious';
+import usePrevious from '~/customHooks/usePrevious';
 import { IncomeStackParamList } from '../../shared/types';
 import { StackNavigationProp } from '@react-navigation/stack';
 import { setQuery } from '../../features/searchExpenses/searchExpensesSlice';

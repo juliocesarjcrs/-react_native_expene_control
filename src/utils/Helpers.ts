@@ -143,7 +143,7 @@ export const handlerDataSearch = (
   newData: LastIncomes[],
   dataOldArray: LastIncomes[],
   query: null | string,
-  prevQuery: undefined | string,
+  prevQuery: string | null | undefined,
   page: number
 ) => {
   let concatPages = [];

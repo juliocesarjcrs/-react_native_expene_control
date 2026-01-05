@@ -63,6 +63,7 @@ export const categorizeExpense = (
         'tilapia',
         'pecho',
         'lomo',
+        'lagarto',
         'trucha',
         'contramuslo',
         'sobrebarriga'

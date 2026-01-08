@@ -4,9 +4,9 @@ import { Provider } from 'react-redux';
 import configureStore, { MockStoreEnhanced } from 'redux-mock-store';
 import LastExpensesScreen from '../LastExpensesScreen';
 import * as expensesService from '../../../services/expenses';
-import { setQuery } from '../../../features/searchExpenses/searchExpensesSlice';
+import { setQuery } from '~/features/search/searchSlice';
 
-// Mock navigation
+// Mock navigationP
 const mockNavigation = {
   addListener: jest.fn(() => jest.fn()),
   removeListener: jest.fn(),
@@ -38,7 +38,7 @@ jest.mock('~/components/ScreenHeader', () => ({
   ScreenHeader: () => null
 }));
 
-jest.mock('./components/RenderItemExpense', () => {
+jest.mock('../components/RenderItemExpense', () => {
   return jest.fn(() => null);
 });
 
@@ -168,17 +168,14 @@ describe('LastExpensesScreen behaviors', () => {
       </Provider>
     );
 
-    // Wait for first fetch
     await waitFor(() => {
       expect(getLastExpensesWithPaginate).toHaveBeenCalledWith(
         expect.objectContaining({ page: 1, query: null })
       );
     });
 
-    // Clear previous calls to verify pagination call
     getLastExpensesWithPaginate.mockClear();
 
-    // Simulate scroll to end
     const flatList = getByTestId('flatlist-expenses');
     await act(async () => {
       if (flatList.props.onEndReached) {
@@ -194,7 +191,6 @@ describe('LastExpensesScreen behaviors', () => {
   });
 
   it('should fetch filtered data when query changes', async () => {
-    // Start with null query
     store = mockStore({ search: { query: null } });
 
     const { rerender } = render(
@@ -203,17 +199,14 @@ describe('LastExpensesScreen behaviors', () => {
       </Provider>
     );
 
-    // Wait for initial fetch
     await waitFor(() => {
       expect(getLastExpensesWithPaginate).toHaveBeenCalledWith(
         expect.objectContaining({ page: 1, query: null })
       );
     });
 
-    // Clear mock to track new calls
     getLastExpensesWithPaginate.mockClear();
 
-    // Simulate query change
     store = mockStore({ search: { query: 'test' } });
     rerender(
       <Provider store={store}>
@@ -229,10 +222,27 @@ describe('LastExpensesScreen behaviors', () => {
   });
 
   it('should paginate filtered data on scroll', async () => {
-    // Start with filter query
-    store = mockStore({ search: { query: 'filter' } });
+    // Start with null query first
+    store = mockStore({ search: { query: null } });
 
-    const { getByTestId } = render(
+    const { getByTestId, rerender } = render(
+      <Provider store={store}>
+        <LastExpensesScreen navigation={mockNavigation} />
+      </Provider>
+    );
+
+    // Wait for initial fetch
+    await waitFor(() => {
+      expect(getLastExpensesWithPaginate).toHaveBeenCalledWith(
+        expect.objectContaining({ page: 1, query: null })
+      );
+    });
+
+    getLastExpensesWithPaginate.mockClear();
+
+    // Change to filter query
+    store = mockStore({ search: { query: 'filter' } });
+    rerender(
       <Provider store={store}>
         <LastExpensesScreen navigation={mockNavigation} />
       </Provider>
@@ -245,7 +255,6 @@ describe('LastExpensesScreen behaviors', () => {
       );
     });
 
-    // Clear to verify pagination
     getLastExpensesWithPaginate.mockClear();
 
     // Simulate scroll for pagination
@@ -264,7 +273,6 @@ describe('LastExpensesScreen behaviors', () => {
   });
 
   it('should stop fetching when no more data', async () => {
-    // Mock to return empty data on page 2
     getLastExpensesWithPaginate.mockImplementation(({ page }) => {
       if (page === 1) {
         return Promise.resolve({
@@ -277,7 +285,7 @@ describe('LastExpensesScreen behaviors', () => {
           }
         });
       }
-      return Promise.resolve({ data: { data: [] } }); // No more data
+      return Promise.resolve({ data: { data: [] } });
     });
 
     store = mockStore({ search: { query: null } });
@@ -294,7 +302,6 @@ describe('LastExpensesScreen behaviors', () => {
       );
     });
 
-    // Trigger pagination
     const flatList = getByTestId('flatlist-expenses');
     await act(async () => {
       if (flatList.props.onEndReached) {
@@ -308,7 +315,6 @@ describe('LastExpensesScreen behaviors', () => {
       );
     });
 
-    // Clear and try to paginate again - should not fetch
     getLastExpensesWithPaginate.mockClear();
 
     await act(async () => {
@@ -317,15 +323,31 @@ describe('LastExpensesScreen behaviors', () => {
       }
     });
 
-    // Should not call again because stopeFetch is true
     expect(getLastExpensesWithPaginate).not.toHaveBeenCalled();
   });
 
   it('should reset data when query changes from value to null', async () => {
-    // Start with a query
-    store = mockStore({ search: { query: 'test' } });
+    // Start with null query first
+    store = mockStore({ search: { query: null } });
 
     const { rerender } = render(
+      <Provider store={store}>
+        <LastExpensesScreen navigation={mockNavigation} />
+      </Provider>
+    );
+
+    // Wait for initial fetch
+    await waitFor(() => {
+      expect(getLastExpensesWithPaginate).toHaveBeenCalledWith(
+        expect.objectContaining({ page: 1, query: null })
+      );
+    });
+
+    getLastExpensesWithPaginate.mockClear();
+
+    // Change to test query
+    store = mockStore({ search: { query: 'test' } });
+    rerender(
       <Provider store={store}>
         <LastExpensesScreen navigation={mockNavigation} />
       </Provider>
@@ -339,7 +361,7 @@ describe('LastExpensesScreen behaviors', () => {
 
     getLastExpensesWithPaginate.mockClear();
 
-    // Change query to null
+    // Change query back to null
     store = mockStore({ search: { query: null } });
     rerender(
       <Provider store={store}>

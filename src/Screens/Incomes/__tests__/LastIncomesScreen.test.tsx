@@ -6,8 +6,7 @@ import LastIncomesScreen, { LastIncomesScreenNavigationProp } from '../LastIncom
 import * as incomesService from '../../../services/incomes';
 import { RouteProp } from '@react-navigation/native';
 import { IncomeStackParamList } from '../../../shared/types';
-import { setQuery } from '../../../features/searchExpenses/searchExpensesSlice';
-
+import { setQuery } from '~/features/search/searchSlice';
 const mockStore = configureStore([]);
 
 // Mock services
@@ -43,7 +42,7 @@ jest.mock('~/components/ScreenHeader', () => ({
   ScreenHeader: () => null
 }));
 
-jest.mock('./components/RenderItemIncome', () => {
+jest.mock('../components/RenderItemIncome', () => {
   return jest.fn(() => null);
 });
 
@@ -64,13 +63,7 @@ jest.mock('~/customHooks/useThemeColors', () => ({
 }));
 
 jest.mock('~/customHooks/usePrevious', () => {
-  return jest.fn((value) => {
-    const ref = React.useRef(undefined);
-    React.useEffect(() => {
-      ref.current = value;
-    });
-    return ref.current;
-  });
+  return jest.fn((value) => value);
 });
 
 jest.mock('~/utils/showError', () => ({
@@ -79,7 +72,6 @@ jest.mock('~/utils/showError', () => ({
 
 jest.mock('~/utils/Helpers', () => ({
   handlerDataSearch: jest.fn((newData, oldData, query, prevQuery, page) => {
-    // Simple implementation for testing
     if (page === 1 || query !== prevQuery) {
       return newData;
     }
@@ -88,14 +80,15 @@ jest.mock('~/utils/Helpers', () => ({
 }));
 
 // Mock useFocusEffect
-jest.mock('@react-navigation/native', () => ({
-  ...jest.requireActual('@react-navigation/native'),
-  useFocusEffect: (callback: () => void) => {
-    React.useEffect(() => {
-      callback();
-    }, []);
-  }
-}));
+jest.mock('@react-navigation/native', () => {
+  const actualNav = jest.requireActual('@react-navigation/native');
+  return {
+    ...actualNav,
+    useFocusEffect: jest.fn(() => {
+      // No hacemos nada - dejamos que useEffect maneje el render inicial
+    })
+  };
+});
 
 describe('LastIncomesScreen flows', () => {
   let store;
@@ -106,7 +99,6 @@ describe('LastIncomesScreen flows', () => {
       search: { query: null }
     });
 
-    // Mock implementation for paginated data
     getLastIncomesWithPaginate.mockImplementation(({ page, query }) => {
       if (page === 1 && !query) {
         return Promise.resolve({
@@ -159,7 +151,6 @@ describe('LastIncomesScreen flows', () => {
       </Provider>
     );
 
-    // The first dispatched action should be setQuery(null)
     const actions = store.getActions();
     expect(actions[0].type).toBe(setQuery.type);
     expect(actions[0].payload).toBe(null);
@@ -194,17 +185,14 @@ describe('LastIncomesScreen flows', () => {
       </Provider>
     );
 
-    // Wait for initial fetch
     await waitFor(() => {
       expect(getLastIncomesWithPaginate).toHaveBeenCalledWith(
         expect.objectContaining({ query: null })
       );
     });
 
-    // Clear mock
     getLastIncomesWithPaginate.mockClear();
 
-    // Simulate query change
     store = mockStore({ search: { query: 'new-query' } });
     rerender(
       <Provider store={store}>
@@ -228,15 +216,12 @@ describe('LastIncomesScreen flows', () => {
       </Provider>
     );
 
-    // Wait for initial fetch
     await waitFor(() => {
       expect(getLastIncomesWithPaginate).toHaveBeenCalledWith(expect.objectContaining({ page: 1 }));
     });
 
-    // Clear previous calls
     getLastIncomesWithPaginate.mockClear();
 
-    // Simulate scroll to end
     const flatList = getByTestId('flatlist-incomes');
     await act(async () => {
       if (flatList.props.onEndReached) {
@@ -244,7 +229,6 @@ describe('LastIncomesScreen flows', () => {
       }
     });
 
-    // Should call fetch for next page
     await waitFor(() => {
       expect(getLastIncomesWithPaginate).toHaveBeenCalledWith(expect.objectContaining({ page: 2 }));
     });
@@ -260,7 +244,6 @@ describe('LastIncomesScreen flows', () => {
       </Provider>
     );
 
-    // Wait for initial fetch with query=null
     await waitFor(() => {
       const calls = getLastIncomesWithPaginate.mock.calls;
       expect(calls.length).toBeGreaterThan(0);
@@ -268,10 +251,8 @@ describe('LastIncomesScreen flows', () => {
       expect(calls[0][0].page).toBe(1);
     });
 
-    // Clear and trigger pagination
     getLastIncomesWithPaginate.mockClear();
 
-    // Get FlatList and call onEndReached
     const flatList = getByTestId('flatlist-incomes');
     await act(async () => {
       if (flatList.props.onEndReached) {
@@ -279,7 +260,6 @@ describe('LastIncomesScreen flows', () => {
       }
     });
 
-    // Wait for pagination fetch
     await waitFor(() => {
       const calls = getLastIncomesWithPaginate.mock.calls;
       expect(calls.some((call) => call[0].page === 2)).toBe(true);
@@ -287,7 +267,6 @@ describe('LastIncomesScreen flows', () => {
   });
 
   it('should not fetch with old query after mount reset, only with null', async () => {
-    // Start with old query
     store = mockStore({ search: { query: 'old-query' } });
     getLastIncomesWithPaginate.mockClear();
 
@@ -297,7 +276,6 @@ describe('LastIncomesScreen flows', () => {
       </Provider>
     );
 
-    // Simulate reset to null
     store = mockStore({ search: { query: null } });
     rerender(
       <Provider store={store}>
@@ -308,13 +286,11 @@ describe('LastIncomesScreen flows', () => {
     await waitFor(() => {
       const calls = getLastIncomesWithPaginate.mock.calls;
       expect(calls.length).toBeGreaterThan(0);
-      // The last call should be with query null
       expect(calls[calls.length - 1][0].query).toBe(null);
     });
   });
 
   it('should stop fetching when no more data', async () => {
-    // Mock to return empty data on page 2
     getLastIncomesWithPaginate.mockImplementation(({ page }) => {
       if (page === 1) {
         return Promise.resolve({
@@ -327,7 +303,7 @@ describe('LastIncomesScreen flows', () => {
           }
         });
       }
-      return Promise.resolve({ data: { data: [] } }); // No more data
+      return Promise.resolve({ data: { data: [] } });
     });
 
     store = mockStore({ search: { query: null } });
@@ -342,7 +318,6 @@ describe('LastIncomesScreen flows', () => {
       expect(getLastIncomesWithPaginate).toHaveBeenCalledWith(expect.objectContaining({ page: 1 }));
     });
 
-    // Trigger pagination
     const flatList = getByTestId('flatlist-incomes');
     await act(async () => {
       if (flatList.props.onEndReached) {
@@ -354,7 +329,6 @@ describe('LastIncomesScreen flows', () => {
       expect(getLastIncomesWithPaginate).toHaveBeenCalledWith(expect.objectContaining({ page: 2 }));
     });
 
-    // Clear and try to paginate again
     getLastIncomesWithPaginate.mockClear();
 
     await act(async () => {
@@ -363,7 +337,6 @@ describe('LastIncomesScreen flows', () => {
       }
     });
 
-    // Should not call again because stopeFetch is true
     expect(getLastIncomesWithPaginate).not.toHaveBeenCalled();
   });
 });

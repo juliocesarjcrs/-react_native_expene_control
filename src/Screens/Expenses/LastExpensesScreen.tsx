@@ -2,8 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { FlatList, SafeAreaView, StyleSheet, Text, View } from 'react-native';
 import { StackNavigationProp } from '@react-navigation/stack';
 import { useDispatch, useSelector } from 'react-redux';
-import { setQuery } from '../../features/searchExpenses/searchExpensesSlice';
-
+import { setQuery } from '~/features/search/searchSlice';
 // Services
 import { getLastExpensesWithPaginate } from '../../services/expenses';
 

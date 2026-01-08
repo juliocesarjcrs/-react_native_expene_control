@@ -11,18 +11,6 @@
     "test": "jest --watchAll",
     "format": "prettier --write ."
   },
-  "jest": {
-    "preset": "jest-expo",
-    "transformIgnorePatterns": [
-      "node_modules/(?!((jest-)?react-native|@react-native(-community)?)|expo(nent)?|@expo(nent)?/.*|react-navigation|@react-navigation/.*|react-redux)"
-    ],
-    "setupFilesAfterEnv": [
-      "<rootDir>/jest.setup.js"
-    ],
-    "moduleNameMapper": {
-      "^~/(.*)$": "<rootDir>/src/$1"
-    }
-  },
   "dependencies": {
     "@apollo/client": "^4.0.5",
     "@expo/vector-icons": "^15.0.3",

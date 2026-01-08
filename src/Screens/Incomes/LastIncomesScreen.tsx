@@ -6,7 +6,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import usePrevious from '~/customHooks/usePrevious';
 import { IncomeStackParamList } from '../../shared/types';
 import { StackNavigationProp } from '@react-navigation/stack';
-import { setQuery } from '../../features/searchExpenses/searchExpensesSlice';
+import { setQuery } from '~/features/search/searchSlice';
 import { LastIncomes } from '../../shared/types/services/income-service.type';
 
 // Components

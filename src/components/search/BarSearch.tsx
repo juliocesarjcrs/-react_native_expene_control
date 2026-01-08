@@ -1,16 +1,17 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, TextInput, StyleSheet, TouchableOpacity } from 'react-native';
 import { Icon } from 'react-native-elements';
-import { useDispatch } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
 
 // Redux
-import { setQuery } from '~/features/searchExpenses/searchExpensesSlice';
+import { setQuery } from '~/features/search/searchSlice';
 
 // Components
 import MyButton from '~/components/MyButton';
 
 // Types
 import { AppDispatch } from '~/shared/types/reducers/root-state.type';
+import { RootState } from '~/shared/types/reducers';
 
 // Theme
 import { useThemeColors } from '~/customHooks/useThemeColors';
@@ -31,24 +32,51 @@ export default function BarSearch({
 }: BarSearchProps) {
   const colors = useThemeColors();
   const dispatch: AppDispatch = useDispatch();
-  const [queryState, setQueryState] = useState<string>('');
+
+  // Obtener el query del store cuando shouldDispatch es true
+  const queryFromStore = useSelector((state: RootState) =>
+    shouldDispatch ? state.search.query : null
+  );
+
+  // Inicializar con el valor del store si existe
+  const [queryState, setQueryState] = useState<string>(queryFromStore || '');
+
+  // Sincronizar con el store cuando el query cambia externamente
+  useEffect(() => {
+    if (shouldDispatch) {
+      // Si el store tiene un valor, sincronizarlo con el estado local
+      if (queryFromStore !== null && queryFromStore !== queryState) {
+        setQueryState(queryFromStore);
+      }
+      // Si el store está null, limpiar el estado local
+      else if (queryFromStore === null && queryState !== '') {
+        setQueryState('');
+      }
+    }
+  }, [queryFromStore, shouldDispatch]);
 
   const handleSearch = (text: string): void => {
     setQueryState(text);
   };
 
   const handleSubmit = (): void => {
+    const trimmedQuery = queryState.trim();
+
     if (shouldDispatch) {
-      dispatch(setQuery(queryState));
+      // Enviar null si está vacío, o el texto si tiene contenido
+      dispatch(setQuery(trimmedQuery || null));
     } else if (onQueryChange) {
-      onQueryChange(queryState);
+      onQueryChange(trimmedQuery);
     }
+
+    // ✅ Mantener el texto en el input después de buscar
+    // Esto mejora la UX permitiendo al usuario ver qué buscó y modificarlo fácilmente
   };
 
   const handleClear = (): void => {
     setQueryState('');
     if (shouldDispatch) {
-      dispatch(setQuery(''));
+      dispatch(setQuery(null));
     } else if (onQueryChange) {
       onQueryChange('');
     }

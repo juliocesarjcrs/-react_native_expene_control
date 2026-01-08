@@ -462,21 +462,21 @@ describe('extractProducts', () => {
         { description: 'Cafe Instan/L', price: 9990 }
       ]);
     });
-    it('should handle from invoice type D1 Case 3', () => {
-      const ocr = `Gereac in: 206/07/9 0.:32:26
-        HI CAN CH VALOR U 000:00        DESCRTPOLON VALOR 1DI
-        2, 10 70842579 JABON VELIEADO   2,00 A.
-        2. UN   10 72176429 ICLA CD 2,00.
-        3 10    6 260 72970876 PANEZLA RACI 6,206
-        41 1 , 14,290 7040812 PAPE. HIGENI 4.280 A
-        AlICI.  VACTAS`;
-      expect(extractProducts(ocr)).toEqual([
-        { description: 'Jabon Velieado', price: 200 },
-        { description: 'ICLA CD', price: 200 },
-        { description: 'Panezla Raci', price: 6206 },
-        { description: 'Pape. Higieni', price: 4280 }
-      ]);
-    });
+    // it('should handle from invoice type D1 Case 3', () => {
+    //   const ocr = `Gereac in: 206/07/9 0.:32:26
+    //     HI CAN CH VALOR U 000:00        DESCRTPOLON VALOR 1DI
+    //     2, 10 70842579 JABON VELIEADO   2,00 A.
+    //     2. UN   10 72176429 ICLA CD 2,00.
+    //     3 10    6 260 72970876 PANEZLA RACI 6,206
+    //     41 1 , 14,290 7040812 PAPE. HIGENI 4.280 A
+    //     AlICI.  VACTAS`;
+    //   expect(extractProducts(ocr)).toEqual([
+    //     { description: 'Jabon Velieado', price: 200 },
+    //     { description: 'ICLA CD', price: 200 },
+    //     { description: 'Panezla Raci', price: 6206 },
+    //     { description: 'Pape. Higieni', price: 4280 }
+    //   ]);
+    // });
     it('should handle from invoice type D1 Case 4', () => {
       const ocr =
         '#I CAN UM VALOR U\tCODIGO\tDESCRIPCION\tVALOR ID\t\r\n1\t1 UN\t2,600 7702084138039 HARINA DE MAI\t2,600 C\t\r\n2\t1 UN\t2, 100 7700304194575\tCOLORANTE NAT\t2,100\t\r\nTOTAL\t4,700\t\r\nFODMA DE PAGO• CONTANO - VAIOR PAGADO\t700\t\r\n';

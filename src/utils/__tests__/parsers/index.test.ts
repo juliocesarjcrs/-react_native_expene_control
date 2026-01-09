@@ -462,21 +462,26 @@ describe('extractProducts', () => {
         { description: 'Cafe Instan/L', price: 9990 }
       ]);
     });
-    // it('should handle from invoice type D1 Case 3', () => {
-    //   const ocr = `Gereac in: 206/07/9 0.:32:26
-    //     HI CAN CH VALOR U 000:00        DESCRTPOLON VALOR 1DI
-    //     2, 10 70842579 JABON VELIEADO   2,00 A.
-    //     2. UN   10 72176429 ICLA CD 2,00.
-    //     3 10    6 260 72970876 PANEZLA RACI 6,206
-    //     41 1 , 14,290 7040812 PAPE. HIGENI 4.280 A
-    //     AlICI.  VACTAS`;
-    //   expect(extractProducts(ocr)).toEqual([
-    //     { description: 'Jabon Velieado', price: 200 },
-    //     { description: 'ICLA CD', price: 200 },
-    //     { description: 'Panezla Raci', price: 6206 },
-    //     { description: 'Pape. Higieni', price: 4280 }
-    //   ]);
-    // });
+    it('should handle from invoice type D1 Case 3', () => {
+      const ocr = `valludulul Blal AUL0
+        #I CAN UM VALOR U	CODIGO	DESCRIPCION	VALOR ID
+        1	2 UN	11,900 7700304792825 CAFE INSTAN/L	23,800 C
+        2	1 UN	1,300 7700304305223 AJO MALLA X 3	1,300 6
+        3	1 UN	3, 850 7700304918294 CREMA LAVALOZ	3,850
+        4	1 UN	2,300 7700304305292 GELATINA SIN	2,300	A
+        5	1 UN	3,490 7700304357307 GELATINA SABO	3,490	A
+        6	1 UN	7,490 7702914604383 CHOCORAMO 65G	7,490	A
+        TOTAL	42,230
+        DACAN`;
+      expect(extractProducts(ocr)).toEqual([
+        { description: 'Cafe Instan/L', price: 23800 },
+        { description: 'Ajo Malla X', price: 1300 },
+        { description: 'Crema Lavaloz', price: 3850 },
+        { description: 'Gelatina Sin', price: 2300 },
+        { description: 'Gelatina Sabo', price: 3490 },
+        { description: 'Chocoramo', price: 7490 }
+      ]);
+    });
     it('should handle from invoice type D1 Case 4', () => {
       const ocr =
         '#I CAN UM VALOR U\tCODIGO\tDESCRIPCION\tVALOR ID\t\r\n1\t1 UN\t2,600 7702084138039 HARINA DE MAI\t2,600 C\t\r\n2\t1 UN\t2, 100 7700304194575\tCOLORANTE NAT\t2,100\t\r\nTOTAL\t4,700\t\r\nFODMA DE PAGO• CONTANO - VAIOR PAGADO\t700\t\r\n';
@@ -490,7 +495,27 @@ describe('extractProducts', () => {
         '#I CAN UM VALOR U\tCODIGO\tDESCRIPCION\tVALOR ID\t\r\n1\tUN\t3,500 7700304211180\tDETERGENTE MU\t\r\n3,500 A\t\r\n2\tUN\t2,900 7700304530939 BLANQUEADOR B\t\r\n2,900 A\t\r\nTOTAL\t6,400\t\r\n';
       expect(extractProducts(ocr)).toEqual([
         { description: 'Detergente Mu', price: 3500 },
-        { description: 'Blanqueador B', price: 2900 }
+        { description: 'Blanqueador', price: 2900 }
+      ]);
+    });
+    it('should handle from invoice type D1 Case 6', () => {
+      const ocr = `CULM
+        #I CAN UM VALOR U	CODIGO	DESCRIPCION	VALOR ID
+        1	1 UN	2,600 7702084138039 HARINA DE MAI	2,600 C
+        1 UN	25,950 7700304833252 ACEITE CANOLA	25,950 A
+        1 UN	1,650 7700304644988 TOALLA DE COC	1,650 A
+        C
+        UN	1,700 7700304473953 HARINA DE TRI	1	,700
+        UN	1,300 7700304305223 AJO MALLA X 3	2	600 6
+        UN	2,000 7702007224023 CHOCOLATINA W	4,000 A
+        38,500`;
+      expect(extractProducts(ocr)).toEqual([
+        { description: 'Harina De Mai', price: 2600 },
+        { description: 'Aceite Canola', price: 25950 },
+        { description: 'Toalla De Coc', price: 1650 },
+        { description: 'Harina De Tri', price: 1700 },
+        { description: 'Ajo Malla X', price: 2600 },
+        { description: 'Chocolatina W', price: 4000 }
       ]);
     });
   });

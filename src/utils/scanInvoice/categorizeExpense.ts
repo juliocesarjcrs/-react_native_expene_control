@@ -55,6 +55,7 @@ export const categorizeExpense = (
         'carne',
         'pollo',
         'pernil',
+        'pierna',
         'espaldilla',
         'morillo',
         'pescado',
@@ -162,7 +163,16 @@ export const categorizeExpense = (
     {
       category: 'Vivienda',
       subcategory: 'Artículos limpieza hogar',
-      keywords: ['limpieza', 'limp', 'detergente', 'det', 'blanqueador', 'esponja', 'lavaloz'],
+      keywords: [
+        'limpieza',
+        'limp',
+        'detergente',
+        'det',
+        'blanqueador',
+        'esponja',
+        'lavaloz',
+        'toalla'
+      ],
       exactMatch: false
     },
     {
@@ -202,7 +212,8 @@ export const categorizeExpense = (
         'higieni',
         'cepillo',
         'algodon',
-        'dental'
+        'dental',
+        'tocador'
       ],
       exactMatch: true // Palabras más específicas con coincidencia exacta
     }

@@ -70,6 +70,10 @@ export const screenConfigs = {
     title: 'Gráficas',
     subtitle: 'Visualización de tu balance financiero'
   },
+  savingsAnalysis: {
+    title: 'Análisis de Ahorros',
+    subtitle: 'Consulta estadísticas y tendencias de tu ahorro en períodos personalizados'
+  },
 
   // SETTINGS
   settings: {

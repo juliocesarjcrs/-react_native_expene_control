@@ -167,6 +167,11 @@ export default function MyStack() {
           component={Routes.GraphBalancesScreen}
           options={{ title: 'Graficas Balance' }}
         />
+        <BalanceStack.Screen
+          name="savingsAnalysis"
+          component={Routes.SavingsAnalysisScreen}
+          options={{ title: 'Análisis de Ahorros' }}
+        />
       </BalanceStack.Navigator>
     );
   }

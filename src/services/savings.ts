@@ -3,7 +3,9 @@ import axios from '../plugins/axiosConfig';
 import {
   GetSavingsByUserQuery,
   GetSavingsByUserResponse,
-  GetUpdateAllSavingsByUserQuery
+  GetUpdateAllSavingsByUserQuery,
+  SavingsPeriodAnalysisQuery,
+  SavingsPeriodAnalysisResponse
 } from '../shared/types/services';
 const PREFIX = 'saving';
 
@@ -15,4 +17,10 @@ export const getSavingsByUser = async (
 
 export const getUpdateAllSavingsByUser = async (params: GetUpdateAllSavingsByUserQuery) => {
   return axios.get(`${PREFIX}/update`, { params });
+};
+
+export const getSavingsPeriodAnalysis = async (
+  params: SavingsPeriodAnalysisQuery
+): Promise<AxiosResponse<SavingsPeriodAnalysisResponse>> => {
+  return axios.get(`${PREFIX}/period-analysis`, { params });
 };

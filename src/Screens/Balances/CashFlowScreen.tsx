@@ -18,6 +18,7 @@ import CashFlowLineChart from './components/CashFlowLineChart';
 import CheckBoxOptions from '../../components/checbox/CheckBoxOptions';
 import ModernTable from '~/components/tables/ModernTable';
 import { ScreenHeader } from '~/components/ScreenHeader';
+import { SavingsAnalysisCard } from './components/SavingsAnalysisCard';
 
 // Types
 import { FinancialRecord } from '../../shared/types/services';
@@ -434,6 +435,12 @@ export default function CashFlowScreen({ navigation }: CashFlowScreenProps) {
               </Text>
               <Icon type="material-community" name="refresh" size={18} color={colors.PRIMARY} />
             </TouchableOpacity>
+
+            {/* ========================================== */}
+            {/* NUEVA CARD DE ANÁLISIS DE AHORROS */}
+            {/* ========================================== */}
+            <SavingsAnalysisCard />
+            {/* ========================================== */}
           </View>
         )}
 

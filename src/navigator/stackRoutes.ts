@@ -17,6 +17,7 @@ import GraphBalancesScreen from '~/Screens/Balances/GraphBalancesScreen';
 import LastExpensesScreen from '~/Screens/Expenses/LastExpensesScreen';
 import EditSubcategoryScreen from '~/Screens/Subcategories/EditSubcategoryScreen';
 import SettingsScreen from '~/Screens/Settings/SettingsScreen';
+import SavingsAnalysisScreen from '~/Screens/Balances/SavingsAnalysisScreen';
 // auth
 import ForgotPasswordScreen from '~/Screens/Auth/ForgotPasswordScreen';
 import CheckCodePasswordScreen from '~/Screens/Auth/CheckCodePasswordScreen';
@@ -97,6 +98,7 @@ export interface StackRoutesType {
   CustomizeThemeColorsScreen: typeof CustomizeThemeColorsScreen;
   ManageUserPermissionsScreen: typeof ManageUserPermissionsScreen;
   CreateEditFeatureFlagScreen: typeof CreateEditFeatureFlagScreen;
+  SavingsAnalysisScreen: typeof SavingsAnalysisScreen;
 }
 
 const stackRoutes: StackRoutesType = {
@@ -141,7 +143,8 @@ const stackRoutes: StackRoutesType = {
   UserThemeSettingsScreen,
   CustomizeThemeColorsScreen,
   ManageUserPermissionsScreen,
-  CreateEditFeatureFlagScreen
+  CreateEditFeatureFlagScreen,
+  SavingsAnalysisScreen
 };
 
 export default stackRoutes;

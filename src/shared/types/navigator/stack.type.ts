@@ -59,6 +59,7 @@ export type IncomeStackParamList = {
 export type BalanceStackParamList = {
   cashFlow: undefined;
   graphBalances: undefined;
+  savingsAnalysis: undefined;
 };
 
 export type SettingsStackParamList = {

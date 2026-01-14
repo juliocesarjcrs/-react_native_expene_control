@@ -1,5 +1,11 @@
 import { IncomeModel } from '../models';
 import { ExtendedExpenseModel } from '../models/expense.type';
+import {
+  FuturePropertyScenario,
+  ImmediateRentScenario,
+  SavingsScenario,
+  ScenarioType
+} from '../services/Investment-comparison.types';
 import { SubcategoriesWithExpenses } from '../services/subcategories-services.type';
 
 export type MainTabParamList = {
@@ -83,4 +89,12 @@ export type SettingsStackParamList = {
   userThemeSettings: undefined;
   customizeThemeColors: undefined;
   manageUserPermissions: undefined;
+  investmentComparisonHome: undefined;
+  scenarioConfig: {
+    scenarioType: ScenarioType;
+    existingData?: SavingsScenario | FuturePropertyScenario | ImmediateRentScenario;
+  };
+  comparisonResults: {
+    comparisonId: string;
+  };
 };

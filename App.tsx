@@ -13,6 +13,8 @@ import { AxiosError } from 'axios';
 import { ApolloProvider } from '@apollo/client/react';
 import client from './src/plugins/ApolloClient';
 import { ThemeProvider } from '~/contexts/ThemeContext';
+import { InvestmentComparisonProvider } from '~/contexts/InvestmentComparisonContext';
+import { ErrorBoundary } from '~/components/ErrorBoundary';
 
 export type ApiError = {
   error: string;
@@ -100,14 +102,18 @@ export default function App() {
   };
 
   return (
-    <ApolloProvider client={client}>
-      <Provider store={store}>
-        <ChatProvider>
-          <ThemeProvider>
-            <MyStack />
-          </ThemeProvider>
-        </ChatProvider>
-      </Provider>
-    </ApolloProvider>
+    <ErrorBoundary>
+      <ApolloProvider client={client}>
+        <Provider store={store}>
+          <ChatProvider>
+            <ThemeProvider>
+              <InvestmentComparisonProvider>
+                <MyStack />
+              </InvestmentComparisonProvider>
+            </ThemeProvider>
+          </ChatProvider>
+        </Provider>
+      </ApolloProvider>
+    </ErrorBoundary>
   );
 }

@@ -144,6 +144,18 @@ export const screenConfigs = {
     title: 'Personalizar Colores',
     subtitle: 'Crea tu tema único modificando cada color'
   },
+  investmentComparisonHome: {
+    title: 'Comparador de Inversiones',
+    subtitle: 'Analiza y compara opciones financieras en Colombia'
+  },
+  scenarioConfig: {
+    title: 'Configurar Escenario',
+    subtitle: 'Personaliza los parámetros de tu inversión'
+  },
+  comparisonResults: {
+    title: 'Resultados de Comparación',
+    subtitle: 'Análisis detallado y recomendación personalizada'
+  },
 
   // STATISTICS
   comparePeriods: {

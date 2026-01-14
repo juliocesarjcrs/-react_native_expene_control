@@ -48,6 +48,9 @@ import ManageUserPermissionsScreen from '~/Screens/Settings/ManageUserPermission
 import UserThemeSettingsScreen from '~/Screens/Settings/UserThemeSettingsScreen';
 import CustomizeThemeColorsScreen from '~/Screens/Settings/CustomizeThemeColorsScreen';
 import CreateEditFeatureFlagScreen from '~/Screens/Settings/FeatureFlags/CreateEditFeatureFlagScreen';
+import InvestmentComparisonHomeScreen from '~/Screens/Settings/investment-comparison/InvestmentComparisonHomeScreen';
+import ComparisonResultsScreen from '~/Screens/Settings/investment-comparison/ComparisonResultsScreen';
+import ScenarioConfigScreen from '~/Screens/Settings/investment-comparison/ScenarioConfigScreen';
 
 // Statistics
 import ComparePeriodsScreen from '~/Screens/Statistics/ComparePeriodsScreen';
@@ -99,6 +102,9 @@ export interface StackRoutesType {
   ManageUserPermissionsScreen: typeof ManageUserPermissionsScreen;
   CreateEditFeatureFlagScreen: typeof CreateEditFeatureFlagScreen;
   SavingsAnalysisScreen: typeof SavingsAnalysisScreen;
+  InvestmentComparisonHomeScreen: typeof InvestmentComparisonHomeScreen;
+  ScenarioConfigScreen: typeof ScenarioConfigScreen;
+  ComparisonResultsScreen: typeof ComparisonResultsScreen;
 }
 
 const stackRoutes: StackRoutesType = {
@@ -144,7 +150,10 @@ const stackRoutes: StackRoutesType = {
   CustomizeThemeColorsScreen,
   ManageUserPermissionsScreen,
   CreateEditFeatureFlagScreen,
-  SavingsAnalysisScreen
+  SavingsAnalysisScreen,
+  InvestmentComparisonHomeScreen,
+  ScenarioConfigScreen,
+  ComparisonResultsScreen
 };
 
 export default stackRoutes;

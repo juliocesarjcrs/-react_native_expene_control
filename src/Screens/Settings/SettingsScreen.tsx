@@ -74,6 +74,10 @@ export default function SettingsScreen({ navigation }: SettingsScreenProps) {
         <MenuCardButton title="Búsqueda Avanzada" onPress={go('advancedSearch')} />
         <MenuCardButton title="Presupuesto Virtual" onPress={go('virtualBudget')} />
         <MenuCardButton title="Mi Tema" onPress={go('userThemeSettings')} />
+        <MenuCardButton
+          title="Comparador de Inversiones"
+          onPress={go('investmentComparisonHome')}
+        />
       </View>
 
       {/* --- SOLO ADMIN --- */}

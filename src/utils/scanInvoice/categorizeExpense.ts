@@ -67,7 +67,8 @@ export const categorizeExpense = (
         'lagarto',
         'trucha',
         'contramuslo',
-        'sobrebarriga'
+        'sobrebarriga',
+        'higado'
       ],
       exactMatch: false
     },

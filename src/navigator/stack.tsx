@@ -276,6 +276,21 @@ export default function MyStack() {
             headerBackTitle: 'Volver'
           })}
         />
+        <SettingsStack.Screen
+          name="investmentComparisonHome"
+          component={Routes.InvestmentComparisonHomeScreen}
+          options={{ headerShown: false }}
+        />
+        <SettingsStack.Screen
+          name="scenarioConfig"
+          component={Routes.ScenarioConfigScreen}
+          options={{ headerShown: false }}
+        />
+        <SettingsStack.Screen
+          name="comparisonResults"
+          component={Routes.ComparisonResultsScreen}
+          options={{ headerShown: false }}
+        />
       </SettingsStack.Navigator>
     );
   }

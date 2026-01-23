@@ -12,7 +12,8 @@
 export enum ScenarioType {
   SAVINGS = 'savings',
   FUTURE_PROPERTY = 'futureProperty',
-  IMMEDIATE_RENT = 'immediateRent'
+  IMMEDIATE_RENT = 'immediateRent',
+  EXISTING_PROPERTY = 'existingProperty'
 }
 
 export enum RiskProfile {
@@ -202,6 +203,109 @@ export interface ImmediateRentResult {
 }
 
 // ============================================
+// ESCENARIO D: PROPIEDAD EXISTENTE (Mantener vs Vender)
+// ============================================
+
+/**
+ * Escenario para comparar:
+ * - Opción A: Mantener propiedad actual y seguir recibiendo renta
+ * - Opción B: Vender y poner el dinero en CDT u otra inversión
+ */
+export interface ExistingPropertyScenario {
+  id: string;
+  name: string;
+
+  // DATOS DE LA INVERSIÓN INICIAL
+  initialInvestment: number; // Lo que invertiste originalmente (ej: $5M)
+  yearsOwned: number; // Años que llevas con la propiedad (ej: 4)
+  currentValue: number; // Valor actual de tu parte (ej: $10M para el 50%)
+  ownershipPercent: number; // % de propiedad (ej: 50)
+
+  // INGRESOS
+  monthlyRent: number; // Renta mensual que RECIBES (ej: $150k)
+  monthsRentedPerYear: number; // Meses arrendado al año (ej: 10 si hubo 2 de vacancia)
+
+  // GASTOS ANUALES
+  annualAdministration: number; // Administración anual (ej: $562k)
+  administrationAnnualIncrease: number; // % incremento anual (default: 5%)
+  annualPropertyTax: number; // Impuesto predial anual (ej: $63,750)
+  annualMaintenance: number; // Mantenimiento anual promedio (ej: $145,620)
+  annualExtraExpenses: number; // Otros gastos (comisiones, etc.)
+
+  // PROYECCIÓN
+  propertyAppreciation: number; // % valorización anual esperada (default: 5%)
+  horizonYears: number; // Años a proyectar (ej: 5)
+  inflation: number; // % inflación anual (default: 5.5%)
+
+  // COMPARACIÓN CON VENTA
+  compareWithSale: boolean; // Si true, compara con vender y meter en CDT
+  cdtTermDays?: number; // Plazo CDT si vende (ej: 270)
+  cdtRate?: number; // Tasa CDT si vende (ej: 9.4%)
+  apply4x1000?: boolean; // Aplicar 4x1000 al vender
+}
+
+export interface ExistingPropertyResult {
+  // OPCIÓN A: MANTENER PROPIEDAD
+  maintain: {
+    // Flujos de caja
+    totalGrossRent: number; // Renta bruta total en horizonte
+    totalExpenses: number; // Gastos totales en horizonte
+    totalNetCashFlow: number; // Flujo neto (renta - gastos)
+
+    // Valorización
+    propertyValueAtEnd: number; // Valor de tu parte al final
+    capitalGain: number; // Ganancia por valorización
+
+    // ROI
+    totalReturn: number; // Flujo neto + ganancia capital
+    roi: number; // % retorno sobre valor actual
+    annualizedReturn: number; // % retorno anualizado
+    cashOnCashReturn: number; // % retorno sobre inversión inicial
+
+    // Flujo por año
+    yearlyBreakdown: Array<{
+      year: number;
+      grossRent: number;
+      expenses: number;
+      netCashFlow: number;
+      propertyValue: number;
+    }>;
+  };
+
+  // OPCIÓN B: VENDER Y CDT (si compareWithSale = true)
+  sell?: {
+    saleAmount: number; // Monto de venta (valor actual)
+    cdtInterest: number; // Intereses generados por CDT
+    cdtTaxes: number; // Impuestos (retención + 4x1000)
+    finalAmount: number; // Monto final después de impuestos
+    totalReturn: number; // Ganancia total
+    roi: number; // % retorno
+    annualizedReturn: number; // % retorno anualizado
+  };
+
+  // COMPARACIÓN
+  comparison?: {
+    maintainBetter: boolean; // true si mantener es mejor
+    difference: number; // Diferencia en $ entre ambas opciones
+    differencePercent: number; // Diferencia en %
+    recommendation: string; // Texto de recomendación
+  };
+}
+
+// ============================================
+// DEFAULTS ADICIONALES
+// ============================================
+
+export const EXISTING_PROPERTY_DEFAULTS = {
+  OWNERSHIP_PERCENT: 50,
+  MONTHS_RENTED_PER_YEAR: 10, // 2 meses de vacancia
+  ADMINISTRATION_INCREASE: 5, // 5% anual
+  PROPERTY_APPRECIATION: 5, // 5% anual
+  HORIZON_YEARS: 5, // 5 años proyección
+  CDT_TERM_DAYS: 270, // 270 días
+  CDT_RATE: 9.4 // 9.4% E.A.
+};
+// ============================================
 // PERFIL DE USUARIO
 // ============================================
 
@@ -223,11 +327,13 @@ export interface ComparisonData {
     savings?: SavingsScenario;
     futureProperty?: FuturePropertyScenario;
     immediateRent?: ImmediateRentScenario;
+    existingProperty?: ExistingPropertyScenario;
   };
   results: {
     savings?: SavingsResult;
     futureProperty?: FuturePropertyResult;
     immediateRent?: ImmediateRentResult;
+    existingProperty?: ExistingPropertyResult;
   };
 }
 

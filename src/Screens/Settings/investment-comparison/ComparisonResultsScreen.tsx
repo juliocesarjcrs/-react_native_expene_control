@@ -1,7 +1,5 @@
-// ~/Screens/settings/investment-comparison/ComparisonResultsScreen.tsx
-
 import React, { useState, useEffect } from 'react';
-import { View, Text, ScrollView, StyleSheet, TouchableOpacity } from 'react-native';
+import { View, Text, ScrollView, StyleSheet } from 'react-native';
 import { StackNavigationProp } from '@react-navigation/stack';
 import { RouteProp } from '@react-navigation/native';
 import { Icon } from 'react-native-elements';
@@ -79,6 +77,11 @@ export default function ComparisonResultsScreen({ navigation, route }: Props) {
           comparison.scenarios.immediateRent
         );
       }
+      if (comparison.scenarios.existingProperty) {
+        results.existingProperty = InvestmentComparisonService.calculateExistingPropertyScenario(
+          comparison.scenarios.existingProperty
+        );
+      }
 
       // Generar recomendación
       const recommendation = InvestmentComparisonService.generateRecommendation(
@@ -108,7 +111,8 @@ export default function ComparisonResultsScreen({ navigation, route }: Props) {
   const scenarioNames = {
     [ScenarioType.SAVINGS]: 'Ahorro/Inversión',
     [ScenarioType.FUTURE_PROPERTY]: 'Vivienda a Futuro',
-    [ScenarioType.IMMEDIATE_RENT]: 'Compra Inmediata'
+    [ScenarioType.IMMEDIATE_RENT]: 'Compra Inmediata',
+    [ScenarioType.EXISTING_PROPERTY]: 'Propiedad Actual'
   };
 
   return (

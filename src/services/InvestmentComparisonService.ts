@@ -13,10 +13,11 @@ import {
   UserProfile,
   RiskProfile,
   UserPriority,
-  CapitalizationFrequency
+  CapitalizationFrequency,
+  ExistingPropertyScenario,
+  ExistingPropertyResult
 } from '~/shared/types/services/Investment-comparison.types';
-import { calculateCDT } from '~/utils/cdtCalculations_original';
-import { calculateSavings } from '~/utils/investmentCalculations';
+import { CalculationService, ScoringService } from './investment-comparison';
 
 const STORAGE_KEYS = {
   COMPARISONS: '@investment_comparisons',
@@ -33,64 +34,9 @@ class InvestmentComparisonService {
   // CÁLCULOS ESCENARIO A: AHORRO/INVERSIÓN
   // ============================================
 
-  /**
-   * Calcula rendimientos de ahorro/inversión (Cajitas o CDT)
-   * Usa las funciones centralizadas según el tipo de producto
-   */
   calculateSavingsScenario(scenario: SavingsScenario): SavingsResult {
-    console.log('🔵 [Service] Calculando escenario:', scenario);
-
-    const productType = (scenario as any).productType || 'cajitas';
-
-    if (productType === 'cdt') {
-      const cdtCapital = (scenario as any).cdtCapital || 0;
-      const cdtTermDays = (scenario as any).cdtTermDays || 90;
-
-      const result = calculateCDT({
-        capitalAmount: cdtCapital,
-        termDays: cdtTermDays,
-        apply4x1000: scenario.apply4x1000,
-        withholdingTax: 4,
-        inflation: scenario.inflation
-      });
-
-      return {
-        totalDeposited: result.capitalAmount,
-        grossEarnings: result.grossInterest,
-        fourPerThousandCharge: result.fourPerThousandTotal,
-        withholdingAmount: result.withholdingAmount,
-        netEarnings: result.netInterest,
-        finalAmount: result.finalAmount,
-        realReturn: result.realReturn,
-        effectiveAnnualRate: result.effectiveAnnualRate
-      };
-    } else {
-      const result = calculateSavings({
-        initialCapital: scenario.initialCapital,
-        monthlyContribution: scenario.monthlyContribution || 0,
-        annualRate: scenario.annualRate,
-        horizonMonths: scenario.horizonMonths,
-        apply4x1000: scenario.apply4x1000,
-        withholdingTax: scenario.withholdingTax || 7,
-        inflation: scenario.inflation
-      });
-
-      return {
-        totalDeposited: result.totalDeposited,
-        grossEarnings: result.grossEarnings,
-        fourPerThousandCharge: result.fourPerThousandTotal,
-        withholdingAmount: result.withholdingAmount,
-        netEarnings: result.netEarnings,
-        finalAmount: result.finalAmount,
-        realReturn: result.realReturn,
-        effectiveAnnualRate: result.effectiveAnnualRate
-      };
-    }
+    return CalculationService.calculateSavingsScenario(scenario);
   }
-  // ============================================
-  // CÁLCULOS ESCENARIO B: VIVIENDA A FUTURO
-  // ============================================
-
   calculateFuturePropertyScenario(scenario: FuturePropertyScenario): FuturePropertyResult {
     const {
       propertyPrice,
@@ -371,6 +317,7 @@ class InvestmentComparisonService {
       savings?: SavingsResult;
       futureProperty?: FuturePropertyResult;
       immediateRent?: ImmediateRentResult;
+      existingProperty?: ExistingPropertyResult;
     }
   ): Recommendation {
     const { userProfile, scenarios } = comparison;
@@ -378,11 +325,13 @@ class InvestmentComparisonService {
 
     // Calcular score para cada escenario configurado
     if (scenarios.savings && results.savings) {
-      scores.push(this.scoreSavingsScenario(scenarios.savings, results.savings, userProfile));
+      scores.push(
+        ScoringService.scoreSavingsScenario(scenarios.savings, results.savings, userProfile)
+      );
     }
     if (scenarios.futureProperty && results.futureProperty) {
       scores.push(
-        this.scoreFuturePropertyScenario(
+        ScoringService.scoreFuturePropertyScenario(
           scenarios.futureProperty,
           results.futureProperty,
           userProfile
@@ -391,7 +340,21 @@ class InvestmentComparisonService {
     }
     if (scenarios.immediateRent && results.immediateRent) {
       scores.push(
-        this.scoreImmediateRentScenario(scenarios.immediateRent, results.immediateRent, userProfile)
+        ScoringService.scoreImmediateRentScenario(
+          scenarios.immediateRent,
+          results.immediateRent,
+          userProfile
+        )
+      );
+    }
+    if (scenarios.existingProperty && results.existingProperty) {
+      console.log('🔵 [Service] Scoring existing property scenario...');
+      scores.push(
+        ScoringService.scoreExistingPropertyScenario(
+          scenarios.existingProperty,
+          results.existingProperty,
+          userProfile
+        )
       );
     }
 
@@ -418,29 +381,7 @@ class InvestmentComparisonService {
     result: SavingsResult,
     profile: UserProfile
   ): ScenarioScore {
-    // Rentabilidad: basada en tasa efectiva
-    const profitability = Math.min((result.effectiveAnnualRate / 15) * 100, 100);
-
-    // Liquidez: máxima (100) - no tiene penalidades por retiro
-    const liquidity = 100;
-
-    // Seguridad: alta (80-90) - depósitos bancarios están respaldados
-    const security = 85;
-
-    // Flujo de caja: bajo (20) - no genera ingresos periódicos
-    const cashFlow = 20;
-
-    const totalScore = this.calculateWeightedScore(
-      { profitability, liquidity, security, cashFlow },
-      profile
-    );
-
-    return {
-      scenarioType: ScenarioType.SAVINGS,
-      totalScore,
-      scores: { profitability, liquidity, security, cashFlow },
-      adjustedReturn: result.effectiveAnnualRate
-    };
+    return ScoringService.scoreSavingsScenario(scenario, result, profile);
   }
 
   private scoreFuturePropertyScenario(
@@ -448,91 +389,7 @@ class InvestmentComparisonService {
     result: FuturePropertyResult,
     profile: UserProfile
   ): ScenarioScore {
-    const profitability = Math.min((result.annualizedReturn / 20) * 100, 100);
-    const liquidity = 30; // Baja - inmueble es ilíquido
-    const security = 70; // Media-alta - activo tangible pero con riesgos
-    const cashFlow = Math.min((result.netRentalIncome / result.totalInvested) * 100 * 5, 80);
-
-    const totalScore = this.calculateWeightedScore(
-      { profitability, liquidity, security, cashFlow },
-      profile
-    );
-
-    return {
-      scenarioType: ScenarioType.FUTURE_PROPERTY,
-      totalScore,
-      scores: { profitability, liquidity, security, cashFlow },
-      adjustedReturn: result.annualizedReturn
-    };
-  }
-
-  private scoreImmediateRentScenario(
-    scenario: ImmediateRentScenario,
-    result: ImmediateRentResult,
-    profile: UserProfile
-  ): ScenarioScore {
-    const profitability = Math.min((result.annualizedReturn / 20) * 100, 100);
-    const liquidity = 25; // Muy baja - capital bloqueado
-    const security = 65; // Media - riesgos de vacancia, mantenimiento
-    const cashFlow = Math.min((result.cashOnCashReturn / 10) * 100, 100);
-
-    const totalScore = this.calculateWeightedScore(
-      { profitability, liquidity, security, cashFlow },
-      profile
-    );
-
-    return {
-      scenarioType: ScenarioType.IMMEDIATE_RENT,
-      totalScore,
-      scores: { profitability, liquidity, security, cashFlow },
-      adjustedReturn: result.annualizedReturn
-    };
-  }
-
-  private calculateWeightedScore(
-    scores: { profitability: number; liquidity: number; security: number; cashFlow: number },
-    profile: UserProfile
-  ): number {
-    const weights = this.getWeights(profile);
-    return (
-      scores.profitability * weights.profitability +
-      scores.liquidity * weights.liquidity +
-      scores.security * weights.security +
-      scores.cashFlow * weights.cashFlow
-    );
-  }
-
-  private getWeights(profile: UserProfile): {
-    profitability: number;
-    liquidity: number;
-    security: number;
-    cashFlow: number;
-  } {
-    // Pesos base según perfil de riesgo
-    let weights = { profitability: 0.3, liquidity: 0.2, security: 0.3, cashFlow: 0.2 };
-
-    if (profile.riskProfile === RiskProfile.CONSERVATIVE) {
-      weights = { profitability: 0.2, liquidity: 0.3, security: 0.4, cashFlow: 0.1 };
-    } else if (profile.riskProfile === RiskProfile.AGGRESSIVE) {
-      weights = { profitability: 0.4, liquidity: 0.1, security: 0.2, cashFlow: 0.3 };
-    }
-
-    // Ajustar según prioridades del usuario
-    profile.priorities.forEach((priority, index) => {
-      const boost = (3 - index) * 0.05; // Primera prioridad +0.15, segunda +0.10, etc.
-      if (priority === UserPriority.PROFITABILITY) weights.profitability += boost;
-      else if (priority === UserPriority.LIQUIDITY) weights.liquidity += boost;
-      else if (priority === UserPriority.SECURITY) weights.security += boost;
-      else if (priority === UserPriority.CASH_FLOW) weights.cashFlow += boost;
-    });
-
-    // Normalizar a que sumen 1
-    const total = Object.values(weights).reduce((sum, w) => sum + w, 0);
-    Object.keys(weights).forEach((key) => {
-      weights[key as keyof typeof weights] /= total;
-    });
-
-    return weights;
+    return ScoringService.scoreFuturePropertyScenario(scenario, result, profile);
   }
 
   private generateReasoning(scores: ScenarioScore[], profile: UserProfile): string[] {
@@ -542,7 +399,8 @@ class InvestmentComparisonService {
     const scenarioNames = {
       [ScenarioType.SAVINGS]: 'Ahorro/Inversión',
       [ScenarioType.FUTURE_PROPERTY]: 'Vivienda a Futuro',
-      [ScenarioType.IMMEDIATE_RENT]: 'Compra Inmediata para Renta'
+      [ScenarioType.IMMEDIATE_RENT]: 'Compra Inmediata para Renta',
+      [ScenarioType.EXISTING_PROPERTY]: 'Propiedad Actual'
     };
 
     reasoning.push(
@@ -602,6 +460,19 @@ class InvestmentComparisonService {
         '⚠️ Bajo flujo de caja: Esta opción no generará ingresos mensuales significativos.'
       );
     }
+    if (best.scenarioType === ScenarioType.EXISTING_PROPERTY) {
+      warnings.push(
+        '⚠️ Considera que mantener la propiedad implica continuar con gastos de administración, ' +
+          'mantenimiento y otros costos operativos. Evalúa si estás dispuesto a seguir gestionando estos aspectos.'
+      );
+
+      if (best.scores.liquidity < 50) {
+        warnings.push(
+          '⚠️ La liquidez de una propiedad es limitada. Si necesitas el capital rápidamente, ' +
+            'vender puede tomar varios meses. Considera tener un fondo de emergencia separado.'
+        );
+      }
+    }
 
     return warnings;
   }
@@ -615,7 +486,8 @@ class InvestmentComparisonService {
     const scenarioNames = {
       [ScenarioType.SAVINGS]: 'Ahorro/Inversión',
       [ScenarioType.FUTURE_PROPERTY]: 'Vivienda a Futuro',
-      [ScenarioType.IMMEDIATE_RENT]: 'Compra Inmediata para Renta'
+      [ScenarioType.IMMEDIATE_RENT]: 'Compra Inmediata para Renta',
+      [ScenarioType.EXISTING_PROPERTY]: 'Propiedad Actual'
     };
 
     alternatives.push(
@@ -718,15 +590,9 @@ class InvestmentComparisonService {
     }
   }
 
-  // Preparado para migrar a API en el futuro
-  // async saveComparisonToAPI(comparison: ComparisonData): Promise<void> {
-  //   const response = await fetch('/api/comparisons', {
-  //     method: 'POST',
-  //     headers: { 'Content-Type': 'application/json' },
-  //     body: JSON.stringify(comparison),
-  //   });
-  //   if (!response.ok) throw new Error('Failed to save comparison');
-  // }
+  calculateExistingPropertyScenario(scenario: ExistingPropertyScenario): ExistingPropertyResult {
+    return CalculationService.calculateExistingPropertyScenario(scenario);
+  }
 }
 
 export default new InvestmentComparisonService();

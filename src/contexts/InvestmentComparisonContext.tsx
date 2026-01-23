@@ -1,5 +1,3 @@
-// ~/contexts/InvestmentComparisonContext.tsx
-
 import React, { createContext, useContext, useState, ReactNode } from 'react';
 import {
   SavingsScenario,
@@ -9,7 +7,8 @@ import {
   UserProfile,
   RiskProfile,
   TimeHorizon,
-  UserPriority
+  UserPriority,
+  ExistingPropertyScenario
 } from '~/shared/types/services/Investment-comparison.types';
 
 // ============================================
@@ -22,6 +21,7 @@ interface InvestmentComparisonState {
     savings: SavingsScenario | null;
     futureProperty: FuturePropertyScenario | null;
     immediateRent: ImmediateRentScenario | null;
+    existingProperty: ExistingPropertyScenario | null;
   };
 }
 
@@ -82,7 +82,8 @@ export const InvestmentComparisonProvider: React.FC<Props> = ({ children }) => {
     scenarios: {
       savings: null,
       futureProperty: null,
-      immediateRent: null
+      immediateRent: null,
+      existingProperty: null
     }
   });
 
@@ -101,8 +102,8 @@ export const InvestmentComparisonProvider: React.FC<Props> = ({ children }) => {
   };
 
   const saveScenario = (type: ScenarioType, scenario: any) => {
-    setState((prev) => {
-      const newScenarios = { ...prev.scenarios };
+    setState((prevState) => {
+      const newScenarios = { ...prevState.scenarios };
 
       switch (type) {
         case ScenarioType.SAVINGS:
@@ -117,10 +118,18 @@ export const InvestmentComparisonProvider: React.FC<Props> = ({ children }) => {
           newScenarios.immediateRent = scenario as ImmediateRentScenario;
           console.log('✅ Escenario Compra Inmediata guardado:', scenario.name);
           break;
+        case ScenarioType.EXISTING_PROPERTY:
+          newScenarios.existingProperty = scenario as ExistingPropertyScenario;
+          console.log('✅ Escenario Propiedad Existente guardado:', scenario.name);
+          break;
+
+        default:
+          console.warn('⚠️ Tipo de escenario desconocido:', type);
+          return prevState;
       }
 
       return {
-        ...prev,
+        ...prevState,
         scenarios: newScenarios
       };
     });
@@ -134,6 +143,8 @@ export const InvestmentComparisonProvider: React.FC<Props> = ({ children }) => {
         return state.scenarios.futureProperty;
       case ScenarioType.IMMEDIATE_RENT:
         return state.scenarios.immediateRent;
+      case ScenarioType.EXISTING_PROPERTY:
+        return state.scenarios.existingProperty;
       default:
         return null;
     }
@@ -158,6 +169,9 @@ export const InvestmentComparisonProvider: React.FC<Props> = ({ children }) => {
         case ScenarioType.IMMEDIATE_RENT:
           newScenarios.immediateRent = null;
           break;
+        case ScenarioType.EXISTING_PROPERTY:
+          newScenarios.existingProperty = null;
+          break;
       }
 
       console.log('🗑️ Escenario eliminado:', type);
@@ -174,7 +188,8 @@ export const InvestmentComparisonProvider: React.FC<Props> = ({ children }) => {
       scenarios: {
         savings: null,
         futureProperty: null,
-        immediateRent: null
+        immediateRent: null,
+        existingProperty: null
       }
     }));
     console.log('🔄 Todos los escenarios eliminados');

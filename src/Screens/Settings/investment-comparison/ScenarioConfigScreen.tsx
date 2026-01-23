@@ -23,6 +23,7 @@ import { SettingsStackParamList } from '~/shared/types';
 import { useThemeColors } from '~/customHooks/useThemeColors';
 import { commonStyles } from '~/styles/common';
 import { screenConfigs } from '~/config/screenConfigs';
+import { ExistingPropertyForm } from './forms/ExistingPropertyForm';
 
 type NavigationProp = StackNavigationProp<SettingsStackParamList, 'scenarioConfig'>;
 type RoutePropType = RouteProp<SettingsStackParamList, 'scenarioConfig'>;
@@ -56,6 +57,14 @@ export default function ScenarioConfigScreen({ navigation, route }: Props) {
       case ScenarioType.IMMEDIATE_RENT:
         return (
           <ImmediateRentForm colors={colors} navigation={navigation} existingData={existingData} />
+        );
+      case ScenarioType.EXISTING_PROPERTY:
+        return (
+          <ExistingPropertyForm
+            colors={colors}
+            navigation={navigation}
+            existingData={existingData}
+          />
         );
 
       default:

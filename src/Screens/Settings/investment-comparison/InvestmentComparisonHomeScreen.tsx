@@ -121,6 +121,13 @@ export default function InvestmentComparisonHomeScreen({ navigation }: Props) {
         comparison.scenarios.immediateRent = state.scenarios.immediateRent;
       }
 
+      if (
+        selectedScenarios.includes(ScenarioType.EXISTING_PROPERTY) &&
+        state.scenarios.existingProperty
+      ) {
+        comparison.scenarios.existingProperty = state.scenarios.existingProperty;
+      }
+
       // Guardar en AsyncStorage
       await InvestmentComparisonService.saveComparison(comparison);
 
@@ -180,6 +187,13 @@ export default function InvestmentComparisonHomeScreen({ navigation }: Props) {
       title: 'Compra Inmediata para Renta',
       description: 'Invierte ahora en propiedad para generar ingresos',
       color: colors.WARNING
+    },
+    {
+      type: ScenarioType.EXISTING_PROPERTY,
+      icon: 'home-analytics',
+      title: 'Propiedad Existente',
+      description: 'Compara mantener vs vender tu propiedad actual',
+      color: colors.PRIMARY
     }
   ];
 

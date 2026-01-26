@@ -1,4 +1,4 @@
 export type IncomesPayloadOnSubmit = {
-  amount: string;
+  amount: number;
   commentary: string;
 };

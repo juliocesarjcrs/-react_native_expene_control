@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import { Keyboard, View } from 'react-native';
-import { useForm, Controller } from 'react-hook-form';
-import { Input } from 'react-native-elements';
+import { useForm } from 'react-hook-form';
 import { RouteProp } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
 
@@ -14,6 +13,7 @@ import SelectOnlyCategory from '../../components/dropDown/SelectOnlyCategory';
 import MyLoading from '../../components/loading/MyLoading';
 import MyButton from '~/components/MyButton';
 import { ScreenHeader } from '~/components/ScreenHeader';
+import MyInput from '~/components/inputs/MyInput';
 
 // Types
 import { EditIncomePayload } from '../../shared/types/services/income-service.type';
@@ -63,7 +63,7 @@ export default function EditIncomeScreen({ navigation, route }: EditIncomeScreen
     formState: { errors }
   } = useForm({
     defaultValues: {
-      amount: objectIncome.cost.toString(),
+      amount: objectIncome.cost,
       commentary: objectIncome.commentary
     }
   });
@@ -92,7 +92,6 @@ export default function EditIncomeScreen({ navigation, route }: EditIncomeScreen
 
       const dataSend: EditIncomePayload = {
         ...payload,
-        amount: parseInt(payload.amount),
         categoryId: idCategory,
         date: DateFormat(date, 'YYYY-MM-DD')
       };
@@ -122,61 +121,42 @@ export default function EditIncomeScreen({ navigation, route }: EditIncomeScreen
       />
 
       {/* AMOUNT */}
-      <Controller
+      <MyInput
         name="amount"
+        type="currency"
         control={control}
+        label="Ingreso"
+        placeholder="0"
         rules={{
-          required: { value: true, message: 'El ingreso es obligatorio' },
-          min: { value: 1, message: 'Valor mínimo: 1' },
-          max: { value: 99999999, message: 'Máximo permitido: 99.999.999' }
+          required: 'El ingreso es obligatorio',
+          min: { value: 1, message: 'El mínimo valor aceptado es 1' },
+          max: {
+            value: 99999999,
+            message: 'El ingreso no puede superar el valor de 99.999.999'
+          }
         }}
-        render={({ field: { onChange, value } }) => (
-          <Input
-            label="Ingreso"
-            value={value}
-            placeholder="Ej: 20000"
-            onChangeText={onChange}
-            keyboardType="numeric"
-            inputStyle={{ color: colors.TEXT_PRIMARY }}
-            labelStyle={{ color: colors.TEXT_PRIMARY }}
-            placeholderTextColor={colors.GRAY}
-            errorStyle={{ color: colors.ERROR }}
-            errorMessage={errors.amount?.message}
-            inputContainerStyle={{
-              borderBottomColor: colors.GRAY
-            }}
-          />
-        )}
+        leftIcon="cash"
+        autoFocus
       />
 
       {/* COMMENTARY */}
-      <Controller
+
+      <MyInput
         name="commentary"
+        type="textarea"
         control={control}
+        label="Comentario"
+        placeholder="Ej: Nómina, quincena"
         rules={{
           maxLength: {
             value: 200,
-            message: 'Máximo 200 caracteres'
+            message: 'El comentario no puede superar los 200 caracteres'
           }
         }}
-        render={({ field: { onChange, value } }) => (
-          <Input
-            label="Comentario"
-            value={value}
-            placeholder="Ej: Nómina, quincena"
-            onChangeText={onChange}
-            multiline
-            numberOfLines={3}
-            inputStyle={{ color: colors.TEXT_PRIMARY }}
-            labelStyle={{ color: colors.TEXT_PRIMARY }}
-            placeholderTextColor={colors.GRAY}
-            errorStyle={{ color: colors.ERROR }}
-            errorMessage={errors.commentary?.message}
-            inputContainerStyle={{
-              borderBottomColor: colors.GRAY
-            }}
-          />
-        )}
+        multiline
+        numberOfLines={2}
+        maxLength={200}
+        leftIcon="text"
       />
 
       {/* DATE SELECTOR */}

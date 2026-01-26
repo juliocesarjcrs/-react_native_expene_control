@@ -1,8 +1,7 @@
 import React, { useRef, useState } from 'react';
 import { Keyboard, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSelector } from 'react-redux';
-import { useForm, Controller } from 'react-hook-form';
-import { Input } from 'react-native-elements';
+import { useForm } from 'react-hook-form';
 
 // Services
 import { CreateExpense, getExpensesFromSubcategory } from '~/services/expenses';
@@ -15,6 +14,7 @@ import { ScreenHeader } from '~/components/ScreenHeader';
 import { DateSelector } from '~/components/datePicker';
 import MyButton from '~/components/MyButton';
 import ExpenseList from './components/ExpenseList';
+import MyInput from '~/components/inputs/MyInput';
 
 // Types
 import { RootState } from '~/shared/types/reducers';
@@ -175,59 +175,33 @@ export default function CreateExpenseScreen(): React.JSX.Element {
         keyboardShouldPersistTaps="handled"
       >
         <View style={styles.formContainer}>
-          <Controller
+          <MyInput
             name="cost"
+            type="currency"
             control={control}
+            label="Gasto"
+            placeholder="0"
             rules={{
-              required: { value: true, message: 'El gasto es obligatorio' },
+              required: 'El gasto es obligatorio',
               min: { value: 1, message: 'El mínimo valor aceptado es 1' },
-              max: {
-                value: 99999999,
-                message: 'El gasto no puede superar 99.999.999'
-              }
+              max: { value: 99999999, message: 'El gasto no puede superar 99.999.999' }
             }}
-            render={({ field: { onChange, value } }) => (
-              <Input
-                label="Gasto"
-                value={value}
-                placeholder="Ej: 20000"
-                placeholderTextColor={colors.TEXT_SECONDARY}
-                onChangeText={onChange}
-                errorMessage={errors?.cost?.message as string}
-                keyboardType="numeric"
-                errorStyle={{ color: colors.ERROR }}
-                inputStyle={{ color: colors.TEXT_PRIMARY }}
-                labelStyle={{ color: colors.TEXT_PRIMARY }}
-              />
-            )}
-            defaultValue=""
+            leftIcon="cash"
           />
 
-          <Controller
+          <MyInput
             name="commentary"
+            type="textarea"
             control={control}
+            label="Comentario"
+            placeholder="Ej: Compra de una camisa"
             rules={{
-              maxLength: {
-                value: 200,
-                message: 'El comentario no puede superar 200 caracteres'
-              }
+              maxLength: { value: 200, message: 'El comentario no puede superar 200 caracteres' }
             }}
-            render={({ field: { onChange, value } }) => (
-              <Input
-                label="Comentario"
-                value={value}
-                placeholder="Ej: Compra de una camisa"
-                placeholderTextColor={colors.TEXT_SECONDARY}
-                onChangeText={onChange}
-                multiline
-                numberOfLines={2}
-                errorMessage={errors?.commentary?.message as string}
-                errorStyle={{ color: colors.ERROR }}
-                inputStyle={{ color: colors.TEXT_PRIMARY }}
-                labelStyle={{ color: colors.TEXT_PRIMARY }}
-              />
-            )}
-            defaultValue=""
+            multiline
+            numberOfLines={2}
+            maxLength={200}
+            leftIcon="text"
           />
 
           <SelectJoinCategory

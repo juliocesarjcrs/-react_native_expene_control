@@ -1,7 +1,7 @@
 import { SubcategoryModel } from '../../models';
 
 export type FormValues = {
-  cost: string;
+  cost: number;
   commentary: string;
 };
 

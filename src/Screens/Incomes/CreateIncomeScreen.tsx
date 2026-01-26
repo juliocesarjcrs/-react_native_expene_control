@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
-import { Keyboard, StyleSheet, View } from 'react-native';
-import { Input } from 'react-native-elements';
-import { useForm, Controller } from 'react-hook-form';
+import { Keyboard, View } from 'react-native';
+import { useForm } from 'react-hook-form';
 import { StackNavigationProp } from '@react-navigation/stack';
 
 // Services
@@ -13,6 +12,7 @@ import ErrorText from '../../components/ErrorText';
 import MyButton from '~/components/MyButton';
 import { ShowToast } from '~/utils/toastUtils';
 import { ScreenHeader } from '~/components/ScreenHeader';
+import MyInput from '~/components/inputs/MyInput';
 
 // Types
 import { IncomeStackParamList } from '../../shared/types';
@@ -51,7 +51,7 @@ export default function CreateIncomeScreen({ navigation }: CreateIncomeScreenPro
     reset,
     formState: { errors }
   } = useForm({
-    defaultValues: { amount: '', commentary: '' }
+    defaultValues: { amount: 0, commentary: '' }
   });
 
   const [categoryId, setCategoryId] = useState<number | null>(null);
@@ -74,13 +74,8 @@ export default function CreateIncomeScreen({ navigation }: CreateIncomeScreenPro
     try {
       if (!categoryId) return;
 
-      const payloadSend = {
-        ...payload,
-        amount: parseInt(payload.amount)
-      };
-
       const dataSend: CreateIncomePayload = {
-        ...payloadSend,
+        ...payload,
         categoryId,
         date: DateFormat(date, 'YYYY-MM-DD')
       };
@@ -108,58 +103,34 @@ export default function CreateIncomeScreen({ navigation }: CreateIncomeScreenPro
       {!categoryId ? <ErrorText msg="Necesita una categoria de ingresos" /> : null}
 
       {/* AMOUNT */}
-      <Controller
+      <MyInput
         name="amount"
+        type="currency"
         control={control}
+        label="Gasto"
+        placeholder="0"
         rules={{
           required: { value: true, message: 'El costo es obligatorio' },
-          min: { value: 1, message: 'El minimó valor aceptado es 1' },
-          max: {
-            value: 99999999,
-            message: 'El costo no puede superar los 99.999.999'
-          }
+          min: { value: 1, message: 'El mínimo valor aceptado es 1' },
+          max: { value: 99999999, message: 'El ingreso no puede superar 99.999.999' }
         }}
-        render={({ field: { onChange, value } }) => (
-          <Input
-            label="Ingreso"
-            value={value}
-            placeholder="Ej: 20000"
-            onChangeText={onChange}
-            keyboardType="numeric"
-            errorStyle={{ color: colors.ERROR }}
-            errorMessage={errors?.amount?.message}
-            labelStyle={{ color: colors.TEXT_PRIMARY }}
-            inputStyle={{ color: colors.TEXT_PRIMARY }}
-            placeholderTextColor={colors.TEXT_SECONDARY}
-          />
-        )}
+        leftIcon="cash"
       />
 
       {/* COMMENTARY */}
-      <Controller
+      <MyInput
         name="commentary"
+        type="textarea"
         control={control}
+        label="Comentario"
+        placeholder="Ej: Nómina, quincena"
         rules={{
-          maxLength: {
-            value: 200,
-            message: 'El comentario no puede superar los 200 caracteres.'
-          }
+          maxLength: { value: 200, message: 'El comentario no puede superar 200 caracteres' }
         }}
-        render={({ field: { onChange, value } }) => (
-          <Input
-            label="Comentario"
-            value={value}
-            placeholder="Ej: Nómina, quincena"
-            onChangeText={onChange}
-            multiline
-            numberOfLines={2}
-            errorStyle={{ color: colors.ERROR }}
-            errorMessage={errors?.commentary?.message}
-            labelStyle={{ color: colors.TEXT_PRIMARY }}
-            inputStyle={{ color: colors.TEXT_PRIMARY }}
-            placeholderTextColor={colors.TEXT_SECONDARY}
-          />
-        )}
+        multiline
+        numberOfLines={2}
+        maxLength={200}
+        leftIcon="text"
       />
 
       <DateSelector

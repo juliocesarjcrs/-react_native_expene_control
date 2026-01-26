@@ -1,9 +1,8 @@
 import React, { useEffect, useState } from 'react';
-import { Keyboard, Platform, StyleSheet, Text } from 'react-native';
+import { Keyboard, Platform, StyleSheet, Text, View } from 'react-native';
 import { useSelector } from 'react-redux';
-import { useForm, Controller } from 'react-hook-form';
-import { View } from 'react-native';
-import { Input, Icon } from 'react-native-elements';
+import { useForm } from 'react-hook-form';
+import { Icon } from 'react-native-elements';
 
 // Services
 import { editExpense, getOneExpense } from '../../services/expenses';
@@ -14,6 +13,7 @@ import MyButton from '~/components/MyButton';
 import ErrorText from '../../components/ErrorText';
 import MyLoading from '~/components/loading/MyLoading';
 import { ScreenHeader } from '~/components/ScreenHeader';
+import MyInput from '~/components/inputs/MyInput';
 
 // Types
 import DateTimePicker, { DateTimePickerEvent } from '@react-native-community/datetimepicker';
@@ -60,7 +60,7 @@ export default function EditExpenseScreen({ route, navigation }: EditExpenseScre
   const month = useSelector((state: any) => state.date.month);
 
   const [expenseEdit, setExpenseEdit] = useState<FormValues>({
-    cost: objectExpense.cost.toString(),
+    cost: objectExpense.cost,
     commentary: objectExpense.commentary ?? ''
   });
 
@@ -151,11 +151,11 @@ export default function EditExpenseScreen({ route, navigation }: EditExpenseScre
       const { data } = await getOneExpense(idExpense);
       // rellena formulario
       setExpenseEdit({
-        cost: data.cost?.toString() ?? '',
+        cost: data.cost ?? 0,
         commentary: data.commentary ?? ''
       });
       reset({
-        cost: data.cost?.toString() ?? '',
+        cost: data.cost ?? 0,
         commentary: data.commentary ?? ''
       });
 
@@ -194,7 +194,7 @@ export default function EditExpenseScreen({ route, navigation }: EditExpenseScre
       }
       const dataSend: EditExpensePayload = {
         ...payload,
-        cost: parseFloat(payload.cost),
+        cost: payload.cost,
         subcategoryId,
         date: DateFormat(date, 'YYYY-MM-DD')
       };
@@ -237,60 +237,41 @@ export default function EditExpenseScreen({ route, navigation }: EditExpenseScre
         ]}
       >
         {/* COST */}
-        <Controller
+        <MyInput
           name="cost"
+          type="currency"
           control={control}
+          label="Gasto"
+          placeholder="0"
           rules={{
-            required: { value: true, message: 'El gasto es obligatorio' },
-            min: { value: 1, message: 'El minimó valor aceptado es 1' },
+            required: 'El gasto es obligatorio',
+            min: { value: 1, message: 'El mínimo valor aceptado es 1' },
             max: {
               value: 99999999,
-              message: 'El gasto no puede superar el valor de 99.999.999 '
+              message: 'El gasto no puede superar el valor de 99.999.999'
             }
           }}
-          render={({ field: { onChange, value } }) => (
-            <Input
-              label="Gasto"
-              value={value}
-              placeholder="Ej: 20000"
-              onChangeText={(text) => onChange(text)}
-              errorStyle={{ color: colors.ERROR }}
-              errorMessage={errors?.cost?.message}
-              keyboardType="numeric"
-              inputContainerStyle={{ borderColor: colors.BORDER }}
-              labelStyle={{ color: colors.TEXT_SECONDARY }}
-              style={{ color: colors.TEXT_PRIMARY }}
-            />
-          )}
-          defaultValue=""
+          leftIcon="cash"
+          autoFocus
         />
 
         {/* COMMENTARY */}
-        <Controller
+        <MyInput
           name="commentary"
+          type="textarea"
           control={control}
+          label="Comentario"
+          placeholder="Ej: Compra de una camisa"
           rules={{
             maxLength: {
               value: 200,
-              message: 'El comenatario no puede superar los 200 carácteres '
+              message: 'El comentario no puede superar los 200 caracteres'
             }
           }}
-          render={({ field: { onChange, value } }) => (
-            <Input
-              label="Comentario"
-              value={value}
-              placeholder="Ej: Compra de una camisa"
-              onChangeText={(text) => onChange(text)}
-              multiline
-              numberOfLines={2}
-              errorStyle={{ color: colors.ERROR }}
-              errorMessage={errors?.commentary?.message}
-              inputContainerStyle={{ borderColor: colors.BORDER }}
-              labelStyle={{ color: colors.TEXT_SECONDARY }}
-              style={{ color: colors.TEXT_PRIMARY }}
-            />
-          )}
-          defaultValue=""
+          multiline
+          numberOfLines={2}
+          maxLength={200}
+          leftIcon="text"
         />
 
         {/* CATEGORY */}

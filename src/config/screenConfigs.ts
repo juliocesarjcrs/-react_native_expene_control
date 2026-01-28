@@ -1,6 +1,15 @@
 // Configuración centralizada de títulos y subtítulos para cada pantalla
 
 export const screenConfigs = {
+  // Auth
+  checkCodePassword: {
+    title: 'Verificar Código',
+    subtitle: 'Ingresa el código enviado a tu correo'
+  },
+  resetPassword: {
+    title: 'Nueva Contraseña',
+    subtitle: 'Crea una contraseña segura'
+  },
   // EXPENSES
   main: {
     title: 'Gastos del mes',

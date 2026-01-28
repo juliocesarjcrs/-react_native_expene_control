@@ -1,8 +1,7 @@
 import React, { useState } from 'react';
-import { View, StyleSheet } from 'react-native';
-import { useForm, Controller } from 'react-hook-form';
+import { View } from 'react-native';
+import { useForm } from 'react-hook-form';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { Input } from 'react-native-elements';
 import { useDispatch, useSelector } from 'react-redux';
 
 import { StackNavigationProp } from '@react-navigation/stack';
@@ -21,9 +20,17 @@ import MyButton from '../../components/MyButton';
 import { AuthStackParamList } from '../../shared/types';
 import { RootState } from '../../shared/types/reducers';
 import { AppDispatch } from '../../shared/types/reducers/root-state.type';
+import MyInput from '~/components/inputs/MyInput';
+
 // Utils
 import { ShowToast } from '../../utils/toastUtils';
 import { showError } from '~/utils/showError';
+
+// Theme
+import { useThemeColors } from '~/customHooks/useThemeColors';
+
+// Styles
+import { commonStyles } from '~/styles/common';
 
 interface LoginFormData {
   email: string;
@@ -36,15 +43,11 @@ interface LoginScreenProps {
 }
 
 export default function LoginScreen({ navigation }: LoginScreenProps) {
+  const colors = useThemeColors();
   const EMAIL_REGEX =
     /^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
 
-  const {
-    handleSubmit,
-    control,
-
-    formState: { errors }
-  } = useForm<LoginFormData>();
+  const { handleSubmit, control } = useForm<LoginFormData>();
   const loadingAuth = useSelector((state: RootState) => {
     return state.auth.loadingAuth;
   });
@@ -77,55 +80,38 @@ export default function LoginScreen({ navigation }: LoginScreenProps) {
     }
   };
   return (
-    <View style={styles.container}>
+    <View style={[commonStyles.screenContentWithPadding, { backgroundColor: colors.BACKGROUND }]}>
       {loadingAuth ? (
         <MyLoading />
       ) : (
-        <View style={styles.container2}>
-          <Controller
+        <View
+          style={[commonStyles.screenContentWithPadding, { backgroundColor: colors.BACKGROUND }]}
+        >
+          <MyInput
             name="email"
             control={control}
+            label="Email"
+            placeholder="ejemplo@correo.com"
             rules={{
-              required: {
-                value: true,
-                message: 'Email es obligatorio'
-              },
-              pattern: {
-                value: EMAIL_REGEX,
-                message: 'Not a valid email'
-              }
+              required: 'Email es obligatorio',
+              pattern: { value: EMAIL_REGEX, message: 'Ingresa un email válido' }
             }}
-            render={({ field: { onChange, value } }) => (
-              <Input
-                value={value}
-                placeholder="Email"
-                onChangeText={(text) => onChange(text)}
-                errorStyle={{ color: 'red' }}
-                errorMessage={errors?.email?.message}
-              />
-            )}
-            defaultValue=""
+            leftIcon="email"
+            autoFocus
           />
-          <Controller
+
+          <MyInput
             name="password"
+            type="password"
             control={control}
+            label="Contraseña"
+            placeholder="••••••••"
             rules={{
-              required: {
-                value: true,
-                message: 'La contraseña es obligatorio'
-              }
+              required: 'La contraseña es obligatoria',
+              minLength: { value: 3, message: 'Mínimo 3 caracteres' }
             }}
-            render={({ field: { onChange, value } }) => (
-              <Input
-                value={value}
-                placeholder="Password"
-                onChangeText={(text) => onChange(text)}
-                secureTextEntry={true}
-                errorStyle={{ color: 'red' }}
-                errorMessage={errors?.password?.message}
-              />
-            )}
-            defaultValue=""
+            leftIcon="lock"
+            onSubmitEditing={handleSubmit(onSubmit)}
           />
           {loading ? (
             <MyLoading />
@@ -144,15 +130,3 @@ export default function LoginScreen({ navigation }: LoginScreenProps) {
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#fff',
-    justifyContent: 'center'
-  },
-  container2: {
-    flexDirection: 'column',
-    backgroundColor: '#fff'
-  }
-});

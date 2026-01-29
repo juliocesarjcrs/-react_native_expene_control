@@ -1,22 +1,36 @@
 import React, { useEffect, useState } from 'react';
 import { StyleSheet, Text, View, Keyboard } from 'react-native';
-import { useForm, Controller } from 'react-hook-form';
-import { Input } from 'react-native-elements';
+import { useForm } from 'react-hook-form';
 import { RadioButton } from 'react-native-paper';
 import { StackNavigationProp } from '@react-navigation/stack';
+
+// Services
 import { CreateCategory, getCategories } from '~/services/categories';
-import { showError } from '~/utils/showError';
-import { ShowToast } from '~/utils/toastUtils';
-import { useThemeColors } from '~/customHooks/useThemeColors';
-import { commonStyles } from '~/styles/common';
-import { screenConfigs } from '~/config/screenConfigs';
+
+// Components
 import { ScreenHeader } from '~/components/ScreenHeader';
 import MyButton from '~/components/MyButton';
 import MyLoading from '~/components/loading/MyLoading';
 import ModalIcon from '~/components/modal/ModalIcon';
+import MyInput from '~/components/inputs/MyInput';
+import CategoryList from './components/CategoryList';
+
+// Types
 import { CategoryModel, ExpenseStackParamList } from '~/shared/types';
 import { CreateCategoryPayload } from '~/shared/types/services';
-import CategoryList from './components/CategoryList';
+
+// Utils
+import { showError } from '~/utils/showError';
+import { ShowToast } from '~/utils/toastUtils';
+
+// Theme
+import { useThemeColors } from '~/customHooks/useThemeColors';
+
+// Styles
+import { commonStyles } from '~/styles/common';
+
+// Configs
+import { screenConfigs } from '~/config/screenConfigs';
 
 export type CreateCategoryScreenNavigationProp = StackNavigationProp<
   ExpenseStackParamList,
@@ -40,12 +54,7 @@ export default function CreateCategoryScreen({ navigation }: CreateCategoryScree
   const [loading, setLoading] = useState<boolean>(false);
   const [type, setType] = useState<CategoryType>(0);
 
-  const {
-    handleSubmit,
-    control,
-    reset,
-    formState: { errors }
-  } = useForm<CreateCategoryFormData>({
+  const { handleSubmit, control, reset } = useForm<CreateCategoryFormData>({
     defaultValues: { name: '' }
   });
 
@@ -130,29 +139,21 @@ export default function CreateCategoryScreen({ navigation }: CreateCategoryScree
           </RadioButton.Group>
         </View>
 
-        <Controller
+        <MyInput
           name="name"
           control={control}
+          label="Categoría"
+          placeholder="Ej: Vivienda"
           rules={{
-            required: {
-              value: true,
-              message: 'El nombre de la categoría es obligatorio'
-            },
+            required: 'El nombre de la categoría es obligatorio',
             maxLength: {
               value: 200,
               message: 'El nombre no puede superar 200 caracteres'
             }
           }}
-          render={({ field: { onChange, value } }) => (
-            <Input
-              label="Categoría"
-              value={value}
-              placeholder="Ej: Vivienda"
-              onChangeText={onChange}
-              errorStyle={{ color: 'red' }}
-              errorMessage={errors?.name?.message}
-            />
-          )}
+          leftIcon="tag"
+          maxLength={200}
+          autoFocus
         />
 
         <ModalIcon icon={icon} setIcon={handleIconChange} />

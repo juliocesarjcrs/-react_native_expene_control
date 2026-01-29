@@ -1,8 +1,7 @@
 import { StatusBar } from 'expo-status-bar';
 import React, { useEffect, useState } from 'react';
-import { Keyboard, View } from 'react-native';
-import { useForm, Controller } from 'react-hook-form';
-import { Input } from 'react-native-elements';
+import { Keyboard, View, ScrollView } from 'react-native';
+import { useForm } from 'react-hook-form';
 import { RouteProp } from '@react-navigation/native';
 
 // Services
@@ -13,6 +12,7 @@ import MyButton from '~/components/MyButton';
 import MyLoading from '~/components/loading/MyLoading';
 import ModalIcon from '../../components/modal/ModalIcon';
 import { ScreenHeader } from '~/components/ScreenHeader';
+import MyInput from '~/components/inputs/MyInput';
 
 // Types
 import { CategoryModel, ExpenseStackParamList } from '~/shared/types';
@@ -36,7 +36,8 @@ type EditCategoryScreenRouteProp = RouteProp<ExpenseStackParamList, 'editCategor
 interface EditCategoryScreenProps {
   route: EditCategoryScreenRouteProp;
 }
-export type CategoryFormData = Omit<CategoryModel, 'budget'> & { budget: string };
+
+export type CategoryFormData = Omit<CategoryModel, 'budget'> & { budget: number };
 
 export default function EditCategoryScreen({ route }: EditCategoryScreenProps) {
   const screenConfig = screenConfigs.editCategory;
@@ -44,13 +45,8 @@ export default function EditCategoryScreen({ route }: EditCategoryScreenProps) {
   const idCategory = route.params.idCategory;
 
   const [category, setCategory] = useState<CategoryFormData | undefined>(undefined);
-  const {
-    handleSubmit,
-    control,
-    reset,
-
-    formState: { errors }
-  } = useForm<CategoryFormData>({
+  const { handleSubmit, control, reset } = useForm<CategoryFormData>({
+    mode: 'onTouched',
     defaultValues: category
   });
   const [icon, setIcon] = useState('home');
@@ -63,14 +59,14 @@ export default function EditCategoryScreen({ route }: EditCategoryScreenProps) {
   const fetchData = async () => {
     try {
       const { data } = await getCategory(idCategory);
-      const dataTransfor = {
+      const dataTransform: CategoryFormData = {
         ...data,
-        budget: data.budget !== null && data.budget !== undefined ? data.budget.toString() : ''
+        budget: data.budget ?? 0
       };
       const editIcon = data.icon ? data.icon : 'home';
       setIcon(editIcon);
-      setCategory(dataTransfor);
-      reset(dataTransfor);
+      setCategory(dataTransform);
+      reset(dataTransform);
     } catch (e) {
       showError(e);
     }
@@ -83,17 +79,18 @@ export default function EditCategoryScreen({ route }: EditCategoryScreenProps) {
       const sendPayload: EditCategoryPayload = {
         ...payload,
         icon,
-        budget: parseInt(payload.budget)
+        budget: payload.budget
       };
       await EditCategory(idCategory, sendPayload);
       setLoading(false);
       Keyboard.dismiss();
-      ShowToast();
+      ShowToast('Categoría editada exitosamente');
     } catch (error) {
       setLoading(false);
       showError(error);
     }
   };
+
   const setIconHandle = (val: string) => {
     setIcon(val);
   };
@@ -102,60 +99,51 @@ export default function EditCategoryScreen({ route }: EditCategoryScreenProps) {
     <View style={[commonStyles.screenContainer, { backgroundColor: colors.BACKGROUND }]}>
       <ScreenHeader title={screenConfig.title} subtitle={screenConfig.subtitle} />
       <StatusBar style="auto" />
-      <Controller
-        name="name"
-        control={control}
-        rules={{
-          required: {
-            value: true,
-            message: 'El nombre de la categoria es obligatorio'
-          },
-          maxLength: {
-            value: 200,
-            message: 'El nombre no puede superar 200 caracteres'
-          }
-        }}
-        render={({ field: { onChange, value } }) => (
-          <Input
-            label="Categoria"
-            value={value}
-            placeholder="Nombre de la categoria"
-            onChangeText={(text) => onChange(text)}
-            errorStyle={{ color: 'red' }}
-            errorMessage={
-              typeof errors?.name?.message === 'string' ? errors.name.message : undefined
-            }
+
+      <ScrollView
+        style={{ flex: 1 }}
+        contentContainerStyle={{ paddingBottom: 20 }}
+        keyboardShouldPersistTaps="handled"
+      >
+        <View style={{ paddingHorizontal: 16, paddingTop: 10 }}>
+          <MyInput
+            name="name"
+            control={control}
+            label="Categoría"
+            placeholder="Ej: Vivienda"
+            rules={{
+              required: 'El nombre de la categoría es obligatorio',
+              maxLength: {
+                value: 200,
+                message: 'El nombre no puede superar 200 caracteres'
+              }
+            }}
+            leftIcon="tag"
+            maxLength={200}
+            autoFocus
           />
-        )}
-        defaultValue=""
-      />
-      <Controller
-        name="budget"
-        control={control}
-        rules={{
-          min: { value: 0, message: 'El minimó valor aceptado es 1' },
-          max: {
-            value: 99999999,
-            message: 'El presupuesto no puede superar el valor de 99.999.999 '
-          }
-        }}
-        render={({ field: { onChange, value } }) => (
-          <Input
+
+          <MyInput
+            name="budget"
+            type="currency"
+            control={control}
             label="Presupuesto"
-            value={value}
-            placeholder="Ej: 200000"
-            onChangeText={(text) => onChange(text)}
-            errorStyle={{ color: 'red' }}
-            errorMessage={
-              typeof errors?.budget?.message === 'string' ? errors.budget.message : undefined
-            }
-            keyboardType="numeric"
+            placeholder="0"
+            rules={{
+              min: { value: 0, message: 'El mínimo valor aceptado es 0' },
+              max: {
+                value: 99999999,
+                message: 'El presupuesto no puede superar el valor de 99.999.999'
+              }
+            }}
+            leftIcon="wallet"
           />
-        )}
-        defaultValue=""
-      />
-      <ModalIcon icon={icon} setIcon={setIconHandle} />
-      {loading ? <MyLoading /> : <MyButton onPress={handleSubmit(onSubmit)} title="Editar" />}
+
+          <ModalIcon icon={icon} setIcon={setIconHandle} />
+
+          {loading ? <MyLoading /> : <MyButton onPress={handleSubmit(onSubmit)} title="Editar" />}
+        </View>
+      </ScrollView>
     </View>
   );
 }

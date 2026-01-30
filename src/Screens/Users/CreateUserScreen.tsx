@@ -1,23 +1,34 @@
 import React, { useEffect, useState } from 'react';
-import { StyleSheet, Text, View, FlatList, SafeAreaView, ListRenderItem } from 'react-native';
-import { useForm, Controller } from 'react-hook-form';
-import { Input } from 'react-native-elements';
+import { StyleSheet, Text, View, FlatList, ListRenderItem } from 'react-native';
+import { useForm } from 'react-hook-form';
 import { StackNavigationProp } from '@react-navigation/stack';
 import { RadioButton } from 'react-native-paper';
+
+// Services
 import { getUsersList, createUser } from '~/services/users';
-import { showError } from '~/utils/showError';
-import { ShowToast } from '~/utils/toastUtils';
+
+// Components
 import { ScreenHeader } from '~/components/ScreenHeader';
 import MyButton from '~/components/MyButton';
-import { MEDIUM, SMALL } from '~/styles/fonts';
-import { SettingsStackParamList, UserModel } from '~/shared/types';
-import { EMAIL_REGEX } from '~/constants/regex';
+import MyInput from '~/components/inputs/MyInput';
 import { UserListItem } from './components/UserListItem';
+
+// Types
+import { SettingsStackParamList, UserModel } from '~/shared/types';
+
+// Utils
+import { showError } from '~/utils/showError';
+import { ShowToast } from '~/utils/toastUtils';
+
+// Constants
+import { EMAIL_REGEX } from '~/constants/regex';
+
 // Theme
 import { useThemeColors } from '~/customHooks/useThemeColors';
 
 // Styles
 import { commonStyles } from '~/styles/common';
+import { MEDIUM, SMALL } from '~/styles/fonts';
 
 // Configs
 import { screenConfigs } from '~/config/screenConfigs';
@@ -31,11 +42,11 @@ interface CreateUserScreenProps {
   navigation: CreateUserScreenNavigationProp;
 }
 
-type CreateUserFormData = {
+interface CreateUserFormData {
   email: string;
   name: string;
   password: string;
-};
+}
 
 type UserRole = 0 | 1; // 0 = Normal, 1 = Admin
 
@@ -43,12 +54,8 @@ export default function CreateUserScreen({ navigation }: CreateUserScreenProps) 
   const screenConfig = screenConfigs.createUser;
   const colors = useThemeColors();
 
-  const {
-    handleSubmit,
-    control,
-    reset,
-    formState: { errors }
-  } = useForm<CreateUserFormData>({
+  const { handleSubmit, control, reset } = useForm<CreateUserFormData>({
+    mode: 'onTouched',
     defaultValues: { email: '', name: '', password: '' }
   });
 
@@ -113,131 +120,100 @@ export default function CreateUserScreen({ navigation }: CreateUserScreenProps) 
     <View style={[commonStyles.screenContainer, { backgroundColor: colors.BACKGROUND }]}>
       <ScreenHeader title={screenConfig.title} subtitle={screenConfig.subtitle} />
 
-      <SafeAreaView style={{ flex: 1 }}>
-        <FlatList
-          data={listUsers}
-          keyExtractor={(item) => item.id.toString()}
-          contentContainerStyle={styles.scrollContent}
-          ListHeaderComponent={
-            <View style={styles.formContainer}>
-              <Controller
-                name="email"
-                control={control}
-                rules={{
-                  required: { value: true, message: 'El email es obligatorio' },
-                  pattern: {
-                    value: EMAIL_REGEX,
-                    message: 'El email no es válido'
-                  }
-                }}
-                render={({ field: { onChange, value } }) => (
-                  <Input
-                    value={value}
-                    placeholder="Email"
-                    placeholderTextColor={colors.TEXT_SECONDARY}
-                    onChangeText={onChange}
-                    keyboardType="email-address"
-                    autoCapitalize="none"
-                    errorStyle={{ color: colors.ERROR }}
-                    errorMessage={errors?.email?.message}
-                    inputStyle={{ color: colors.TEXT_PRIMARY }}
-                    containerStyle={styles.inputContainer}
-                  />
-                )}
-              />
+      <FlatList
+        data={listUsers}
+        keyExtractor={(item) => item.id.toString()}
+        contentContainerStyle={styles.scrollContent}
+        ListHeaderComponent={
+          <View style={styles.formContainer}>
+            {/* Input de Email */}
+            <MyInput
+              name="email"
+              control={control}
+              label="Email"
+              placeholder="ejemplo@correo.com"
+              rules={{
+                required: 'El email es obligatorio',
+                pattern: {
+                  value: EMAIL_REGEX,
+                  message: 'El email no es válido'
+                }
+              }}
+              leftIcon="email"
+              autoFocus
+            />
 
-              <Controller
-                name="name"
-                control={control}
-                rules={{
-                  required: { value: true, message: 'El nombre es obligatorio' },
-                  minLength: {
-                    value: 2,
-                    message: 'El nombre debe tener al menos 2 caracteres'
-                  }
-                }}
-                render={({ field: { onChange, value } }) => (
-                  <Input
-                    value={value}
-                    placeholder="Nombre"
-                    placeholderTextColor={colors.TEXT_SECONDARY}
-                    onChangeText={onChange}
-                    errorStyle={{ color: colors.ERROR }}
-                    errorMessage={errors?.name?.message}
-                    inputStyle={{ color: colors.TEXT_PRIMARY }}
-                    containerStyle={styles.inputContainer}
-                  />
-                )}
-              />
+            {/* Input de Nombre */}
+            <MyInput
+              name="name"
+              control={control}
+              label="Nombre"
+              placeholder="Nombre completo"
+              rules={{
+                required: 'El nombre es obligatorio',
+                minLength: {
+                  value: 2,
+                  message: 'El nombre debe tener al menos 2 caracteres'
+                }
+              }}
+              leftIcon="account"
+            />
 
-              <Controller
-                name="password"
-                control={control}
-                rules={{
-                  required: {
-                    value: true,
-                    message: 'La contraseña es obligatoria'
-                  },
-                  minLength: {
-                    value: 3,
-                    message: 'La contraseña debe tener al menos 3 caracteres'
-                  }
-                }}
-                render={({ field: { onChange, value } }) => (
-                  <Input
-                    value={value}
-                    placeholder="Contraseña"
-                    placeholderTextColor={colors.TEXT_SECONDARY}
-                    onChangeText={onChange}
-                    secureTextEntry={true}
-                    errorStyle={{ color: colors.ERROR }}
-                    errorMessage={errors?.password?.message}
-                    inputStyle={{ color: colors.TEXT_PRIMARY }}
-                    containerStyle={styles.inputContainer}
-                  />
-                )}
-              />
+            {/* Input de Contraseña */}
+            <MyInput
+              name="password"
+              type="password"
+              control={control}
+              label="Contraseña"
+              placeholder="••••••••"
+              rules={{
+                required: 'La contraseña es obligatoria',
+                minLength: {
+                  value: 3,
+                  message: 'La contraseña debe tener al menos 3 caracteres'
+                }
+              }}
+              leftIcon="lock"
+            />
 
-              <View style={styles.roleSection}>
-                <Text style={[styles.roleLabel, { color: colors.TEXT_PRIMARY }]}>
-                  Rol del usuario:
-                </Text>
-                <RadioButton.Group onValueChange={handleRoleChange} value={role.toString()}>
-                  <View style={styles.radioContainer}>
-                    <View style={styles.radioOption}>
-                      <RadioButton.Android
-                        value="0"
-                        color={colors.PRIMARY}
-                        uncheckedColor={colors.TEXT_SECONDARY}
-                      />
-                      <Text style={{ color: colors.TEXT_PRIMARY, fontSize: SMALL, marginLeft: 4 }}>
-                        Normal
-                      </Text>
-                    </View>
-                    <View style={styles.radioOption}>
-                      <RadioButton.Android
-                        value="1"
-                        color={colors.PRIMARY}
-                        uncheckedColor={colors.TEXT_SECONDARY}
-                      />
-                      <Text style={{ color: colors.TEXT_PRIMARY, fontSize: SMALL, marginLeft: 4 }}>
-                        Admin
-                      </Text>
-                    </View>
-                  </View>
-                </RadioButton.Group>
-              </View>
-
-              <MyButton title="Crear usuario" onPress={handleSubmit(onSubmit)} />
-
-              <Text style={[styles.listTitle, { color: colors.TEXT_PRIMARY }]}>
-                Usuarios existentes ({listUsers.length}):
+            {/* Radio buttons para rol */}
+            <View style={styles.roleSection}>
+              <Text style={[styles.roleLabel, { color: colors.TEXT_PRIMARY }]}>
+                Rol del usuario:
               </Text>
+              <RadioButton.Group onValueChange={handleRoleChange} value={role.toString()}>
+                <View style={styles.radioContainer}>
+                  <View style={styles.radioOption}>
+                    <RadioButton.Android
+                      value="0"
+                      color={colors.PRIMARY}
+                      uncheckedColor={colors.TEXT_SECONDARY}
+                    />
+                    <Text style={[styles.radioText, { color: colors.TEXT_PRIMARY }]}>Normal</Text>
+                  </View>
+                  <View style={styles.radioOption}>
+                    <RadioButton.Android
+                      value="1"
+                      color={colors.INFO}
+                      uncheckedColor={colors.TEXT_SECONDARY}
+                    />
+                    <Text style={[styles.radioText, { color: colors.TEXT_PRIMARY }]}>Admin</Text>
+                  </View>
+                </View>
+              </RadioButton.Group>
             </View>
-          }
-          renderItem={renderItem}
-        />
-      </SafeAreaView>
+
+            {/* Botón de crear */}
+            <MyButton title="Crear usuario" onPress={handleSubmit(onSubmit)} variant="primary" />
+
+            {/* Título de lista */}
+            <Text style={[styles.listTitle, { color: colors.TEXT_PRIMARY }]}>
+              Usuarios existentes ({listUsers.length}):
+            </Text>
+          </View>
+        }
+        renderItem={renderItem}
+      />
     </View>
   );
 }
@@ -250,15 +226,12 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingTop: 10
   },
-  inputContainer: {
-    marginBottom: -10
-  },
   roleSection: {
     marginVertical: 8,
     marginBottom: 16
   },
   roleLabel: {
-    fontSize: SMALL,
+    fontSize: SMALL + 2,
     fontWeight: '600',
     marginBottom: 8
   },
@@ -269,7 +242,11 @@ const styles = StyleSheet.create({
   },
   radioOption: {
     flexDirection: 'row',
-    alignItems: 'center'
+    alignItems: 'center',
+    gap: 4
+  },
+  radioText: {
+    fontSize: SMALL + 1
   },
   listTitle: {
     fontSize: MEDIUM,

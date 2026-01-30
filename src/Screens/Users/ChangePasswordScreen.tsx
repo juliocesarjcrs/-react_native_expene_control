@@ -1,19 +1,33 @@
-import React, { useRef } from 'react';
-import { StyleSheet, View } from 'react-native';
-import { useForm, Controller } from 'react-hook-form';
-import { Input } from 'react-native-elements';
+import React from 'react';
+import { ScrollView, View } from 'react-native';
+import { useForm } from 'react-hook-form';
 import { StackNavigationProp } from '@react-navigation/stack';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+
+// Services
 import { changePassword } from '~/services/users';
-import { showError } from '~/utils/showError';
-import { ShowToast } from '~/utils/toastUtils';
-import { useThemeColors } from '~/customHooks/useThemeColors';
-import { commonStyles } from '~/styles/common';
-import { screenConfigs } from '~/config/screenConfigs';
+
+// Components
 import { ScreenHeader } from '~/components/ScreenHeader';
 import MyButton from '~/components/MyButton';
+import MyInput from '~/components/inputs/MyInput';
+
+// Types
 import { SettingsStackParamList, UserModel } from '~/shared/types';
 import { ChangePasswordPayload } from '~/shared/types/services';
+
+// Utils
+import { showError } from '~/utils/showError';
+import { ShowToast } from '~/utils/toastUtils';
+
+// Theme
+import { useThemeColors } from '~/customHooks/useThemeColors';
+
+// Styles
+import { commonStyles } from '~/styles/common';
+
+// Configs
+import { screenConfigs } from '~/config/screenConfigs';
 
 export type ChangePasswordScreenNavigationProp = StackNavigationProp<
   SettingsStackParamList,
@@ -28,13 +42,10 @@ type ChangePasswordFormData = ChangePasswordPayload;
 
 export default function ChangePasswordScreen({ navigation }: ChangePasswordScreenProps) {
   const colors = useThemeColors();
+  const screenConfig = screenConfigs.changePassword;
 
-  const {
-    handleSubmit,
-    control,
-    watch,
-    formState: { errors }
-  } = useForm<ChangePasswordFormData>({
+  const { handleSubmit, control, watch } = useForm<ChangePasswordFormData>({
+    mode: 'onTouched',
     defaultValues: {
       currentlyPassword: '',
       password: '',
@@ -42,8 +53,7 @@ export default function ChangePasswordScreen({ navigation }: ChangePasswordScree
     }
   });
 
-  const password = useRef<string>('');
-  password.current = watch('password', '');
+  const password = watch('password', '');
 
   const onSubmit = async (payload: ChangePasswordFormData): Promise<void> => {
     try {
@@ -63,91 +73,74 @@ export default function ChangePasswordScreen({ navigation }: ChangePasswordScree
     }
   };
 
-  const screenConfig = screenConfigs.changePassword;
-
   return (
     <View style={[commonStyles.screenContainer, { backgroundColor: colors.BACKGROUND }]}>
       <ScreenHeader title={screenConfig.title} subtitle={screenConfig.subtitle} />
 
-      <View style={commonStyles.screenContent}>
-        <Controller
-          name="currentlyPassword"
-          control={control}
-          rules={{
-            required: {
-              value: true,
-              message: 'La contraseña actual es obligatoria'
-            },
-            minLength: {
-              value: 3,
-              message: 'La contraseña debe tener al menos 3 caracteres'
-            }
-          }}
-          render={({ field: { onChange, value } }) => (
-            <Input
-              value={value}
-              placeholder="Contraseña actual"
-              onChangeText={onChange}
-              secureTextEntry={true}
-              errorStyle={{ color: colors.ERROR }}
-              errorMessage={errors?.currentlyPassword?.message}
-            />
-          )}
-        />
+      <ScrollView
+        style={{ flex: 1 }}
+        contentContainerStyle={{ paddingBottom: 20 }}
+        keyboardShouldPersistTaps="handled"
+      >
+        <View style={{ paddingHorizontal: 16, paddingTop: 10 }}>
+          {/* Contraseña actual */}
+          <MyInput
+            name="currentlyPassword"
+            type="password"
+            control={control}
+            label="Contraseña actual"
+            placeholder="••••••••"
+            rules={{
+              required: 'La contraseña actual es obligatoria',
+              minLength: {
+                value: 6,
+                message: 'La contraseña debe tener al menos 6 caracteres'
+              }
+            }}
+            leftIcon="lock"
+            autoFocus
+          />
 
-        <Controller
-          name="password"
-          control={control}
-          rules={{
-            required: {
-              value: true,
-              message: 'La nueva contraseña es obligatoria'
-            },
-            minLength: {
-              value: 3,
-              message: 'La contraseña debe tener al menos 3 caracteres'
-            }
-          }}
-          render={({ field: { onChange, value } }) => (
-            <Input
-              value={value}
-              placeholder="Nueva contraseña"
-              onChangeText={onChange}
-              secureTextEntry={true}
-              errorStyle={{ color: colors.ERROR }}
-              errorMessage={errors?.password?.message}
-            />
-          )}
-        />
+          {/* Nueva contraseña */}
+          <MyInput
+            name="password"
+            type="password"
+            control={control}
+            label="Nueva contraseña"
+            placeholder="••••••••"
+            rules={{
+              required: 'La nueva contraseña es obligatoria',
+              minLength: {
+                value: 6,
+                message: 'La contraseña debe tener al menos 6 caracteres'
+              }
+            }}
+            leftIcon="lock-reset"
+            helperText="Mínimo 6 caracteres"
+          />
 
-        <Controller
-          name="passwordComfirm"
-          control={control}
-          rules={{
-            required: {
-              value: true,
-              message: 'Debe confirmar la contraseña'
-            },
-            minLength: {
-              value: 3,
-              message: 'La contraseña debe tener al menos 3 caracteres'
-            },
-            validate: (value) => value === password.current || 'Las contraseñas no coinciden'
-          }}
-          render={({ field: { onChange, value } }) => (
-            <Input
-              value={value}
-              placeholder="Confirmar nueva contraseña"
-              onChangeText={onChange}
-              secureTextEntry={true}
-              errorStyle={{ color: colors.ERROR }}
-              errorMessage={errors?.passwordComfirm?.message}
-            />
-          )}
-        />
+          {/* Confirmar contraseña */}
+          <MyInput
+            name="passwordComfirm"
+            type="password"
+            control={control}
+            label="Confirmar nueva contraseña"
+            placeholder="••••••••"
+            rules={{
+              required: 'Debe confirmar la contraseña',
+              minLength: {
+                value: 6,
+                message: 'La contraseña debe tener al menos 6 caracteres'
+              },
+              validate: (value: string) => value === password || 'Las contraseñas no coinciden'
+            }}
+            leftIcon="lock-check"
+          />
 
-        <MyButton title="Cambiar contraseña" onPress={handleSubmit(onSubmit)} />
-      </View>
+          {/* Botón de submit */}
+          <MyButton title="Cambiar contraseña" onPress={handleSubmit(onSubmit)} variant="primary" />
+        </View>
+      </ScrollView>
     </View>
   );
 }

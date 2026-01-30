@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { StyleSheet, Text, View, Image, Platform, Alert } from 'react-native';
-import { useForm, Controller } from 'react-hook-form';
-import { Input } from 'react-native-elements';
+import { useForm } from 'react-hook-form';
 import { StackNavigationProp } from '@react-navigation/stack';
 import { useDispatch } from 'react-redux';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -16,6 +15,7 @@ import { getUrlSignedAws } from '~/services/files';
 import { ScreenHeader } from '~/components/ScreenHeader';
 import MyButton from '~/components/MyButton';
 import MyLoading from '~/components/loading/MyLoading';
+import MyInput from '~/components/inputs/MyInput';
 
 // Types
 import { SettingsStackParamList, UserModel } from '~/shared/types';
@@ -49,12 +49,7 @@ export default function EditUserScreen({ navigation }: EditUserScreenProps) {
   const colors = useThemeColors();
   const dispatch = useDispatch();
 
-  const {
-    handleSubmit,
-    control,
-    setValue,
-    formState: { errors }
-  } = useForm<EditUserFormData>({
+  const { handleSubmit, control, setValue } = useForm<EditUserFormData>({
     defaultValues: { email: '', name: '' }
   });
 
@@ -194,54 +189,37 @@ export default function EditUserScreen({ navigation }: EditUserScreenProps) {
       <ScreenHeader title={screenConfig.title} subtitle={screenConfig.subtitle} />
 
       <View style={commonStyles.screenContent}>
-        <Controller
+        {/* Input de Email */}
+        <MyInput
           name="email"
           control={control}
+          label="Email"
+          placeholder="ejemplo@correo.com"
           rules={{
-            required: {
-              value: true,
-              message: 'El email es obligatorio'
-            },
+            required: 'El email es obligatorio',
             pattern: {
               value: EMAIL_REGEX,
               message: 'El email no es válido'
             }
           }}
-          render={({ field: { onChange, value } }) => (
-            <Input
-              value={value}
-              placeholder="Email"
-              onChangeText={onChange}
-              keyboardType="email-address"
-              autoCapitalize="none"
-              errorStyle={{ color: colors.ERROR }}
-              errorMessage={errors?.email?.message}
-            />
-          )}
+          leftIcon="email"
+          autoFocus
         />
 
-        <Controller
+        {/* Input de Nombre */}
+        <MyInput
           name="name"
           control={control}
+          label="Nombre"
+          placeholder="Nombre completo"
           rules={{
-            required: {
-              value: true,
-              message: 'El nombre es obligatorio'
-            },
+            required: 'El nombre es obligatorio',
             minLength: {
               value: 2,
               message: 'El nombre debe tener al menos 2 caracteres'
             }
           }}
-          render={({ field: { onChange, value } }) => (
-            <Input
-              value={value}
-              placeholder="Nombre"
-              onChangeText={onChange}
-              errorStyle={{ color: colors.ERROR }}
-              errorMessage={errors?.name?.message}
-            />
-          )}
+          leftIcon="account"
         />
 
         {loading ? (

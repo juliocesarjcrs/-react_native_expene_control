@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import { View, Keyboard } from 'react-native';
-import { Input } from 'react-native-elements';
-import { useForm, Controller } from 'react-hook-form';
+import { useForm } from 'react-hook-form';
 import { StackNavigationProp } from '@react-navigation/stack';
 import { RouteProp } from '@react-navigation/native';
 
@@ -13,6 +12,7 @@ import MyLoading from '../../components/loading/MyLoading';
 import { ShowToast } from '../../utils/toastUtils';
 import MyButton from '../../components/MyButton';
 import { ScreenHeader } from '~/components/ScreenHeader';
+import MyInput from '~/components/inputs/MyInput';
 
 // Types
 import { ExpenseStackParamList } from '../../shared/types';
@@ -44,13 +44,7 @@ export default function EditSubcategoryScreen({ route, navigation }: EditSubcate
   const screenConfig = screenConfigs.editSubcategory;
   const colors = useThemeColors();
   const subcategoryObj = route.params.subcategoryObject;
-  const {
-    handleSubmit,
-    control,
-    reset,
-
-    formState: { errors }
-  } = useForm({
+  const { handleSubmit, control, reset } = useForm({
     defaultValues: { name: subcategoryObj.name }
   });
   const [loading, setLoading] = useState(false);
@@ -78,30 +72,28 @@ export default function EditSubcategoryScreen({ route, navigation }: EditSubcate
     <View style={[commonStyles.screenContainer, { backgroundColor: colors.BACKGROUND }]}>
       <ScreenHeader title={screenConfig.title} subtitle={screenConfig.subtitle} />
 
-      <Controller
+      <MyInput
         name="name"
         control={control}
+        label="Nombre de la subcategoría"
+        placeholder="Ej: Recibo de agua"
         rules={{
           required: {
             value: true,
-            message: 'El nombre de la subcategoria es obligatorio'
+            message: 'El nombre de la subcategoría es obligatorio'
+          },
+          minLength: {
+            value: 2,
+            message: 'El nombre debe tener al menos 2 caracteres'
           },
           maxLength: {
             value: 200,
             message: 'El nombre no puede superar 200 caracteres'
           }
         }}
-        render={({ field: { onChange, value } }) => (
-          <Input
-            label="Subcategoria"
-            value={value}
-            placeholder="Ej: Recibo de agua"
-            onChangeText={(text) => onChange(text)}
-            errorStyle={{ color: 'red' }}
-            errorMessage={errors?.name?.message}
-          />
-        )}
-        defaultValue=""
+        leftIcon="tag"
+        maxLength={200}
+        autoFocus
       />
       {loading ? <MyLoading /> : <MyButton onPress={handleSubmit(editApi)} title="Editar" />}
     </View>

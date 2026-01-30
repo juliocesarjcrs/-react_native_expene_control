@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { View, Keyboard } from 'react-native';
-import { useForm, Controller } from 'react-hook-form';
-import { Input } from 'react-native-elements';
+import { useForm } from 'react-hook-form';
 import { StackNavigationProp } from '@react-navigation/stack';
 import { RouteProp } from '@react-navigation/native';
 
@@ -13,6 +12,7 @@ import MyLoading from '~/components/loading/MyLoading';
 import MyButton from '~/components/MyButton';
 import { ScreenHeader } from '~/components/ScreenHeader';
 import SubcategoryList from './components/SubcategoryList';
+import MyInput from '~/components/inputs/MyInput';
 
 // Types
 import { ExpenseStackParamList } from '~/shared/types';
@@ -57,12 +57,7 @@ export default function CreateSubcategoryScreen({
   const [subcategories, setSubcategories] = useState<SubcategoriesWithExpenses[]>([]);
   const [loading, setLoading] = useState<boolean>(false);
 
-  const {
-    handleSubmit,
-    control,
-    reset,
-    formState: { errors }
-  } = useForm<FormData>({
+  const { handleSubmit, control, reset } = useForm<FormData>({
     defaultValues: { name: '' }
   });
 
@@ -115,9 +110,11 @@ export default function CreateSubcategoryScreen({
       <ScreenHeader title={screenConfig.title} subtitle={screenConfig.subtitle} />
 
       <View style={commonStyles.screenContent}>
-        <Controller
+        <MyInput
           name="name"
           control={control}
+          label="Nombre de la subcategoría"
+          placeholder="Ej: Recibo de agua"
           rules={{
             required: {
               value: true,
@@ -132,19 +129,9 @@ export default function CreateSubcategoryScreen({
               message: 'El nombre no puede superar 200 caracteres'
             }
           }}
-          render={({ field: { onChange, value } }) => (
-            <Input
-              label="Nombre de la subcategoría"
-              value={value}
-              placeholder="Ej: Recibo de agua"
-              placeholderTextColor={colors.TEXT_SECONDARY}
-              onChangeText={onChange}
-              errorStyle={{ color: colors.ERROR }}
-              errorMessage={errors?.name?.message}
-              inputStyle={{ color: colors.TEXT_PRIMARY }}
-              labelStyle={{ color: colors.TEXT_PRIMARY }}
-            />
-          )}
+          leftIcon="tag"
+          maxLength={200}
+          autoFocus
         />
 
         {loading ? (

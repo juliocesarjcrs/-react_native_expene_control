@@ -10,6 +10,10 @@ export const screenConfigs = {
     title: 'Nueva Contraseña',
     subtitle: 'Crea una contraseña segura'
   },
+  forgotPassword: {
+    title: 'Olvidé Contraseña',
+    subtitle: 'Restaurar contraseña'
+  },
   // EXPENSES
   main: {
     title: 'Gastos del mes',

@@ -1,21 +1,32 @@
 import React, { useMemo, useState } from 'react';
 import { View, Text, ScrollView, StyleSheet, TouchableOpacity } from 'react-native';
-import { useForm, Controller, useWatch } from 'react-hook-form';
-import { Input, CheckBox, Icon } from 'react-native-elements';
+import { useForm, useWatch } from 'react-hook-form';
+import { CheckBox, Icon } from 'react-native-elements';
 import { Picker } from '@react-native-picker/picker';
+
+// Components
 import MyButton from '~/components/MyButton';
+import MyInput from '~/components/inputs/MyInput';
+
+// Context
 import { useInvestmentComparison } from '~/contexts/InvestmentComparisonContext';
+
+// Types
 import {
   SavingsScenario,
   ScenarioType,
   DEFAULTS
 } from '~/shared/types/services/Investment-comparison.types';
+
+// Utils
 import { ShowToast } from '~/utils/toastUtils';
 import { NumberFormat } from '~/utils/Helpers';
-import { MEDIUM, SMALL } from '~/styles/fonts';
 import { calculateSavings } from '~/utils/investmentCalculations';
 import { calculateCDT, CDT_RATES, CDT_TERMS } from '~/utils/cdtCalculations_original';
 import { validateSerializable } from '~/utils/serializationHelper';
+
+// Styles
+import { MEDIUM, SMALL } from '~/styles/fonts';
 
 interface Props {
   colors: any;
@@ -24,14 +35,6 @@ interface Props {
 }
 
 type ProductType = 'cajitas' | 'cdt';
-
-// Helper para convertir errores de react-hook-form a string
-const getErrorMessage = (error: any): string | undefined => {
-  if (!error) return undefined;
-  if (typeof error === 'string') return error;
-  if (error.message) return error.message as string;
-  return undefined;
-};
 
 export const SavingsForm: React.FC<Props> = ({ colors, navigation, existingData }) => {
   const { saveScenario } = useInvestmentComparison();
@@ -44,9 +47,10 @@ export const SavingsForm: React.FC<Props> = ({ colors, navigation, existingData 
   const {
     handleSubmit,
     control,
-    formState: { errors },
-    setValue
+    setValue,
+    watch
   } = useForm<any>({
+    mode: 'onTouched',
     defaultValues: {
       id: existingData?.id || Date.now().toString(),
       name: existingData?.name || 'Mi Ahorro',
@@ -71,43 +75,50 @@ export const SavingsForm: React.FC<Props> = ({ colors, navigation, existingData 
 
   const watchedValues = useWatch({ control });
 
+  // Watch values for helper text
+  const initialCapital = watch('initialCapital');
+  const monthlyContribution = watch('monthlyContribution');
+  const horizonMonths = watch('horizonMonths');
+  const cdtCapital = watch('cdtCapital');
+  const cdtTermDays = watch('cdtTermDays');
+
   // Calcular preview según tipo de producto
   const calculationPreview = useMemo(() => {
     if (productType === 'cajitas') {
-      const initialCapital = watchedValues.initialCapital || 0;
-      const monthlyContribution = watchedValues.monthlyContribution || 0;
-      const annualRate = watchedValues.annualRate || 0;
-      const horizonMonths = watchedValues.horizonMonths || 0;
+      const initialCap = watchedValues.initialCapital || 0;
+      const monthlyContr = watchedValues.monthlyContribution || 0;
+      const annualRt = watchedValues.annualRate || 0;
+      const horizonMnths = watchedValues.horizonMonths || 0;
 
-      if (initialCapital <= 0 || annualRate <= 0 || horizonMonths <= 0) {
+      if (initialCap <= 0 || annualRt <= 0 || horizonMnths <= 0) {
         return null;
       }
 
       return {
         type: 'cajitas',
         ...calculateSavings({
-          initialCapital,
-          monthlyContribution,
-          annualRate,
-          horizonMonths,
+          initialCapital: initialCap,
+          monthlyContribution: monthlyContr,
+          annualRate: annualRt,
+          horizonMonths: horizonMnths,
           apply4x1000: watchedValues.apply4x1000,
           withholdingTax: 7,
           inflation: watchedValues.inflation
         })
       };
     } else {
-      const cdtCapital = watchedValues.cdtCapital || 0;
-      const cdtTermDays = watchedValues.cdtTermDays || 90;
+      const cdtCap = watchedValues.cdtCapital || 0;
+      const cdtTerm = watchedValues.cdtTermDays || 90;
 
-      if (cdtCapital <= 0) {
+      if (cdtCap <= 0) {
         return null;
       }
 
       return {
         type: 'cdt',
         ...calculateCDT({
-          capitalAmount: cdtCapital,
-          termDays: cdtTermDays,
+          capitalAmount: cdtCap,
+          termDays: cdtTerm,
           apply4x1000: watchedValues.apply4x1000,
           withholdingTax: 4,
           inflation: watchedValues.inflation
@@ -136,8 +147,6 @@ export const SavingsForm: React.FC<Props> = ({ colors, navigation, existingData 
   const handleProductTypeChange = (type: ProductType) => {
     setProductType(type);
     setValue('productType', type);
-
-    // Ajustar retención según tipo
     setValue('withholdingTax', type === 'cdt' ? 4 : 7);
   };
 
@@ -256,89 +265,55 @@ export const SavingsForm: React.FC<Props> = ({ colors, navigation, existingData 
             {productType === 'cajitas' ? '💰 Cajitas - Ahorro Líquido' : '📄 CDT - A Plazo Fijo'}
           </Text>
 
-          <Controller
+          <MyInput
             name="name"
             control={control}
-            rules={{ required: { value: true, message: 'Obligatorio' } }}
-            render={({ field: { onChange, value } }) => (
-              <Input
-                label="Nombre del escenario"
-                value={value}
-                onChangeText={onChange}
-                errorMessage={getErrorMessage(errors?.name)}
-                inputStyle={{ color: colors.TEXT_PRIMARY }}
-                labelStyle={{ color: colors.TEXT_PRIMARY }}
-              />
-            )}
+            label="Nombre del escenario"
+            placeholder="Mi Ahorro"
+            rules={{ required: 'El nombre es obligatorio' }}
+            leftIcon="piggy-bank"
+            autoFocus
           />
 
           {productType === 'cajitas' ? (
             // FORMULARIO CAJITAS
             <>
-              <Controller
+              <MyInput
                 name="initialCapital"
+                type="currency"
                 control={control}
-                rules={{ required: true, min: { value: 100000, message: 'Mínimo $100k' } }}
-                render={({ field: { onChange, value } }) => (
-                  <Input
-                    label="Capital inicial (COP)"
-                    value={value?.toString()}
-                    keyboardType="numeric"
-                    onChangeText={(text) => onChange(parseFloat(text) || 0)}
-                    errorMessage={getErrorMessage(errors?.initialCapital)}
-                    inputStyle={{ color: colors.TEXT_PRIMARY }}
-                    labelStyle={{ color: colors.TEXT_PRIMARY }}
-                    rightIcon={
-                      <Text style={{ color: colors.TEXT_SECONDARY, fontSize: SMALL }}>
-                        {NumberFormat(value || 0)}
-                      </Text>
-                    }
-                  />
-                )}
+                label="Capital inicial"
+                placeholder="0"
+                rules={{
+                  required: 'El capital inicial es obligatorio',
+                  min: { value: 100000, message: 'Mínimo $100.000' }
+                }}
+                leftIcon="cash-multiple"
+                helperText={NumberFormat(initialCapital || 0)}
               />
 
-              <Controller
+              <MyInput
                 name="monthlyContribution"
+                type="currency"
                 control={control}
-                render={({ field: { onChange, value } }) => (
-                  <Input
-                    label="Aporte mensual (COP) - Opcional"
-                    value={value?.toString()}
-                    keyboardType="numeric"
-                    placeholder="0"
-                    onChangeText={(text) => onChange(parseFloat(text) || 0)}
-                    inputStyle={{ color: colors.TEXT_PRIMARY }}
-                    labelStyle={{ color: colors.TEXT_PRIMARY }}
-                    rightIcon={
-                      <Text style={{ color: colors.TEXT_SECONDARY, fontSize: SMALL }}>
-                        {NumberFormat(value || 0)}
-                      </Text>
-                    }
-                  />
-                )}
+                label="Aporte mensual (opcional)"
+                placeholder="0"
+                leftIcon="cash-plus"
+                helperText={NumberFormat(monthlyContribution || 0)}
               />
 
-              <Controller
+              <MyInput
                 name="horizonMonths"
+                type="number"
                 control={control}
-                rules={{ required: true, min: 1 }}
-                render={({ field: { onChange, value } }) => (
-                  <Input
-                    label="Horizonte (meses)"
-                    value={value?.toString()}
-                    keyboardType="numeric"
-                    placeholder="12"
-                    onChangeText={(text) => onChange(parseInt(text) || 0)}
-                    errorMessage={getErrorMessage(errors?.horizonMonths)}
-                    inputStyle={{ color: colors.TEXT_PRIMARY }}
-                    labelStyle={{ color: colors.TEXT_PRIMARY }}
-                    rightIcon={
-                      <Text style={{ color: colors.TEXT_SECONDARY, fontSize: SMALL }}>
-                        {Math.floor((value || 0) / 12)} años
-                      </Text>
-                    }
-                  />
-                )}
+                label="Horizonte (meses)"
+                placeholder="12"
+                rules={{
+                  required: 'El horizonte es obligatorio',
+                  min: { value: 1, message: 'Mínimo 1 mes' }
+                }}
+                leftIcon="calendar-range"
+                helperText={`${Math.floor((horizonMonths || 0) / 12)} años`}
               />
 
               <Text style={[styles.helperText, { color: colors.INFO }]}>
@@ -348,60 +323,43 @@ export const SavingsForm: React.FC<Props> = ({ colors, navigation, existingData 
           ) : (
             // FORMULARIO CDT
             <>
-              <Controller
+              <MyInput
                 name="cdtCapital"
+                type="currency"
                 control={control}
-                rules={{ required: true, min: { value: 100000, message: 'Mínimo $100k' } }}
-                render={({ field: { onChange, value } }) => (
-                  <Input
-                    label="Monto a invertir (COP)"
-                    value={value?.toString()}
-                    keyboardType="numeric"
-                    onChangeText={(text) => onChange(parseFloat(text) || 0)}
-                    errorMessage={getErrorMessage(errors?.cdtCapital)}
-                    inputStyle={{ color: colors.TEXT_PRIMARY }}
-                    labelStyle={{ color: colors.TEXT_PRIMARY }}
-                    rightIcon={
-                      <Text style={{ color: colors.TEXT_SECONDARY, fontSize: SMALL }}>
-                        {NumberFormat(value || 0)}
-                      </Text>
-                    }
-                  />
-                )}
+                label="Monto a invertir"
+                placeholder="0"
+                rules={{
+                  required: 'El monto es obligatorio',
+                  min: { value: 100000, message: 'Mínimo $100.000' }
+                }}
+                leftIcon="cash-check"
+                helperText={NumberFormat(cdtCapital || 0)}
               />
 
-              <Controller
-                name="cdtTermDays"
-                control={control}
-                rules={{ required: true }}
-                render={({ field: { onChange, value } }) => (
-                  <View style={{ marginBottom: 16 }}>
-                    <Text style={[styles.label, { color: colors.TEXT_PRIMARY }]}>
-                      Plazo del CDT
-                    </Text>
-                    <View
-                      style={[
-                        styles.pickerContainer,
-                        { backgroundColor: colors.BACKGROUND, borderColor: colors.BORDER }
-                      ]}
-                    >
-                      <Picker
-                        selectedValue={value}
-                        onValueChange={onChange}
-                        style={{ color: colors.TEXT_PRIMARY }}
-                      >
-                        {CDT_TERMS.map((days) => (
-                          <Picker.Item
-                            key={days}
-                            label={`${days} días - ${CDT_RATES[days]}% E.A.`}
-                            value={days}
-                          />
-                        ))}
-                      </Picker>
-                    </View>
-                  </View>
-                )}
-              />
+              <View style={{ marginBottom: 16 }}>
+                <Text style={[styles.label, { color: colors.TEXT_PRIMARY }]}>Plazo del CDT *</Text>
+                <View
+                  style={[
+                    styles.pickerContainer,
+                    { backgroundColor: colors.BACKGROUND, borderColor: colors.BORDER }
+                  ]}
+                >
+                  <Picker
+                    selectedValue={cdtTermDays}
+                    onValueChange={(value) => setValue('cdtTermDays', value)}
+                    style={{ color: colors.TEXT_PRIMARY }}
+                  >
+                    {CDT_TERMS.map((days) => (
+                      <Picker.Item
+                        key={days}
+                        label={`${days} días - ${CDT_RATES[days]}% E.A.`}
+                        value={days}
+                      />
+                    ))}
+                  </Picker>
+                </View>
+              </View>
 
               <Text style={[styles.helperText, { color: colors.INFO }]}>
                 💡 Retención: 4% sobre intereses | Pago al vencimiento | Sin aportes mensuales
@@ -410,19 +368,18 @@ export const SavingsForm: React.FC<Props> = ({ colors, navigation, existingData 
           )}
 
           {/* CHECKBOX 4x1000 */}
-          <Controller
-            name="apply4x1000"
-            control={control}
-            render={({ field: { onChange, value } }) => (
-              <CheckBox
-                title="Aplicar impuesto 4x1000"
-                checked={value}
-                onPress={() => onChange(!value)}
-                containerStyle={{ backgroundColor: 'transparent', borderWidth: 0, padding: 0 }}
-                textStyle={{ color: colors.TEXT_PRIMARY, fontWeight: 'normal' }}
-                checkedColor={colors.PRIMARY}
-              />
-            )}
+          <CheckBox
+            title="Aplicar impuesto 4x1000"
+            checked={watchedValues.apply4x1000}
+            onPress={() => setValue('apply4x1000', !watchedValues.apply4x1000)}
+            containerStyle={{
+              backgroundColor: 'transparent',
+              borderWidth: 0,
+              padding: 0,
+              marginTop: 12
+            }}
+            textStyle={{ color: colors.TEXT_PRIMARY, fontWeight: 'normal' }}
+            checkedColor={colors.PRIMARY}
           />
           <Text style={[styles.helperText, { color: colors.TEXT_SECONDARY, marginTop: -10 }]}>
             ℹ️ Marca si no tienes cuenta exenta de 4x1000
@@ -455,7 +412,7 @@ export const SavingsForm: React.FC<Props> = ({ colors, navigation, existingData 
   );
 };
 
-// Componente Preview para Cajitas
+// Componente Preview para Cajitas (sin cambios)
 const CajitasPreview = ({ preview, colors, horizonMonths }: any) => (
   <View
     style={[
@@ -528,7 +485,7 @@ const CajitasPreview = ({ preview, colors, horizonMonths }: any) => (
   </View>
 );
 
-// Componente Preview para CDT
+// Componente Preview para CDT (sin cambios)
 const CDTPreview = ({ preview, colors }: any) => (
   <View
     style={[
@@ -604,7 +561,7 @@ const CDTPreview = ({ preview, colors }: any) => (
   </View>
 );
 
-// Componente auxiliar para filas de preview
+// Componente auxiliar para filas de preview (sin cambios)
 const PreviewRow = ({
   label,
   value,
@@ -642,9 +599,26 @@ const PreviewRow = ({
 );
 
 const styles = StyleSheet.create({
-  section: { marginBottom: 16, padding: 16, borderRadius: 12, borderWidth: 1 },
+  section: {
+    marginBottom: 16,
+    padding: 16,
+    borderRadius: 12,
+    borderWidth: 1,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 2
+  },
   sectionTitle: { fontSize: MEDIUM, fontWeight: 'bold', marginBottom: 12 },
-  helperText: { fontSize: SMALL - 1, lineHeight: 16, marginTop: 4 },
+  helperText: {
+    fontSize: SMALL - 1,
+    lineHeight: 16,
+    marginTop: 4,
+    padding: 8,
+    borderRadius: 8,
+    backgroundColor: 'rgba(0, 123, 255, 0.1)'
+  },
   productSelector: { flexDirection: 'row', gap: 12 },
   productCard: {
     flex: 1,

@@ -2,17 +2,27 @@
 
 import React from 'react';
 import { View, Text, ScrollView, StyleSheet } from 'react-native';
-import { useForm, Controller } from 'react-hook-form';
-import { Input } from 'react-native-elements';
+import { useForm } from 'react-hook-form';
+
+// Components
 import MyButton from '~/components/MyButton';
+import MyInput from '~/components/inputs/MyInput';
+
+// Context
 import { useInvestmentComparison } from '~/contexts/InvestmentComparisonContext';
+
+// Types
 import {
   ImmediateRentScenario,
   ScenarioType,
   DEFAULTS
 } from '~/shared/types/services/Investment-comparison.types';
+
+// Utils
 import { ShowToast } from '~/utils/toastUtils';
 import { NumberFormat } from '~/utils/Helpers';
+
+// Styles
 import { MEDIUM, SMALL } from '~/styles/fonts';
 
 interface Props {
@@ -27,8 +37,10 @@ export const ImmediateRentForm: React.FC<Props> = ({ colors, navigation, existin
   const {
     handleSubmit,
     control,
+    watch,
     formState: { errors }
   } = useForm<ImmediateRentScenario>({
+    mode: 'onTouched',
     defaultValues: {
       id: existingData?.id || Date.now().toString(),
       name: existingData?.name || 'Compra Inmediata para Renta',
@@ -56,6 +68,15 @@ export const ImmediateRentForm: React.FC<Props> = ({ colors, navigation, existin
     }
   });
 
+  // Watch values for helper text
+  const availableCapital = watch('availableCapital');
+  const propertyPrice = watch('propertyPrice');
+  const mortgageTerm = watch('mortgageTerm');
+  const refurbishmentCost = watch('refurbishmentCost');
+  const monthlyRent = watch('monthlyRent');
+  const monthlyAdministration = watch('monthlyAdministration');
+  const horizonMonths = watch('horizonMonths');
+
   const onSubmit = (data: ImmediateRentScenario) => {
     saveScenario(ScenarioType.IMMEDIATE_RENT, data);
     ShowToast('Escenario de compra inmediata configurado');
@@ -76,142 +97,89 @@ export const ImmediateRentForm: React.FC<Props> = ({ colors, navigation, existin
             💵 Inversión Inicial
           </Text>
 
-          <Controller
+          <MyInput
             name="name"
             control={control}
-            rules={{ required: { value: true, message: 'Obligatorio' } }}
-            render={({ field: { onChange, value } }) => (
-              <Input
-                label="Nombre del escenario"
-                value={value}
-                onChangeText={onChange}
-                errorMessage={errors?.name?.message}
-                inputStyle={{ color: colors.TEXT_PRIMARY }}
-                labelStyle={{ color: colors.TEXT_PRIMARY }}
-              />
-            )}
+            label="Nombre del escenario"
+            placeholder="Compra Inmediata para Renta"
+            rules={{ required: 'El nombre es obligatorio' }}
+            leftIcon="home-city"
+            autoFocus
           />
 
-          <Controller
+          <MyInput
             name="availableCapital"
+            type="currency"
             control={control}
-            rules={{ required: true, min: 1000000 }}
-            render={({ field: { onChange, value } }) => (
-              <Input
-                label="Capital disponible (COP)"
-                value={value?.toString()}
-                placeholder="100000000"
-                keyboardType="numeric"
-                onChangeText={(text) => onChange(parseFloat(text) || 0)}
-                errorMessage={errors?.availableCapital?.message}
-                inputStyle={{ color: colors.TEXT_PRIMARY }}
-                labelStyle={{ color: colors.TEXT_PRIMARY }}
-                rightIcon={
-                  <Text style={{ color: colors.TEXT_SECONDARY, fontSize: SMALL }}>
-                    {NumberFormat(value || 0)}
-                  </Text>
-                }
-              />
-            )}
+            label="Capital disponible"
+            placeholder="0"
+            rules={{
+              required: 'El capital es obligatorio',
+              min: { value: 1000000, message: 'Mínimo $1.000.000' }
+            }}
+            leftIcon="cash-multiple"
+            helperText={NumberFormat(availableCapital || 0)}
           />
 
-          <Controller
+          <MyInput
             name="propertyPrice"
+            type="currency"
             control={control}
-            rules={{ required: true, min: 10000000 }}
-            render={({ field: { onChange, value } }) => (
-              <Input
-                label="Precio del inmueble (COP)"
-                value={value?.toString()}
-                placeholder="300000000"
-                keyboardType="numeric"
-                onChangeText={(text) => onChange(parseFloat(text) || 0)}
-                errorMessage={errors?.propertyPrice?.message}
-                inputStyle={{ color: colors.TEXT_PRIMARY }}
-                labelStyle={{ color: colors.TEXT_PRIMARY }}
-                rightIcon={
-                  <Text style={{ color: colors.TEXT_SECONDARY, fontSize: SMALL }}>
-                    {NumberFormat(value || 0)}
-                  </Text>
-                }
-              />
-            )}
+            label="Precio del inmueble"
+            placeholder="0"
+            rules={{
+              required: 'El precio es obligatorio',
+              min: { value: 10000000, message: 'Mínimo $10.000.000' }
+            }}
+            leftIcon="home"
+            helperText={NumberFormat(propertyPrice || 0)}
           />
 
-          <Controller
+          <MyInput
             name="downPaymentPercent"
+            type="number"
             control={control}
-            rules={{ required: true, min: 0, max: 100 }}
-            render={({ field: { onChange, value } }) => (
-              <Input
-                label="Cuota inicial (%)"
-                value={value?.toString()}
-                placeholder="30"
-                keyboardType="numeric"
-                onChangeText={(text) => onChange(parseFloat(text) || 0)}
-                errorMessage={errors?.downPaymentPercent?.message}
-                inputStyle={{ color: colors.TEXT_PRIMARY }}
-                labelStyle={{ color: colors.TEXT_PRIMARY }}
-              />
-            )}
+            label="Cuota inicial (%)"
+            placeholder="30"
+            rules={{
+              required: 'La cuota inicial es obligatoria',
+              min: { value: 0, message: 'Mínimo 0%' },
+              max: { value: 100, message: 'Máximo 100%' }
+            }}
+            leftIcon="percent"
           />
 
-          <Controller
+          <MyInput
             name="mortgageTerm"
+            type="number"
             control={control}
-            render={({ field: { onChange, value } }) => (
-              <Input
-                label="Plazo hipoteca (meses, 0 = cash completo)"
-                value={value?.toString()}
-                placeholder="0"
-                keyboardType="numeric"
-                onChangeText={(text) => onChange(parseInt(text) || 0)}
-                inputStyle={{ color: colors.TEXT_PRIMARY }}
-                labelStyle={{ color: colors.TEXT_PRIMARY }}
-                rightIcon={
-                  <Text style={{ color: colors.TEXT_SECONDARY, fontSize: SMALL }}>
-                    {value && value > 0 ? `${Math.floor(value / 12)} años` : 'Sin crédito'}
-                  </Text>
-                }
-              />
-            )}
+            label="Plazo hipoteca (meses, 0 = cash completo)"
+            placeholder="0"
+            leftIcon="calendar-clock"
+            helperText={
+              mortgageTerm && mortgageTerm > 0
+                ? `${Math.floor(mortgageTerm / 12)} años`
+                : 'Sin crédito'
+            }
           />
 
-          <Controller
+          <MyInput
             name="mortgageRate"
+            type="number"
             control={control}
-            render={({ field: { onChange, value } }) => (
-              <Input
-                label="Tasa hipoteca E.A. (%)"
-                value={value?.toString()}
-                placeholder="12"
-                keyboardType="numeric"
-                onChangeText={(text) => onChange(parseFloat(text) || 0)}
-                inputStyle={{ color: colors.TEXT_PRIMARY }}
-                labelStyle={{ color: colors.TEXT_PRIMARY }}
-              />
-            )}
+            label="Tasa hipoteca E.A. (%)"
+            placeholder="12"
+            leftIcon="percent"
           />
 
-          <Controller
+          <MyInput
             name="refurbishmentCost"
+            type="currency"
             control={control}
-            render={({ field: { onChange, value } }) => (
-              <Input
-                label="Costo de adecuación (COP)"
-                value={value?.toString()}
-                placeholder="30000000"
-                keyboardType="numeric"
-                onChangeText={(text) => onChange(parseFloat(text) || 0)}
-                inputStyle={{ color: colors.TEXT_PRIMARY }}
-                labelStyle={{ color: colors.TEXT_PRIMARY }}
-                rightIcon={
-                  <Text style={{ color: colors.TEXT_SECONDARY, fontSize: SMALL }}>
-                    {NumberFormat(value || 0)}
-                  </Text>
-                }
-              />
-            )}
+            label="Costo de adecuación"
+            placeholder="0"
+            leftIcon="tools"
+            helperText={NumberFormat(refurbishmentCost || 0)}
           />
 
           <Text style={[styles.helperText, { color: colors.INFO }]}>
@@ -230,151 +198,91 @@ export const ImmediateRentForm: React.FC<Props> = ({ colors, navigation, existin
             💰 Generación de Renta
           </Text>
 
-          <Controller
+          <MyInput
             name="monthlyRent"
+            type="currency"
             control={control}
-            rules={{ required: true, min: 100000 }}
-            render={({ field: { onChange, value } }) => (
-              <Input
-                label="Canon de arriendo mensual (COP)"
-                value={value?.toString()}
-                placeholder="1300000"
-                keyboardType="numeric"
-                onChangeText={(text) => onChange(parseFloat(text) || 0)}
-                errorMessage={errors?.monthlyRent?.message}
-                inputStyle={{ color: colors.TEXT_PRIMARY }}
-                labelStyle={{ color: colors.TEXT_PRIMARY }}
-                rightIcon={
-                  <Text style={{ color: colors.TEXT_SECONDARY, fontSize: SMALL }}>
-                    {NumberFormat(value || 0)}
-                  </Text>
-                }
-              />
-            )}
+            label="Canon de arriendo mensual"
+            placeholder="0"
+            rules={{
+              required: 'El canon es obligatorio',
+              min: { value: 100000, message: 'Mínimo $100.000' }
+            }}
+            leftIcon="cash"
+            helperText={NumberFormat(monthlyRent || 0)}
           />
 
-          <Controller
+          <MyInput
             name="monthlyAdministration"
+            type="currency"
             control={control}
-            render={({ field: { onChange, value } }) => (
-              <Input
-                label="Administración mensual (COP)"
-                value={value?.toString()}
-                placeholder="300000"
-                keyboardType="numeric"
-                onChangeText={(text) => onChange(parseFloat(text) || 0)}
-                inputStyle={{ color: colors.TEXT_PRIMARY }}
-                labelStyle={{ color: colors.TEXT_PRIMARY }}
-                rightIcon={
-                  <Text style={{ color: colors.TEXT_SECONDARY, fontSize: SMALL }}>
-                    {NumberFormat(value || 0)}
-                  </Text>
-                }
-              />
-            )}
+            label="Administración mensual"
+            placeholder="0"
+            leftIcon="office-building"
+            helperText={NumberFormat(monthlyAdministration || 0)}
           />
 
-          <Controller
+          <MyInput
             name="vacancyMonthsPerYear"
+            type="number"
             control={control}
-            render={({ field: { onChange, value } }) => (
-              <Input
-                label="Meses de vacancia al año"
-                value={value?.toString()}
-                placeholder="1"
-                keyboardType="numeric"
-                onChangeText={(text) => onChange(parseFloat(text) || 0)}
-                inputStyle={{ color: colors.TEXT_PRIMARY }}
-                labelStyle={{ color: colors.TEXT_PRIMARY }}
-              />
-            )}
+            label="Meses de vacancia al año"
+            placeholder="1"
+            rules={{
+              min: { value: 0, message: 'Mínimo 0 meses' },
+              max: { value: 12, message: 'Máximo 12 meses' }
+            }}
+            leftIcon="calendar-remove"
           />
 
-          <Controller
+          <MyInput
             name="maintenancePercent"
+            type="number"
             control={control}
-            render={({ field: { onChange, value } }) => (
-              <Input
-                label="Mantenimiento anual (% del valor inmueble)"
-                value={value?.toString()}
-                placeholder="1"
-                keyboardType="numeric"
-                onChangeText={(text) => onChange(parseFloat(text) || 0)}
-                inputStyle={{ color: colors.TEXT_PRIMARY }}
-                labelStyle={{ color: colors.TEXT_PRIMARY }}
-              />
-            )}
+            label="Mantenimiento anual (% del valor inmueble)"
+            placeholder="1"
+            leftIcon="wrench"
           />
 
-          <Controller
+          <MyInput
             name="propertyTaxPercent"
+            type="number"
             control={control}
-            render={({ field: { onChange, value } }) => (
-              <Input
-                label="Predial anual (% del valor inmueble)"
-                value={value?.toString()}
-                placeholder="0.5"
-                keyboardType="numeric"
-                onChangeText={(text) => onChange(parseFloat(text) || 0)}
-                inputStyle={{ color: colors.TEXT_PRIMARY }}
-                labelStyle={{ color: colors.TEXT_PRIMARY }}
-              />
-            )}
+            label="Predial anual (% del valor inmueble)"
+            placeholder="0.5"
+            leftIcon="file-document"
           />
 
-          <Controller
+          <MyInput
             name="rentalIncomeTax"
+            type="number"
             control={control}
-            render={({ field: { onChange, value } }) => (
-              <Input
-                label="Impuesto sobre renta (% del arriendo)"
-                value={value?.toString()}
-                placeholder="15"
-                keyboardType="numeric"
-                onChangeText={(text) => onChange(parseFloat(text) || 0)}
-                inputStyle={{ color: colors.TEXT_PRIMARY }}
-                labelStyle={{ color: colors.TEXT_PRIMARY }}
-              />
-            )}
+            label="Impuesto sobre renta (% del arriendo)"
+            placeholder="15"
+            leftIcon="percent"
           />
 
-          <Controller
+          <MyInput
             name="propertyAppreciation"
+            type="number"
             control={control}
-            render={({ field: { onChange, value } }) => (
-              <Input
-                label="Apreciación anual (%)"
-                value={value?.toString()}
-                placeholder="5"
-                keyboardType="numeric"
-                onChangeText={(text) => onChange(parseFloat(text) || 0)}
-                inputStyle={{ color: colors.TEXT_PRIMARY }}
-                labelStyle={{ color: colors.TEXT_PRIMARY }}
-              />
-            )}
+            label="Apreciación anual (%)"
+            placeholder="5"
+            leftIcon="chart-line"
           />
 
-          <Controller
+          <MyInput
             name="horizonMonths"
+            type="number"
             control={control}
-            rules={{ required: true, min: 1 }}
-            render={({ field: { onChange, value } }) => (
-              <Input
-                label="Horizonte de inversión (meses)"
-                value={value?.toString()}
-                placeholder="60"
-                keyboardType="numeric"
-                onChangeText={(text) => onChange(parseInt(text) || 0)}
-                errorMessage={errors?.horizonMonths?.message}
-                inputStyle={{ color: colors.TEXT_PRIMARY }}
-                labelStyle={{ color: colors.TEXT_PRIMARY }}
-                rightIcon={
-                  <Text style={{ color: colors.TEXT_SECONDARY, fontSize: SMALL }}>
-                    {Math.floor((value || 0) / 12)} años
-                  </Text>
-                }
-              />
-            )}
+            label="Horizonte de inversión (meses)"
+            placeholder="60"
+            rules={{
+              required: 'El horizonte es obligatorio',
+              min: { value: 1, message: 'Mínimo 1 mes' }
+            }}
+            leftIcon="calendar-range"
+            helperText={`${Math.floor((horizonMonths || 0) / 12)} años`}
           />
         </View>
 
@@ -392,7 +300,28 @@ export const ImmediateRentForm: React.FC<Props> = ({ colors, navigation, existin
 };
 
 const styles = StyleSheet.create({
-  section: { marginBottom: 16, padding: 16, borderRadius: 12, borderWidth: 1 },
-  sectionTitle: { fontSize: MEDIUM, fontWeight: 'bold', marginBottom: 12 },
-  helperText: { fontSize: SMALL - 1, lineHeight: 16, marginTop: 4 }
+  section: {
+    marginBottom: 16,
+    padding: 16,
+    borderRadius: 12,
+    borderWidth: 1,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 2
+  },
+  sectionTitle: {
+    fontSize: MEDIUM,
+    fontWeight: 'bold',
+    marginBottom: 12
+  },
+  helperText: {
+    fontSize: SMALL - 1,
+    lineHeight: 16,
+    marginTop: 4,
+    padding: 8,
+    borderRadius: 8,
+    backgroundColor: 'rgba(0, 123, 255, 0.1)'
+  }
 });

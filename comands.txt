@@ -22,3 +22,5 @@ Limpia la caché de Metro bundler
 Ejecuta este comando para asegurarte de que no esté guardando valores viejos:
 
 npm run clear:cache
+
+npx expo start --tunnel

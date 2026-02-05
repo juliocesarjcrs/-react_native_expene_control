@@ -298,11 +298,45 @@ export default function MyStack() {
   function StatisticsStackScreen() {
     return (
       <StatisticsStack.Navigator screenOptions={minimalHeaderOptions}>
-        {/* <StatisticsStack.Screen name="overview" component={Routes.StatisticsOverviewScreen} options={{ title: 'Estadísticas generales' }}/> */}
+        {/* Pantalla principal (hub) */}
+        <StatisticsStack.Screen
+          name="statisticsHome"
+          component={Routes.StatisticsScreen}
+          options={{ title: 'Estadísticas' }}
+        />
+        {/* Pantalla principal de análisis */}
+        <StatisticsStack.Screen
+          name="commentaryAnalysis"
+          component={Routes.CommentaryAnalysisScreen}
+          options={{ title: 'Análisis de Comentarios' }}
+        />
+
+        {/* Comparar períodos (ya existente) */}
         <StatisticsStack.Screen
           name="comparePeriods"
           component={Routes.ComparePeriodsScreen}
           options={{ title: 'Comparar períodos' }}
+        />
+
+        {/* Análisis de servicios públicos */}
+        <StatisticsStack.Screen
+          name="utilityAnalysis"
+          component={Routes.UtilityAnalysisScreen}
+          options={{ title: 'Servicios Públicos' }}
+        />
+
+        {/* Comparación de precios */}
+        <StatisticsStack.Screen
+          name="productPrices"
+          component={Routes.ProductPricesScreen}
+          options={{ title: 'Precios de Productos' }}
+        />
+
+        {/* Análisis de retenciones */}
+        <StatisticsStack.Screen
+          name="retentionAnalysis"
+          component={Routes.RetentionAnalysisScreen}
+          options={{ title: 'Retenciones' }}
         />
       </StatisticsStack.Navigator>
     );

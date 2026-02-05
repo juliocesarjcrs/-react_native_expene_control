@@ -117,6 +117,7 @@ export function parseSuperCarnesJH(lines: string[], joined: string): Product[] {
 
 /**
  * Formatea la descripción del producto incluyendo peso y precio por unidad
+ * Formato: "Producto — X kg @ $Y/kg [SuperCarnesJH]"
  */
 function formatProductDescription(
   productName: string,
@@ -128,7 +129,7 @@ function formatProductDescription(
   const formattedQuantity = quantity.toFixed(3).replace(/\.?0+$/, '');
   const formattedPrice = pricePerUnit.toLocaleString('es-CO');
 
-  return `${formattedName} — ${formattedQuantity} ${unit} a $${formattedPrice}/${unit}`;
+  return `${formattedName} — ${formattedQuantity} ${unit} @ $${formattedPrice}/${unit} [SuperCarnesJH]`;
 }
 
 /**

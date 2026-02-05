@@ -1,6 +1,17 @@
-import { Product } from '~/shared/types/components/receipt-scanner.type';
+import { Product, ReceiptType } from '~/shared/types/components/receipt-scanner.type';
 import { formatDescription } from './formatDescription';
+import { formatSimpleProduct } from './helpers';
 
+const RECEIPT_TYPE: ReceiptType = 'D1';
+
+/**
+ * Parser para recibos de D1
+ * Los productos de D1 generalmente no tienen información de peso/precio unitario
+ *
+ * @param lines - Líneas del recibo OCR
+ * @param joined - Texto completo del recibo
+ * @returns Array de productos parseados
+ */
 export function parseD1(lines: string[], joined: string): Product[] {
   console.log('📄 Procesando como tipo D1...');
   const products: Product[] = [];
@@ -23,12 +34,9 @@ export function parseD1(lines: string[], joined: string): Product[] {
         const price = parseInt(priceStr.replace(/[.,]/g, ''), 10);
 
         if (!isNaN(price) && description.length >= 3) {
-          if (
-            !products.find(
-              (p) => p.description === formatDescription(description) && p.price === price
-            )
-          ) {
-            products.push({ description: formatDescription(description), price });
+          const formattedDesc = formatSimpleProduct(formatDescription(description), RECEIPT_TYPE);
+          if (!products.find((p) => p.description === formattedDesc && p.price === price)) {
+            products.push({ description: formattedDesc, price });
           }
         }
       }
@@ -51,12 +59,9 @@ export function parseD1(lines: string[], joined: string): Product[] {
 
       if (!isNaN(price) && description.length >= 3) {
         // Evitar duplicados
-        if (
-          !products.find(
-            (p) => p.description === formatDescription(description) && p.price === price
-          )
-        ) {
-          products.push({ description: formatDescription(description), price });
+        const formattedDesc = formatSimpleProduct(formatDescription(description), RECEIPT_TYPE);
+        if (!products.find((p) => p.description === formattedDesc && p.price === price)) {
+          products.push({ description: formattedDesc, price });
         }
       }
       continue;
@@ -86,12 +91,9 @@ export function parseD1(lines: string[], joined: string): Product[] {
       }
 
       if (!isNaN(price) && description.length >= 3) {
-        if (
-          !products.find(
-            (p) => p.description === formatDescription(description) && p.price === price
-          )
-        ) {
-          products.push({ description: formatDescription(description), price });
+        const formattedDesc = formatSimpleProduct(formatDescription(description), RECEIPT_TYPE);
+        if (!products.find((p) => p.description === formattedDesc && p.price === price)) {
+          products.push({ description: formattedDesc, price });
         }
       }
     }
@@ -121,8 +123,9 @@ export function parseD1(lines: string[], joined: string): Product[] {
       const price = parseInt(priceString, 10);
 
       if (!isNaN(price)) {
-        if (!products.find((p) => p.description === description && p.price === price)) {
-          products.push({ description: formatDescription(description), price });
+        const formattedDesc = formatSimpleProduct(formatDescription(description), RECEIPT_TYPE);
+        if (!products.find((p) => p.description === formattedDesc && p.price === price)) {
+          products.push({ description: formattedDesc, price });
         }
       }
     }
@@ -147,11 +150,19 @@ export function parseD1(lines: string[], joined: string): Product[] {
         price = parseInt(cleanPrice.replace(/[.,]/g, ''), 10);
       }
 
-      if (!products.find((p) => p.description === description && p.price === price)) {
-        products.push({ description: formatDescription(description), price });
+      const formattedDesc = formatSimpleProduct(formatDescription(description), RECEIPT_TYPE);
+      if (!products.find((p) => p.description === formattedDesc && p.price === price)) {
+        products.push({ description: formattedDesc, price });
       }
     }
   }
 
   return products;
 }
+
+// Ejemplos de uso:
+// Input: "1	2 UN	11,900 7700304792825 CAFE INSTAN/L	23,800 C"
+// Output: { description: "Cafe Instan/L [D1]", price: 23800 }
+//
+// Input: "2,950 7700304649631 SALSA DE PINA"
+// Output: { description: "Salsa De Pina [D1]", price: 2950 }

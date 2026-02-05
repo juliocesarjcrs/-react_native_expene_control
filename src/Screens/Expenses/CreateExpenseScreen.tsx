@@ -24,7 +24,7 @@ import {
   CreateExpensePayload,
   GetExpensesFromSubcategoryResponse
 } from '~/shared/types/services/expense-service.type';
-import { DropDownSelectJoinCategoryFormat } from '~/shared/types/components/dropDown/SelectOnlyCategory.type';
+import { SubcategorySelection } from '~/shared/types/components/dropDown/SelectJoinCategory.type';
 
 // Utils
 import { ShowToast } from '~/utils/toastUtils';
@@ -80,7 +80,7 @@ export default function CreateExpenseScreen(): React.JSX.Element {
   const [currencySymbol] = useState<string>('COP');
 
   const fetchExpensesSubcategory = async (
-    foundSubcategory: DropDownSelectJoinCategoryFormat
+    foundSubcategory: SubcategorySelection
   ): Promise<void> => {
     try {
       setLoading(true);

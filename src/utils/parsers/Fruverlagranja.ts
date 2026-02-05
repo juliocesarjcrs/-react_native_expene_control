@@ -124,7 +124,7 @@ function formatProductDescription(
 
   const formattedPrice = pricePerUnit.toLocaleString('es-CO');
 
-  return `${formattedName} — ${formattedQuantity} ${unit} × $${formattedPrice}/${unit}`;
+  return `${formattedName} — ${formattedQuantity} ${unit} @ $${formattedPrice}/${unit} [FruverLaGranja]`;
 }
 
 /**

@@ -33,11 +33,7 @@ interface Props {
 export const ExistingPropertyForm: React.FC<Props> = ({ colors, navigation, existingData }) => {
   const { saveScenario } = useInvestmentComparison();
 
-  const {
-    handleSubmit,
-    control,
-    watch
-  } = useForm<any>({
+  const { handleSubmit, control, watch } = useForm<any>({
     mode: 'onTouched',
     defaultValues: {
       id: existingData?.id || Date.now().toString(),

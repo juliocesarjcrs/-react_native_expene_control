@@ -10,13 +10,3 @@ export type DropDownSelectFormat = {
   label: string;
   iconName?: string | null;
 };
-
-export type DropDownSelectJoinCategoryFormat = {
-  label: string;
-  value: number;
-};
-
-export type DropDownSelectJoinCategoryFormat2 = {
-  id: number | null;
-  label: string;
-};

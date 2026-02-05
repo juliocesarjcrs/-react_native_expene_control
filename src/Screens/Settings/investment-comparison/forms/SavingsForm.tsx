@@ -44,12 +44,7 @@ export const SavingsForm: React.FC<Props> = ({ colors, navigation, existingData 
     (existingData as any)?.productType || 'cajitas'
   );
 
-  const {
-    handleSubmit,
-    control,
-    setValue,
-    watch
-  } = useForm<any>({
+  const { handleSubmit, control, setValue, watch } = useForm<any>({
     mode: 'onTouched',
     defaultValues: {
       id: existingData?.id || Date.now().toString(),

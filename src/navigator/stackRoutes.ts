@@ -54,6 +54,13 @@ import ScenarioConfigScreen from '~/Screens/Settings/investment-comparison/Scena
 
 // Statistics
 import ComparePeriodsScreen from '~/Screens/Statistics/ComparePeriodsScreen';
+import {
+  CommentaryAnalysisScreen,
+  ProductPricesScreen,
+  RetentionAnalysisScreen,
+  StatisticsScreen,
+  UtilityAnalysisScreen
+} from '~/Screens';
 
 // Admin
 import AIModelsScreen from '~/Screens/Admin/AIModelsScreen';
@@ -105,6 +112,11 @@ export interface StackRoutesType {
   InvestmentComparisonHomeScreen: typeof InvestmentComparisonHomeScreen;
   ScenarioConfigScreen: typeof ScenarioConfigScreen;
   ComparisonResultsScreen: typeof ComparisonResultsScreen;
+  CommentaryAnalysisScreen: typeof CommentaryAnalysisScreen;
+  UtilityAnalysisScreen: typeof UtilityAnalysisScreen;
+  ProductPricesScreen: typeof ProductPricesScreen;
+  RetentionAnalysisScreen: typeof RetentionAnalysisScreen;
+  StatisticsScreen: typeof StatisticsScreen;
 }
 
 const stackRoutes: StackRoutesType = {
@@ -153,7 +165,12 @@ const stackRoutes: StackRoutesType = {
   SavingsAnalysisScreen,
   InvestmentComparisonHomeScreen,
   ScenarioConfigScreen,
-  ComparisonResultsScreen
+  ComparisonResultsScreen,
+  CommentaryAnalysisScreen,
+  UtilityAnalysisScreen,
+  ProductPricesScreen,
+  RetentionAnalysisScreen,
+  StatisticsScreen
 };
 
 export default stackRoutes;

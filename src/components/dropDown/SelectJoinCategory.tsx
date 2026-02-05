@@ -4,7 +4,7 @@ import DropDownPicker from 'react-native-dropdown-picker';
 import { useSelector } from 'react-redux';
 
 // Services
-import { getAllSubcategoriesExpensesByMonth } from '../../services/categories';
+import { getAllSubcategoriesExpensesByMonth } from '~/services/categories';
 
 // Utils
 import ErrorText from '../ErrorText';
@@ -13,15 +13,13 @@ import ErrorText from '../ErrorText';
 import MyLoading from '../loading/MyLoading';
 
 // Types
-import { RootState } from '../../shared/types/reducers';
+import { RootState } from '~/shared/types/reducers';
 import {
   CategoryFormat,
-  SubcategoryFormat
-} from '../../shared/types/components/dropDown/SelectJoinCategory.type';
-import {
-  DropDownSelectJoinCategoryFormat,
-  DropDownSelectJoinCategoryFormat2
-} from '../../shared/types/components/dropDown/SelectOnlyCategory.type';
+  CategorySelection,
+  SubcategoryFormat,
+  SubcategorySelection
+} from '~/shared/types/components/dropDown/SelectJoinCategory.type';
 
 // Styles
 import { MEGA_BIG } from '~/styles/fonts';
@@ -30,10 +28,11 @@ import { showError } from '~/utils/showError';
 import { useThemeColors } from '~/customHooks/useThemeColors';
 
 interface SelectJoinCategoryProps {
-  fetchExpensesSubcategory: (data: DropDownSelectJoinCategoryFormat) => void;
-  fetchExpensesOnlyCategory: (data: DropDownSelectJoinCategoryFormat2) => void;
+  fetchExpensesSubcategory: (data: SubcategorySelection) => void;
+  fetchExpensesOnlyCategory: (data: CategorySelection) => void;
   containerStyle?: StyleProp<ViewStyle>;
 }
+
 type SubcategoryFormatInt = {
   label: string;
   value: number;
@@ -51,13 +50,14 @@ const SelectJoinCategory = forwardRef(
     const colors = useThemeColors();
     const month = useSelector((state: RootState) => state.date.month);
     const [categories, setCategories] = useState<CategoryFormat[]>([]);
-    const [subcategories, setSubcategories] = useState<DropDownSelectJoinCategoryFormat[]>([]);
+    const [subcategories, setSubcategories] = useState<SubcategoryFormatInt[]>([]);
     const [subcategoryId, setSubcategoryId] = useState<null | number>(null);
     const [loading, setLoading] = useState(false);
     const ITEM_HEIGHT = 42;
     const [open, setOpen] = useState(false);
     const [open2, setOpen2] = useState(false);
     const [idCategory, setIdCategory] = useState<null | number>(null);
+
     useImperativeHandle(ref, () => ({
       resetSubcategory() {
         setSubcategoryId(null);
@@ -96,6 +96,7 @@ const SelectJoinCategory = forwardRef(
         showError(error);
       }
     };
+
     const defaultIdCategory = (categoriesFormat: CategoryFormat[]) => {
       if (categoriesFormat.length > 0) {
         setIdCategory(categoriesFormat[0].value);
@@ -103,10 +104,19 @@ const SelectJoinCategory = forwardRef(
     };
 
     const sendDataSubcategory = (index: null | number) => {
-      if (index) {
+      if (index && idCategory) {
         const foundSubcategory = subcategories.find((e) => e.value === index);
-        if (foundSubcategory) {
-          fetchExpensesSubcategory(foundSubcategory);
+        const foundCategory = categories.find((c) => c.value === idCategory);
+
+        if (foundSubcategory && foundCategory) {
+          // ✅ CORREGIDO: Enviar objeto completo con categoryId y categoryName
+          const dataToSend: SubcategorySelection = {
+            label: foundSubcategory.label,
+            value: foundSubcategory.value,
+            categoryId: idCategory,
+            categoryName: foundCategory.label
+          };
+          fetchExpensesSubcategory(dataToSend);
         }
       }
     };
@@ -114,6 +124,7 @@ const SelectJoinCategory = forwardRef(
     useEffect(() => {
       sendFromDropDownPickerCategory(idCategory);
     }, [idCategory]);
+
     useEffect(() => {
       sendDataSubcategory(subcategoryId);
     }, [subcategoryId]);
@@ -126,18 +137,20 @@ const SelectJoinCategory = forwardRef(
       if (indexArray >= 0) {
         const dataFormat = formatOptionsSubcategories(categories[indexArray].subcategories);
         setSubcategories(dataFormat);
-        const newData = {
+        const newData: CategorySelection = {
           id: index,
           label: categories[indexArray].label
         };
         fetchExpensesOnlyCategory(newData);
       }
     };
+
     const formatOptionsSubcategories = (data: SubcategoryFormat[]): SubcategoryFormatInt[] => {
       return data.map((e) => {
         return { label: e.name, value: e.id };
       });
     };
+
     return (
       <View style={[styles.container, containerStyle]}>
         <Text style={[styles.subtitle, { color: colors.TEXT_PRIMARY }]}>Categoría</Text>
@@ -261,7 +274,7 @@ const styles = StyleSheet.create({
     flex: 0,
     marginBottom: 0,
     paddingBottom: 0,
-    zIndex: 3000, // Asegura que el contenedor esté por encima de otros elementos
+    zIndex: 3000,
     padding: 0
   },
   errorContainer: {
@@ -310,4 +323,5 @@ const styles = StyleSheet.create({
     fontSize: 16
   }
 });
+
 export default SelectJoinCategory;

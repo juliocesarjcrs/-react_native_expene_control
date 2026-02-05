@@ -38,7 +38,8 @@ export default function YearCitySelector({
 
   const cityItems = [
     { label: 'Pereira', value: 'Pereira' },
-    { label: 'Bucaramanga', value: 'Bucaramanga' }
+    { label: 'Bucaramanga', value: 'Bucaramanga' },
+    { label: 'Pamplona', value: 'Pamplona' }
     // { label: 'Bogotá', value: 'Bogotá' },
     // { label: 'Medellín', value: 'Medellín' },
     // { label: 'Cali', value: 'Cali' },

@@ -101,7 +101,7 @@ export default function AdvancedSearchScreen() {
         }
 
         const queryParams: ExpenseSearchOptionsQuery = {
-          subcategoriesId: selectedSubcategories.join(','),
+          subcategoriesId: selectedSubcategories,
           startDate,
           endDate,
           searchValue: searchText,

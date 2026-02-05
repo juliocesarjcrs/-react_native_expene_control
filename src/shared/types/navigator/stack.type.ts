@@ -98,3 +98,23 @@ export type SettingsStackParamList = {
     comparisonId: string;
   };
 };
+export type StatisticsStackParamList = {
+  statisticsHome: undefined;
+  comparePeriods: undefined;
+  commentaryAnalysis: undefined;
+  utilityAnalysis: {
+    subcategory?: string;
+    startDate?: string;
+    endDate?: string;
+  };
+  productPrices: {
+    subcategory?: string;
+    startDate?: string;
+    endDate?: string;
+  };
+  retentionAnalysis: {
+    categoryId?: number;
+    startDate?: string;
+    endDate?: string;
+  };
+};

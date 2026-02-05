@@ -171,9 +171,29 @@ export const screenConfigs = {
   },
 
   // STATISTICS
+  statistics: {
+    title: 'Estadísticas',
+    subtitle: 'Analiza tus finanzas en profundidad'
+  },
   comparePeriods: {
     title: 'Comparar periodos',
     subtitle: 'Analiza y compara gastos entre dos periodos'
+  },
+  commentaryAnalysis: {
+    title: 'Análisis de Comentarios',
+    subtitle: 'Extrae información valiosa de tus gastos e ingresos'
+  },
+  utilityAnalysis: {
+    title: 'Servicios Públicos',
+    subtitle: 'Analiza consumo y costos de luz, agua y gas'
+  },
+  productPrices: {
+    title: 'Precios de Productos',
+    subtitle: 'Compara precios entre supermercados'
+  },
+  retentionAnalysis: {
+    title: 'Análisis de Retenciones',
+    subtitle: 'Calcula retenciones acumuladas en tus ingresos'
   },
 
   // ADMIN

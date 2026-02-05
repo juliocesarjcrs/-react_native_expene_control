@@ -80,7 +80,12 @@ export const editExpense = async (idExpense: number, payload: EditExpensePayload
 export const findExpensesBySubcategories = async (
   params: ExpenseSearchOptionsQuery
 ): Promise<AxiosResponse<FindExpensesBySubcategoriesResponse>> => {
-  return axios.get(`${PREFIX}/by-subcategories`, { params });
+  return axios.get(`${PREFIX}/by-subcategories`, {
+    params,
+    paramsSerializer: {
+      indexes: null
+    }
+  });
 };
 
 export const getComparePeriods = async (

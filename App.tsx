@@ -65,7 +65,10 @@ export default function App() {
           }
           console.log('::: type :::', typeof error);
           if (error instanceof AxiosError) {
-            console.log('::: Error :::', error);
+            const data = error.response?.data;
+
+            console.log('STATUS:', error.response?.status);
+            console.log('DATA:', data);
 
             // AxiosError tiene propiedades específicas
             const axiosError = error as AxiosError;

@@ -23,9 +23,9 @@ import MyLoading from '../../../components/loading/MyLoading';
 // Types
 import { BalanceStackParamList } from '../../../shared/types';
 import {
-  DropDownSelectJoinCategoryFormat,
-  DropDownSelectJoinCategoryFormat2
-} from '../../../shared/types/components/dropDown/SelectOnlyCategory.type';
+  SubcategorySelection,
+  CategorySelection
+} from '../../../shared/types/components/dropDown/SelectJoinCategory.type';
 
 // Utils
 import { cutText, NumberFormat } from '../../../utils/Helpers';
@@ -58,7 +58,7 @@ export default function GraphBySubcategory({ navigation }: GraphBySubcategoryPro
   const [sum, setSum] = useState<number>(0);
   const [loading, setLoading] = useState(false);
   const [activePoint, setActivePoint] = useState<ChartDataPoint | null>(null);
-  const [dataCategory, setDataCategory] = useState<DropDownSelectJoinCategoryFormat2>();
+  const [dataCategory, setDataCategory] = useState<CategorySelection>();
   const [numMonths, setNumMonths] = useState(3);
 
   // Responsive: ajustar según orientación
@@ -92,7 +92,7 @@ export default function GraphBySubcategory({ navigation }: GraphBySubcategoryPro
     return val.toFixed(0);
   };
 
-  const fetchExpensesSubcategory = async (foundSubcategory: DropDownSelectJoinCategoryFormat) => {
+  const fetchExpensesSubcategory = async (foundSubcategory: SubcategorySelection) => {
     try {
       setActivePoint(null);
       setLoading(true);
@@ -123,7 +123,7 @@ export default function GraphBySubcategory({ navigation }: GraphBySubcategoryPro
     }
   }, [dataCategory, numMonths]);
 
-  const fetchExpensesOnlyCategory = async (foundCategory: DropDownSelectJoinCategoryFormat2) => {
+  const fetchExpensesOnlyCategory = async (foundCategory: CategorySelection) => {
     setDataCategory(foundCategory);
   };
 

@@ -5,7 +5,7 @@ export type CreateExpensePayload = Omit<ExpenseModel, 'id' | 'createdAt' | 'user
 export type EditExpensePayload = Partial<ExpenseModel>;
 
 export type ExpenseSearchOptionsQuery = {
-  subcategoriesId: string;
+  subcategoriesId: number[];
   startDate?: Date;
   endDate?: Date;
   searchValue?: string;

@@ -16,9 +16,12 @@ import { StatisticsStackParamList } from '~/shared/types/navigator/stack.type';
 import { RetentionData } from '~/shared/types/screens/Statistics/commentary-analysis.types';
 
 // Utils
-import { parseRetentionCommentary, calculateTotalRetention } from '~/utils/commentaryParser.utils';
 import { showError } from '~/utils/showError';
 import { NumberFormat, DateFormat } from '~/utils/Helpers';
+import {
+  calculateTotalRetention,
+  parseRetentionCommentary
+} from '~/utils/commentaryParser/retentionParser';
 
 // Theme
 import { useThemeColors } from '~/customHooks/useThemeColors';

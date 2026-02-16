@@ -8,6 +8,7 @@ import { findExpensesBySubcategories } from '~/services/expenses';
 import { ScreenHeader } from '~/components/ScreenHeader';
 import MyLoading from '~/components/loading/MyLoading';
 import FilterSelector, { AnalysisFilters } from './components/FilterSelector';
+import { UtilitySituationDisplay } from './components/UtilitySituationDisplay';
 
 // Types
 import { StatisticsStackParamList } from '~/shared/types/navigator/stack.type';
@@ -17,12 +18,12 @@ import { RouteProp } from '@react-navigation/native';
 import { Icon } from 'react-native-elements';
 
 // Utils
-import {
-  parseUtilityCommentary,
-  calculateConsumptionPerPerson
-} from '~/utils/commentaryParser.utils';
 import { showError } from '~/utils/showError';
 import { NumberFormat, DateFormat } from '~/utils/Helpers';
+import {
+  calculateConsumptionPerPerson,
+  parseUtilityCommentary
+} from '~/utils/commentaryParser/utilityParser';
 
 // Theme
 import { useThemeColors } from '~/customHooks/useThemeColors';
@@ -33,7 +34,6 @@ import { MEDIUM, SMALL } from '~/styles/fonts';
 
 // Configs
 import { screenConfigs } from '~/config/screenConfigs';
-
 type ScreenNavigationProp = StackNavigationProp<StatisticsStackParamList, 'utilityAnalysis'>;
 type ScreenRouteProp = RouteProp<StatisticsStackParamList, 'utilityAnalysis'>;
 
@@ -58,19 +58,13 @@ export default function UtilityAnalysisScreen({ navigation, route }: ScreenProps
       setLoading(true);
       setCurrentFilters(filters);
 
-      // Llamar al endpoint con filtros
-      console.log('subcategoryId:', filters.subcategoryId);
-      console.log('payload:', {
-        subcategoriesId: [filters.subcategoryId]
-      });
-
       const { data } = await findExpensesBySubcategories({
         subcategoriesId: [filters.subcategoryId],
         startDate: filters.startDate,
         endDate: filters.endDate
       });
 
-      // Parsear comentarios
+      // Parsear comentarios con nuevo parser optimizado
       const parsed = data.expenses
         .map((expense: any) =>
           parseUtilityCommentary(expense.commentary, expense.cost, expense.date)
@@ -86,7 +80,7 @@ export default function UtilityAnalysisScreen({ navigation, route }: ScreenProps
     }
   };
 
-  // Calcular estadísticas
+  // Calcular estadísticas mejoradas
   const stats = parsedData.length > 0 ? calculateConsumptionPerPerson(parsedData) : null;
   const avgCost =
     parsedData.length > 0
@@ -158,8 +152,8 @@ export default function UtilityAnalysisScreen({ navigation, route }: ScreenProps
                 </View>
               </View>
 
-              {/* Consumo por persona */}
-              {stats && stats.withExtra > 0 && (
+              {/* Consumo por persona - MEJORADO */}
+              {stats && stats.withExtraCount > 0 && (
                 <View
                   style={[
                     styles.insightCard,
@@ -172,22 +166,27 @@ export default function UtilityAnalysisScreen({ navigation, route }: ScreenProps
                   <Text style={[styles.insightTitle, { color: colors.TEXT_PRIMARY }]}>
                     📊 Análisis de Consumo
                   </Text>
+
                   <View style={styles.insightRow}>
                     <Text style={[styles.insightLabel, { color: colors.TEXT_SECONDARY }]}>
-                      Solos:
+                      Solos ({stats.aloneCount} registros):
                     </Text>
                     <Text style={[styles.insightValue, { color: colors.TEXT_PRIMARY }]}>
                       {stats.alone} {parsedData[0]?.unit || 'unidades'}
                     </Text>
                   </View>
+
                   <View style={styles.insightRow}>
                     <Text style={[styles.insightLabel, { color: colors.TEXT_SECONDARY }]}>
-                      Con persona adicional:
+                      Con persona adicional ({stats.withExtraCount} registros):
                     </Text>
                     <Text style={[styles.insightValue, { color: colors.TEXT_PRIMARY }]}>
                       {stats.withExtra} {parsedData[0]?.unit || 'unidades'}
                     </Text>
                   </View>
+
+                  <View style={[styles.divider, { backgroundColor: colors.BORDER }]} />
+
                   <View style={styles.insightRow}>
                     <Text style={[styles.insightLabel, { color: colors.SUCCESS }]}>
                       Diferencia:
@@ -196,7 +195,7 @@ export default function UtilityAnalysisScreen({ navigation, route }: ScreenProps
                       style={[styles.insightValue, { color: colors.SUCCESS, fontWeight: '700' }]}
                     >
                       +{stats.difference} {parsedData[0]?.unit || 'unidades'} (+
-                      {Math.round((stats.difference / stats.alone) * 100)}%)
+                      {stats.percentageIncrease}%)
                     </Text>
                   </View>
                 </View>
@@ -204,7 +203,7 @@ export default function UtilityAnalysisScreen({ navigation, route }: ScreenProps
             </>
           )}
 
-          {/* Lista de consumos */}
+          {/* Lista de consumos - CON NUEVO COMPONENTE */}
           {loading ? (
             <MyLoading />
           ) : parsedData.length > 0 ? (
@@ -222,12 +221,17 @@ export default function UtilityAnalysisScreen({ navigation, route }: ScreenProps
                       borderColor: colors.BORDER,
                       borderLeftColor: item.hasExtraPerson
                         ? colors.WARNING
-                        : (item.uninhabitedDays ?? 0) > 0
+                        : item.hasVisits
                           ? colors.INFO
-                          : colors.SUCCESS
+                          : (item.uninhabitedDays ?? 0) > 0
+                            ? colors.ERROR
+                            : item.isSolo
+                              ? colors.SUCCESS
+                              : colors.BORDER
                     }
                   ]}
                 >
+                  {/* Header */}
                   <View style={styles.consumptionHeader}>
                     <Text style={[styles.consumptionPeriod, { color: colors.TEXT_PRIMARY }]}>
                       {item.periodStart} - {item.periodEnd}
@@ -237,6 +241,7 @@ export default function UtilityAnalysisScreen({ navigation, route }: ScreenProps
                     </Text>
                   </View>
 
+                  {/* Detalles */}
                   <View style={styles.consumptionDetails}>
                     <View style={styles.consumptionItem}>
                       <Icon
@@ -263,41 +268,8 @@ export default function UtilityAnalysisScreen({ navigation, route }: ScreenProps
                     </View>
                   </View>
 
-                  {item.notes && (
-                    <View style={[styles.notesContainer, { backgroundColor: colors.BACKGROUND }]}>
-                      <Text style={[styles.notesText, { color: colors.TEXT_SECONDARY }]}>
-                        {item.notes}
-                      </Text>
-                    </View>
-                  )}
-
-                  {item.hasExtraPerson && (
-                    <View style={[styles.badge, { backgroundColor: colors.WARNING + '20' }]}>
-                      <Icon
-                        type="material-community"
-                        name="account-plus"
-                        size={12}
-                        color={colors.WARNING}
-                      />
-                      <Text style={[styles.badgeText, { color: colors.WARNING }]}>
-                        Persona adicional
-                      </Text>
-                    </View>
-                  )}
-
-                  {(item.uninhabitedDays ?? 0) > 0 && (
-                    <View style={[styles.badge, { backgroundColor: colors.INFO + '20' }]}>
-                      <Icon
-                        type="material-community"
-                        name="home-off"
-                        size={12}
-                        color={colors.INFO}
-                      />
-                      <Text style={[styles.badgeText, { color: colors.INFO }]}>
-                        {item.uninhabitedDays ?? 0} días deshabitado
-                      </Text>
-                    </View>
-                  )}
+                  {/* NUEVO: Componente de situación con franja gris */}
+                  <UtilitySituationDisplay item={item} />
                 </View>
               ))}
             </View>
@@ -313,7 +285,7 @@ export default function UtilityAnalysisScreen({ navigation, route }: ScreenProps
                 No se encontraron registros con comentarios válidos
               </Text>
               <Text style={[styles.emptyHint, { color: colors.TEXT_SECONDARY }]}>
-                Asegúrate de usar el formato: &quot;Consumo X Kw/M3 Fecha - Fecha&quot;
+                Formato esperado: Consumo(X Kw/M3) Fecha - Fecha [Situación]
               </Text>
             </View>
           ) : null}
@@ -384,6 +356,10 @@ const styles = StyleSheet.create({
     fontSize: SMALL + 1,
     fontWeight: '600'
   },
+  divider: {
+    height: 1,
+    marginVertical: 4
+  },
   sectionTitle: {
     fontSize: MEDIUM,
     fontWeight: '600',
@@ -421,29 +397,6 @@ const styles = StyleSheet.create({
   },
   consumptionValue: {
     fontSize: SMALL,
-    fontWeight: '600'
-  },
-  notesContainer: {
-    padding: 8,
-    borderRadius: 4,
-    marginTop: 4
-  },
-  notesText: {
-    fontSize: SMALL - 1,
-    fontStyle: 'italic'
-  },
-  badge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    alignSelf: 'flex-start',
-    paddingVertical: 4,
-    paddingHorizontal: 8,
-    borderRadius: 12,
-    gap: 4,
-    marginTop: 4
-  },
-  badgeText: {
-    fontSize: SMALL - 2,
     fontWeight: '600'
   },
   emptyState: {

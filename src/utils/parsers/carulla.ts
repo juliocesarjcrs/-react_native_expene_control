@@ -8,13 +8,6 @@ const PRICE_PATTERN = /(\d+[.,]?\d*[A-Za-z]?)\s*$/;
 const EXITO_PRODUCT_PATTERN = /(\d{6,})\s+([A-Z].+?)\s+(\d{1,3}[.,]\d{3})[A-Z]?/;
 const DESC_PATTERN = /^\d+\s+(\d{6,})\s+([A-Z].+)/;
 const SIMPLE_PRICE_PATTERN = /^(\d{1,3}[.,]\d{3})[A-Z]?$/;
-const KGM_PATTERN = /(\d+(?:\.\s?\d+)?)\/(KGM)\s+[x*]\s+([\d.,]+)\s+V\.\s+Ahorro\s+([\d.,]+)/i;
-
-// Patrones adicionales para manejar OCR inconsistente
-const CODE_PRODUCT_PRICE_PATTERN = /(\d{6,})\s+(.+?)\s+(\d{1,3}[.,]\d{3})/;
-const WEIGHT_INFO_PATTERN =
-  /^\d+\s+(\d+(?:\.\s?\d+)?)\/(KGM)\s+[x*]\s+([\d.,]+)\s+V\.\s+Ahorro\s+([\d.,]+)/i;
-const PRICE_AT_START_PATTERN = /^(\d{1,3}[.,]\d{3})[A-Z]?\s*$/;
 
 /**
  * Parser principal para recibos de Carulla y Éxito
@@ -143,9 +136,13 @@ function processCarullaCase6(lines: string[], joined: string, receiptType: Recei
   while (i < lines.length) {
     const line = lines[i].trim();
 
-    // PRIORIDAD 1: Línea de peso/KGM sin precio al final, seguida de código+producto+precio
+    // PRIORIDAD 1: Línea de peso/KGM sin precio al final, seguida de código+producto+precio.
+    // IMPORTANTE: usa [ ]+ (espacio, no tab) después de "Ahorro" para no confundir
+    // el precio separado por tab (columna OCR) con el valor de ahorro.
+    // Ej correcto:  "V. Ahorro 854"     → 854 es ahorro (PRIORIDAD 1 matchea)
+    // Ej incorrecto: "V. Ahorro\t31.027" → 31.027 es precio (debe ir a PRIORIDAD 2, no aquí)
     const weightInfoNoPrice = line.match(
-      /^\d+\s+([\d.]+\/KGM)\s+[x*]\s+([\d.,]+)\s+V\.\s*Ahorro\s+([\d.,]+)$/i
+      /^\d+\s+([\d.]+\/KGM)\s+[x*]\s+([\d.,]+)\s+V\.\s*Ahorro[ ]+([\d.,]+)\s*$/i
     );
     if (weightInfoNoPrice && i + 1 < lines.length) {
       const nextLine = lines[i + 1].trim();
@@ -173,9 +170,11 @@ function processCarullaCase6(lines: string[], joined: string, receiptType: Recei
       }
     }
 
-    // PRIORIDAD 2: Línea de peso CON precio al final, producto en siguiente línea
+    // PRIORIDAD 2: Línea de peso CON precio al final, producto en siguiente línea.
+    // [\s\d.,]*? (lazy) consume flexiblemente el whitespace/valor de ahorro entre
+    // "V. Ahorro" y el precio final (maneja tabs, comas en ahorro, o ahorro ausente).
     const weightWithPriceMatch = line.match(
-      /^\d+\s+([\d.]+\/KGM)\s+[x*]\s+([\d.,]+)\s+V\.\s*Ahorro\s+\d+\s+(\d{1,3}[.,]\d{3})/i
+      /^\d+\s+([\d.]+\/KGM)\s+[x*]\s+([\d.,]+)\s+V\.\s*Ahorro[\s\d.,]*?(\d{1,3}[.,]\s?\d{3})\s*[A-Za-z]?\s*$/i
     );
     if (weightWithPriceMatch && i + 1 < lines.length) {
       const nextLine = lines[i + 1].trim();
@@ -183,7 +182,7 @@ function processCarullaCase6(lines: string[], joined: string, receiptType: Recei
 
       if (productOnlyMatch && !nextLine.match(/\d{1,3}[.,]\d{3}/)) {
         const description = formatDescription(productOnlyMatch[2].trim());
-        const price = cleanPrice(weightWithPriceMatch[3]);
+        const price = cleanPrice(weightWithPriceMatch[3].replace(/\s/g, ''));
         const descWithWeight = processWeightAndSavings(line, description, receiptType);
 
         products.push({ description: descWithWeight, price });
@@ -192,20 +191,23 @@ function processCarullaCase6(lines: string[], joined: string, receiptType: Recei
       }
     }
 
-    // PRIORIDAD 3: Info unidad CON precio, producto en siguiente línea
+    // PRIORIDAD 3: Info unidad CON precio embebido, producto en siguiente línea sin precio.
+    // [\s\d.,]*? (lazy) maneja: coma en ahorro (9,090), tab entre ahorro y precio, o variantes.
     const unitWithPriceMatch = line.match(
-      /^\d+\s+(?:1\/u|\d+\.?\d*\/\w+)\s+[x*]\s+([\d.,]+)\s+V\.?\s*Ahorro\s+\d+\s+(\d{1,3}[.,]\d{3})/i
+      /^\d+\s+(?:1\/u|\d+\.?\d*\/\w+)\s+[x*]\s+([\d.,]+)\s+V\.?\s*Ahorro[\s\d.,]*?(\d{1,3}[.,]\s?\d{3})\s*[A-Za-z]?\s*$/i
     );
     if (unitWithPriceMatch && i + 1 < lines.length) {
       const nextLine = lines[i + 1].trim();
       const productOnlyMatch = nextLine.match(/^(\d{4,})\s+(.+?)$/);
 
-      if (productOnlyMatch && !nextLine.match(/\d{1,3}[.,]\d{3}/)) {
+      // Guard más estricto: rechaza si la línea termina en CUALQUIER número (incl. "0" suelto)
+      // para evitar capturar líneas como "3019241 Enjuague Bucal T   0"
+      if (productOnlyMatch && !nextLine.match(/[\d.,]+[A-Za-z]?\s*$/)) {
         const description = formatSimpleProduct(
           formatDescription(productOnlyMatch[2].trim()),
           receiptType
         );
-        const price = cleanPrice(unitWithPriceMatch[2]);
+        const price = cleanPrice(unitWithPriceMatch[2].replace(/\s/g, ''));
 
         products.push({ description, price });
         i += 2;

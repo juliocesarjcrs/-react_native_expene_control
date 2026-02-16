@@ -170,7 +170,7 @@ export default function EditIncomeScreen({ navigation, route }: EditIncomeScreen
       />
 
       {/* BUTTON */}
-      {loading ? <MyLoading /> : <MyButton title="Guardar" onPress={handleSubmit(onSubmit)} />}
+      {loading ? <MyLoading /> : <MyButton title="Editar" onPress={handleSubmit(onSubmit)} />}
     </View>
   );
 }

@@ -18,9 +18,9 @@ import { StatisticsStackParamList } from '~/shared/types/navigator/stack.type';
 import { ProductPrice } from '~/shared/types/screens/Statistics/commentary-analysis.types';
 
 // Utils
-import { parseProductCommentary, findBestPrice } from '~/utils/commentaryParser.utils';
 import { showError } from '~/utils/showError';
 import { NumberFormat, DateFormat } from '~/utils/Helpers';
+import { findBestPrice, parseProductCommentary } from '~/utils/commentaryParser/productParser';
 
 // Theme
 import { useThemeColors } from '~/customHooks/useThemeColors';

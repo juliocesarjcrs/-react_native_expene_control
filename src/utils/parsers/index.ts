@@ -5,8 +5,8 @@ import { parseGeneric } from './parseGeneric';
 import { parseDollarCity } from './dollarCity';
 import { parseAra } from './ara';
 import { parseCruzVerde } from './cruzVerde';
-import { isSuperCarnesJH, parseSuperCarnesJH } from './Supercarnesjh';
-import { isFruverLaGranja, parseFruverLaGranja } from './Fruverlagranja';
+import { isSuperCarnesJH, parseSuperCarnesJH } from './superCarnesJH';
+import { isFruverLaGranja, parseFruverLaGranja } from './fruverLaGranja';
 
 export function extractProducts(ocr: string): Product[] {
   const lines = ocr

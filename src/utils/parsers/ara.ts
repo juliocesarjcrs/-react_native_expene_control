@@ -1,5 +1,8 @@
-import { Product } from '~/shared/types/components/receipt-scanner.type';
+import { Product, ReceiptType } from '~/shared/types/components/receipt-scanner.type';
 import { formatDescription } from './formatDescription';
+import { formatSimpleProduct } from './helpers';
+
+const RECEIPT_TYPE: ReceiptType = 'Ara';
 
 export function parseAra(lines: string[]): Product[] {
   console.log('📄 Procesando como tipo Ara...');
@@ -22,7 +25,10 @@ export function parseAra(lines: string[]): Product[] {
         rawPrice = rawPrice.replace('.', '');
       }
 
-      const description = formatDescription(rawDescription.replace(/\./g, ''));
+      const description = formatSimpleProduct(
+        formatDescription(rawDescription.replace(/\./g, '')),
+        RECEIPT_TYPE
+      );
       const price = parseInt(rawPrice);
 
       if (!isNaN(price) && price > 0) {

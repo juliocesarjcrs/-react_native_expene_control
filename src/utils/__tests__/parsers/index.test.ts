@@ -619,12 +619,12 @@ describe('extractProducts', () => {
       const ocr =
         'Jeronimo Martins Colombia S. A. S.\t\r\nNIT: 900. 480. 569-1\t\r\nComprobante de entrega\t\r\nArtículo\tDescripción\tValor\t\r\n07704269659070 CEPIL DENTAL\t4.490 G\t\r\n07704269131675 REMOV BEBEAU\t5. 490 G\t\r\n07704269474024 ROD DESM B. B\t3. 150 G\t\r\n17704269613539 TOAL HUME BB\t7. 680 G\t\r\n2 UN X\t3. 840\t\r\n07704269374454 LIMP AGENTEX\t2. 250 G\t\r\n07706261000072 PANDERO MINI\t5. 990 D\t\r\nTotal\t\r\n29. 050\t\r\nEfectivo\t50. 000\t\r\nCambio:\t20. 950$\t\r\nArticulos Vendidos: 7\t\r\n';
       expect(extractProducts(ocr)).toEqual([
-        { description: 'Cepil Dental', price: 4490 },
-        { description: 'Remov Bebeau', price: 5490 },
-        { description: 'Rod Desm B B', price: 3150 },
-        { description: 'Toal Hume Bb', price: 7680 },
-        { description: 'Limp Agentex', price: 2250 },
-        { description: 'Pandero Mini', price: 5990 }
+        { description: 'Cepil Dental [Ara]', price: 4490 },
+        { description: 'Remov Bebeau [Ara]', price: 5490 },
+        { description: 'Rod Desm B B [Ara]', price: 3150 },
+        { description: 'Toal Hume Bb [Ara]', price: 7680 },
+        { description: 'Limp Agentex [Ara]', price: 2250 },
+        { description: 'Pandero Mini [Ara]', price: 5990 }
       ]);
     });
     it('should handle Ara receipsts (case 2)', () => {
@@ -637,9 +637,9 @@ describe('extractProducts', () => {
         Total	:	64. 520
         Efectivo	100. 000`;
       expect(extractProducts(ocr)).toEqual([
-        { description: 'Maq Afe Ski/', price: 2990 },
-        { description: 'Pan Perro', price: 373600 }, // mejora cuando tiene números
-        { description: 'Tostones Pla', price: 4400 }
+        { description: 'Maq Afe Ski/ [Ara]', price: 2990 },
+        { description: 'Pan Perro [Ara]', price: 373600 }, // mejora cuando tiene números
+        { description: 'Tostones Pla [Ara]', price: 4400 }
       ]);
     });
     it('should handle Ara receipsts (case 3)', () => {
@@ -661,12 +661,12 @@ describe('extractProducts', () => {
           SUB TOTAL:	44. 946
           TATAI.`;
       expect(extractProducts(ocr)).toEqual([
-        { description: 'Fusilli Arri', price: 3990 },
-        { description: 'Velas Medita', price: 18990 },
-        { description: 'Queso Sabane', price: 9990 },
-        { description: 'Queso Holand', price: 8300 },
-        { description: 'Maiz Ducle X', price: 5990 },
-        { description: 'Lenteja Dl', price: 3190 }
+        { description: 'Fusilli Arri [Ara]', price: 3990 },
+        { description: 'Velas Medita [Ara]', price: 18990 },
+        { description: 'Queso Sabane [Ara]', price: 9990 },
+        { description: 'Queso Holand [Ara]', price: 8300 },
+        { description: 'Maiz Ducle X [Ara]', price: 5990 },
+        { description: 'Lenteja Dl [Ara]', price: 3190 }
       ]);
     });
 
@@ -680,8 +680,8 @@ describe('extractProducts', () => {
         Ð¢Ð¾Ñ‚Ð»Ñ– .
         `;
       expect(extractProducts(ocr)).toEqual([
-        { description: 'Leche Desl Valor Imp', price: 2890 },
-        { description: 'Colada Vaini', price: 3500 }
+        { description: 'Leche Desl Valor Imp [Ara]', price: 2890 },
+        { description: 'Colada Vaini [Ara]', price: 3500 }
       ]);
     });
   });

@@ -183,7 +183,7 @@ describe('extractProducts', () => {
             },
             {
               description:
-                'Chocolo Tierno(M — 1.140 kg @ $2.842/kg (antes $4.060/kg, -30%) [Carulla]',
+                'Chocolo Tiernom — 1.140 kg @ $2.842/kg (antes $4.060/kg, -30%) [Carulla]',
               price: 3239
             },
             {
@@ -199,8 +199,7 @@ describe('extractProducts', () => {
               price: 2700
             },
             {
-              description:
-                'Tomate Chonto (A — 0.860 kg @ $4.186/kg (antes $5.980/kg, -30%) [Carulla]',
+              description: 'Tomate Chonto — 0.860 kg @ $4.186/kg (antes $5.980/kg, -30%) [Carulla]',
               price: 3600
             },
             {
@@ -316,7 +315,7 @@ describe('extractProducts', () => {
             { description: 'Galletas Yogurt [Carulla]', price: 4640 },
             { description: 'Salsa Sabor Ajo [Carulla]', price: 7210 },
             {
-              description: 'Cebolla Blanca S — 0.555 kg @ $6.280/kg [Carulla]',
+              description: 'Cebolla Blanca — 0.555 kg @ $6.280/kg [Carulla]',
               price: 3485
             },
             { description: 'Chorizo Santarro [Carulla]', price: 4620 },
@@ -355,7 +354,7 @@ describe('extractProducts', () => {
             },
             {
               description:
-                'Lomo Caracha* — 0.500 kg @ $37.024/kg (antes $46.280/kg, -20%) [Carulla]',
+                'Lomo Caracha — 0.500 kg @ $37.024/kg (antes $46.280/kg, -20%) [Carulla]',
               price: 18512
             },
             { description: 'Estuche Surtido [Carulla]', price: 19900 },
@@ -386,7 +385,7 @@ describe('extractProducts', () => {
               price: 31581
             },
             {
-              description: 'Pepino Res* — 0.590 kg @ $20.559/kg (antes $21.640/kg, -5%) [Carulla]',
+              description: 'Pepino Res — 0.590 kg @ $20.559/kg (antes $21.640/kg, -5%) [Carulla]',
               price: 12130
             },
             { description: 'Pecho Corriente [Carulla]', price: 25591 }
@@ -427,7 +426,7 @@ describe('extractProducts', () => {
               price: 2774
             },
             {
-              description: 'Cebolla Blanca S — 0.625 kg @ $4.180/kg [Carulla]',
+              description: 'Cebolla Blanca — 0.625 kg @ $4.180/kg [Carulla]',
               price: 2613
             },
             {
@@ -483,7 +482,7 @@ describe('extractProducts', () => {
             // Enjuague Bucal T omitido: "0" al final de la línea del producto es ambiguo/ruido OCR
             // BUG A: PRIORIDAD 1 captura "V. Ahorro\t31.027" como ahorro en vez de precio
             {
-              description: 'Pepino Res* — 1.150 kg @ $-0/kg (antes $26.980/kg, -100%) [Carulla]',
+              description: 'Pepino Res — 1.150 kg @ $-0/kg (antes $26.980/kg, -100%) [Carulla]',
               price: 0
             },
             // BUG B: falta .replace(/\s/g,'') en cleanPrice de PRIORIDAD 3 → "11. 960" da 11 en vez de 11960

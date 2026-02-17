@@ -1,6 +1,7 @@
 import { Product, ReceiptType } from '~/shared/types/components/receipt-scanner.type';
 import { formatDescription } from './formatDescription';
 import { formatSimpleProduct, processWeightAndSavings, cleanPrice, limitProducts } from './helpers';
+import { canonicalize } from '../canonicalizer';
 
 const PRODUCT_PATTERN =
   /^\d+\s+([A-Za-zÀÁÉÍÓÚÜÑñáéíóúü#%().,\/&\s*\-]+?(?:\s*\/\s*[A-Za-zÀÁÉÍÓÚÜÑñáéíóúü#%().,\/&\s*\-]+?)*)(?:\s+(\d{1,3}(?:[.,]\s?\d{2,3})?)[A-Za-z]*)?$/i;
@@ -10,41 +11,72 @@ const DESC_PATTERN = /^\d+\s+(\d{6,})\s+([A-Z].+)/;
 const SIMPLE_PRICE_PATTERN = /^(\d{1,3}[.,]\d{3})[A-Z]?$/;
 
 /**
- * Parser principal para recibos de Carulla y Éxito
+ * Parser principal para recibos de Carulla y Éxito.
  *
- * @param lines - Líneas del recibo OCR
- * @param joined - Texto completo del recibo
- * @returns Array de productos parseados
+ * @param lines               - Líneas del recibo OCR
+ * @param joined              - Texto completo del recibo
+ * @param existingCanonicals  - Nombres canónicos ya presentes en BD,
+ *                              usados para resolver truncamientos OCR.
+ *                              Pasar vacío [] si no se requiere deduplicación.
+ * @returns Array de productos con description canonicalizada
  */
-export function parseCarulla(lines: string[], joined: string): Product[] {
+export function parseCarulla(
+  lines: string[],
+  joined: string,
+  existingCanonicals: string[] = []
+): Product[] {
   console.log('📄 Procesando como tipo Carulla...');
 
-  // Determinar el tipo de recibo (Carulla o Éxito)
   const receiptType: ReceiptType = isExitoFormat(joined) ? 'Exito' : 'Carulla';
 
-  // Determinar el tipo de formato y procesar
+  let products: Product[];
+
   if (isAltCarulla(joined)) {
     console.log('📄 Procesando como Carulla alternativo (caso 2)');
-    return processAltCarulla(lines, receiptType);
-  }
-
-  if (isExitoFormat(joined)) {
+    products = processAltCarulla(lines, receiptType);
+  } else if (isExitoFormat(joined)) {
     console.log('🛒 Procesando como tipo Éxito');
-    return processExitoFormat(lines, receiptType);
-  }
-
-  if (isCarullaCase5(joined)) {
+    products = processExitoFormat(lines, receiptType);
+  } else if (isCarullaCase5(joined)) {
     console.log('🛠️ Procesando como caso especial Carulla 5');
-    return processCarullaCase5(lines, joined, receiptType);
-  }
-
-  if (isCarullaCase6(joined)) {
+    products = processCarullaCase5(lines, joined, receiptType);
+  } else if (isCarullaCase6(joined)) {
     console.log('🛠️ Procesando como caso especial Carulla 6');
-    return processCarullaCase6(lines, joined, receiptType);
+    products = processCarullaCase6(lines, joined, receiptType);
+  } else {
+    console.log('🔍 Aplicando heurísticas generales');
+    products = fallbackProcessing(lines, joined, receiptType);
   }
 
-  console.log('🔍 Aplicando heurísticas generales');
-  return fallbackProcessing(lines, joined, receiptType);
+  return applyCanonicalNames(products, existingCanonicals);
+}
+
+// ===== CANONICALIZACIÓN =====
+
+/**
+ * Aplica nombres canónicos a todos los productos al final del pipeline.
+ * Se hace aquí y no dentro de cada función de procesamiento para:
+ *   1. Mantener la lógica de canonicalización en un único lugar.
+ *   2. Facilitar testing de cada procesador de forma independiente.
+ *   3. Permitir que existingCanonicals crezca con los productos ya
+ *      canonicalizados en esta misma pasada (útil cuando el ticket
+ *      repite el mismo producto con truncamiento distinto).
+ */
+function applyCanonicalNames(products: Product[], existingCanonicals: string[]): Product[] {
+  // Copia local para no mutar el arreglo del llamador
+  const seen = [...existingCanonicals];
+
+  return products.map((product) => {
+    const canonical = canonicalize(product.description, seen);
+
+    // Acumular para que productos posteriores del mismo ticket
+    // puedan resolver contra canónicos ya resueltos en esta pasada
+    if (!seen.includes(canonical)) {
+      seen.push(canonical);
+    }
+
+    return { ...product, description: canonical };
+  });
 }
 
 // ===== FUNCIONES DE DETECCIÓN DE FORMATOS =====
@@ -123,6 +155,9 @@ function processProductsWithPatterns(
 }
 
 // ===== FUNCIONES DE PROCESAMIENTO ESPECÍFICAS =====
+// Nota: estas funciones devuelven descriptions sin canonicalizar.
+// La canonicalización se aplica una sola vez en applyCanonicalNames(),
+// llamada desde parseCarulla() al final del pipeline.
 
 function processExitoFormat(lines: string[], receiptType: ReceiptType): Product[] {
   return processProductsWithPatterns(lines, [PRODUCT_PATTERN, EXITO_PRODUCT_PATTERN], receiptType);

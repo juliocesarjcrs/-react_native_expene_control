@@ -12,12 +12,10 @@ const ExpenseItem: React.FC<ExpenseItemProps> = ({
   onRemove,
   onUpdate
 }) => {
-  // 1. Primero, añade estados locales para cada picker
   const [isCategoryOpen, setIsCategoryOpen] = useState(false);
   const [isSubcategoryOpen, setIsSubcategoryOpen] = useState(false);
   const [initialDescriptionProcessed, setInitialDescriptionProcessed] = useState(false);
 
-  // 2. Actualiza los estados cuando el item cambie
   useEffect(() => {
     if (item.description && !initialDescriptionProcessed && !item.categoryId) {
       const { categoryId, subcategoryId } = categorizeExpense(item.description, categories);
@@ -33,7 +31,6 @@ const ExpenseItem: React.FC<ExpenseItemProps> = ({
     }
   }, [item.description, item.categoryId, categories, index, onUpdate, initialDescriptionProcessed]);
 
-  // Efecto adicional para sincronizar el valor de subcategoría cuando la categoría cambia
   useEffect(() => {
     if (item.categoryId && item.subcategoryId) {
       const currentCategory = categories.find((c) => c.value === item.categoryId);
@@ -46,7 +43,6 @@ const ExpenseItem: React.FC<ExpenseItemProps> = ({
     }
   }, [item.categoryId, item.subcategoryId, categories, index, onUpdate]);
 
-  // Memoize categories transformation to prevent unnecessary recalculations
   const transformedCategories = useMemo(() => {
     return categories.map((cat) => ({
       label: cat.label,
@@ -63,14 +59,12 @@ const ExpenseItem: React.FC<ExpenseItemProps> = ({
     }));
   }, [categories]);
 
-  // Memoize subcategories based on current category
   const subcategories = useMemo(() => {
     if (!item.categoryId) return [];
     const category = categories.find((c) => c.value === item.categoryId);
     return category?.subcategories || [];
   }, [item.categoryId, categories]);
 
-  // Stable callback for subcategory changes
   const handleSubcategoryChange = useCallback(
     (value: number | null) => {
       onUpdate(index, 'subcategoryId', value);
@@ -78,11 +72,10 @@ const ExpenseItem: React.FC<ExpenseItemProps> = ({
     [index, onUpdate]
   );
 
-  // Stable callback for dropdown toggle
   const handleCategoryToggle = useCallback<Dispatch<SetStateAction<boolean>>>(
     (value) => {
       const open = typeof value === 'function' ? value(isCategoryOpen) : value;
-      if (open === isCategoryOpen) return; // Evita actualizaciones innecesarias
+      if (open === isCategoryOpen) return;
       setIsCategoryOpen(open);
       if (open) setIsSubcategoryOpen(false);
     },
@@ -92,7 +85,7 @@ const ExpenseItem: React.FC<ExpenseItemProps> = ({
   const handleSubcategoryToggle = useCallback<Dispatch<SetStateAction<boolean>>>(
     (value) => {
       const open = typeof value === 'function' ? value(isSubcategoryOpen) : value;
-      if (open === isSubcategoryOpen) return; // Evita actualizaciones innecesarias
+      if (open === isSubcategoryOpen) return;
       setIsSubcategoryOpen(open);
       if (open) setIsCategoryOpen(false);
     },
@@ -115,11 +108,16 @@ const ExpenseItem: React.FC<ExpenseItemProps> = ({
         </TouchableOpacity>
       </View>
 
+      {/* Campo descripción: multiline para que el texto no quede cortado */}
       <TextInput
-        style={styles.input}
+        style={styles.descriptionInput}
         placeholder="Descripción *"
         value={item.description || ''}
         onChangeText={handleDescriptionChange}
+        multiline
+        numberOfLines={2}
+        textAlignVertical="top"
+        scrollEnabled={false}
       />
 
       <TextInput
@@ -152,6 +150,7 @@ const ExpenseItem: React.FC<ExpenseItemProps> = ({
           animationType: 'fade'
         }}
       />
+
       {item.categoryId && (
         <DropDownPicker
           open={isSubcategoryOpen && item.categoryId !== null}
@@ -198,6 +197,7 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     color: '#555'
   },
+  // Input base: para monto y futuros campos de una línea
   input: {
     borderWidth: 1,
     borderColor: '#ddd',
@@ -205,6 +205,20 @@ const styles = StyleSheet.create({
     padding: 10,
     marginBottom: 10,
     backgroundColor: '#fff'
+  },
+  // Input de descripción: más alto, multiline, texto visible completo
+  descriptionInput: {
+    borderWidth: 1,
+    borderColor: '#ddd',
+    borderRadius: 5,
+    padding: 10,
+    marginBottom: 10,
+    backgroundColor: '#fff',
+    minHeight: 56, // Mínimo 2 líneas visibles
+    maxHeight: 100, // Evita que crezca demasiado en textos muy largos
+    textAlignVertical: 'top',
+    lineHeight: 20,
+    fontSize: 14
   },
   dropdown: {
     borderWidth: 1,

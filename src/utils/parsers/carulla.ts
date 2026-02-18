@@ -11,6 +11,78 @@ const DESC_PATTERN = /^\d+\s+(\d{6,})\s+([A-Z].+)/;
 const SIMPLE_PRICE_PATTERN = /^(\d{1,3}[.,]\d{3})[A-Z]?$/;
 
 /**
+ * Procesa líneas con información de unidad y precio (patrón 1/u).
+ * Similar a processWeightAndSavings pero para ítems por unidad.
+ *
+ * @param line - Línea con información de unidad (ej: "5 1/u x 4.100 V. Ahorro 1.230")
+ * @param productName - Nombre del producto
+ * @param receiptType - Tipo de recibo (no usado actualmente, pero mantenido para consistencia)
+ * @returns Descripción formateada con unidad y precio
+ */
+function processUnitAndPrice(line: string, productName: string, receiptType: ReceiptType): string {
+  // 🔒 Blindaje: solo procesar si realmente es 1/u
+  if (!/1\/u/i.test(line)) {
+    return productName;
+  }
+
+  // Patrón: "1/u x <precio_por_unidad> V. Ahorro <ahorro>"
+  const unitMatch = line.match(/1\/u\s+[x*]\s+([\d.,]+)\s+V\.\s*Ahorro/i);
+
+  if (unitMatch) {
+    // Eliminar todos los separadores (. y ,) ya que en OCR colombiano ambos pueden ser miles
+    const pricePerUnit = parseFloat(unitMatch[1].replace(/[.,]/g, ''));
+
+    if (pricePerUnit > 0) {
+      // Formato: "Nombre — 1 un @ $precio"
+      const formattedPrice = pricePerUnit
+        .toLocaleString('es-CO', {
+          minimumFractionDigits: 0,
+          maximumFractionDigits: 3
+        })
+        .replace(/\./g, ',');
+
+      const descWithUnit = `${productName} — 1 un @ $${formattedPrice}`;
+
+      // Agregar sufijo de tienda [Carulla] o [Exito]
+      return formatSimpleProduct(descWithUnit, receiptType);
+    }
+  }
+
+  // Si no hay información de unidad válida, retornar el nombre sin cambios
+  return productName;
+}
+
+/**
+ * Intenta agregar información contextual a la descripción del producto.
+ * Primero intenta peso/descuento (KGM), luego info de unidad (1/u), finalmente formato simple.
+ *
+ * @param prevLine - Línea anterior que puede contener info de peso o unidad
+ * @param description - Descripción base del producto
+ * @param receiptType - Tipo de recibo
+ * @returns Descripción enriquecida con info contextual
+ */
+function enrichDescription(
+  prevLine: string,
+  description: string,
+  receiptType: ReceiptType
+): string {
+  // 1. Intentar agregar peso/descuento (KGM)
+  const withWeight = processWeightAndSavings(prevLine, description, receiptType);
+  if (withWeight !== description) {
+    return withWeight;
+  }
+
+  // 2. Intentar agregar info de unidad (1/u)
+  const withUnit = processUnitAndPrice(prevLine, description, receiptType);
+  if (withUnit !== description) {
+    return withUnit;
+  }
+
+  // 3. Si ninguno funcionó, retornar con formato simple
+  return formatSimpleProduct(description, receiptType);
+}
+
+/**
  * Parser principal para recibos de Carulla y Éxito.
  *
  * @param lines               - Líneas del recibo OCR
@@ -302,15 +374,10 @@ function processCarullaCase6(lines: string[], joined: string, receiptType: Recei
       let description = formatDescription(match[1].replace(/\.$/, ''));
       let price = match[2] ? cleanPrice(match[2].replace(/\s/g, '')) : 0;
 
-      // Buscar información de peso en líneas anteriores
+      // Buscar información de peso/unidad en líneas anteriores
       if (i > 0) {
         const prevLine = lines[i - 1];
-        const weightDesc = processWeightAndSavings(prevLine, description, receiptType);
-        if (weightDesc !== description) {
-          description = weightDesc;
-        } else {
-          description = formatSimpleProduct(description, receiptType);
-        }
+        description = enrichDescription(prevLine, description, receiptType);
       } else {
         description = formatSimpleProduct(description, receiptType);
       }
@@ -343,15 +410,10 @@ function processCarullaCase6(lines: string[], joined: string, receiptType: Recei
       if (priceMatch) {
         let description = formatDescription(descMatch[2].trim());
 
-        // Buscar información de peso en líneas anteriores
+        // Buscar información de peso/unidad en líneas anteriores
         if (i > 0) {
           const prevLine = lines[i - 1];
-          const weightDesc = processWeightAndSavings(prevLine, description, receiptType);
-          if (weightDesc !== description) {
-            description = weightDesc;
-          } else {
-            description = formatSimpleProduct(description, receiptType);
-          }
+          description = enrichDescription(prevLine, description, receiptType);
         } else {
           description = formatSimpleProduct(description, receiptType);
         }
@@ -393,15 +455,10 @@ function processCarullaCase5(lines: string[], joined: string, receiptType: Recei
       if (priceMatch && !/^\d|V\. Ahorro|KGM\b/i.test(description)) {
         const price = cleanPrice(priceMatch[1]);
 
-        // Buscar información de peso en líneas anteriores
+        // Buscar información de peso/unidad en líneas anteriores
         if (i > 0) {
           const prevLine = lines[i - 1];
-          const weightDesc = processWeightAndSavings(prevLine, description, receiptType);
-          if (weightDesc !== description) {
-            description = weightDesc;
-          } else {
-            description = formatSimpleProduct(description, receiptType);
-          }
+          description = enrichDescription(prevLine, description, receiptType);
         } else {
           description = formatSimpleProduct(description, receiptType);
         }

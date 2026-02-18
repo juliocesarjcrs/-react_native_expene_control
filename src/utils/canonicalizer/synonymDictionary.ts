@@ -14,7 +14,7 @@ export const SYNONYM_GROUPS: [string, string[]][] = [
   ['Pimentón', ['pimenton', 'pimiento']],
   ['Pepino Cohombro', ['pepino cohombro', 'pepino']], // distinto de pepino calabacín
   ['Pepino Res', ['pepino rez', 'pepino res']], // "rez" → OCR corrupto de "res"
-  ['Pechuga', ['pechuga a granel', 'pechuga blanca']],
+  ['Pechuga Blanca', ['pechuga a granel', 'pechuga blanca', 'Pechuga Blanca M']],
   ['Tomate Chonto', ['tomate chonto (a', 'tomate chonto (aa', 'tomate chonto', 'Tomate Chonto A']],
   ['Chocolo Tierno', ['Chocolo Tiernom']],
   ['Cebolla Blanca', ['Cebolla Blanca S']],

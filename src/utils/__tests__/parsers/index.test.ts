@@ -19,8 +19,8 @@ describe('extractProducts', () => {
         const ocr =
           'PRECIO\t\r\nPLU\tDETALLE\t\r\n1 1/u x 23.000 V. Ahorro 0\t\r\n172836 Huevo Napoles De\t23.000\t\r\n2 1/u x 2.350 V. Ahorro 0\t\r\n3343120 Mogolla Integral\t2.350\t\r\nTotal Item :2\t\r\n';
         expect(extractProducts(ocr)).toEqual([
-          { description: 'Huevo Napoles De [Carulla]', price: 23000 },
-          { description: 'Mogolla Integral [Carulla]', price: 2350 }
+          { description: 'Huevo Napoles De — 1 un @ $23,000 [Carulla]', price: 23000 },
+          { description: 'Mogolla Integral — 1 un @ $2,350 [Carulla]', price: 2350 }
         ]);
       });
 
@@ -91,7 +91,7 @@ describe('extractProducts', () => {
             description: 'Habichuela — 0.345 kg @ $7.335/kg (antes $10.480/kg, -30%) [Carulla]',
             price: 2531
           },
-          { description: 'Champi#%N Tajado [Carulla]', price: 5250 },
+          { description: 'Champi#%N Tajado — 1 un @ $7,500 [Carulla]', price: 5250 },
           {
             description: 'Pepino Cohombro — 0.945 kg @ $1.428/kg (antes $2.040/kg, -30%) [Carulla]',
             price: 1350
@@ -120,8 +120,8 @@ describe('extractProducts', () => {
         337695 Queso D/Crema	7
         Total Item :2`;
         expect(extractProducts(ocr)).toEqual([
-          { description: 'Esparcible [Carulla]', price: 7440 },
-          { description: 'Queso D/Crema [Carulla]', price: 7 }
+          { description: 'Esparcible — 1 un @ $7,440 [Carulla]', price: 7440 },
+          { description: 'Queso D/Crema — 1 un @ $5,450 [Carulla]', price: 7 }
         ]);
       });
 
@@ -134,8 +134,8 @@ describe('extractProducts', () => {
         337695 Queso D/Crema	5.177
         Total Item 12	`;
         expect(extractProducts(ocr)).toEqual([
-          { description: 'Esparcible [Carulla]', price: 273 },
-          { description: 'Queso D/Crema [Carulla]', price: 5177 }
+          { description: 'Esparcible — 1 un @ $7,440 [Carulla]', price: 273 },
+          { description: 'Queso D/Crema — 1 un @ $5,450 [Carulla]', price: 5177 }
         ]);
       });
 
@@ -148,8 +148,8 @@ describe('extractProducts', () => {
         337695 Queso D/Crema
         Total Item :2`;
         expect(extractProducts(ocr)).toEqual([
-          { description: 'Esparcible [Carulla]', price: 440 },
-          { description: 'Queso D/Crema [Carulla]', price: 2 }
+          { description: 'Esparcible — 1 un @ $7,440 [Carulla]', price: 440 },
+          { description: 'Queso D/Crema — 1 un @ $5,450 [Carulla]', price: 2 }
         ]);
       });
     });
@@ -254,13 +254,13 @@ describe('extractProducts', () => {
               price: 2020
             },
             { description: 'Pepino Zukini — 40.460 kg @ $8.471/kg [Carulla]', price: 2737 },
-            { description: 'Lechuga Crespa [Carulla]', price: 2870 }, // ✅ Sin peso es correcto (1/u)
+            { description: 'Lechuga Crespa — 1 un @ $4,100 [Carulla]', price: 2870 }, // ✅ Sin peso es correcto (1/u)
             {
               description:
                 'Limon Tahiti A G — 1.590 kg @ $1.680/kg (antes $2.400/kg, -30%) [Carulla]',
               price: 2671
             },
-            { description: 'Rabano Rojo [Carulla]', price: 4662 }, // ✅ Sin peso es correcto (1/u)
+            { description: 'Rabano Rojo — 1 un @ $6,660 [Carulla]', price: 4662 }, // ✅ Sin peso es correcto (1/u)
             {
               description: 'Zanahoria — 0.780 kg @ $1.764/kg (antes $2.520/kg, -30%) [Carulla]',
               price: 1376
@@ -353,22 +353,22 @@ describe('extractProducts', () => {
         3649296 Choco Cookies Ch	6. 140A
         Total Item :9`;
           expect(extractProducts(ocr)).toEqual([
-            { description: 'Sixpack Cola&Pol [Carulla]', price: 10625 },
-            { description: 'Galletas Antojos [Carulla]', price: 3132 },
-            { description: 'Galletas Antojos [Carulla]', price: 3132 },
+            { description: 'Sixpack Cola&Pol — 1 un @ $12,500 [Carulla]', price: 10625 },
+            { description: 'Galletas Antojos — 1 un @ $7,830 [Carulla]', price: 3132 },
+            { description: 'Galletas Antojos — 1 un @ $7,830 [Carulla]', price: 3132 },
             {
               description:
-                'Pechuga Blanca M — 1.085 kg @ $16.915/kg (antes $19.900/kg, -15%) [Carulla]',
+                'Pechuga Blanca — 1.085 kg @ $16.915/kg (antes $19.900/kg, -15%) [Carulla]',
               price: 18353
             },
-            { description: 'Galletas Yogurt [Carulla]', price: 4640 },
+            { description: 'Galletas Yogurt — 1 un @ $11,600 [Carulla]', price: 4640 },
             { description: 'Salsa Sabor Ajo [Carulla]', price: 7210 },
             {
               description: 'Cebolla Blanca — 0.555 kg @ $6.280/kg [Carulla]',
               price: 3485
             },
-            { description: 'Chorizo Santarro [Carulla]', price: 4620 },
-            { description: 'Choco Cookies Ch [Carulla]', price: 6140 }
+            { description: 'Chorizo Santarro — 1 un @ $6,600 [Carulla]', price: 4620 },
+            { description: 'Choco Cookies Ch — 1 un @ $15,350 [Carulla]', price: 6140 }
           ]);
         });
       });
@@ -398,7 +398,7 @@ describe('extractProducts', () => {
             },
             {
               description:
-                'Pechuga Blanca M — 1.140 kg @ $15.920/kg (antes $19.900/kg, -20%) [Carulla]',
+                'Pechuga Blanca — 1.140 kg @ $15.920/kg (antes $19.900/kg, -20%) [Carulla]',
               price: 18149
             },
             {
@@ -430,7 +430,7 @@ describe('extractProducts', () => {
           expect(extractProducts(ocr)).toEqual([
             {
               description:
-                'Pechuga Blanca M — 1.990 kg @ $15.920/kg (antes $19.900/kg, -20%) [Carulla]',
+                'Pechuga Blanca — 1.990 kg @ $15.920/kg (antes $19.900/kg, -20%) [Carulla]',
               price: 31581
             },
             {
@@ -522,12 +522,12 @@ describe('extractProducts', () => {
         Total Item :11
         `;
           expect(extractProducts(ocr)).toEqual([
-            { description: 'Sixpack Cola&Pol [Carulla]', price: 9375 },
+            { description: 'Sixpack Cola&Pol — 1 un @ $12,500 [Carulla]', price: 9375 },
             // Café Liofilizado omitido: sin número de ítem al inicio de la línea de unidad
-            { description: 'Desod Barra Derm [Carulla]', price: 26280 },
-            { description: 'Desod Barra Derm [Carulla]', price: 26280 },
-            { description: 'Cepillo De Dient [Carulla]', price: 26010 },
-            { description: 'Crema Dental Tot [Carulla]', price: 29640 },
+            { description: 'Desod Barra Derm — 1 un @ $32,850 [Carulla]', price: 26280 },
+            { description: 'Desod Barra Derm — 1 un @ $32,850 [Carulla]', price: 26280 },
+            { description: 'Cepillo De Dient — 1 un @ $43,350 [Carulla]', price: 26010 },
+            { description: 'Crema Dental Tot — 1 un @ $45,600 [Carulla]', price: 29640 },
             // Enjuague Bucal T omitido: "0" al final de la línea del producto es ambiguo/ruido OCR
             // BUG A: PRIORIDAD 1 captura "V. Ahorro\t31.027" como ahorro en vez de precio
             {

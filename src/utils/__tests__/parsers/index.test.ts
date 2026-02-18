@@ -88,8 +88,7 @@ describe('extractProducts', () => {
         Total Item :6`;
         expect(extractProducts(ocr)).toEqual([
           {
-            description:
-              'Habichuela A Gra — 0.345 kg @ $7.335/kg (antes $10.480/kg, -30%) [Carulla]',
+            description: 'Habichuela — 0.345 kg @ $7.335/kg (antes $10.480/kg, -30%) [Carulla]',
             price: 2531
           },
           { description: 'Champi#%N Tajado [Carulla]', price: 5250 },
@@ -98,8 +97,7 @@ describe('extractProducts', () => {
             price: 1350
           },
           {
-            description:
-              'Zanahoria A Gran — 1.065 kg @ $3.990/kg (antes $5.700/kg, -30%) [Carulla]',
+            description: 'Zanahoria — 1.065 kg @ $3.990/kg (antes $5.700/kg, -30%) [Carulla]',
             price: 4250
           },
           {
@@ -203,8 +201,7 @@ describe('extractProducts', () => {
               price: 3600
             },
             {
-              description:
-                'Zanahoria A Gran — 0.860 kg @ $2.787/kg (antes $3.980/kg, -30%) [Carulla]',
+              description: 'Zanahoria — 0.860 kg @ $2.787/kg (antes $3.980/kg, -30%) [Carulla]',
               price: 2397
             },
             {
@@ -215,6 +212,58 @@ describe('extractProducts', () => {
             {
               description: 'Yuca Fresca — 1.795 kg @ $3.360/kg (antes $4.800/kg, -30%) [Carulla]',
               price: 6032
+            }
+          ]);
+        });
+      });
+
+      describe('PRIORIDAD 1B — KGM con código PLU en misma línea de unidad', () => {
+        it('handles KGM line with PLU code at end, desc+price in next line (case 20)', () => {
+          const ocr = `PLU	DETALLE
+          PRECIO
+          1 0.680/KGM x 7.580 V. Ahorro 1.546	1137
+          HABICHUELA A GRA	3.608
+          20.475/KGM x 5.720 V. Ahorro 815
+          1201	Pepino Calabacin
+          1.902
+          3	0.370/KGM x 7.800 V. Ahorro 866
+          1278	Brocoli	2.020
+          40.460/KGM x 8.500 V. Ahorro 1.173
+          1188	Pepino Zukini	2.737
+          5 1/u x 4.100 V. Ahorro 1.230
+          262223 LECHUGA HIDROP.	2.870
+          6 1.590/KGM x 2.400 V. Ahorro 1.145
+          1055	Limon Tahiti A G	2.671
+          7 1/u x 6.660 V. Ahorro 1.998
+          711587 RABANO ROJO	4.662
+          8 0.780/KGM x 2.520 V. Ahorro 590
+          1141	Zanahoria A Gran	1.376
+          Total Item :8`;
+          expect(extractProducts(ocr)).toEqual([
+            {
+              description: 'Habichuela — 0.680 kg @ $5.306/kg (antes $7.580/kg, -30%) [Carulla]',
+              price: 3608
+            },
+            {
+              description:
+                'Pepino Calabacin — 20.475 kg @ $5.680/kg (antes $5.720/kg, -1%) [Carulla]',
+              price: 1902
+            },
+            {
+              description: 'Brocoli — 0.370 kg @ $5.459/kg (antes $7.800/kg, -30%) [Carulla]',
+              price: 2020
+            },
+            { description: 'Pepino Zukini — 40.460 kg @ $8.471/kg [Carulla]', price: 2737 },
+            { description: 'Lechuga Crespa [Carulla]', price: 2870 }, // ✅ Sin peso es correcto (1/u)
+            {
+              description:
+                'Limon Tahiti A G — 1.590 kg @ $1.680/kg (antes $2.400/kg, -30%) [Carulla]',
+              price: 2671
+            },
+            { description: 'Rabano Rojo [Carulla]', price: 4662 }, // ✅ Sin peso es correcto (1/u)
+            {
+              description: 'Zanahoria — 0.780 kg @ $1.764/kg (antes $2.520/kg, -30%) [Carulla]',
+              price: 1376
             }
           ]);
         });
@@ -253,7 +302,7 @@ describe('extractProducts', () => {
               price: 3391
             },
             {
-              description: 'Zanahoria A Gran — 1.345 kg @ $2.720/kg [Carulla]',
+              description: 'Zanahoria — 1.345 kg @ $2.720/kg [Carulla]',
               price: 3658
             },
             { description: 'Panela 4 Und [Carulla]', price: 6770 }

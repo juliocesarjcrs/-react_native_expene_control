@@ -205,6 +205,31 @@ function processCarullaCase6(lines: string[], joined: string, receiptType: Recei
       }
     }
 
+    // PRIORIDAD 1B: KGM con ahorro + código PLU en la misma línea,
+    // seguido de descripción + precio en línea siguiente.
+    // Formato: "1 0.680/KGM x 7.580 V. Ahorro 1.546 1137"
+    //           "HABICHUELA A GRA    3.608"
+    const weightWithPLU = line.match(
+      /^\d+\s+([\d.]+\/KGM)\s+[x*]\s+([\d.,]+)\s+V\.\s*Ahorro\s+([\d.,]+)\s+(\d{4,})\s*$/i
+    );
+    if (weightWithPLU && i + 1 < lines.length) {
+      const nextLine = lines[i + 1].trim();
+      // nextLine: descripción + precio (sin código PLU al inicio)
+      const descMatch = nextLine.match(
+        /^([A-Za-z][A-Za-z\s.#%&\/\-]+?)\s+(\d{1,3}[.,]\s?\d{3})[A-Za-z]?$/i
+      );
+
+      if (descMatch) {
+        const description = formatDescription(descMatch[1].trim());
+        const price = cleanPrice(descMatch[2].replace(/\s/g, ''));
+        const descWithWeight = processWeightAndSavings(line, description, receiptType);
+
+        products.push({ description: descWithWeight, price });
+        i += 2;
+        continue;
+      }
+    }
+
     // PRIORIDAD 2: Línea de peso CON precio al final, producto en siguiente línea.
     // [\s\d.,]*? (lazy) consume flexiblemente el whitespace/valor de ahorro entre
     // "V. Ahorro" y el precio final (maneja tabs, comas en ahorro, o ahorro ausente).

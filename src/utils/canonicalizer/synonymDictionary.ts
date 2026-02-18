@@ -17,7 +17,10 @@ export const SYNONYM_GROUPS: [string, string[]][] = [
   ['Pechuga', ['pechuga a granel', 'pechuga blanca']],
   ['Tomate Chonto', ['tomate chonto (a', 'tomate chonto (aa', 'tomate chonto', 'Tomate Chonto A']],
   ['Chocolo Tierno', ['Chocolo Tiernom']],
-  ['Cebolla Blanca', ['Cebolla Blanca S']]
+  ['Cebolla Blanca', ['Cebolla Blanca S']],
+  ['Zanahoria', ['Zanahoria A Gran']],
+  ['Lechuga Crespa', ['Lechuga Hidrop']],
+  ['Habichuela', ['Habichuela A Gra']]
 
   // Agrega según veas en tus datos. El diccionario crece con el uso.
 ];

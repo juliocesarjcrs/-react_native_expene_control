@@ -137,6 +137,10 @@ export function processWeightAndSavings(
   productName: string,
   receiptType: ReceiptType
 ): string {
+  // 🔒 Blindaje: solo procesar si realmente es KGM
+  if (!/\/KGM/i.test(line)) {
+    return productName;
+  }
   const kgmMatch = line.match(REGEX_PATTERNS.KGM_PATTERN);
 
   if (kgmMatch) {

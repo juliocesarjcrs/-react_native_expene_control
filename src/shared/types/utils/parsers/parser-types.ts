@@ -111,7 +111,7 @@ export const FORMAT_CONSTANTS = {
  */
 export const REGEX_PATTERNS = {
   /** Patrón para productos con peso y descuento (Carulla/Éxito) */
-  KGM_PATTERN: /(\d+(?:\.\s?\d+)?)\/(KGM)\s+[x*]\s+([\d.,]+)\s+V\.\s+Ahorro\s+([\d.,]+)/i,
+  KGM_PATTERN: /(\d+(?:\.\s?\d+)?)\/(KGM)\s+\S+\s+([\d.,]+)\s+V\.\s+Ahorro\s+([\d.,]+)/i,
 
   /** Patrón para productos con peso simple */
   SIMPLE_KG_PATTERN: /(\d+\.?\d*)\s*kg\s*a\s*\$?([\d.,]+)\s*\/kg/i,

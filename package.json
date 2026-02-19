@@ -9,6 +9,7 @@
     "clear:cache": "expo start -c",
     "lint": "expo lint",
     "test": "jest --watchAll",
+    "test:cov": "jest --coverage",
     "format": "prettier --write ."
   },
   "dependencies": {

@@ -10,17 +10,23 @@ export const SYNONYM_GROUPS: [string, string[]][] = [
   ['Ahuyama', ['auyama', 'zapallo', 'calabaza']],
   ['Patilla', ['sandía', 'sandia', 'patilla']],
   ['Cilantro', ['cilantra', 'culantro']], // "cilantra" aparece en tus datos reales
-  ['Limón Tahití', ['limon tahiti', 'limhn tahity', 'liman']], // "limhn" es OCR corrupto de "limón"
+  ['Limón Tahití', ['limon tahiti', 'limhn tahity', 'liman', 'Limon Tahiti A G']], // "limhn" es OCR corrupto de "limón"
   ['Pimentón', ['pimenton', 'pimiento']],
   ['Pepino Cohombro', ['pepino cohombro', 'pepino']], // distinto de pepino calabacín
   ['Pepino Res', ['pepino rez', 'pepino res']], // "rez" → OCR corrupto de "res"
-  ['Pechuga Blanca', ['pechuga a granel', 'pechuga blanca', 'Pechuga Blanca M']],
+  [
+    'Pechuga Blanca',
+    ['pechuga a granel', 'pechuga blanca', 'Pechuga Blanca M', 'Pechusa Blanca M']
+  ],
   ['Tomate Chonto', ['tomate chonto (a', 'tomate chonto (aa', 'tomate chonto', 'Tomate Chonto A']],
   ['Chocolo Tierno', ['Chocolo Tiernom']],
   ['Cebolla Blanca', ['Cebolla Blanca S']],
   ['Zanahoria', ['Zanahoria A Gran']],
   ['Lechuga Crespa', ['Lechuga Hidrop']],
-  ['Habichuela', ['Habichuela A Gra']]
+  ['Habichuela', ['Habichuela A Gra']],
+  ['Trucha', ['Trucha Xkg El Mar']],
+  ['Tilapia', ['Tilapia Rio Claro']],
+  ['Muslo', ['Muslo A Granel']]
 
   // Agrega según veas en tus datos. El diccionario crece con el uso.
 ];

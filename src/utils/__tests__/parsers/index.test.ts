@@ -160,6 +160,30 @@ describe('extractProducts', () => {
     // Formato: varía entre sub-patrones internos (PRIORIDAD 1–4 + principal)
     // ─────────────────────────────────────────────────────────────────────────
     describe('processCarullaCase6 — PLU DETALLE PRECIO con ítems KGM', () => {
+      describe('PRIORIDAD 0 — KGM sin número de ítem, OCR con baja calidad', () => {
+        it('handles KGM line without item number, with internal spaces and × symbol (case 21)', () => {
+          const ocr = `
+          PLU	DETALLE	PRECIO
+          0. 870/KGM	× 20.900 V. Ahorro 3.637
+          36	18617 Pechusa Blanca M	14,546
+          2	2 1/u x 5.950 V. Ahorro	298
+          942160 Panela 4 Und	5.652
+          Total Item :2
+          `;
+
+          expect(extractProducts(ocr)).toEqual([
+            {
+              description:
+                'Pechuga Blanca — 0.870 kg @ $16.720/kg (antes $20.900/kg, -20%) [Carulla]',
+              price: 14546
+            },
+            {
+              description: 'Panela 4 Und — 1 un @ $5,950 [Carulla]',
+              price: 5652
+            }
+          ]);
+        });
+      });
       // PRIORIDAD 1: KGM + ahorro separado por espacio → precio en línea del producto
       describe('PRIORIDAD 1 — KGM con ahorro en espacio, precio en línea de producto', () => {
         it('parses 11 KGM products with discount — price always in product line (original case 4)', () => {
@@ -256,8 +280,7 @@ describe('extractProducts', () => {
             { description: 'Pepino Zukini — 40.460 kg @ $8.471/kg [Carulla]', price: 2737 },
             { description: 'Lechuga Crespa — 1 un @ $4,100 [Carulla]', price: 2870 }, // ✅ Sin peso es correcto (1/u)
             {
-              description:
-                'Limon Tahiti A G — 1.590 kg @ $1.680/kg (antes $2.400/kg, -30%) [Carulla]',
+              description: 'Limón Tahití — 1.590 kg @ $1.680/kg (antes $2.400/kg, -30%) [Carulla]',
               price: 2671
             },
             { description: 'Rabano Rojo — 1 un @ $6,660 [Carulla]', price: 4662 }, // ✅ Sin peso es correcto (1/u)
@@ -408,7 +431,7 @@ describe('extractProducts', () => {
             },
             { description: 'Estuche Surtido [Carulla]', price: 19900 },
             {
-              description: 'Limon Tahiti A G — 0.905 kg @ $2.400/kg [Carulla]',
+              description: 'Limón Tahití — 0.905 kg @ $2.400/kg [Carulla]',
               price: 2172
             }
             // Pecho Corriente omitido: precio en línea de unidad sin producto en siguiente → no parseable
@@ -436,6 +459,10 @@ describe('extractProducts', () => {
             {
               description: 'Pepino Res — 0.590 kg @ $20.559/kg (antes $21.640/kg, -5%) [Carulla]',
               price: 12130
+            },
+            {
+              description: 'Pepino Res — 0.500 kg @ $20.558/kg (antes $21.640/kg, -5%) [Carulla]',
+              price: 1347
             },
             { description: 'Pecho Corriente [Carulla]', price: 25591 }
           ]);
@@ -523,6 +550,8 @@ describe('extractProducts', () => {
         `;
           expect(extractProducts(ocr)).toEqual([
             { description: 'Sixpack Cola&Pol — 1 un @ $12,500 [Carulla]', price: 9375 },
+            { description: 'Cafãº Liofilizado — 1 un @ $31,000 [Carulla]', price: 31000 },
+
             // Café Liofilizado omitido: sin número de ítem al inicio de la línea de unidad
             { description: 'Desod Barra Derm — 1 un @ $32,850 [Carulla]', price: 26280 },
             { description: 'Desod Barra Derm — 1 un @ $32,850 [Carulla]', price: 26280 },
@@ -792,37 +821,39 @@ describe('extractProducts', () => {
     });
   });
   describe('Super Carnes JH receipts', () => {
-    it('should parse products with weight from Super Carnes JH (case 1)', () => {
+    // ─── Formato A: CODIGO PRODUCTO TOTAL|IVA + línea KGS X $precio ─────────────
+
+    it('parses kg products with price-per-kg line — basic case (format A, case 1)', () => {
       const ocr = `DantUIN. CKA 29 #33-40
-        CODIGO	PRODUCTO	TOTAL | IVA
-        4040 Tilapia rio claro	16.435 | 0
-        0,865 KGS X $19.000
-        3003 Muslo A Granel	11.618 | 0
-        1,570 KGS X	$7.400
-        TOTAL KILOS: 2.435
-        TOTAL UNIDADES: 0
-        SUBTOTAL	$28.053
-        $0
-        DESCUENTO
-        $0
-        IVA
-        $28.053
-        TOTAL`;
+      CODIGO	PRODUCTO	TOTAL | IVA
+      4040 Tilapia rio claro	16.435 | 0
+      0,865 KGS X $19.000
+      3003 Muslo A Granel	11.618 | 0
+      1,570 KGS X	$7.400
+      TOTAL KILOS: 2.435
+      TOTAL UNIDADES: 0
+      SUBTOTAL	$28.053
+      $0
+      DESCUENTO
+      $0
+      IVA
+      $28.053
+      TOTAL`;
 
       expect(extractProducts(ocr)).toEqual([
-        { description: 'Tilapia Rio Claro — 0.865 kg @ $19.000/kg [SuperCarnesJH]', price: 16435 },
-        { description: 'Muslo A Granel — 1.57 kg @ $7.400/kg [SuperCarnesJH]', price: 11618 }
+        { description: 'Tilapia — 0.865 kg @ $19.000/kg [SuperCarnesJH]', price: 16435 },
+        { description: 'Muslo — 1.57 kg @ $7.400/kg [SuperCarnesJH]', price: 11618 }
       ]);
     });
 
-    it('should handle Super Carnes JH with gramos instead of kilos (case 2)', () => {
+    it('converts grams to kg when unit is GRS/GRAMOS (format A, case 2)', () => {
       const ocr = `CODIGO	PRODUCTO	TOTAL | IVA
-        5020 Carne Molida Premium	8.500 | 0
-        500 GRS X $17.000
-        2010 Pechuga Sin Hueso	12.750 | 0
-        750 GRAMOS X $17.000
-        TOTAL KILOS: 1.250
-        TOTAL UNIDADES: 0`;
+      5020 Carne Molida Premium	8.500 | 0
+      500 GRS X $17.000
+      2010 Pechuga Sin Hueso	12.750 | 0
+      750 GRAMOS X $17.000
+      TOTAL KILOS: 1.250
+      TOTAL UNIDADES: 0`;
 
       expect(extractProducts(ocr)).toEqual([
         { description: 'Carne Molida Premium — 0.5 kg @ $17.000/kg [SuperCarnesJH]', price: 8500 },
@@ -830,13 +861,13 @@ describe('extractProducts', () => {
       ]);
     });
 
-    it('should handle Super Carnes JH with OCR errors (case 3)', () => {
+    it('handles OCR artifacts in price separators — dot vs comma (format A, case 3)', () => {
       const ocr = `CODIGO	PRODUCTO	TOTAL | IVA
-        4040 Tilapia rio claro	16435 | 0
-        0.865 KG X $19000
-        3003 Muslo A Granel	11618 | 0
-        1.570 KILOS X 7400
-        TOTAL KILOS: 2.435`;
+      4040 Tilapia rio claro	16435 | 0
+      0.865 KG X $19000
+      3003 Muslo A Granel	11618 | 0
+      1.570 KILOS X 7400
+      TOTAL KILOS: 2.435`;
 
       expect(extractProducts(ocr)).toEqual([
         {
@@ -850,50 +881,70 @@ describe('extractProducts', () => {
       ]);
     });
 
-    it('should handle Super Carnes JH without total price on same line (case 4)', () => {
+    it('reads total price from line below when absent on product line (format A, case 4)', () => {
       const ocr = `CODIGO	PRODUCTO
-        4040 Tilapia rio claro
-        0,865 KGS X $19.000
-        16.435
-        3003 Muslo A Granel
-        1,570 KGS X $7.400
-        11.618
-        TOTAL KILOS: 2.435`;
+      4040 Tilapia rio claro
+      0,865 KGS X $19.000
+      16.435
+      3003 Muslo A Granel
+      1,570 KGS X $7.400
+      11.618
+      TOTAL KILOS: 2.435`;
 
       expect(extractProducts(ocr)).toEqual([
-        { description: 'Tilapia Rio Claro — 0.865 kg @ $19.000/kg [SuperCarnesJH]', price: 16435 },
-        { description: 'Muslo A Granel — 1.57 kg @ $7.400/kg [SuperCarnesJH]', price: 11618 }
+        { description: 'Tilapia — 0.865 kg @ $19.000/kg [SuperCarnesJH]', price: 16435 },
+        { description: 'Muslo — 1.57 kg @ $7.400/kg [SuperCarnesJH]', price: 11618 }
       ]);
     });
 
-    it('should limit products by TOTAL UNIDADES when present (case 5)', () => {
+    it('truncates list to TOTAL UNIDADES when parser detects more items (format A, case 5)', () => {
       const ocr = `CODIGO	PRODUCTO	TOTAL | IVA
-        4040 Tilapia rio claro	16.435 | 0
-        0,865 KGS X $19.000
-        3003 Muslo A Granel	11.618 | 0
-        1,570 KGS X	$7.400
-        5050 Extra Product	5.000 | 0
-        0.500 KGS X $10.000
-        TOTAL KILOS: 2.935
-        TOTAL UNIDADES: 2`;
+      4040 Tilapia rio claro	16.435 | 0
+      0,865 KGS X $19.000
+      3003 Muslo A Granel	11.618 | 0
+      1,570 KGS X	$7.400
+      5050 Extra Product	5.000 | 0
+      0.500 KGS X $10.000
+      TOTAL KILOS: 2.935
+      TOTAL UNIDADES: 2`;
 
       expect(extractProducts(ocr)).toEqual([
-        { description: 'Tilapia Rio Claro — 0.865 kg @ $19.000/kg [SuperCarnesJH]', price: 16435 },
-        { description: 'Muslo A Granel — 1.57 kg @ $7.400/kg [SuperCarnesJH]', price: 11618 }
+        { description: 'Tilapia — 0.865 kg @ $19.000/kg [SuperCarnesJH]', price: 16435 },
+        { description: 'Muslo — 1.57 kg @ $7.400/kg [SuperCarnesJH]', price: 11618 }
       ]);
     });
 
-    it('should handle Super Carnes JH with mixed spacing (case 6)', () => {
+    it('handles collapsed spacing and missing dollar sign on price-per-kg line (format A, case 6)', () => {
       const ocr = `CODIGO PRODUCTO TOTAL|IVA
-        4040 Tilapia rio claro 16.435|0
-        0,865KGS X$19.000
-        3003 Muslo A Granel 11.618|0
-        1,570 KGS X $7.400
-        TOTAL KILOS:2.435`;
+      4040 Tilapia rio claro 16.435|0
+      0,865KGS X$19.000
+      3003 Muslo A Granel 11.618|0
+      1,570 KGS X $7.400
+      TOTAL KILOS:2.435`;
 
       expect(extractProducts(ocr)).toEqual([
-        { description: 'Tilapia Rio Claro — 0.865 kg @ $19.000/kg [SuperCarnesJH]', price: 16435 },
-        { description: 'Muslo A Granel — 1.57 kg @ $7.400/kg [SuperCarnesJH]', price: 11618 }
+        { description: 'Tilapia — 0.865 kg @ $19.000/kg [SuperCarnesJH]', price: 16435 },
+        { description: 'Muslo — 1.57 kg @ $7.400/kg [SuperCarnesJH]', price: 11618 }
+      ]);
+    });
+
+    // ─── Formato B: ítem secuencial + línea cantidad precioKg total ─────────────
+
+    it('parses sequential-item format with ART kg $ header (format B, case 7)', () => {
+      const ocr = `SUPER CARNES JH
+      MALL POBLADO
+      18/FEB/26 13:53	NT : 000121
+      PEPE
+      ART	kg	$
+      1	TILAPIA RIO CLARO
+      1,655	20000	33100
+      2 TRUCHA XKG EL	MAR
+      0,520	27000	14040
+      TOTAL 2)	47140`;
+
+      expect(extractProducts(ocr)).toEqual([
+        { description: 'Tilapia — 1.655 kg @ $20.000/kg [SuperCarnesJH]', price: 33100 },
+        { description: 'Trucha — 0.52 kg @ $27.000/kg [SuperCarnesJH]', price: 14040 }
       ]);
     });
   });

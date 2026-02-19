@@ -1,147 +1,185 @@
-import { Product } from '~/shared/types/components/receipt-scanner.type';
+import { Product, ReceiptType } from '~/shared/types/components/receipt-scanner.type';
 import { formatDescription } from './formatDescription';
+import { canonicalize } from '../canonicalizer';
 
-// Patrones para detectar productos y precios
+const RECEIPT_TYPE: ReceiptType = 'SuperCarnesJH';
+
+// ─── Formato A: CODIGO PRODUCTO TOTAL|IVA + línea KGS X $precio ──────────────
 const PRODUCT_WITH_PRICE_PATTERN = /(\d{4})\s+(.+?)\s+(\d{1,3}(?:[.,]\d{3})+)/;
 const WEIGHT_PATTERN = /([\d.,]+)\s*(KGS?|KILOS?|GRS?|GRAMOS?)\s*[Xx×]\s*\$?\s*([\d.,]+)/i;
 const SIMPLE_PRODUCT_PATTERN = /(\d{4})\s+(.+)/;
 
-export function parseSuperCarnesJH(lines: string[], joined: string): Product[] {
-  console.log('🥩 Procesando como tipo Super Carnes JH...');
+// ─── Formato B: N PRODUCTO (secuencial) + línea cantidad precioKg total ───────
+// Línea de ítem: número secuencial + nombre (puede dividirse en varias líneas por OCR)
+const SEQUENTIAL_ITEM_PATTERN = /^(\d{1,2})\s+(.+)$/;
+// Línea de datos: cantidad,precioKg,total (sin KGS/X)
+const DATA_LINE_PATTERN = /^(\d+[,.]?\d*)\s+([\d.,]+)\s+([\d.,]+)$/;
 
+// ─── Detección de formato ─────────────────────────────────────────────────────
+
+function isFormatoB(joined: string): boolean {
+  return /ART\s+kg\s+\$/i.test(joined) || /PEPE\s+ART/i.test(joined);
+}
+
+// ─── Helpers ─────────────────────────────────────────────────────────────────
+
+function parseColombianNumber(raw: string): number {
+  return parseInt(raw.replace(/[.,]/g, ''), 10);
+}
+
+function parseDecimal(raw: string): number {
+  // Formato colombiano usa coma como decimal: "1,655" → 1.655
+  return parseFloat(raw.replace(',', '.'));
+}
+
+function formatKgDescription(productName: string, quantity: number, pricePerKg: number): string {
+  const formattedName = formatDescription(productName);
+  // Eliminar ceros finales pero preservar al menos un decimal
+  const formattedQty = quantity
+    .toFixed(3)
+    .replace(/(\.\d*?)0+$/, '$1')
+    .replace(/\.$/, '');
+  const formattedPrice = pricePerKg.toLocaleString('es-CO');
+  return `${formattedName} — ${formattedQty} kg @ $${formattedPrice}/kg [${RECEIPT_TYPE}]`;
+}
+
+// ─── Procesadores por formato ─────────────────────────────────────────────────
+
+function processFormatoA(lines: string[]): Product[] {
   const products: Product[] = [];
 
   for (let i = 0; i < lines.length; i++) {
     const line = lines[i].trim();
 
-    // Intentar encontrar línea de producto (CODIGO PRODUCTO TOTAL)
     const productMatch = line.match(PRODUCT_WITH_PRICE_PATTERN);
 
     if (productMatch) {
       const productName = productMatch[2].trim();
-      const totalPrice = parseInt(productMatch[3].replace(/[.,]/g, ''), 10);
+      const totalPrice = parseColombianNumber(productMatch[3]);
 
-      // Buscar información de peso en la siguiente línea
       if (i + 1 < lines.length) {
         const nextLine = lines[i + 1].trim();
         const weightMatch = nextLine.match(WEIGHT_PATTERN);
 
         if (weightMatch) {
-          const quantity = parseFloat(weightMatch[1].replace(',', '.'));
+          const rawQty = parseFloat(weightMatch[1].replace(',', '.'));
           const unit = weightMatch[2].toUpperCase();
-          const pricePerUnit = parseInt(weightMatch[3].replace(/[.,]/g, ''), 10);
+          const pricePerUnit = parseColombianNumber(weightMatch[3]);
 
-          // Normalizar unidad (convertir gramos a kg si es necesario)
-          let normalizedQuantity = quantity;
-          let normalizedUnit = 'kg';
-
-          if (unit.startsWith('GR')) {
-            normalizedQuantity = quantity / 1000;
-            normalizedUnit = 'kg';
-          } else if (unit.startsWith('KG') || unit.startsWith('KILO')) {
-            normalizedQuantity = quantity;
-            normalizedUnit = 'kg';
-          }
-
-          // Formatear descripción con toda la información
-          const description = formatProductDescription(
-            productName,
-            normalizedQuantity,
-            normalizedUnit,
-            pricePerUnit
-          );
+          const quantity = unit.startsWith('GR') ? rawQty / 1000 : rawQty;
 
           products.push({
-            description,
+            description: formatKgDescription(productName, quantity, pricePerUnit),
             price: totalPrice
           });
 
-          i++; // Saltar la línea de peso ya procesada
+          i++;
           continue;
         }
       }
 
-      // Si no hay información de peso, agregar solo el producto básico
       products.push({
         description: formatDescription(productName),
         price: totalPrice
       });
-    } else {
-      // Intentar patrón simple si no coincide con el completo
-      const simpleMatch = line.match(SIMPLE_PRODUCT_PATTERN);
+      continue;
+    }
 
-      if (simpleMatch && i + 1 < lines.length) {
-        const productName = simpleMatch[2].trim();
-        const nextLine = lines[i + 1].trim();
+    // Patrón simple: código + nombre sin precio en la misma línea
+    const simpleMatch = line.match(SIMPLE_PRODUCT_PATTERN);
 
-        // Verificar si la siguiente línea tiene peso y precio
-        const weightMatch = nextLine.match(WEIGHT_PATTERN);
+    if (simpleMatch && i + 1 < lines.length) {
+      const productName = simpleMatch[2].trim();
+      const nextLine = lines[i + 1].trim();
+      const weightMatch = nextLine.match(WEIGHT_PATTERN);
 
-        if (weightMatch) {
-          const quantity = parseFloat(weightMatch[1].replace(',', '.'));
-          const unit = weightMatch[2].toUpperCase();
-          const pricePerUnit = parseInt(weightMatch[3].replace(/[.,]/g, ''), 10);
+      if (weightMatch) {
+        const rawQty = parseFloat(weightMatch[1].replace(',', '.'));
+        const unit = weightMatch[2].toUpperCase();
+        const pricePerUnit = parseColombianNumber(weightMatch[3]);
 
-          // Calcular precio total
-          let normalizedQuantity = quantity;
-          if (unit.startsWith('GR')) {
-            normalizedQuantity = quantity / 1000;
-          }
+        const quantity = unit.startsWith('GR') ? rawQty / 1000 : rawQty;
+        const totalPrice = Math.round(quantity * pricePerUnit);
 
-          const totalPrice = Math.round(normalizedQuantity * pricePerUnit);
+        products.push({
+          description: formatKgDescription(productName, quantity, pricePerUnit),
+          price: totalPrice
+        });
 
-          // Normalizar unidad
-          const normalizedUnit = unit.startsWith('GR') ? 'kg' : 'kg';
-
-          const description = formatProductDescription(
-            productName,
-            normalizedQuantity,
-            normalizedUnit,
-            pricePerUnit
-          );
-
-          products.push({
-            description,
-            price: totalPrice
-          });
-
-          i++; // Saltar la línea de peso ya procesada
-        }
+        i++;
       }
     }
   }
 
-  // Limitar productos según TOTAL UNIDADES si está disponible
-  return limitProductsByTotal(products, joined);
+  return products;
 }
 
 /**
- * Formatea la descripción del producto incluyendo peso y precio por unidad
- * Formato: "Producto — X kg @ $Y/kg [SuperCarnesJH]"
+ * Formato B:
+ *   1  TILAPIA RIO CLARO         ← ítem secuencial + nombre
+ *   1,655  20000  33100           ← cantidad  precioKg  total
+ *
+ * El nombre puede fragmentarse en dos líneas por el OCR:
+ *   2 TRUCHA XKG EL  MAR         ← nombre partido en línea de ítem
  */
-function formatProductDescription(
-  productName: string,
-  quantity: number,
-  unit: string,
-  pricePerUnit: number
-): string {
-  const formattedName = formatDescription(productName);
-  const formattedQuantity = quantity.toFixed(3).replace(/\.?0+$/, '');
-  const formattedPrice = pricePerUnit.toLocaleString('es-CO');
+function processFormatoB(lines: string[]): Product[] {
+  const products: Product[] = [];
+  let i = 0;
 
-  return `${formattedName} — ${formattedQuantity} ${unit} @ $${formattedPrice}/${unit} [SuperCarnesJH]`;
+  while (i < lines.length) {
+    const line = lines[i].trim();
+    const itemMatch = line.match(SEQUENTIAL_ITEM_PATTERN);
+
+    if (itemMatch) {
+      let productName = itemMatch[2].trim();
+
+      // Mirar si la siguiente línea es continuación del nombre o datos
+      let dataLine = '';
+
+      if (i + 1 < lines.length) {
+        const candidate = lines[i + 1].trim();
+
+        if (DATA_LINE_PATTERN.test(candidate)) {
+          dataLine = candidate;
+        } else if (i + 2 < lines.length && DATA_LINE_PATTERN.test(lines[i + 2].trim())) {
+          // El nombre se partió en dos líneas
+          productName = `${productName} ${candidate}`.trim();
+          dataLine = lines[i + 2].trim();
+          i++; // consumir la línea extra del nombre
+        }
+      }
+
+      if (dataLine) {
+        const dataMatch = dataLine.match(DATA_LINE_PATTERN)!;
+        const quantity = parseDecimal(dataMatch[1]);
+        const pricePerKg = parseColombianNumber(dataMatch[2]);
+        const totalPrice = parseColombianNumber(dataMatch[3]);
+
+        products.push({
+          description: formatKgDescription(productName, quantity, pricePerKg),
+          price: totalPrice
+        });
+
+        i += 2; // consumir línea de ítem + línea de datos
+        continue;
+      }
+    }
+
+    i++;
+  }
+
+  return products;
 }
 
-/**
- * Limita los productos según el total indicado en la factura
- */
+// ─── Limitación por total declarado ──────────────────────────────────────────
+
 function limitProductsByTotal(products: Product[], joined: string): Product[] {
-  // Buscar "TOTAL UNIDADES" o cantidad total de productos
-  const totalMatch = joined.match(/TOTAL\s+(?:UNIDADES|ITEMS?)\s*[:\s]+\s*(\d+)/i);
+  // Soporta: "TOTAL 2)", "TOTAL UNIDADES: 2", "TOTAL ITEMS 2", etc.
+  const totalMatch = joined.match(/TOTAL\s*(?:UNIDADES|ITEMS?)?\s*[:\s)]*\s*(\d+)\s*[):]?/i);
 
   if (totalMatch) {
     const totalProducts = parseInt(totalMatch[1], 10);
-    if (products.length > totalProducts && totalProducts > 0) {
+    if (totalProducts > 0 && products.length > totalProducts) {
       console.log(`🔍 Limitando a ${totalProducts} productos según factura`);
       return products.slice(0, totalProducts);
     }
@@ -150,14 +188,31 @@ function limitProductsByTotal(products: Product[], joined: string): Product[] {
   return products;
 }
 
-/**
- * Detecta si el OCR corresponde a una factura de Super Carnes JH
- */
+// ─── Entrada pública ──────────────────────────────────────────────────────────
+
+export function parseSuperCarnesJH(
+  lines: string[],
+  joined: string,
+  existingCanonicals: string[] = []
+): Product[] {
+  console.log('🥩 Procesando como tipo Super Carnes JH...');
+
+  const raw = isFormatoB(joined) ? processFormatoB(lines) : processFormatoA(lines);
+
+  const limited = limitProductsByTotal(raw, joined);
+
+  return limited.map((p) => ({
+    ...p,
+    description: canonicalize(p.description, existingCanonicals)
+  }));
+}
+
 export function isSuperCarnesJH(ocr: string): boolean {
   const indicators = [
     /super\s*carnes\s*j\.?h\.?/i,
     /TOTAL\s+KILOS/i,
     /TOTAL\s+UNIDADES/i,
+    /ART\s+kg\s+\$/i,
     /\d{4}\s+.+?\s+\d{1,3}(?:[.,]\d{3})+.*?KGS?\s*[Xx×]/is
   ];
 

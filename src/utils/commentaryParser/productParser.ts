@@ -157,10 +157,46 @@ const resolveIsWeighed = (productName: string, hasKgInComment: boolean): boolean
 };
 
 /**
- * Parsea el bloque de precio colombiano: "$22.000" o "$22.000/kg"
- * Elimina el separador de miles (punto) y retorna el número.
+ * Parsea el bloque de precio colombiano.
+ * Acepta múltiples formatos:
+ * - $22.000 (punto = separador de miles)
+ * - $4,100 (coma = separador de miles)
+ * - $1.234,56 (punto = miles, coma = decimal)
+ * Elimina separadores de miles y retorna entero.
  */
-const parseCOPrice = (raw: string): number => parseInt(raw.replace(/\./g, '').replace(',', ''), 10);
+const parseCOPrice = (raw: string): number => {
+  const clean = raw.replace(/\s/g, '');
+
+  // Si tiene punto Y coma: punto=miles, coma=decimal → $1.234,56
+  if (clean.includes('.') && clean.includes(',')) {
+    return parseInt(clean.replace(/\./g, '').replace(',', ''), 10);
+  }
+
+  // Si solo tiene coma: determinar si es miles o decimal
+  if (clean.includes(',')) {
+    const parts = clean.split(',');
+    // Si hay 3+ dígitos después de la coma → separador de miles ($4,100)
+    if (parts[1] && parts[1].length >= 3) {
+      return parseInt(clean.replace(/,/g, ''), 10);
+    }
+    // Si 1-2 dígitos → decimal ($4,50) — eliminar coma
+    return parseInt(clean.replace(',', ''), 10);
+  }
+
+  // Si solo tiene punto: determinar si es miles o decimal
+  if (clean.includes('.')) {
+    const parts = clean.split('.');
+    // 3+ dígitos después del punto → miles ($4.100)
+    if (parts[1] && parts[1].length >= 3) {
+      return parseInt(clean.replace(/\./g, ''), 10);
+    }
+    // 1-2 dígitos → decimal ($4.50)
+    return parseInt(clean.replace('.', ''), 10);
+  }
+
+  // Sin separadores: $4100
+  return parseInt(clean, 10);
+};
 
 // ============================================================
 // PARSER PRINCIPAL
@@ -209,7 +245,7 @@ export const parseProductCommentary = (
     // Nombre: ≥2 chars, no empieza con @ ni —
     // ----------------------------------------------------------
     let match = text.match(
-      /^([^@\u2014\n]{2,}?)\s*[\u2014\-]\s*(\d+[.,]?\d*)\s*(kg|un)\s*@\s*\$?([\d.]+)(?:\/kg)?\s*\(antes\s*\$?([\d.]+)(?:\/kg)?,\s*-(\d+)%\)\s*\[([^\]]+)\]/i
+      /^([^@\u2014\n]{2,}?)\s*[\u2014\-]\s*(\d+[.,]?\d*)\s*(kg|un)\s*@\s*\$?([,\d.]+)(?:\/(?:kg|un))?\s*\(antes\s*\$?([,\d.]+)(?:\/(?:kg|un))?,?\s*-(\d+)%\)\s*\[([^\]]+)\]/i
     );
 
     if (match && match[1].trim().length >= 2) {
@@ -243,7 +279,7 @@ export const parseProductCommentary = (
     // Nombre: ≥2 chars, no empieza con @
     // ----------------------------------------------------------
     match = text.match(
-      /^([^@\u2014\n]{2,}?)\s*[\u2014\-]\s*(\d+[.,]?\d*)\s*(kg|un)\s*@\s*\$?([\d.]+)(?:\/kg)?\s*\[([^\]]+)\]/i
+      /^([^@\u2014\n]{2,}?)\s*[\u2014\-]\s*(\d+[.,]?\d*)\s*(kg|un)\s*@\s*\$?([,\d.]+)(?:\/(?:kg|un))?\s*\[([^\]]+)\]/i
     );
 
     if (match && match[1].trim().length >= 2) {
@@ -273,7 +309,7 @@ export const parseProductCommentary = (
     // → isIncomplete: true, pricePerKg y originalPricePerKg sí disponibles
     // ----------------------------------------------------------
     match = text.match(
-      /^[\u2014\-]?\s*(\d+[.,]?\d*)\s*(kg|un)\s*@\s*\$?([\d.]+)(?:\/kg)?\s*\(antes\s*\$?([\d.]+)(?:\/kg)?,\s*-(\d+)%\)\s*\[([^\]]+)\]/i
+      /^[\u2014\-]?\s*(\d+[.,]?\d*)\s*(kg|un)\s*@\s*\$?([,\d.]+)(?:\/(?:kg|un))?\s*\(antes\s*\$?([,\d.]+)(?:\/(?:kg|un))?,?\s*-(\d+)%\)\s*\[([^\]]+)\]/i
     );
 
     if (match) {
@@ -304,7 +340,7 @@ export const parseProductCommentary = (
     // "— X kg @ $P/kg [Tienda]"
     // ----------------------------------------------------------
     match = text.match(
-      /^[\u2014\-]?\s*(\d+[.,]?\d*)\s*(kg|un)\s*@\s*\$?([\d.]+)(?:\/kg)?\s*\[([^\]]+)\]/i
+      /^[\u2014\-]?\s*(\d+[.,]?\d*)\s*(kg|un)\s*@\s*\$?([,\d.]+)(?:\/(?:kg|un))?\s*\[([^\]]+)\]/i
     );
 
     if (match) {
@@ -332,7 +368,7 @@ export const parseProductCommentary = (
     // → INCOMPLETO: precio/kg disponible pero sin nombre ni cantidad
     // ----------------------------------------------------------
     match = text.match(
-      /^@\s*\$?([\d.]+)(?:\/kg)?\s*\(antes\s*\$?([\d.]+)(?:\/kg)?,\s*-(\d+)%\)\s*\[([^\]]+)\]/i
+      /^@\s*\$?([,\d.]+)(?:\/(?:kg|un))?\s*\(antes\s*\$?([,\d.]+)(?:\/(?:kg|un))?,?\s*-(\d+)%\)\s*\[([^\]]+)\]/i
     );
 
     if (match) {
@@ -411,7 +447,7 @@ export const parseProductCommentary = (
     // PATRÓN 4: Formato antiguo sin @ (retrocompatibilidad)
     // "Producto — Xkg a $P/kg"
     // ----------------------------------------------------------
-    match = text.match(/(.+?)\s*[\u2014\-]\s*(\d+[.,]?\d*)\s*(kg|un)\s*a?\s*\$?([\d.,]+)/i);
+    match = text.match(/(.+?)\s*[\u2014\-]\s*(\d+[.,]?\d*)\s*(kg|un)\s*a?\s*\$?([,\d.]+)/i);
 
     if (match) {
       const product = match[1].trim();

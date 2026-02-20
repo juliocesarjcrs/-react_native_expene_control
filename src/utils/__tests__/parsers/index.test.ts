@@ -91,7 +91,10 @@ describe('extractProducts', () => {
             description: 'Habichuela — 0.345 kg @ $7.335/kg (antes $10.480/kg, -30%) [Carulla]',
             price: 2531
           },
-          { description: 'Champi#%N Tajado — 1 un @ $7,500 [Carulla]', price: 5250 },
+          {
+            description: 'Champi#%N Tajado — 1 un @ $5,250 (antes $7,500, -30%) [Carulla]',
+            price: 5250
+          },
           {
             description: 'Pepino Cohombro — 0.945 kg @ $1.428/kg (antes $2.040/kg, -30%) [Carulla]',
             price: 1350
@@ -121,7 +124,7 @@ describe('extractProducts', () => {
         Total Item :2`;
         expect(extractProducts(ocr)).toEqual([
           { description: 'Esparcible — 1 un @ $7,440 [Carulla]', price: 7440 },
-          { description: 'Queso D/Crema — 1 un @ $5,450 [Carulla]', price: 7 }
+          { description: 'Queso D/Crema — 1 un @ $7 (antes $5,450, -5%) [Carulla]', price: 7 }
         ]);
       });
 
@@ -134,8 +137,11 @@ describe('extractProducts', () => {
         337695 Queso D/Crema	5.177
         Total Item 12	`;
         expect(extractProducts(ocr)).toEqual([
-          { description: 'Esparcible — 1 un @ $7,440 [Carulla]', price: 273 },
-          { description: 'Queso D/Crema — 1 un @ $5,450 [Carulla]', price: 5177 }
+          { description: 'Esparcible — 1 un @ $273 [Carulla]', price: 273 },
+          {
+            description: 'Queso D/Crema — 1 un @ $5,177 (antes $5,450, -5%) [Carulla]',
+            price: 5177
+          }
         ]);
       });
 
@@ -148,8 +154,8 @@ describe('extractProducts', () => {
         337695 Queso D/Crema
         Total Item :2`;
         expect(extractProducts(ocr)).toEqual([
-          { description: 'Esparcible — 1 un @ $7,440 [Carulla]', price: 440 },
-          { description: 'Queso D/Crema — 1 un @ $5,450 [Carulla]', price: 2 }
+          { description: 'Esparcible — 1 un @ $440 [Carulla]', price: 440 },
+          { description: 'Queso D/Crema — 1 un @ $2 (antes $5,450, -5%) [Carulla]', price: 2 }
         ]);
       });
     });
@@ -178,7 +184,7 @@ describe('extractProducts', () => {
               price: 14546
             },
             {
-              description: 'Panela 4 Und — 1 un @ $5,950 [Carulla]',
+              description: 'Panela 4 Und — 1 un @ $5,652 (antes $5,950, -5%) [Carulla]',
               price: 5652
             }
           ]);
@@ -278,12 +284,18 @@ describe('extractProducts', () => {
               price: 2020
             },
             { description: 'Pepino Zukini — 40.460 kg @ $8.471/kg [Carulla]', price: 2737 },
-            { description: 'Lechuga Crespa — 1 un @ $4,100 [Carulla]', price: 2870 }, // ✅ Sin peso es correcto (1/u)
+            {
+              description: 'Lechuga Crespa — 1 un @ $2,870 (antes $4,100, -30%) [Carulla]',
+              price: 2870
+            },
             {
               description: 'Limón Tahití — 1.590 kg @ $1.680/kg (antes $2.400/kg, -30%) [Carulla]',
               price: 2671
             },
-            { description: 'Rabano Rojo — 1 un @ $6,660 [Carulla]', price: 4662 }, // ✅ Sin peso es correcto (1/u)
+            {
+              description: 'Rabano Rojo — 1 un @ $4,662 (antes $6,660, -30%) [Carulla]',
+              price: 4662
+            },
             {
               description: 'Zanahoria — 0.780 kg @ $1.764/kg (antes $2.520/kg, -30%) [Carulla]',
               price: 1376
@@ -376,22 +388,40 @@ describe('extractProducts', () => {
         3649296 Choco Cookies Ch	6. 140A
         Total Item :9`;
           expect(extractProducts(ocr)).toEqual([
-            { description: 'Sixpack Cola&Pol — 1 un @ $12,500 [Carulla]', price: 10625 },
-            { description: 'Galletas Antojos — 1 un @ $7,830 [Carulla]', price: 3132 },
-            { description: 'Galletas Antojos — 1 un @ $7,830 [Carulla]', price: 3132 },
+            {
+              description: 'Sixpack Cola&Pol — 1 un @ $10,625 (antes $12,500, -15%) [Carulla]',
+              price: 10625
+            },
+            {
+              description: 'Galletas Antojos — 1 un @ $3,132 (antes $7,830, -60%) [Carulla]',
+              price: 3132
+            },
+            {
+              description: 'Galletas Antojos — 1 un @ $3,132 (antes $7,830, -60%) [Carulla]',
+              price: 3132
+            },
             {
               description:
                 'Pechuga Blanca — 1.085 kg @ $16.915/kg (antes $19.900/kg, -15%) [Carulla]',
               price: 18353
             },
-            { description: 'Galletas Yogurt — 1 un @ $11,600 [Carulla]', price: 4640 },
+            {
+              description: 'Galletas Yogurt — 1 un @ $4,640 (antes $11,600, -60%) [Carulla]',
+              price: 4640
+            },
             { description: 'Salsa Sabor Ajo [Carulla]', price: 7210 },
             {
               description: 'Cebolla Blanca — 0.555 kg @ $6.280/kg [Carulla]',
               price: 3485
             },
-            { description: 'Chorizo Santarro — 1 un @ $6,600 [Carulla]', price: 4620 },
-            { description: 'Choco Cookies Ch — 1 un @ $15,350 [Carulla]', price: 6140 }
+            {
+              description: 'Chorizo Santarro — 1 un @ $4,620 (antes $6,600, -0%) [Carulla]',
+              price: 4620
+            },
+            {
+              description: 'Choco Cookies Ch — 1 un @ $6,140 (antes $15,350, -60%) [Carulla]',
+              price: 6140
+            }
           ]);
         });
       });
@@ -549,14 +579,29 @@ describe('extractProducts', () => {
         Total Item :11
         `;
           expect(extractProducts(ocr)).toEqual([
-            { description: 'Sixpack Cola&Pol — 1 un @ $12,500 [Carulla]', price: 9375 },
+            {
+              description: 'Sixpack Cola&Pol — 1 un @ $9,375 (antes $12,500, -25%) [Carulla]',
+              price: 9375
+            },
             { description: 'Cafãº Liofilizado — 1 un @ $31,000 [Carulla]', price: 31000 },
 
             // Café Liofilizado omitido: sin número de ítem al inicio de la línea de unidad
-            { description: 'Desod Barra Derm — 1 un @ $32,850 [Carulla]', price: 26280 },
-            { description: 'Desod Barra Derm — 1 un @ $32,850 [Carulla]', price: 26280 },
-            { description: 'Cepillo De Dient — 1 un @ $43,350 [Carulla]', price: 26010 },
-            { description: 'Crema Dental Tot — 1 un @ $45,600 [Carulla]', price: 29640 },
+            {
+              description: 'Desod Barra Derm — 1 un @ $26,280 (antes $32,850, -20%) [Carulla]',
+              price: 26280
+            },
+            {
+              description: 'Desod Barra Derm — 1 un @ $26,280 (antes $32,850, -20%) [Carulla]',
+              price: 26280
+            },
+            {
+              description: 'Cepillo De Dient — 1 un @ $26,010 (antes $43,350, -40%) [Carulla]',
+              price: 26010
+            },
+            {
+              description: 'Crema Dental Tot — 1 un @ $29,640 (antes $45,600, -35%) [Carulla]',
+              price: 29640
+            },
             // Enjuague Bucal T omitido: "0" al final de la línea del producto es ambiguo/ruido OCR
             // BUG A: PRIORIDAD 1 captura "V. Ahorro\t31.027" como ahorro en vez de precio
             {

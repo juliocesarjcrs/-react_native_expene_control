@@ -16,32 +16,58 @@ const SIMPLE_PRICE_PATTERN = /^(\d{1,3}[.,]\d{3})[A-Z]?$/;
  *
  * @param line - Línea con información de unidad (ej: "5 1/u x 4.100 V. Ahorro 1.230")
  * @param productName - Nombre del producto
- * @param receiptType - Tipo de recibo (no usado actualmente, pero mantenido para consistencia)
- * @returns Descripción formateada con unidad y precio
+ * @param finalPrice - Precio final del producto (para calcular descuento)
+ * @param receiptType - Tipo de recibo
+ * @returns Descripción formateada con unidad, precio y descuento si aplica
  */
-function processUnitAndPrice(line: string, productName: string, receiptType: ReceiptType): string {
+function processUnitAndPrice(
+  line: string,
+  productName: string,
+  finalPrice: number,
+  receiptType: ReceiptType
+): string {
   // 🔒 Blindaje: solo procesar si realmente es 1/u
   if (!/1\/u/i.test(line)) {
     return productName;
   }
 
   // Patrón: "1/u x <precio_por_unidad> V. Ahorro <ahorro>"
-  const unitMatch = line.match(/1\/u\s+\S+\s+([\d.,]+)\s+V\.\s*Ahorro/i);
+  const unitMatch = line.match(/1\/u\s+\S+\s+([\d.,]+)\s+V\.\s*Ahorro\s+([\d.,]+)?/i);
 
   if (unitMatch) {
-    // Eliminar todos los separadores (. y ,) ya que en OCR colombiano ambos pueden ser miles
-    const pricePerUnit = parseFloat(unitMatch[1].replace(/[.,]/g, ''));
+    // Precio original por unidad
+    const originalPricePerUnit = parseFloat(unitMatch[1].replace(/[.,]/g, ''));
+    // Ahorro (puede no estar presente en algunas líneas)
+    const savings = unitMatch[2] ? parseFloat(unitMatch[2].replace(/[.,]/g, '')) : 0;
 
-    if (pricePerUnit > 0) {
-      // Formato: "Nombre — 1 un @ $precio"
-      const formattedPrice = pricePerUnit
+    if (originalPricePerUnit > 0) {
+      // Formatear precio final
+      const formattedFinalPrice = finalPrice
         .toLocaleString('es-CO', {
           minimumFractionDigits: 0,
           maximumFractionDigits: 3
         })
         .replace(/\./g, ',');
 
-      const descWithUnit = `${productName} — 1 un @ $${formattedPrice}`;
+      // Formatear precio original
+      const formattedOriginalPrice = originalPricePerUnit
+        .toLocaleString('es-CO', {
+          minimumFractionDigits: 0,
+          maximumFractionDigits: 3
+        })
+        .replace(/\./g, ',');
+
+      // Calcular porcentaje de descuento
+      let descWithUnit: string;
+
+      if (savings > 0 && originalPricePerUnit > finalPrice) {
+        const savingsPercentage = (savings / originalPricePerUnit) * 100;
+
+        descWithUnit = `${productName} — 1 un @ $${formattedFinalPrice} (antes $${formattedOriginalPrice}, -${Math.round(savingsPercentage)}%)`;
+      } else {
+        // Sin descuento, solo mostrar precio
+        descWithUnit = `${productName} — 1 un @ $${formattedFinalPrice}`;
+      }
 
       // Agregar sufijo de tienda [Carulla] o [Exito]
       return formatSimpleProduct(descWithUnit, receiptType);
@@ -58,12 +84,14 @@ function processUnitAndPrice(line: string, productName: string, receiptType: Rec
  *
  * @param prevLine - Línea anterior que puede contener info de peso o unidad
  * @param description - Descripción base del producto
+ * @param price - Precio final del producto (para calcular descuento en 1/u)
  * @param receiptType - Tipo de recibo
  * @returns Descripción enriquecida con info contextual
  */
 function enrichDescription(
   prevLine: string,
   description: string,
+  price: number,
   receiptType: ReceiptType
 ): string {
   // 1. Intentar agregar peso/descuento (KGM)
@@ -72,8 +100,8 @@ function enrichDescription(
     return withWeight;
   }
 
-  // 2. Intentar agregar info de unidad (1/u)
-  const withUnit = processUnitAndPrice(prevLine, description, receiptType);
+  // 2. Intentar agregar info de unidad (1/u) con descuento
+  const withUnit = processUnitAndPrice(prevLine, description, price, receiptType);
   if (withUnit !== description) {
     return withUnit;
   }
@@ -403,7 +431,7 @@ function processCarullaCase6(lines: string[], joined: string, receiptType: Recei
       // Buscar información de peso/unidad en líneas anteriores
       if (i > 0) {
         const prevLine = lines[i - 1];
-        description = enrichDescription(prevLine, description, receiptType);
+        description = enrichDescription(prevLine, description, price, receiptType);
       } else {
         description = formatSimpleProduct(description, receiptType);
       }
@@ -424,7 +452,7 @@ function processCarullaCase6(lines: string[], joined: string, receiptType: Recei
       // Buscar información de peso/unidad en líneas anteriores
       if (i > 0) {
         const prevLine = lines[i - 1];
-        description = enrichDescription(prevLine, description, receiptType);
+        description = enrichDescription(prevLine, description, price, receiptType);
       } else {
         description = formatSimpleProduct(description, receiptType);
       }
@@ -456,18 +484,19 @@ function processCarullaCase6(lines: string[], joined: string, receiptType: Recei
 
       if (priceMatch) {
         let description = formatDescription(descMatch[2].trim());
+        const price = cleanPrice(priceMatch[1]);
 
         // Buscar información de peso/unidad en líneas anteriores
         if (i > 0) {
           const prevLine = lines[i - 1];
-          description = enrichDescription(prevLine, description, receiptType);
+          description = enrichDescription(prevLine, description, price, receiptType);
         } else {
           description = formatSimpleProduct(description, receiptType);
         }
 
         products.push({
           description,
-          price: cleanPrice(priceMatch[1])
+          price
         });
         i += 2;
         continue;
@@ -505,7 +534,7 @@ function processCarullaCase5(lines: string[], joined: string, receiptType: Recei
         // Buscar información de peso/unidad en líneas anteriores
         if (i > 0) {
           const prevLine = lines[i - 1];
-          description = enrichDescription(prevLine, description, receiptType);
+          description = enrichDescription(prevLine, description, price, receiptType);
         } else {
           description = formatSimpleProduct(description, receiptType);
         }

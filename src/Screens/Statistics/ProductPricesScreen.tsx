@@ -47,6 +47,7 @@ interface ProductSummary {
   normalizedName: string;
   count: number;
   isWeighed: boolean;
+  unit: 'kg' | 'un'; // Unidad mayoritaria del grupo
   // Para completos: precio promedio real
   avgPrice: number;
   best: ProductPrice | null;
@@ -60,12 +61,18 @@ interface ProductSummary {
 
 // ─── helpers ──────────────────────────────────────────────────────────────────
 
-/** Devuelve el sufijo de unidad según si el producto se pesa o no */
-const unitLabel = (isWeighed: boolean | undefined): string => (isWeighed ? '/kg' : '/un');
+/**
+ * Devuelve el sufijo de unidad basado en el campo `unit` del producto.
+ * Fallback a isWeighed si unit no está presente (datos antiguos).
+ */
+const unitLabel = (product: ProductPrice): string => {
+  if (product.unit) return `/${product.unit}`;
+  return product.isWeighed ? '/kg' : '/un';
+};
 
-/** Formatea precio con su unidad o muestra costo total para incompletos */
-const formatPrice = (price: number, isWeighed: boolean | undefined): string =>
-  `${NumberFormat(price)}${unitLabel(isWeighed)}`;
+/** Formatea precio con su unidad */
+const formatPrice = (price: number, product: ProductPrice): string =>
+  `${NumberFormat(price)}${unitLabel(product)}`;
 
 // ─── componente ───────────────────────────────────────────────────────────────
 
@@ -128,6 +135,17 @@ export default function ProductPricesScreen({ navigation }: ScreenProps) {
     const completeItems = items.filter((i) => !i.isIncomplete);
     const isWeighed = items[0].isWeighed;
 
+    // Unidad mayoritaria: contar cuántos items tienen kg vs un
+    const unitCounts = items.reduce(
+      (acc, i) => {
+        const u = i.unit || (i.isWeighed ? 'kg' : 'un');
+        acc[u] = (acc[u] || 0) + 1;
+        return acc;
+      },
+      {} as Record<string, number>
+    );
+    const unit = (unitCounts.kg || 0) >= (unitCounts.un || 0) ? 'kg' : 'un';
+
     // Promedio solo sobre registros completos; si todos son incompletos → 0
     const avgPrice =
       completeItems.length > 0
@@ -142,6 +160,7 @@ export default function ProductPricesScreen({ navigation }: ScreenProps) {
       normalizedName: key,
       count: items.length,
       isWeighed: isWeighed ?? false,
+      unit,
       avgPrice,
       best,
       worst,
@@ -171,10 +190,20 @@ export default function ProductPricesScreen({ navigation }: ScreenProps) {
 
   /** Card de producto COMPLETO: muestra mejor/peor precio, descuento si aplica */
   const renderCompleteCard = (summary: ProductSummary) => {
-    const { best, worst, savings, name, count, avgPrice, isWeighed, normalizedName } = summary;
+    const { best, worst, savings, name, count, avgPrice, unit, normalizedName } = summary;
 
     // Tomamos el descuento del "best" si lo tiene (el precio más bajo con descuento es el más relevante)
     const bestHasDiscount = best?.originalPricePerKg && best?.discountPercent;
+
+    // Helper temporal: ProductPrice mínimo para formatear el promedio
+    const avgProduct: ProductPrice = {
+      cost: 0,
+      product: name,
+      quantity: 1,
+      pricePerKg: avgPrice,
+      date: '',
+      unit
+    };
 
     return (
       <View
@@ -196,7 +225,7 @@ export default function ProductPricesScreen({ navigation }: ScreenProps) {
           <View style={[styles.avgPriceBadge, { backgroundColor: colors.PRIMARY + '15' }]}>
             <Text style={[styles.avgPriceText, { color: colors.PRIMARY }]}>Promedio</Text>
             <Text style={[styles.avgPriceValue, { color: colors.PRIMARY }]}>
-              {formatPrice(avgPrice, isWeighed)}
+              {formatPrice(avgPrice, avgProduct)}
             </Text>
           </View>
         </View>
@@ -225,7 +254,7 @@ export default function ProductPricesScreen({ navigation }: ScreenProps) {
               {bestHasDiscount && (
                 <View style={styles.discountRow}>
                   <Text style={[styles.strikePrice, { color: colors.TEXT_SECONDARY }]}>
-                    {formatPrice(best!.originalPricePerKg!, isWeighed)}
+                    {formatPrice(best!.originalPricePerKg!, best!)}
                   </Text>
                   <View style={[styles.discountBadge, { backgroundColor: colors.SUCCESS }]}>
                     <Text style={styles.discountText}>-{best!.discountPercent}%</Text>
@@ -234,7 +263,7 @@ export default function ProductPricesScreen({ navigation }: ScreenProps) {
               )}
 
               <Text style={[styles.priceValue, { color: colors.TEXT_PRIMARY }]}>
-                {formatPrice(best.pricePerKg, isWeighed)}
+                {formatPrice(best.pricePerKg, best)}
               </Text>
               {best.store && (
                 <Text style={[styles.priceStore, { color: colors.TEXT_SECONDARY }]}>
@@ -259,7 +288,7 @@ export default function ProductPricesScreen({ navigation }: ScreenProps) {
               </View>
 
               <Text style={[styles.priceValue, { color: colors.TEXT_PRIMARY }]}>
-                {formatPrice(worst.pricePerKg, isWeighed)}
+                {formatPrice(worst.pricePerKg, worst)}
               </Text>
               {worst.store && (
                 <Text style={[styles.priceStore, { color: colors.TEXT_SECONDARY }]}>
@@ -278,7 +307,7 @@ export default function ProductPricesScreen({ navigation }: ScreenProps) {
           <View style={[styles.savingsContainer, { backgroundColor: colors.INFO + '15' }]}>
             <Icon type="material-community" name="piggy-bank" size={16} color={colors.INFO} />
             <Text style={[styles.savingsText, { color: colors.INFO }]}>
-              Ahorro potencial: {formatPrice(savings, isWeighed)}
+              Ahorro potencial: {formatPrice(savings, avgProduct)}
             </Text>
           </View>
         )}

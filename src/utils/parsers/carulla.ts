@@ -41,21 +41,18 @@ function processUnitAndPrice(
     const savings = unitMatch[2] ? parseFloat(unitMatch[2].replace(/[.,]/g, '')) : 0;
 
     if (originalPricePerUnit > 0) {
-      // Formatear precio final
-      const formattedFinalPrice = finalPrice
-        .toLocaleString('es-CO', {
-          minimumFractionDigits: 0,
-          maximumFractionDigits: 3
-        })
-        .replace(/\./g, ',');
+      // Formatear precio final — estándar colombiano ISO 4217: punto = miles, coma = decimales
+      // toLocaleString('es-CO') ya produce el formato correcto: 23.000, 4.100, etc.
+      const formattedFinalPrice = finalPrice.toLocaleString('es-CO', {
+        minimumFractionDigits: 0,
+        maximumFractionDigits: 3
+      });
 
       // Formatear precio original
-      const formattedOriginalPrice = originalPricePerUnit
-        .toLocaleString('es-CO', {
-          minimumFractionDigits: 0,
-          maximumFractionDigits: 3
-        })
-        .replace(/\./g, ',');
+      const formattedOriginalPrice = originalPricePerUnit.toLocaleString('es-CO', {
+        minimumFractionDigits: 0,
+        maximumFractionDigits: 3
+      });
 
       // Calcular porcentaje de descuento
       let descWithUnit: string;

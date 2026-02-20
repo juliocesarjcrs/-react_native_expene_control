@@ -144,13 +144,16 @@ export function processWeightAndSavings(
   const kgmMatch = line.match(REGEX_PATTERNS.KGM_PATTERN);
 
   if (kgmMatch) {
-    const weight = kgmMatch[1].replace(/\s+/g, '');
+    // weightRaw: formato anglosajón con punto decimal → usado para cálculos (parseFloat)
+    // weightDisplay: formato colombiano con coma decimal (ISO 4217 / SI) → usado en el comentario
+    const weightRaw = kgmMatch[1].replace(/\s+/g, '');
+    const weightDisplay = weightRaw.replace('.', ',');
     const originalPrice = parseFloat(kgmMatch[3].replace(REGEX_PATTERNS.PRICE_CLEAN, ''));
     const savings = parseFloat(kgmMatch[4].replace(REGEX_PATTERNS.PRICE_CLEAN, ''));
 
-    const totalOriginal = originalPrice * parseFloat(weight);
+    const totalOriginal = originalPrice * parseFloat(weightRaw);
     const totalPid = totalOriginal - savings;
-    const newPricePerkg = totalPid / parseFloat(weight);
+    const newPricePerkg = totalPid / parseFloat(weightRaw);
 
     if (totalOriginal > 0) {
       const savingsPercentage = (savings / totalOriginal) * 100;
@@ -162,7 +165,7 @@ export function processWeightAndSavings(
         savingsPercentage
       };
 
-      return formatDiscountProduct(productName, weight, discount, receiptType);
+      return formatDiscountProduct(productName, weightDisplay, discount, receiptType);
     }
   }
 

@@ -19,8 +19,8 @@ describe('extractProducts', () => {
         const ocr =
           'PRECIO\t\r\nPLU\tDETALLE\t\r\n1 1/u x 23.000 V. Ahorro 0\t\r\n172836 Huevo Napoles De\t23.000\t\r\n2 1/u x 2.350 V. Ahorro 0\t\r\n3343120 Mogolla Integral\t2.350\t\r\nTotal Item :2\t\r\n';
         expect(extractProducts(ocr)).toEqual([
-          { description: 'Huevo Napoles De — 1 un @ $23,000 [Carulla]', price: 23000 },
-          { description: 'Mogolla Integral — 1 un @ $2,350 [Carulla]', price: 2350 }
+          { description: 'Huevo Napoles De — 1 un @ $23.000 [Carulla]', price: 23000 },
+          { description: 'Mogolla Integral — 1 un @ $2.350 [Carulla]', price: 2350 }
         ]);
       });
 
@@ -88,27 +88,27 @@ describe('extractProducts', () => {
         Total Item :6`;
         expect(extractProducts(ocr)).toEqual([
           {
-            description: 'Habichuela — 0.345 kg @ $7.335/kg (antes $10.480/kg, -30%) [Carulla]',
+            description: 'Habichuela — 0,345 kg @ $7.335/kg (antes $10.480/kg, -30%) [Carulla]',
             price: 2531
           },
           {
-            description: 'Champi#%N Tajado — 1 un @ $5,250 (antes $7,500, -30%) [Carulla]',
+            description: 'Champi#%N Tajado — 1 un @ $5.250 (antes $7.500, -30%) [Carulla]',
             price: 5250
           },
           {
-            description: 'Pepino Cohombro — 0.945 kg @ $1.428/kg (antes $2.040/kg, -30%) [Carulla]',
+            description: 'Pepino Cohombro — 0,945 kg @ $1.428/kg (antes $2.040/kg, -30%) [Carulla]',
             price: 1350
           },
           {
-            description: 'Zanahoria — 1.065 kg @ $3.990/kg (antes $5.700/kg, -30%) [Carulla]',
+            description: 'Zanahoria — 1,065 kg @ $3.990/kg (antes $5.700/kg, -30%) [Carulla]',
             price: 4250
           },
           {
-            description: 'Yuca Fresca — 1.560 kg @ $3.290/kg (antes $4.700/kg, -30%) [Carulla]',
+            description: 'Yuca Fresca — 1,560 kg @ $3.290/kg (antes $4.700/kg, -30%) [Carulla]',
             price: 5132
           },
           {
-            description: 'Lechuga Batavia — 0.480 kg @ $5.026/kg (antes $7.180/kg, -30%) [Carulla]',
+            description: 'Lechuga Batavia — 0,480 kg @ $5.026/kg (antes $7.180/kg, -30%) [Carulla]',
             price: 2412
           }
         ]);
@@ -123,8 +123,8 @@ describe('extractProducts', () => {
         337695 Queso D/Crema	7
         Total Item :2`;
         expect(extractProducts(ocr)).toEqual([
-          { description: 'Esparcible — 1 un @ $7,440 [Carulla]', price: 7440 },
-          { description: 'Queso D/Crema — 1 un @ $7 (antes $5,450, -5%) [Carulla]', price: 7 }
+          { description: 'Esparcible — 1 un @ $7.440 [Carulla]', price: 7440 },
+          { description: 'Queso D/Crema — 1 un @ $7 (antes $5.450, -5%) [Carulla]', price: 7 }
         ]);
       });
 
@@ -139,7 +139,7 @@ describe('extractProducts', () => {
         expect(extractProducts(ocr)).toEqual([
           { description: 'Esparcible — 1 un @ $273 [Carulla]', price: 273 },
           {
-            description: 'Queso D/Crema — 1 un @ $5,177 (antes $5,450, -5%) [Carulla]',
+            description: 'Queso D/Crema — 1 un @ $5.177 (antes $5.450, -5%) [Carulla]',
             price: 5177
           }
         ]);
@@ -155,7 +155,7 @@ describe('extractProducts', () => {
         Total Item :2`;
         expect(extractProducts(ocr)).toEqual([
           { description: 'Esparcible — 1 un @ $440 [Carulla]', price: 440 },
-          { description: 'Queso D/Crema — 1 un @ $2 (antes $5,450, -5%) [Carulla]', price: 2 }
+          { description: 'Queso D/Crema — 1 un @ $2 (antes $5.450, -5%) [Carulla]', price: 2 }
         ]);
       });
     });
@@ -180,11 +180,11 @@ describe('extractProducts', () => {
           expect(extractProducts(ocr)).toEqual([
             {
               description:
-                'Pechuga Blanca — 0.870 kg @ $16.720/kg (antes $20.900/kg, -20%) [Carulla]',
+                'Pechuga Blanca — 0,870 kg @ $16.720/kg (antes $20.900/kg, -20%) [Carulla]',
               price: 14546
             },
             {
-              description: 'Panela 4 Und — 1 un @ $5,652 (antes $5,950, -5%) [Carulla]',
+              description: 'Panela 4 Und — 1 un @ $5.652 (antes $5.950, -5%) [Carulla]',
               price: 5652
             }
           ]);
@@ -197,50 +197,50 @@ describe('extractProducts', () => {
           expect(extractProducts(ocr)).toEqual([
             {
               description:
-                'Remolacha A Gran — 0.305 kg @ $6.540/kg (antes $9.340/kg, -30%) [Carulla]',
+                'Remolacha A Gran — 0,305 kg @ $6.540/kg (antes $9.340/kg, -30%) [Carulla]',
               price: 1995
             },
             {
               description:
-                'Ahuyama Entera — 0.750 kg @ $2.141/kg (antes $3.060/kg, -30%) [Carulla]',
+                'Ahuyama Entera — 0,750 kg @ $2.141/kg (antes $3.060/kg, -30%) [Carulla]',
               price: 1606
             },
             {
-              description: 'Cebolla Roja — 0.800 kg @ $4.620/kg (antes $6.600/kg, -30%) [Carulla]',
+              description: 'Cebolla Roja — 0,800 kg @ $4.620/kg (antes $6.600/kg, -30%) [Carulla]',
               price: 3696
             },
             {
               description:
-                'Chocolo Tiernom — 1.140 kg @ $2.842/kg (antes $4.060/kg, -30%) [Carulla]',
+                'Chocolo Tiernom — 1,140 kg @ $2.842/kg (antes $4.060/kg, -30%) [Carulla]',
               price: 3239
             },
             {
-              description: 'Papaya Comun — 2.415 kg @ $2.128/kg (antes $3.040/kg, -30%) [Carulla]',
+              description: 'Papaya Comun — 2,415 kg @ $2.128/kg (antes $3.040/kg, -30%) [Carulla]',
               price: 5139
             },
             {
-              description: 'Acelga — 0.435 kg @ $5.221/kg (antes $7.460/kg, -30%) [Carulla]',
+              description: 'Acelga — 0,435 kg @ $5.221/kg (antes $7.460/kg, -30%) [Carulla]',
               price: 2271
             },
             {
-              description: 'Pepino Zukini — 0.475 kg @ $5.684/kg (antes $8.120/kg, -30%) [Carulla]',
+              description: 'Pepino Zukini — 0,475 kg @ $5.684/kg (antes $8.120/kg, -30%) [Carulla]',
               price: 2700
             },
             {
-              description: 'Tomate Chonto — 0.860 kg @ $4.186/kg (antes $5.980/kg, -30%) [Carulla]',
+              description: 'Tomate Chonto — 0,860 kg @ $4.186/kg (antes $5.980/kg, -30%) [Carulla]',
               price: 3600
             },
             {
-              description: 'Zanahoria — 0.860 kg @ $2.787/kg (antes $3.980/kg, -30%) [Carulla]',
+              description: 'Zanahoria — 0,860 kg @ $2.787/kg (antes $3.980/kg, -30%) [Carulla]',
               price: 2397
             },
             {
               description:
-                'Platano Maduro — 1.455 kg @ $2.072/kg (antes $2.960/kg, -30%) [Carulla]',
+                'Platano Maduro — 1,455 kg @ $2.072/kg (antes $2.960/kg, -30%) [Carulla]',
               price: 3015
             },
             {
-              description: 'Yuca Fresca — 1.795 kg @ $3.360/kg (antes $4.800/kg, -30%) [Carulla]',
+              description: 'Yuca Fresca — 1,795 kg @ $3.360/kg (antes $4.800/kg, -30%) [Carulla]',
               price: 6032
             }
           ]);
@@ -271,33 +271,33 @@ describe('extractProducts', () => {
           Total Item :8`;
           expect(extractProducts(ocr)).toEqual([
             {
-              description: 'Habichuela — 0.680 kg @ $5.306/kg (antes $7.580/kg, -30%) [Carulla]',
+              description: 'Habichuela — 0,680 kg @ $5.306/kg (antes $7.580/kg, -30%) [Carulla]',
               price: 3608
             },
             {
               description:
-                'Pepino Calabacin — 20.475 kg @ $5.680/kg (antes $5.720/kg, -1%) [Carulla]',
+                'Pepino Calabacin — 20,475 kg @ $5.680/kg (antes $5.720/kg, -1%) [Carulla]',
               price: 1902
             },
             {
-              description: 'Brocoli — 0.370 kg @ $5.459/kg (antes $7.800/kg, -30%) [Carulla]',
+              description: 'Brocoli — 0,370 kg @ $5.459/kg (antes $7.800/kg, -30%) [Carulla]',
               price: 2020
             },
-            { description: 'Pepino Zukini — 40.460 kg @ $8.471/kg [Carulla]', price: 2737 },
+            { description: 'Pepino Zukini — 40,460 kg @ $8.471/kg [Carulla]', price: 2737 },
             {
-              description: 'Lechuga Crespa — 1 un @ $2,870 (antes $4,100, -30%) [Carulla]',
+              description: 'Lechuga Crespa — 1 un @ $2.870 (antes $4.100, -30%) [Carulla]',
               price: 2870
             },
             {
-              description: 'Limón Tahití — 1.590 kg @ $1.680/kg (antes $2.400/kg, -30%) [Carulla]',
+              description: 'Limón Tahití — 1,590 kg @ $1.680/kg (antes $2.400/kg, -30%) [Carulla]',
               price: 2671
             },
             {
-              description: 'Rabano Rojo — 1 un @ $4,662 (antes $6,660, -30%) [Carulla]',
+              description: 'Rabano Rojo — 1 un @ $4.662 (antes $6.660, -30%) [Carulla]',
               price: 4662
             },
             {
-              description: 'Zanahoria — 0.780 kg @ $1.764/kg (antes $2.520/kg, -30%) [Carulla]',
+              description: 'Zanahoria — 0,780 kg @ $1.764/kg (antes $2.520/kg, -30%) [Carulla]',
               price: 1376
             }
           ]);
@@ -315,7 +315,7 @@ describe('extractProducts', () => {
         Total Item :26`;
           expect(extractProducts(ocr)).toEqual([
             {
-              description: 'Carne Asar Freir — 0.265 kg @ $26.600/kg [Carulla]',
+              description: 'Carne Asar Freir — 0,265 kg @ $26.600/kg [Carulla]',
               price: 7049
             },
             { description: 'Aguacate Und [Carulla]', price: 3780 }
@@ -333,11 +333,11 @@ describe('extractProducts', () => {
         Total Item :3`;
           expect(extractProducts(ocr)).toEqual([
             {
-              description: 'Banano — 0.995 kg @ $3.408/kg (antes $4.260/kg, -20%) [Carulla]',
+              description: 'Banano — 0,995 kg @ $3.408/kg (antes $4.260/kg, -20%) [Carulla]',
               price: 3391
             },
             {
-              description: 'Zanahoria — 1.345 kg @ $2.720/kg [Carulla]',
+              description: 'Zanahoria — 1,345 kg @ $2.720/kg [Carulla]',
               price: 3658
             },
             { description: 'Panela 4 Und [Carulla]', price: 6770 }
@@ -355,7 +355,7 @@ describe('extractProducts', () => {
           expect(extractProducts(ocr)).toEqual([
             { description: 'Panela 4 Und [Carulla]', price: 6770 },
             {
-              description: 'Papaya Comun — 0.710 kg @ $3.900/kg [Carulla]',
+              description: 'Papaya Comun — 0,710 kg @ $3.900/kg [Carulla]',
               price: 2769
             }
           ]);
@@ -389,37 +389,37 @@ describe('extractProducts', () => {
         Total Item :9`;
           expect(extractProducts(ocr)).toEqual([
             {
-              description: 'Sixpack Cola&Pol — 1 un @ $10,625 (antes $12,500, -15%) [Carulla]',
+              description: 'Sixpack Cola&Pol — 1 un @ $10.625 (antes $12.500, -15%) [Carulla]',
               price: 10625
             },
             {
-              description: 'Galletas Antojos — 1 un @ $3,132 (antes $7,830, -60%) [Carulla]',
+              description: 'Galletas Antojos — 1 un @ $3.132 (antes $7.830, -60%) [Carulla]',
               price: 3132
             },
             {
-              description: 'Galletas Antojos — 1 un @ $3,132 (antes $7,830, -60%) [Carulla]',
+              description: 'Galletas Antojos — 1 un @ $3.132 (antes $7.830, -60%) [Carulla]',
               price: 3132
             },
             {
               description:
-                'Pechuga Blanca — 1.085 kg @ $16.915/kg (antes $19.900/kg, -15%) [Carulla]',
+                'Pechuga Blanca — 1,085 kg @ $16.915/kg (antes $19.900/kg, -15%) [Carulla]',
               price: 18353
             },
             {
-              description: 'Galletas Yogurt — 1 un @ $4,640 (antes $11,600, -60%) [Carulla]',
+              description: 'Galletas Yogurt — 1 un @ $4.640 (antes $11.600, -60%) [Carulla]',
               price: 4640
             },
             { description: 'Salsa Sabor Ajo [Carulla]', price: 7210 },
             {
-              description: 'Cebolla Blanca — 0.555 kg @ $6.280/kg [Carulla]',
+              description: 'Cebolla Blanca — 0,555 kg @ $6.280/kg [Carulla]',
               price: 3485
             },
             {
-              description: 'Chorizo Santarro — 1 un @ $4,620 (antes $6,600, -0%) [Carulla]',
+              description: 'Chorizo Santarro — 1 un @ $4.620 (antes $6.600, -0%) [Carulla]',
               price: 4620
             },
             {
-              description: 'Choco Cookies Ch — 1 un @ $6,140 (antes $15,350, -60%) [Carulla]',
+              description: 'Choco Cookies Ch — 1 un @ $6.140 (antes $15.350, -60%) [Carulla]',
               price: 6140
             }
           ]);
@@ -446,22 +446,22 @@ describe('extractProducts', () => {
           expect(extractProducts(ocr)).toEqual([
             {
               description:
-                'Pechuga Campesin — 0.965 kg @ $17.199/kg (antes $21.500/kg, -20%) [Carulla]',
+                'Pechuga Campesin — 0,965 kg @ $17.199/kg (antes $21.500/kg, -20%) [Carulla]',
               price: 16598
             },
             {
               description:
-                'Pechuga Blanca — 1.140 kg @ $15.920/kg (antes $19.900/kg, -20%) [Carulla]',
+                'Pechuga Blanca — 1,140 kg @ $15.920/kg (antes $19.900/kg, -20%) [Carulla]',
               price: 18149
             },
             {
               description:
-                'Lomo Caracha — 0.500 kg @ $37.024/kg (antes $46.280/kg, -20%) [Carulla]',
+                'Lomo Caracha — 0,500 kg @ $37.024/kg (antes $46.280/kg, -20%) [Carulla]',
               price: 18512
             },
             { description: 'Estuche Surtido [Carulla]', price: 19900 },
             {
-              description: 'Limón Tahití — 0.905 kg @ $2.400/kg [Carulla]',
+              description: 'Limón Tahití — 0,905 kg @ $2.400/kg [Carulla]',
               price: 2172
             }
             // Pecho Corriente omitido: precio en línea de unidad sin producto en siguiente → no parseable
@@ -483,15 +483,15 @@ describe('extractProducts', () => {
           expect(extractProducts(ocr)).toEqual([
             {
               description:
-                'Pechuga Blanca — 1.990 kg @ $15.920/kg (antes $19.900/kg, -20%) [Carulla]',
+                'Pechuga Blanca — 1,990 kg @ $15.920/kg (antes $19.900/kg, -20%) [Carulla]',
               price: 31581
             },
             {
-              description: 'Pepino Res — 0.590 kg @ $20.559/kg (antes $21.640/kg, -5%) [Carulla]',
+              description: 'Pepino Res — 0,590 kg @ $20.559/kg (antes $21.640/kg, -5%) [Carulla]',
               price: 12130
             },
             {
-              description: 'Pepino Res — 0.500 kg @ $20.558/kg (antes $21.640/kg, -5%) [Carulla]',
+              description: 'Pepino Res — 0,500 kg @ $20.558/kg (antes $21.640/kg, -5%) [Carulla]',
               price: 1347
             },
             { description: 'Pecho Corriente [Carulla]', price: 25591 }
@@ -528,15 +528,15 @@ describe('extractProducts', () => {
             { description: 'Granola Familiar [Carulla]', price: 10450 },
             { description: 'Fresa [Carulla]', price: 10380 },
             {
-              description: 'Aguacate Hass — 0.485 kg @ $5.720/kg [Carulla]',
+              description: 'Aguacate Hass — 0,485 kg @ $5.720/kg [Carulla]',
               price: 2774
             },
             {
-              description: 'Cebolla Blanca — 0.625 kg @ $4.180/kg [Carulla]',
+              description: 'Cebolla Blanca — 0,625 kg @ $4.180/kg [Carulla]',
               price: 2613
             },
             {
-              description: 'Banano — 1.390 kg @ $3.160/kg [Carulla]',
+              description: 'Banano — 1,390 kg @ $3.160/kg [Carulla]',
               price: 4392
             },
             { description: 'Leche Semid Desl [Carulla]', price: 2980 },
@@ -580,38 +580,38 @@ describe('extractProducts', () => {
         `;
           expect(extractProducts(ocr)).toEqual([
             {
-              description: 'Sixpack Cola&Pol — 1 un @ $9,375 (antes $12,500, -25%) [Carulla]',
+              description: 'Sixpack Cola&Pol — 1 un @ $9.375 (antes $12.500, -25%) [Carulla]',
               price: 9375
             },
-            { description: 'Cafãº Liofilizado — 1 un @ $31,000 [Carulla]', price: 31000 },
+            { description: 'Cafãº Liofilizado — 1 un @ $31.000 [Carulla]', price: 31000 },
 
             // Café Liofilizado omitido: sin número de ítem al inicio de la línea de unidad
             {
-              description: 'Desod Barra Derm — 1 un @ $26,280 (antes $32,850, -20%) [Carulla]',
+              description: 'Desod Barra Derm — 1 un @ $26.280 (antes $32.850, -20%) [Carulla]',
               price: 26280
             },
             {
-              description: 'Desod Barra Derm — 1 un @ $26,280 (antes $32,850, -20%) [Carulla]',
+              description: 'Desod Barra Derm — 1 un @ $26.280 (antes $32.850, -20%) [Carulla]',
               price: 26280
             },
             {
-              description: 'Cepillo De Dient — 1 un @ $26,010 (antes $43,350, -40%) [Carulla]',
+              description: 'Cepillo De Dient — 1 un @ $26.010 (antes $43.350, -40%) [Carulla]',
               price: 26010
             },
             {
-              description: 'Crema Dental Tot — 1 un @ $29,640 (antes $45,600, -35%) [Carulla]',
+              description: 'Crema Dental Tot — 1 un @ $29.640 (antes $45.600, -35%) [Carulla]',
               price: 29640
             },
             // Enjuague Bucal T omitido: "0" al final de la línea del producto es ambiguo/ruido OCR
             // BUG A: PRIORIDAD 1 captura "V. Ahorro\t31.027" como ahorro en vez de precio
             {
-              description: 'Pepino Res — 1.150 kg @ $-0/kg (antes $26.980/kg, -100%) [Carulla]',
+              description: 'Pepino Res — 1,150 kg @ $-0/kg (antes $26.980/kg, -100%) [Carulla]',
               price: 0
             },
             // BUG B: falta .replace(/\s/g,'') en cleanPrice de PRIORIDAD 3 → "11. 960" da 11 en vez de 11960
             { description: 'Galletas Origina [Carulla]', price: 11960 },
             { description: 'Ponque Tradicion [Carulla]', price: 5610 },
-            { description: 'Ampolleta Corrie — 0.965 kg @ $32.980/kg [Carulla]', price: 31826 }
+            { description: 'Ampolleta Corrie — 0,965 kg @ $32.980/kg [Carulla]', price: 31826 }
           ]);
         });
       });

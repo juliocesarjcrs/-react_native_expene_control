@@ -318,7 +318,7 @@ describe('extractProducts', () => {
               description: 'Carne Asar Freir — 0,265 kg @ $26.600/kg [Carulla]',
               price: 7049
             },
-            { description: 'Aguacate Und [Carulla]', price: 3780 }
+            { description: 'Aguacate Und — 1 un @ $3.780 [Carulla]', price: 3780 }
           ]);
         });
 
@@ -340,7 +340,7 @@ describe('extractProducts', () => {
               description: 'Zanahoria — 1,345 kg @ $2.720/kg [Carulla]',
               price: 3658
             },
-            { description: 'Panela 4 Und [Carulla]', price: 6770 }
+            { description: 'Panela 4 Und — 1 un @ $6.770 [Carulla]', price: 6770 }
           ]);
         });
 
@@ -353,7 +353,7 @@ describe('extractProducts', () => {
           Total Item :2
         `;
           expect(extractProducts(ocr)).toEqual([
-            { description: 'Panela 4 Und [Carulla]', price: 6770 },
+            { description: 'Panela 4 Und — 1 un @ $6.770 [Carulla]', price: 6770 },
             {
               description: 'Papaya Comun — 0,710 kg @ $3.900/kg [Carulla]',
               price: 2769
@@ -409,7 +409,7 @@ describe('extractProducts', () => {
               description: 'Galletas Yogurt — 1 un @ $4.640 (antes $11.600, -60%) [Carulla]',
               price: 4640
             },
-            { description: 'Salsa Sabor Ajo [Carulla]', price: 7210 },
+            { description: 'Salsa Sabor Ajo — 1 un @ $7.210 [Carulla]', price: 7210 },
             {
               description: 'Cebolla Blanca — 0,555 kg @ $6.280/kg [Carulla]',
               price: 3485
@@ -459,7 +459,7 @@ describe('extractProducts', () => {
                 'Lomo Caracha — 0,500 kg @ $37.024/kg (antes $46.280/kg, -20%) [Carulla]',
               price: 18512
             },
-            { description: 'Estuche Surtido [Carulla]', price: 19900 },
+            { description: 'Estuche Surtido — 1 un @ $19.900 [Carulla]', price: 19900 },
             {
               description: 'Limón Tahití — 0,905 kg @ $2.400/kg [Carulla]',
               price: 2172
@@ -523,10 +523,10 @@ describe('extractProducts', () => {
         : 1
         `;
           expect(extractProducts(ocr)).toEqual([
-            { description: 'Huevo Napoles Li [Carulla]', price: 17900 },
-            { description: 'Bebida Lactea Ba [Carulla]', price: 17350 },
-            { description: 'Granola Familiar [Carulla]', price: 10450 },
-            { description: 'Fresa [Carulla]', price: 10380 },
+            { description: 'Huevo Napoles Li — 1 un @ $17.900 [Carulla]', price: 17900 },
+            { description: 'Bebida Lactea Ba — 1 un @ $17.350 [Carulla]', price: 17350 },
+            { description: 'Granola Familiar — 1 un @ $10.450 [Carulla]', price: 10450 },
+            { description: 'Fresa — 1 un @ $10.380 [Carulla]', price: 10380 },
             {
               description: 'Aguacate Hass — 0,485 kg @ $5.720/kg [Carulla]',
               price: 2774
@@ -636,6 +636,50 @@ describe('extractProducts', () => {
 
       expect(extractProducts(carullaText)).toEqual([
         { description: 'Galleta Wafer Si [Exito]', price: 4349 }
+      ]);
+    });
+
+    it('should parse products with OCR-corrupted multiplication symbol (Ã—) and colon-prefixed price', () => {
+      // Artefactos OCR presentes en este recibo:
+      //  • "Ã—" en lugar de "×" como símbolo de multiplicación
+      //  • ":36.990" con dos puntos como prefijo del precio
+      //  • "36, 990A" con espacio entre separador de miles y dígitos
+      //  • Descripciones que terminan en dígito (ej: "Toalla Bato 70x1")
+      const ocr = `PLU	DETALLE	PRECIO
+        1 1/u x 40.150 V. Ahorro 12.045
+        704450 MBquina De Afeit	28. 105A
+        2 1/u Ã—	:36.990 V. Ahorro 0
+        3641985	Toalla Bato 70x1	36, 990A
+        3	1/u x	36,990 V. Ahorro 0
+        3641746	Toalla 78x150 cm	36. 990A
+        4 1/u x 18,900 V. Ahorro 0
+        3788442	Toallas Natural	18,900
+        5 1/u x	16.350 V. Ahorro 0
+        3323923 Brownie Mini Are	16. 350A
+        6 1/u x 7,990 V. Ahorro 0
+        3642000 Toalla Mano 40x6	7.990A
+        7 1/u x 7.990 V. Ahorro 0
+        3733794 Toalla 40X65Cm 3	7.990A
+        8 1/u x 2.740 V. Ahorro 0
+        806731 Pasabocas Con To	2.740A
+        9 1/u x 2.500 V. Ahorro 0
+        3814160 Refajo Rojo Unid	2. 500A
+        IMP. CONS. LICORES	:140
+        10 1/u x 1.700 V. Ahorro 0
+        1883189 Bolsa Reutilizab	1.700A
+        Total Item :10`;
+
+      expect(extractProducts(ocr)).toEqual([
+        { description: 'Mbquina De Afeit [Exito]', price: 28105 },
+        { description: 'Toalla Bato 70x1 [Exito]', price: 36990 },
+        { description: 'Toalla 78x150 Cm [Exito]', price: 36990 },
+        { description: 'Toallas Natural [Exito]', price: 18900 },
+        { description: 'Brownie Mini Are [Exito]', price: 16350 },
+        { description: 'Toalla Mano 40x6 [Exito]', price: 7990 },
+        { description: 'Toalla 40x65cm 3 [Exito]', price: 7990 },
+        { description: 'Pasabocas Con To [Exito]', price: 2740 },
+        { description: 'Refajo Rojo Unid [Exito]', price: 2500 },
+        { description: 'Bolsa Reutilizab [Exito]', price: 1700 }
       ]);
     });
   });
@@ -886,8 +930,8 @@ describe('extractProducts', () => {
       TOTAL`;
 
       expect(extractProducts(ocr)).toEqual([
-        { description: 'Tilapia — 0.865 kg @ $19.000/kg [SuperCarnesJH]', price: 16435 },
-        { description: 'Muslo — 1.57 kg @ $7.400/kg [SuperCarnesJH]', price: 11618 }
+        { description: 'Tilapia — 0,865 kg @ $19.000/kg [SuperCarnesJH]', price: 16435 },
+        { description: 'Muslo — 1,57 kg @ $7.400/kg [SuperCarnesJH]', price: 11618 }
       ]);
     });
 
@@ -901,8 +945,8 @@ describe('extractProducts', () => {
       TOTAL UNIDADES: 0`;
 
       expect(extractProducts(ocr)).toEqual([
-        { description: 'Carne Molida Premium — 0.5 kg @ $17.000/kg [SuperCarnesJH]', price: 8500 },
-        { description: 'Pechuga Sin Hueso — 0.75 kg @ $17.000/kg [SuperCarnesJH]', price: 12750 }
+        { description: 'Carne Molida Premium — 0,5 kg @ $17.000/kg [SuperCarnesJH]', price: 8500 },
+        { description: 'Pechuga Sin Hueso — 0,75 kg @ $17.000/kg [SuperCarnesJH]', price: 12750 }
       ]);
     });
 
@@ -916,11 +960,11 @@ describe('extractProducts', () => {
 
       expect(extractProducts(ocr)).toEqual([
         {
-          description: 'Tilapia Rio Claro 16435 | 0 — 0.865 kg @ $19.000/kg [SuperCarnesJH]',
+          description: 'Tilapia Rio Claro 16435 | 0 — 0,865 kg @ $19.000/kg [SuperCarnesJH]',
           price: 16435
         },
         {
-          description: 'Muslo A Granel 11618 | 0 — 1.57 kg @ $7.400/kg [SuperCarnesJH]',
+          description: 'Muslo A Granel 11618 | 0 — 1,57 kg @ $7.400/kg [SuperCarnesJH]',
           price: 11618
         }
       ]);
@@ -937,8 +981,8 @@ describe('extractProducts', () => {
       TOTAL KILOS: 2.435`;
 
       expect(extractProducts(ocr)).toEqual([
-        { description: 'Tilapia — 0.865 kg @ $19.000/kg [SuperCarnesJH]', price: 16435 },
-        { description: 'Muslo — 1.57 kg @ $7.400/kg [SuperCarnesJH]', price: 11618 }
+        { description: 'Tilapia — 0,865 kg @ $19.000/kg [SuperCarnesJH]', price: 16435 },
+        { description: 'Muslo — 1,57 kg @ $7.400/kg [SuperCarnesJH]', price: 11618 }
       ]);
     });
 
@@ -954,8 +998,8 @@ describe('extractProducts', () => {
       TOTAL UNIDADES: 2`;
 
       expect(extractProducts(ocr)).toEqual([
-        { description: 'Tilapia — 0.865 kg @ $19.000/kg [SuperCarnesJH]', price: 16435 },
-        { description: 'Muslo — 1.57 kg @ $7.400/kg [SuperCarnesJH]', price: 11618 }
+        { description: 'Tilapia — 0,865 kg @ $19.000/kg [SuperCarnesJH]', price: 16435 },
+        { description: 'Muslo — 1,57 kg @ $7.400/kg [SuperCarnesJH]', price: 11618 }
       ]);
     });
 
@@ -968,8 +1012,8 @@ describe('extractProducts', () => {
       TOTAL KILOS:2.435`;
 
       expect(extractProducts(ocr)).toEqual([
-        { description: 'Tilapia — 0.865 kg @ $19.000/kg [SuperCarnesJH]', price: 16435 },
-        { description: 'Muslo — 1.57 kg @ $7.400/kg [SuperCarnesJH]', price: 11618 }
+        { description: 'Tilapia — 0,865 kg @ $19.000/kg [SuperCarnesJH]', price: 16435 },
+        { description: 'Muslo — 1,57 kg @ $7.400/kg [SuperCarnesJH]', price: 11618 }
       ]);
     });
 
@@ -988,8 +1032,8 @@ describe('extractProducts', () => {
       TOTAL 2)	47140`;
 
       expect(extractProducts(ocr)).toEqual([
-        { description: 'Tilapia — 1.655 kg @ $20.000/kg [SuperCarnesJH]', price: 33100 },
-        { description: 'Trucha — 0.52 kg @ $27.000/kg [SuperCarnesJH]', price: 14040 }
+        { description: 'Tilapia — 1,655 kg @ $20.000/kg [SuperCarnesJH]', price: 33100 },
+        { description: 'Trucha — 0,52 kg @ $27.000/kg [SuperCarnesJH]', price: 14040 }
       ]);
     });
   });

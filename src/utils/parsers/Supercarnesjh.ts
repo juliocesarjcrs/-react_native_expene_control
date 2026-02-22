@@ -34,11 +34,12 @@ function parseDecimal(raw: string): number {
 
 function formatKgDescription(productName: string, quantity: number, pricePerKg: number): string {
   const formattedName = formatDescription(productName);
-  // Eliminar ceros finales pero preservar al menos un decimal
+  // Eliminar ceros finales, luego convertir punto decimal → coma (ISO 4217 / SI colombiano)
   const formattedQty = quantity
     .toFixed(3)
     .replace(/(\.\d*?)0+$/, '$1')
-    .replace(/\.$/, '');
+    .replace(/\.$/, '')
+    .replace('.', ',');
   const formattedPrice = pricePerKg.toLocaleString('es-CO');
   return `${formattedName} — ${formattedQty} kg @ $${formattedPrice}/kg [${RECEIPT_TYPE}]`;
 }

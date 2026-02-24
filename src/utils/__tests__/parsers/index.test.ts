@@ -1,6 +1,8 @@
 import { extractProducts } from '~/utils/parsers';
 describe('extractProducts', () => {
-  describe('Carulla receipts', () => {
+  // Carulla y Éxito son la misma franquicia (Grupo Éxito) con estructura de ticket idéntica.
+  // Ambos usan parseCarulla. storeHint resuelve la ambigüedad cuando el OCR no discrimina.
+  describe('Carulla & Éxito receipts', () => {
     // ─────────────────────────────────────────────────────────────────────────
     // processAltCarulla
     // Criterio: "DETALLE PRECIO" aparece ANTES que PLU + tiene "Total Item :"
@@ -625,62 +627,69 @@ describe('extractProducts', () => {
         });
       });
     });
-  });
 
-  describe('invoice type Exito', () => {
-    it('should extract a single product from invoice type Exito', () => {
-      const ocr =
-        'PLU\tDETALLE\tPRECIO\t\r\n1 1/u x 4.578 V. Ahorro 229\t229\t\r\n647588 GALLETA WAFER SI\t4.349A\t\r\nTotal Item :1\t\r\n';
-      expect(extractProducts(ocr)).toEqual([
-        { description: 'Galleta Wafer Si — 1 un @ $4.349 (antes $4.578, -5%) [Exito]', price: 4349 }
-      ]);
-    });
+    // ──────────────────────────────────────────────────────────────────────
+    // processExitoFormat  [auto-detectado como Éxito: PLU DETALLE PRECIO + sin KGM]
+    // Casos tab-separados y con artefactos OCR propios del scanner de Éxito
+    // ──────────────────────────────────────────────────────────────────────
+    describe('processExitoFormat — tab-separado, artefactos OCR Éxito', () => {
+      it('parses single product — tab-separated unit line with discount (original case 14)', () => {
+        const ocr =
+          'PLU\tDETALLE\tPRECIO\t\r\n1 1/u x 4.578 V. Ahorro 229\t229\t\r\n647588 GALLETA WAFER SI\t4.349A\t\r\nTotal Item :1\t\r\n';
+        expect(extractProducts(ocr)).toEqual([
+          {
+            description: 'Galleta Wafer Si — 1 un @ $4.349 (antes $4.578, -5%) [Exito]',
+            price: 4349
+          }
+        ]);
+      });
 
-    it('should parse products with OCR-corrupted multiplication symbol (Ã—) and colon-prefixed price', () => {
-      // Artefactos OCR presentes en este recibo:
-      //  • "Ã—" en lugar de "×" como símbolo de multiplicación
-      //  • ":36.990" con dos puntos como prefijo del precio
-      //  • "36, 990A" con espacio entre separador de miles y dígitos
-      //  • Descripciones que terminan en dígito (ej: "Toalla Bato 70x1")
-      const ocr = `PLU	DETALLE	PRECIO
-        1 1/u x 40.150 V. Ahorro 12.045
-        704450 MBquina De Afeit	28. 105A
-        2 1/u Ã—	:36.990 V. Ahorro 0
-        3641985	Toalla Bato 70x1	36, 990A
-        3	1/u x	36,990 V. Ahorro 0
-        3641746	Toalla 78x150 cm	36. 990A
-        4 1/u x 18,900 V. Ahorro 0
-        3788442	Toallas Natural	18,900
-        5 1/u x	16.350 V. Ahorro 0
-        3323923 Brownie Mini Are	16. 350A
-        6 1/u x 7,990 V. Ahorro 0
-        3642000 Toalla Mano 40x6	7.990A
-        7 1/u x 7.990 V. Ahorro 0
-        3733794 Toalla 40X65Cm 3	7.990A
-        8 1/u x 2.740 V. Ahorro 0
-        806731 Pasabocas Con To	2.740A
-        9 1/u x 2.500 V. Ahorro 0
-        3814160 Refajo Rojo Unid	2. 500A
-        IMP. CONS. LICORES	:140
-        10 1/u x 1.700 V. Ahorro 0
-        1883189 Bolsa Reutilizab	1.700A
-        Total Item :10`;
+      it('parses multi-product receipt — OCR artefacts: Ã—, colon-prefix, space in thousands (original case 11b)', () => {
+        // Artefactos OCR presentes en este recibo:
+        //  • "Ã—" en lugar de "×" como símbolo de multiplicación
+        //  • ":36.990" con dos puntos como prefijo del precio
+        //  • "36, 990A" con espacio entre separador de miles y dígitos
+        //  • Descripciones que terminan en dígito (ej: "Toalla Bato 70x1")
+        const ocr = `PLU	DETALLE	PRECIO
+          1 1/u x 40.150 V. Ahorro 12.045
+          704450 MBquina De Afeit	28. 105A
+          2 1/u Ã—	:36.990 V. Ahorro 0
+          3641985	Toalla Bato 70x1	36, 990A
+          3	1/u x	36,990 V. Ahorro 0
+          3641746	Toalla 78x150 cm	36. 990A
+          4 1/u x 18,900 V. Ahorro 0
+          3788442	Toallas Natural	18,900
+          5 1/u x	16.350 V. Ahorro 0
+          3323923 Brownie Mini Are	16. 350A
+          6 1/u x 7,990 V. Ahorro 0
+          3642000 Toalla Mano 40x6	7.990A
+          7 1/u x 7.990 V. Ahorro 0
+          3733794 Toalla 40X65Cm 3	7.990A
+          8 1/u x 2.740 V. Ahorro 0
+          806731 Pasabocas Con To	2.740A
+          9 1/u x 2.500 V. Ahorro 0
+          3814160 Refajo Rojo Unid	2. 500A
+          IMP. CONS. LICORES	:140
+          10 1/u x 1.700 V. Ahorro 0
+          1883189 Bolsa Reutilizab	1.700A
+          Total Item :10`;
 
-      expect(extractProducts(ocr)).toEqual([
-        {
-          description: 'Mbquina De Afeit — 1 un @ $28.105 (antes $40.150, -30%) [Exito]',
-          price: 28105
-        },
-        { description: 'Toalla Bato 70x1 — 1 un @ $36.990 [Exito]', price: 36990 },
-        { description: 'Toalla 78x150 Cm — 1 un @ $36.990 [Exito]', price: 36990 },
-        { description: 'Toallas Natural — 1 un @ $18.900 [Exito]', price: 18900 },
-        { description: 'Brownie Mini Are — 1 un @ $16.350 [Exito]', price: 16350 },
-        { description: 'Toalla Mano 40x6 — 1 un @ $7.990 [Exito]', price: 7990 },
-        { description: 'Toalla 40x65cm 3 — 1 un @ $7.990 [Exito]', price: 7990 },
-        { description: 'Pasabocas Con To — 1 un @ $2.740 [Exito]', price: 2740 },
-        { description: 'Refajo Rojo Unid — 1 un @ $2.500 [Exito]', price: 2500 },
-        { description: 'Bolsa Reutilizab — 1 un @ $1.700 [Exito]', price: 1700 }
-      ]);
+        expect(extractProducts(ocr)).toEqual([
+          {
+            description: 'Mbquina De Afeit — 1 un @ $28.105 (antes $40.150, -30%) [Exito]',
+            price: 28105
+          },
+          { description: 'Toalla Bato 70x1 — 1 un @ $36.990 [Exito]', price: 36990 },
+          { description: 'Toalla 78x150 Cm — 1 un @ $36.990 [Exito]', price: 36990 },
+          { description: 'Toallas Natural — 1 un @ $18.900 [Exito]', price: 18900 },
+          { description: 'Brownie Mini Are — 1 un @ $16.350 [Exito]', price: 16350 },
+          { description: 'Toalla Mano 40x6 — 1 un @ $7.990 [Exito]', price: 7990 },
+          { description: 'Toalla 40x65cm 3 — 1 un @ $7.990 [Exito]', price: 7990 },
+          { description: 'Pasabocas Con To — 1 un @ $2.740 [Exito]', price: 2740 },
+          { description: 'Refajo Rojo Unid — 1 un @ $2.500 [Exito]', price: 2500 },
+          { description: 'Bolsa Reutilizab — 1 un @ $1.700 [Exito]', price: 1700 }
+        ]);
+      });
     });
   });
 

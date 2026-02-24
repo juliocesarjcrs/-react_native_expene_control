@@ -8,7 +8,7 @@ import { parseCruzVerde } from './cruzVerde';
 import { isSuperCarnesJH, parseSuperCarnesJH } from './superCarnesJH';
 import { isFruverLaGranja, parseFruverLaGranja } from './fruverLaGranja';
 
-export function extractProducts(ocr: string): Product[] {
+export function extractProducts(ocr: string, storeHint?: 'Carulla' | 'Exito'): Product[] {
   const lines = ocr
     .split(/\r?\n/)
     .map((l) => l.replace(/\t/g, ' ').trim())
@@ -34,8 +34,8 @@ export function extractProducts(ocr: string): Product[] {
     console.log('🔍 isCruzVerde:', isCruzVerde);
     return parseCruzVerde(lines);
   } else if (isCarulla) {
-    console.log('🔍 isCarulla:', isCarulla);
-    return parseCarulla(lines, joined);
+    console.log('🔍 isCarulla:', isCarulla, storeHint ? `(hint: ${storeHint})` : '');
+    return parseCarulla(lines, joined, [], storeHint);
   } else if (isD1) {
     console.log('🔍 isD1:', isD1);
     return parseD1(lines, joined);

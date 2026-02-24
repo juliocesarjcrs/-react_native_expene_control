@@ -14,7 +14,7 @@ import { commonStyles } from '~/styles/common';
 // Configs
 import { screenConfigs } from '~/config/screenConfigs';
 
-const CreateExpenseScreenV2: React.FC = () => {
+const ScanReceiptScreen: React.FC = () => {
   const config = screenConfigs.scanInvoiceExpense;
   const colors = useThemeColors();
   const [, setExtracted] = useState<{
@@ -32,4 +32,4 @@ const CreateExpenseScreenV2: React.FC = () => {
   );
 };
 
-export default CreateExpenseScreenV2;
+export default ScanReceiptScreen;

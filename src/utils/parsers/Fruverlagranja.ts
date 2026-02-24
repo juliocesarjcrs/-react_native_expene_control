@@ -1,5 +1,8 @@
-import { Product } from '~/shared/types/components/receipt-scanner.type';
+import { Product, ReceiptType } from '~/shared/types/components/receipt-scanner.type';
 import { formatDescription } from './formatDescription';
+import { canonicalize } from '../canonicalizer';
+
+const RECEIPT_TYPE: ReceiptType = 'FruverLaGranja';
 
 // Patrón principal para productos con peso/unidad y precios
 const PRODUCT_PATTERN =
@@ -8,7 +11,11 @@ const PRODUCT_PATTERN =
 // Patrón alternativo si los datos están en diferentes posiciones
 const ALT_PRODUCT_PATTERN = /^N?\s*(.+?)\s+([\d.,]+)\s+(KI|KG|KILO|K|UN|UND|UNID)/i;
 
-export function parseFruverLaGranja(lines: string[], joined: string): Product[] {
+export function parseFruverLaGranja(
+  lines: string[],
+  joined: string,
+  existingCanonicals: string[] = []
+): Product[] {
   console.log('🍎 Procesando como tipo Fruver La Granja...');
 
   const products: Product[] = [];
@@ -78,7 +85,10 @@ export function parseFruverLaGranja(lines: string[], joined: string): Product[] 
     }
   }
 
-  return products;
+  return products.map((p) => ({
+    ...p,
+    description: canonicalize(p.description, existingCanonicals)
+  }));
 }
 
 /**
@@ -101,7 +111,13 @@ function normalizeUnit(unit: string): string {
 }
 
 /**
- * Formatea la descripción del producto incluyendo cantidad y precio por unidad
+ * Formatea la descripción del producto incluyendo cantidad y precio por unidad.
+ *
+ * Estándar colombiano (ISO 4217 / SI):
+ *   - Cantidades kg: coma como separador decimal  → "0,665 kg"
+ *   - Precios: punto como separador de miles      → "$1.900"
+ *   - Productos por unidad: sin sufijo /un        → "1 un @ $5.500"
+ *   - Productos por kg: con sufijo /kg            → "0,665 kg @ $1.900/kg"
  */
 function formatProductDescription(
   productName: string,
@@ -110,21 +126,21 @@ function formatProductDescription(
   pricePerUnit: number
 ): string {
   const formattedName = formatDescription(productName);
-
-  // Formatear cantidad según la unidad
-  let formattedQuantity: string;
-  if (unit === 'kg') {
-    // Para kilos, mostrar hasta 3 decimales y remover ceros innecesarios
-    formattedQuantity = quantity.toFixed(3).replace(/\.?0+$/, '');
-  } else {
-    // Para unidades, mostrar como entero si es número entero, sino con decimales
-    formattedQuantity =
-      quantity % 1 === 0 ? quantity.toString() : quantity.toFixed(2).replace(/\.?0+$/, '');
-  }
-
   const formattedPrice = pricePerUnit.toLocaleString('es-CO');
 
-  return `${formattedName} — ${formattedQuantity} ${unit} @ $${formattedPrice}/${unit} [FruverLaGranja]`;
+  if (unit === 'kg') {
+    // Hasta 3 decimales, sin ceros innecesarios, coma como separador decimal (SI colombiano)
+    const formattedQuantity = quantity
+      .toFixed(3)
+      .replace(/\.?0+$/, '')
+      .replace('.', ',');
+    return `${formattedName} — ${formattedQuantity} kg @ $${formattedPrice}/kg [${RECEIPT_TYPE}]`;
+  } else {
+    // Para unidades: entero si corresponde, sin sufijo /un (estándar colombiano)
+    const formattedQuantity =
+      quantity % 1 === 0 ? quantity.toString() : quantity.toFixed(2).replace(/\.?0+$/, '');
+    return `${formattedName} — ${formattedQuantity} un @ $${formattedPrice} [${RECEIPT_TYPE}]`;
+  }
 }
 
 /**

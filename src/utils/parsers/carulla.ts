@@ -6,8 +6,7 @@ import { canonicalize } from '../canonicalizer';
 const PRODUCT_PATTERN =
   /^\d+\s+([A-Za-zÀÁÉÍÓÚÜÑñáéíóúü#%().,\/&\s*\-]+?(?:\s*\/\s*[A-Za-zÀÁÉÍÓÚÜÑñáéíóúü#%().,\/&\s*\-]+?)*)(?:\s+(\d{1,3}(?:[.,]\s?\d{2,3})?)[A-Za-z]*)?$/i;
 const PRICE_PATTERN = /(\d+[.,]?\d*[A-Za-z]?)\s*$/;
-// Tolerates spaces within price separators (OCR artifact: "36, 990A" → 36990)
-const EXITO_PRODUCT_PATTERN = /(\d{6,})\s+([A-Z].+?)\s+(\d{1,3}[.,]\s?\d{3})[A-Z]?/;
+const EXITO_PRODUCT_PATTERN = /(\d{6,})\s+([A-Z].+?)\s+(\d{1,3}[.,]\d{3})[A-Z]?/;
 const DESC_PATTERN = /^\d+\s+(\d{6,})\s+([A-Z].+)/;
 const SIMPLE_PRICE_PATTERN = /^(\d{1,3}[.,]\d{3})[A-Z]?$/;
 
@@ -33,9 +32,7 @@ function processUnitAndPrice(
   }
 
   // Patrón: "1/u x <precio_por_unidad> V. Ahorro <ahorro>"
-  // Tolerancia OCR: el multiplicador puede ser "Ã—" (UTF-8 corrupto de ×),
-  // y el precio puede tener ":" como artefacto (ej: "1/u Ã— :36.990 V. Ahorro 0").
-  const unitMatch = line.match(/1\/u\s+\S+\s+:?([\d.,]+)\s+V\.?\s*Ahorro\s+([\d.,]+)?/i);
+  const unitMatch = line.match(/1\/u\s+\S+\s+([\d.,]+)\s+V\.\s*Ahorro\s+([\d.,]+)?/i);
 
   if (unitMatch) {
     // Precio original por unidad
@@ -123,11 +120,14 @@ function enrichDescription(
 export function parseCarulla(
   lines: string[],
   joined: string,
-  existingCanonicals: string[] = []
+  existingCanonicals: string[] = [],
+  storeHint?: 'Carulla' | 'Exito'
 ): Product[] {
   console.log('📄 Procesando como tipo Carulla...');
 
-  const receiptType: ReceiptType = isExitoFormat(joined) ? 'Exito' : 'Carulla';
+  // storeHint tiene precedencia sobre la detección automática cuando el formato
+  // es ambiguo entre Carulla y Éxito (misma franquicia, misma estructura de ticket)
+  const receiptType: ReceiptType = storeHint ?? (isExitoFormat(joined) ? 'Exito' : 'Carulla');
 
   let products: Product[];
 
@@ -238,8 +238,7 @@ function processProductsWithPatterns(
 
         if (pattern === EXITO_PRODUCT_PATTERN) {
           description = formatSimpleProduct(formatDescription(match[2]), receiptType);
-          // Normalizar "36, 990" → "36990": quitar espacios y coma de miles antes de cleanPrice
-          price = cleanPrice(match[3].replace(/[\s,]/g, ''));
+          price = cleanPrice(match[3]);
         } else if (pattern === PRODUCT_PATTERN) {
           description = formatSimpleProduct(formatDescription(match[1].trim()), receiptType);
           price = match[2] ? cleanPrice(match[2].replace(/\s/g, '').replace(/[A-Za-z]$/i, '')) : 0;
@@ -400,24 +399,20 @@ function processCarullaCase6(lines: string[], joined: string, receiptType: Recei
       }
     }
 
-    // PRIORIDAD 4: Info unidad SIN precio, seguida de código+producto+precio.
-    // Tolerancia OCR: el símbolo de multiplicación puede aparecer como "Ã—" (UTF-8 corrupto de ×),
-    // y el precio puede llevar ":" como prefijo artefacto (ej: ":36.990" → "36.990").
-    // Se usa \s*$ para tolerar trailing whitespace sin capturar líneas con precio tab-separado
-    // (ej: "V. Ahorro 3.125\t9.375" debe ir a PRIORIDAD 3, no aquí).
+    // PRIORIDAD 4: Info unidad SIN precio, seguida de código+producto+precio
     const unitInfoMatch = line.match(
-      /^\d+\s+(?:1\/u|\d+\.?\d*\/\w+)\s+\S+\s+:?([\d.,]+)\s+V\.?\s*Ahorro\s+\d+\s*$/i
+      /^\d+\s+(?:1\/u|\d+\.?\d*\/\w+)\s+\S+\s+([\d.,]+)\s+V\.\s*Ahorro\s+\d+$/i
     );
     if (unitInfoMatch && i + 1 < lines.length) {
       const nextLine = lines[i + 1].trim();
       const productMatch = nextLine.match(/^(\d{4,})\s+(.+?)\s+(\d{1,3}[.,]\s?\d{3})[A-Za-z]?$/);
 
       if (productMatch) {
-        const baseDescription = formatDescription(productMatch[2].trim());
-        // Normalizar "36, 990" → "36990" antes de cleanPrice (artefacto OCR: espacio/coma dentro del precio)
-        const price = cleanPrice(productMatch[3].replace(/[\s,]/g, ''));
-        // Enriquecer con info de unidad/descuento de la línea actual (ej: "— 1 un @ $X (antes $Y, -Z%)")
-        const description = enrichDescription(line, baseDescription, price, receiptType);
+        const description = formatSimpleProduct(
+          formatDescription(productMatch[2].trim()),
+          receiptType
+        );
+        const price = cleanPrice(productMatch[3].replace(/\s/g, ''));
 
         products.push({ description, price });
         i += 2;

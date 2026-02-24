@@ -4,8 +4,8 @@ import CreateSubcategoryScreen from '~/Screens/Subcategories/CreateSubcategorySc
 import CreateCategoryScreen from '~/Screens/Categories/CreateCategoryScreen';
 import EditCategoryScreen from '~/Screens/Categories/EditCategoryScreen';
 // Expenses
-import CreateExpenseScreenV2 from '../Screens/Expenses/CreateExpenseScreenV2';
 import CreateExpenseScreen from '~/Screens/Expenses/CreateExpenseScreen';
+import ScanReceiptScreen from '~/Screens/Expenses/ScanReceiptScreen';
 import EditExpenseScreen from '~/Screens/Expenses/EditExpenseScreen';
 import MainScreen from '~/Screens/Main/MainScreen';
 import SumaryExpenseScreen from '~/Screens/Expenses/SumaryExpenseScreen';
@@ -72,8 +72,8 @@ export interface StackRoutesType {
   CreateSubcategoryScreen: typeof CreateSubcategoryScreen;
   CreateCategoryScreen: typeof CreateCategoryScreen;
   EditCategoryScreen: typeof EditCategoryScreen;
-  CreateExpenseScreenV2: typeof CreateExpenseScreenV2;
   CreateExpenseScreen: typeof CreateExpenseScreen;
+  ScanReceiptScreen: typeof ScanReceiptScreen;
   SumaryExpenseScreen: typeof SumaryExpenseScreen;
   SumaryIncomesScreen: typeof SumaryIncomesScreen;
   CreateIncomeScreen: typeof CreateIncomeScreen;
@@ -126,8 +126,8 @@ const stackRoutes: StackRoutesType = {
   CreateSubcategoryScreen,
   CreateCategoryScreen,
   EditCategoryScreen,
-  CreateExpenseScreenV2,
   CreateExpenseScreen,
+  ScanReceiptScreen,
   SumaryExpenseScreen,
   SumaryIncomesScreen,
   CreateIncomeScreen,

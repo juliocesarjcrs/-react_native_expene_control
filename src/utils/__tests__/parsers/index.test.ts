@@ -60,7 +60,10 @@ describe('extractProducts', () => {
         Total Item :1
         `;
         expect(extractProducts(ocr)).toEqual([
-          { description: 'Patitos Humedos [Exito]', price: 4130 }
+          {
+            description: 'Patitos Humedos — 1 un @ $4.130 (antes $4.900, -16%) [Exito]',
+            price: 4130
+          }
         ]);
       });
     });
@@ -539,9 +542,9 @@ describe('extractProducts', () => {
               description: 'Banano — 1,390 kg @ $3.160/kg [Carulla]',
               price: 4392
             },
-            { description: 'Leche Semid Desl [Carulla]', price: 2980 },
-            { description: 'Leche Semid Desl [Carulla]', price: 2980 },
-            { description: 'Pasabocas Con To [Carulla]', price: 2800 }
+            { description: 'Leche Semid Desl — 1 un @ $2.980 [Carulla]', price: 2980 },
+            { description: 'Leche Semid Desl — 1 un @ $2.980 [Carulla]', price: 2980 },
+            { description: 'Pasabocas Con To — 1 un @ $2.800 [Carulla]', price: 2800 }
           ]);
         });
       });
@@ -609,8 +612,14 @@ describe('extractProducts', () => {
               price: 0
             },
             // BUG B: falta .replace(/\s/g,'') en cleanPrice de PRIORIDAD 3 → "11. 960" da 11 en vez de 11960
-            { description: 'Galletas Origina [Carulla]', price: 11960 },
-            { description: 'Ponque Tradicion [Carulla]', price: 5610 },
+            {
+              description: 'Galletas Origina — 1 un @ $11.960 (antes $14.950, -20%) [Carulla]',
+              price: 11960
+            },
+            {
+              description: 'Ponque Tradicion — 1 un @ $5.610 (antes $6.600, -15%) [Carulla]',
+              price: 5610
+            },
             { description: 'Ampolleta Corrie — 0,965 kg @ $32.980/kg [Carulla]', price: 31826 }
           ]);
         });
@@ -623,7 +632,7 @@ describe('extractProducts', () => {
       const ocr =
         'PLU\tDETALLE\tPRECIO\t\r\n1 1/u x 4.578 V. Ahorro 229\t229\t\r\n647588 GALLETA WAFER SI\t4.349A\t\r\nTotal Item :1\t\r\n';
       expect(extractProducts(ocr)).toEqual([
-        { description: 'Galleta Wafer Si [Exito]', price: 4349 }
+        { description: 'Galleta Wafer Si — 1 un @ $4.349 (antes $4.578, -5%) [Exito]', price: 4349 }
       ]);
     });
 
@@ -670,16 +679,19 @@ describe('extractProducts', () => {
         Total Item :10`;
 
       expect(extractProducts(ocr)).toEqual([
-        { description: 'Mbquina De Afeit [Exito]', price: 28105 },
-        { description: 'Toalla Bato 70x1 [Exito]', price: 36990 },
-        { description: 'Toalla 78x150 Cm [Exito]', price: 36990 },
-        { description: 'Toallas Natural [Exito]', price: 18900 },
-        { description: 'Brownie Mini Are [Exito]', price: 16350 },
-        { description: 'Toalla Mano 40x6 [Exito]', price: 7990 },
-        { description: 'Toalla 40x65cm 3 [Exito]', price: 7990 },
-        { description: 'Pasabocas Con To [Exito]', price: 2740 },
-        { description: 'Refajo Rojo Unid [Exito]', price: 2500 },
-        { description: 'Bolsa Reutilizab [Exito]', price: 1700 }
+        {
+          description: 'Mbquina De Afeit — 1 un @ $28.105 (antes $40.150, -30%) [Exito]',
+          price: 28105
+        },
+        { description: 'Toalla Bato 70x1 — 1 un @ $36.990 [Exito]', price: 36990 },
+        { description: 'Toalla 78x150 Cm — 1 un @ $36.990 [Exito]', price: 36990 },
+        { description: 'Toallas Natural — 1 un @ $18.900 [Exito]', price: 18900 },
+        { description: 'Brownie Mini Are — 1 un @ $16.350 [Exito]', price: 16350 },
+        { description: 'Toalla Mano 40x6 — 1 un @ $7.990 [Exito]', price: 7990 },
+        { description: 'Toalla 40x65cm 3 — 1 un @ $7.990 [Exito]', price: 7990 },
+        { description: 'Pasabocas Con To — 1 un @ $2.740 [Exito]', price: 2740 },
+        { description: 'Refajo Rojo Unid — 1 un @ $2.500 [Exito]', price: 2500 },
+        { description: 'Bolsa Reutilizab — 1 un @ $1.700 [Exito]', price: 1700 }
       ]);
     });
   });
@@ -1049,11 +1061,11 @@ describe('extractProducts', () => {
         TOTAL PROD: 5`;
 
       expect(extractProducts(ocr)).toEqual([
-        { description: 'Mango Tomy — 0.665 kg @ $1.900/kg [FruverLaGranja]', price: 1264 },
-        { description: 'Papa Criolla — 0.445 kg @ $4.400/kg [FruverLaGranja]', price: 1958 },
-        { description: 'Platano Verde — 0.395 kg @ $3.580/kg [FruverLaGranja]', price: 1414 },
-        { description: 'Bandeja Manzana — 1 un @ $5.500/un [FruverLaGranja]', price: 5500 },
-        { description: 'Fresa Bandeja — 1 un @ $4.500/un [FruverLaGranja]', price: 4500 }
+        { description: 'Mango Tomy — 0,665 kg @ $1.900/kg [FruverLaGranja]', price: 1264 },
+        { description: 'Papa Criolla — 0,445 kg @ $4.400/kg [FruverLaGranja]', price: 1958 },
+        { description: 'Platano Verde — 0,395 kg @ $3.580/kg [FruverLaGranja]', price: 1414 },
+        { description: 'Bandeja Manzana — 1 un @ $5.500 [FruverLaGranja]', price: 5500 },
+        { description: 'Fresa Bandeja — 1 un @ $4.500 [FruverLaGranja]', price: 4500 }
       ]);
     });
 
@@ -1064,9 +1076,9 @@ describe('extractProducts', () => {
         N ZANAHORIA	0,500 KG	3.600	1.800`;
 
       expect(extractProducts(ocr)).toEqual([
-        { description: 'Tomate Chonto — 1.25 kg @ $3.200/kg [FruverLaGranja]', price: 4000 },
-        { description: 'Cebolla Cabezona — 0.85 kg @ $2.800/kg [FruverLaGranja]', price: 2380 },
-        { description: 'Zanahoria — 0.5 kg @ $3.600/kg [FruverLaGranja]', price: 1800 }
+        { description: 'Tomate Chonto — 1,25 kg @ $3.200/kg [FruverLaGranja]', price: 4000 },
+        { description: 'Cebolla Cabezona — 0,85 kg @ $2.800/kg [FruverLaGranja]', price: 2380 },
+        { description: 'Zanahoria — 0,5 kg @ $3.600/kg [FruverLaGranja]', price: 1800 }
       ]);
     });
 
@@ -1077,9 +1089,9 @@ describe('extractProducts', () => {
         N BANDEJA MANZANA	1 UN	5.500	5.500`;
 
       expect(extractProducts(ocr)).toEqual([
-        { description: 'Mango Tomy — 0.665 kg @ $1.900/kg [FruverLaGranja]', price: 1264 },
-        { description: 'Papa Criolla — 0.445 kg @ $4.400/kg [FruverLaGranja]', price: 1958 },
-        { description: 'Bandeja Manzana — 1 un @ $5.500/un [FruverLaGranja]', price: 5500 }
+        { description: 'Mango Tomy — 0,665 kg @ $1.900/kg [FruverLaGranja]', price: 1264 },
+        { description: 'Papa Criolla — 0,445 kg @ $4.400/kg [FruverLaGranja]', price: 1958 },
+        { description: 'Bandeja Manzana — 1 un @ $5.500 [FruverLaGranja]', price: 5500 }
       ]);
     });
 
@@ -1090,9 +1102,9 @@ describe('extractProducts', () => {
         N PIMENTON ROJO	1 UN	3.200	3.200`;
 
       expect(extractProducts(ocr)).toEqual([
-        { description: 'Aguacate Hass — 3 un @ $2.500/un [FruverLaGranja]', price: 7500 },
-        { description: 'Limon Tahiti — 2 un @ $1.000/un [FruverLaGranja]', price: 2000 },
-        { description: 'Pimenton Rojo — 1 un @ $3.200/un [FruverLaGranja]', price: 3200 }
+        { description: 'Aguacate Hass — 3 un @ $2.500 [FruverLaGranja]', price: 7500 },
+        { description: 'Limón Tahití — 2 un @ $1.000 [FruverLaGranja]', price: 2000 },
+        { description: 'Pimenton Rojo — 1 un @ $3.200 [FruverLaGranja]', price: 3200 }
       ]);
     });
 
@@ -1102,8 +1114,8 @@ describe('extractProducts', () => {
         N YUCA	0,750 K	3.000	2.250`;
 
       expect(extractProducts(ocr)).toEqual([
-        { description: 'Arracacha — 1.2 kg @ $4.500/kg [FruverLaGranja]', price: 5400 },
-        { description: 'Yuca — 0.75 kg @ $3.000/kg [FruverLaGranja]', price: 2250 }
+        { description: 'Arracacha — 1,2 kg @ $4.500/kg [FruverLaGranja]', price: 5400 },
+        { description: 'Yuca — 0,75 kg @ $3.000/kg [FruverLaGranja]', price: 2250 }
       ]);
     });
 
@@ -1114,9 +1126,9 @@ describe('extractProducts', () => {
         BANDEJA MANZANA	1 UN	5.500	5.500`;
 
       expect(extractProducts(ocr)).toEqual([
-        { description: 'Mango Tomy — 0.665 kg @ $1.900/kg [FruverLaGranja]', price: 1264 },
-        { description: 'Papa Criolla — 0.445 kg @ $4.400/kg [FruverLaGranja]', price: 1958 },
-        { description: 'Bandeja Manzana — 1 un @ $5.500/un [FruverLaGranja]', price: 5500 }
+        { description: 'Mango Tomy — 0,665 kg @ $1.900/kg [FruverLaGranja]', price: 1264 },
+        { description: 'Papa Criolla — 0,445 kg @ $4.400/kg [FruverLaGranja]', price: 1958 },
+        { description: 'Bandeja Manzana — 1 un @ $5.500 [FruverLaGranja]', price: 5500 }
       ]);
     });
 
@@ -1128,8 +1140,8 @@ describe('extractProducts', () => {
         4.400	1.958`;
 
       expect(extractProducts(ocr)).toEqual([
-        { description: 'Mango Tomy — 0.665 kg @ $1.900/kg [FruverLaGranja]', price: 1264 },
-        { description: 'Papa Criolla — 0.445 kg @ $4.400/kg [FruverLaGranja]', price: 1958 }
+        { description: 'Mango Tomy — 0,665 kg @ $1.900/kg [FruverLaGranja]', price: 1264 },
+        { description: 'Papa Criolla — 0,445 kg @ $4.400/kg [FruverLaGranja]', price: 1958 }
       ]);
     });
 
@@ -1140,9 +1152,9 @@ describe('extractProducts', () => {
         N TOMATE	2,5 KI	3.200	8.000`;
 
       expect(extractProducts(ocr)).toEqual([
-        { description: 'Aguacate Hass — 5 un @ $2.500/un [FruverLaGranja]', price: 12500 },
-        { description: 'Limon Tahiti — 10 un @ $500/un [FruverLaGranja]', price: 5000 },
-        { description: 'Tomate — 2.5 kg @ $3.200/kg [FruverLaGranja]', price: 8000 }
+        { description: 'Aguacate Hass — 5 un @ $2.500 [FruverLaGranja]', price: 12500 },
+        { description: 'Limón Tahití — 10 un @ $500 [FruverLaGranja]', price: 5000 },
+        { description: 'Tomate — 2,5 kg @ $3.200/kg [FruverLaGranja]', price: 8000 }
       ]);
     });
   });

@@ -85,7 +85,7 @@ export default function MyStack() {
         />
         <ExpenseStack.Screen
           name="scanInvoiceExpense"
-          component={Routes.CreateExpenseScreenV2}
+          component={Routes.ScanReceiptScreen}
           options={{ title: 'Scanear facturas' }}
         />
         <ExpenseStack.Screen

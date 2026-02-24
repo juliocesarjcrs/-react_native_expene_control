@@ -1,5 +1,13 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, ActivityIndicator, StyleSheet, ScrollView, Alert } from 'react-native';
+import {
+  View,
+  Text,
+  ActivityIndicator,
+  StyleSheet,
+  ScrollView,
+  Alert,
+  TouchableOpacity
+} from 'react-native';
 import { File, Paths } from 'expo-file-system';
 import * as Sharing from 'expo-sharing';
 import {
@@ -75,7 +83,10 @@ const ReceiptScanner: React.FC<ReceiptScannerProps> = () => {
       if (data?.ParsedResults?.[0]) {
         const rawText = data.ParsedResults[0].ParsedText;
         setText(rawText);
-        const productos = extractProducts(rawText);
+        // storeHint resuelve la ambigüedad Carulla/Éxito cuando el OCR
+        // no tiene señales suficientes para distinguirlos automáticamente
+        const hint = receiptType === 'Carulla' || receiptType === 'Exito' ? receiptType : undefined;
+        const productos = extractProducts(rawText, hint);
         setEditableProducts(productos);
         setPendingRawText(rawText);
         setEditModalVisible(true);
@@ -188,6 +199,32 @@ const ReceiptScanner: React.FC<ReceiptScannerProps> = () => {
   return (
     <ScrollView contentContainerStyle={[styles.container, { backgroundColor: colors.BACKGROUND }]}>
       <View style={styles.inner}>
+        {/* --- SELECTOR ANTICIPADO DE TIENDA (solo Carulla/Éxito) --- */}
+        {/* Permite resolver la ambigüedad antes de procesar el OCR */}
+        {!text && (
+          <View style={styles.storeHintContainer}>
+            <Text style={[styles.storeHintLabel, { color: colors.TEXT_PRIMARY }]}>
+              ¿Es factura de Carulla o Éxito? (opcional)
+            </Text>
+            <View style={styles.storeHintRow}>
+              {(['Carulla', 'Exito'] as const).map((store) => (
+                <TouchableOpacity
+                  key={store}
+                  style={[
+                    styles.storeHintButton,
+                    receiptType === store && styles.storeHintButtonSelected
+                  ]}
+                  onPress={() => setReceiptType(receiptType === store ? '' : store)}
+                >
+                  <Text style={receiptType === store ? styles.storeHintTextSelected : undefined}>
+                    {store}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+          </View>
+        )}
+
         {/* --- SELECTOR DE IMAGEN --- */}
         <ImagePickerComponent
           onImageSelected={(base64, uri) => {
@@ -273,6 +310,35 @@ const styles = StyleSheet.create({
   container: {
     flexGrow: 1,
     padding: 16
+  },
+  storeHintContainer: {
+    width: '100%',
+    marginBottom: 12
+  },
+  storeHintLabel: {
+    fontSize: 13,
+    fontWeight: '600',
+    marginBottom: 6
+  },
+  storeHintRow: {
+    flexDirection: 'row',
+    gap: 8
+  },
+  storeHintButton: {
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 6,
+    borderWidth: 1,
+    borderColor: '#ddd',
+    backgroundColor: '#f8f9fa'
+  },
+  storeHintButtonSelected: {
+    backgroundColor: '#e3f2fd',
+    borderColor: '#2196f3'
+  },
+  storeHintTextSelected: {
+    color: '#2196f3',
+    fontWeight: '600'
   },
   inner: {
     flex: 1,

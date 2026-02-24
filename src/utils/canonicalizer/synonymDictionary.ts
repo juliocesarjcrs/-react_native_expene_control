@@ -10,7 +10,10 @@ export const SYNONYM_GROUPS: [string, string[]][] = [
   ['Ahuyama', ['auyama', 'zapallo', 'calabaza']],
   ['Patilla', ['sandía', 'sandia', 'patilla']],
   ['Cilantro', ['cilantra', 'culantro']], // "cilantra" aparece en tus datos reales
-  ['Limón Tahití', ['limon tahiti', 'limhn tahity', 'liman', 'Limon Tahiti A G']], // "limhn" es OCR corrupto de "limón"
+  [
+    'Limón Tahití',
+    ['limon tahiti', 'limhn tahity', 'liman', 'Limon Tahiti A G', 'Limon Tahiti Ag']
+  ], // "limhn" es OCR corrupto de "limón"
   ['Pimentón', ['pimenton', 'pimiento']],
   ['Pepino Cohombro', ['pepino cohombro', 'pepino']], // distinto de pepino calabacín
   ['Pepino Res', ['pepino rez', 'pepino res']], // "rez" → OCR corrupto de "res"
@@ -26,7 +29,9 @@ export const SYNONYM_GROUPS: [string, string[]][] = [
   ['Habichuela', ['Habichuela A Gra']],
   ['Trucha', ['Trucha Xkg El Mar']],
   ['Tilapia', ['Tilapia Rio Claro']],
-  ['Muslo', ['Muslo A Granel']]
+  ['Muslo', ['Muslo A Granel']],
+  ['Papaya', ['papaya comun']]
+  // ['Muslo', ['Muslo A Granel']],
 
   // Agrega según veas en tus datos. El diccionario crece con el uso.
 ];

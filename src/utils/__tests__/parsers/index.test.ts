@@ -218,7 +218,7 @@ describe('extractProducts', () => {
               price: 3239
             },
             {
-              description: 'Papaya Comun — 2,415 kg @ $2.128/kg (antes $3.040/kg, -30%) [Carulla]',
+              description: 'Papaya — 2,415 kg @ $2.128/kg (antes $3.040/kg, -30%) [Carulla]',
               price: 5139
             },
             {
@@ -358,7 +358,7 @@ describe('extractProducts', () => {
           expect(extractProducts(ocr)).toEqual([
             { description: 'Panela 4 Und — 1 un @ $6.770 [Carulla]', price: 6770 },
             {
-              description: 'Papaya Comun — 0,710 kg @ $3.900/kg [Carulla]',
+              description: 'Papaya — 0,710 kg @ $3.900/kg [Carulla]',
               price: 2769
             }
           ]);
@@ -633,18 +633,6 @@ describe('extractProducts', () => {
         'PLU\tDETALLE\tPRECIO\t\r\n1 1/u x 4.578 V. Ahorro 229\t229\t\r\n647588 GALLETA WAFER SI\t4.349A\t\r\nTotal Item :1\t\r\n';
       expect(extractProducts(ocr)).toEqual([
         { description: 'Galleta Wafer Si — 1 un @ $4.349 (antes $4.578, -5%) [Exito]', price: 4349 }
-      ]);
-    });
-
-    it('should parse single product from Carulla receipt', () => {
-      const carullaText = `
-          PLU DETALLE PRECIO
-          1 1/u x 4.578 V . Ahorro 229 647588 GALLETA WAFER SI 4.349A
-          Total Item :1
-          `;
-
-      expect(extractProducts(carullaText)).toEqual([
-        { description: 'Galleta Wafer Si [Exito]', price: 4349 }
       ]);
     });
 

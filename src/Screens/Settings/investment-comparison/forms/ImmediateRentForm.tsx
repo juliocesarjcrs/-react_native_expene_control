@@ -45,7 +45,7 @@ export const ImmediateRentForm: React.FC<Props> = ({ colors, navigation, existin
       id: existingData?.id || Date.now().toString(),
       name: existingData?.name || 'Compra Inmediata para Renta',
       availableCapital: existingData?.availableCapital || DEFAULTS.DEFAULT_CAPITAL,
-      propertyPrice: existingData?.propertyPrice || 300000000,
+      propertyPrice: existingData?.propertyPrice || 276_000_000,
       downPaymentPercent: existingData?.downPaymentPercent || DEFAULTS.VIS_DOWN_PAYMENT,
       mortgageTerm: existingData?.mortgageTerm || 0, // 0 = cash completo
       mortgageRate: existingData?.mortgageRate || 12,

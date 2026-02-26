@@ -281,14 +281,17 @@ describe('extractProducts', () => {
             },
             {
               description:
-                'Pepino Calabacin — 20,475 kg @ $5.680/kg (antes $5.720/kg, -1%) [Carulla]',
+                'Pepino Calabacin — 0,388 kg @ $3.619/kg (antes $5.720/kg, -37%) [Carulla]',
               price: 1902
             },
             {
               description: 'Brocoli — 0,370 kg @ $5.459/kg (antes $7.800/kg, -30%) [Carulla]',
               price: 2020
             },
-            { description: 'Pepino Zukini — 40,460 kg @ $8.471/kg [Carulla]', price: 2737 },
+            {
+              description: 'Pepino Zukini — 0,374 kg @ $5.364/kg (antes $8.500/kg, -37%) [Carulla]',
+              price: 2737
+            },
             {
               description: 'Lechuga Crespa — 1 un @ $2.870 (antes $4.100, -30%) [Carulla]',
               price: 2870
@@ -431,6 +434,45 @@ describe('extractProducts', () => {
         });
       });
 
+      describe('PRIORIDAD 0 + P1 — ítem pegado al peso y V.Ahorro sin espacio', () => {
+        it('parses KGM with item number glued to weight, V.Ahorro without space, and duplicate savings (case 22)', () => {
+          const ocr = `
+          PLU	DETALLE	PRECIO
+          1 1/u x 2,990 V. Ahorro 0
+          3750923 Leche Semid Desl	2.990
+          2 1/u x 2.990 V. Ahorro 0
+          3750923 Leche Semid Desl	2.990
+          1/u x 2.990 V. Ahorro 0
+          3750923 Leche Semid Desl	2.990
+          41.000/KGM x 20.900 V. Ahorro	4.180
+          3618617 Pechuga Blanca M	16.720
+          5 0.955/KGM x 20.900 V.Ahorro	3.992
+          3618617 Pechuga Blanca M	15.968
+          6 1.085/KGM x 36.980 V. Ahorro 10.031	10.031
+          104755 CADERA CORRIENTE	30,092
+          Total Item :6`;
+          expect(extractProducts(ocr)).toEqual([
+            { description: 'Leche Semid Desl — 1 un @ $2.990 [Carulla]', price: 2990 },
+            { description: 'Leche Semid Desl — 1 un @ $2.990 [Carulla]', price: 2990 },
+            { description: 'Leche Semid Desl — 1 un @ $2.990 [Carulla]', price: 2990 },
+            {
+              description:
+                'Pechuga Blanca — 1,000 kg @ $16.720/kg (antes $20.900/kg, -20%) [Carulla]',
+              price: 16720
+            },
+            {
+              description:
+                'Pechuga Blanca — 0,955 kg @ $16.720/kg (antes $20.900/kg, -20%) [Carulla]',
+              price: 15968
+            },
+            {
+              description:
+                'Cadera Corriente — 1,085 kg @ $27.735/kg (antes $36.980/kg, -25%) [Carulla]',
+              price: 30092
+            }
+          ]);
+        });
+      });
       // Mixed: múltiples sub-patrones en el mismo recibo
       describe('mixed sub-patterns — PRIORIDAD 1 + 2 + principal en el mismo recibo', () => {
         it('handles KGM + 1/u mix — last product missing price is skipped (original case 11)', () => {

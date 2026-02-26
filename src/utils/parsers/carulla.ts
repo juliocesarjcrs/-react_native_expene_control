@@ -24,7 +24,16 @@ const EXITO_PRODUCT_PATTERN = /(\d{6,})\s+([A-Z].+?)\s+(\d{1,3}[.,]\s?\d{3})[A-Z
  * Captura: [1]=peso/KGM  [2]=precio_unitario  [3]=ahorro
  * Ejemplo: "0. 870/KGM × 20.900 V. Ahorro 3.637"
  */
-const KGM_NO_ITEM = /^([\d.\s]+\/KGM)\s+\S+\s+([\d.,]+)\s+V\.\s*Ahorro\s+([\d.,]+)\s*$/i;
+/**
+ * KGM sin número de ítem al inicio — OCR de baja calidad.
+ * Captura: [1]=peso/KGM  [2]=precio_unitario  [3]=ahorro
+ * Ejemplo: "0. 870/KGM × 20.900 V. Ahorro 3.637"
+ *
+ * Requiere separador decimal en el peso (\d+[.,]\s?\d*) para excluir líneas
+ * tipo "5 0.955/KGM..." donde "5" es el número de ítem — esas van a P1 (KGM_SAVINGS_SPACE).
+ * Acepta espacio interno OCR: "0. 870/KGM" gracias a [.,]\s?.
+ */
+const KGM_NO_ITEM = /^(\d+[.,]\s?\d*\/KGM)\s+\S+\s+([\d.,]+)\s+V\.?\s*Ahorro\s+([\d.,]+)\s*$/i;
 
 /**
  * KGM con número de ítem, ahorro separado por espacio (no tab).
@@ -291,6 +300,37 @@ function processExitoFormat(lines: string[], receiptType: ReceiptType): Product[
   return products;
 }
 
+/**
+ * Corrige el caso donde un número de ítem queda pegado al peso en OCR de baja calidad.
+ * Ejemplo: "41.000/KGM" = ítem "4" + peso "1.000/KGM" → reconstruye "1.000/KGM"
+ *
+ * Estrategia: si el peso parseado > 5 kg (poco probable para carnes/frutas) y
+ * se dispone del precio final, recalcula peso = finalPrice / (precioKg - ahorro).
+ * Si no hay precio o el recalculado no cae en [0.1, 5], devuelve la línea original.
+ */
+function fixGluedItemNumber(line: string, finalPrice: number): string {
+  const m = line.match(/(\d+[.,]\s?\d*)\s*\/KGM\s+\S+\s+([\d.,]+)\s+V\.?\s*Ahorro\s+([\d.,]+)/i);
+  if (!m) return line;
+
+  const weight = parseFloat(m[1].replace(/[\s,]/g, '.'));
+  if (weight <= 5) return line; // peso razonable, no hay nada que corregir
+
+  const originalPriceKg = parseFloat(m[2].replace(/[.,]/g, ''));
+  const savings = parseFloat(m[3].replace(/[.,]/g, ''));
+  const priceKgFinal = originalPriceKg - savings;
+
+  if (priceKgFinal <= 0) return line;
+
+  const realWeight = finalPrice / priceKgFinal;
+  if (realWeight < 0.1 || realWeight > 5) return line; // recálculo no razonable
+
+  // Reconstruir la línea reemplazando el peso incorrecto con el real
+  // Formateamos a 3 decimales para mantener el estilo del recibo
+  // Usar punto (no coma) para que KGM_PATTERN /([\d.\s]+)\/KGM/ capture el peso correctamente
+  const realWeightStr = realWeight.toFixed(3); // ej: "1.000"
+  return line.replace(m[1], realWeightStr);
+}
+
 function processCarullaCase6(lines: string[], joined: string, receiptType: ReceiptType): Product[] {
   const products: Product[] = [];
   let i = 0;
@@ -304,17 +344,19 @@ function processCarullaCase6(lines: string[], joined: string, receiptType: Recei
     // Casos especiales que maneja:
     //  - Ruido al inicio de next: "36\t18617 Pechusa..." → busca PLU con search, no match
     //  - Precio en i+2: "20.475/KGM..." + "1201 Pepino Calabacin" + "1.902"
+    //  - Ítem pegado al peso: "41.000/KGM" = ítem "4" + peso "1.000" → recalcula peso
     const p0 = line.match(KGM_NO_ITEM);
     if (p0 && next) {
       // search (no match) para tolerar ruido al inicio: "36 18617 Desc 14,546"
       const productMatch = next.match(/(\d{4,})\s+(.+?)\s+(\d{1,3}[.,]\s?\d{3})[A-Za-z]?$/);
       if (productMatch) {
         const price = normalizePrice(productMatch[3]);
-        const description = processWeightAndSavings(
-          line,
-          formatDescription(productMatch[2].trim()),
-          receiptType
-        );
+        // Si el peso parseado es > 5 kg (sospechoso para productos frescos),
+        // recalcular como finalPrice / (precioKg - ahorro) para deshacer el ítem pegado.
+        // Ej: "41.000/KGM" + ahorro=4.180/kg + finalPrice=16.720 → peso real = 16720/16720 = 1.000
+        const lineFixed = fixGluedItemNumber(line, price);
+        // buildDescription garantiza fallback a formatSimpleProduct si processWeightAndSavings falla
+        const description = buildDescription(productMatch[2].trim(), lineFixed, price, receiptType);
         products.push({ description, price });
         i += 2;
         continue;
@@ -325,11 +367,8 @@ function processCarullaCase6(lines: string[], joined: string, receiptType: Recei
       const priceOnly = next2?.match(/^(\d{1,3}[.,]\s?\d{3})[A-Za-z]?$/);
       if (noPrice && priceOnly) {
         const price = normalizePrice(priceOnly[1]);
-        const description = processWeightAndSavings(
-          line,
-          formatDescription(noPrice[2].trim()),
-          receiptType
-        );
+        const lineFixed = fixGluedItemNumber(line, price);
+        const description = buildDescription(noPrice[2].trim(), lineFixed, price, receiptType);
         products.push({ description, price });
         i += 3;
         continue;
@@ -341,12 +380,19 @@ function processCarullaCase6(lines: string[], joined: string, receiptType: Recei
     // Ejemplo: "1 0.305/KGM x 9.340 V. Ahorro 854"
     const p1 = line.match(KGM_SAVINGS_SPACE);
     if (p1 && next) {
+      // Reconstruir línea canónica sin número de ítem al inicio.
+      // Necesario porque KGM_PATTERN en helpers usa ([\d.\s]+)\/KGM (greedy) y captura
+      // el número de ítem: "5 0.955/KGM" → peso "50.955" en vez de "0.955".
+      // Con la línea canónica "0.955/KGM x 20.900 V. Ahorro 3.992", el peso es correcto.
+      // También normaliza "V.Ahorro" → "V. Ahorro" por si KGM_PATTERN lo requiere.
+      const canonicalLine = `${p1[1]} x ${p1[2]} V. Ahorro ${p1[3]}`;
       const productMatch = next.match(PRODUCT_WITH_PRICE);
       if (productMatch) {
         const price = normalizePrice(productMatch[3]);
-        const description = processWeightAndSavings(
-          line,
-          formatDescription(productMatch[2].trim()),
+        const description = buildDescription(
+          productMatch[2].trim(),
+          canonicalLine,
+          price,
           receiptType
         );
         products.push({ description, price });
@@ -356,11 +402,7 @@ function processCarullaCase6(lines: string[], joined: string, receiptType: Recei
       // Subcase: producto sin precio en siguiente línea
       const noPriceMatch = next.match(PRODUCT_NO_PRICE);
       if (noPriceMatch && !next.match(/\d{1,3}[.,]\d{3}/)) {
-        const description = processWeightAndSavings(
-          line,
-          formatDescription(noPriceMatch[2].trim()),
-          receiptType
-        );
+        const description = buildDescription(noPriceMatch[2].trim(), canonicalLine, 0, receiptType);
         products.push({ description, price: 0 });
         i += 2;
         continue;
@@ -375,11 +417,7 @@ function processCarullaCase6(lines: string[], joined: string, receiptType: Recei
       const descMatch = next.match(DESC_WITH_PRICE);
       if (descMatch) {
         const price = normalizePrice(descMatch[2]);
-        const description = processWeightAndSavings(
-          line,
-          formatDescription(descMatch[1].trim()),
-          receiptType
-        );
+        const description = buildDescription(descMatch[1].trim(), line, price, receiptType);
         products.push({ description, price });
         i += 2;
         continue;
@@ -394,11 +432,7 @@ function processCarullaCase6(lines: string[], joined: string, receiptType: Recei
       const productOnlyMatch = next.match(PRODUCT_NO_PRICE);
       if (productOnlyMatch && !next.match(/\d{1,3}[.,]\d{3}/)) {
         const price = normalizePrice(p2[3]);
-        const description = processWeightAndSavings(
-          line,
-          formatDescription(productOnlyMatch[2].trim()),
-          receiptType
-        );
+        const description = buildDescription(productOnlyMatch[2].trim(), line, price, receiptType);
         products.push({ description, price });
         i += 2;
         continue;

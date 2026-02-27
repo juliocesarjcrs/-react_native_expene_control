@@ -68,15 +68,6 @@ export interface ProductPrice {
   isWeighed?: boolean; // true = se vende por peso (kg), false = por unidad
   isIncomplete?: boolean; // true = el comentario no tenía kg ni precio → dato parcial
 }
-// Parseo de retenciones
-export interface RetentionData {
-  cost: number;
-  retention: number; // monto retenido
-  notes?: string;
-  date: string;
-  category: string;
-}
-
 // Patrones para parsear comentarios
 export interface CommentaryPattern {
   id: string;

@@ -68,7 +68,8 @@ export const categorizeExpense = (
         'trucha',
         'contramuslo',
         'sobrebarriga',
-        'higado'
+        'higado',
+        'cadera'
       ],
       exactMatch: false
     },
@@ -120,7 +121,17 @@ export const categorizeExpense = (
     {
       category: 'Alimentación',
       subcategory: 'Licores',
-      keywords: ['licor', 'cerveza', 'vino', 'ron', 'whisky', 'cola', 'pola', 'refajo'],
+      keywords: [
+        'licor',
+        'cerveza',
+        'vino',
+        'ron',
+        'whisky',
+        'cola',
+        'pola',
+        'refajo',
+        'embriagan'
+      ],
       exactMatch: false
     },
     {
@@ -214,7 +225,8 @@ export const categorizeExpense = (
         'cepillo',
         'algodon',
         'dental',
-        'tocador'
+        'tocador',
+        'seda'
       ],
       exactMatch: true // Palabras más específicas con coincidencia exacta
     }

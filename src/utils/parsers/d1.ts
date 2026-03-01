@@ -1,6 +1,7 @@
 import { Product, ReceiptType } from '~/shared/types/components/receipt-scanner.type';
 import { formatDescription } from './formatDescription';
 import { formatSimpleProduct } from './helpers';
+import { canonicalize } from '../canonicalizer';
 
 const RECEIPT_TYPE: ReceiptType = 'D1';
 
@@ -12,7 +13,11 @@ const RECEIPT_TYPE: ReceiptType = 'D1';
  * @param joined - Texto completo del recibo
  * @returns Array de productos parseados
  */
-export function parseD1(lines: string[], joined: string): Product[] {
+export function parseD1(
+  lines: string[],
+  joined: string,
+  existingCanonicals: string[] = []
+): Product[] {
   console.log('📄 Procesando como tipo D1...');
   const products: Product[] = [];
 
@@ -157,7 +162,10 @@ export function parseD1(lines: string[], joined: string): Product[] {
     }
   }
 
-  return products;
+  return products.map((p) => ({
+    ...p,
+    description: canonicalize(p.description, existingCanonicals)
+  }));
 }
 
 // Ejemplos de uso:

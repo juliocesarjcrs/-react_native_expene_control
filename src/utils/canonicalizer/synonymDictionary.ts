@@ -30,7 +30,16 @@ export const SYNONYM_GROUPS: [string, string[]][] = [
   ['Trucha', ['Trucha Xkg El Mar']],
   ['Tilapia', ['Tilapia Rio Claro']],
   ['Muslo', ['Muslo A Granel']],
-  ['Papaya', ['papaya comun']]
+  ['Papaya', ['papaya comun']],
+  ['Limón Mandarino', ['Limon Mandarino']],
+  ['Perníl Blanco', ['Pernil Blanco Ma']],
+  ['Piña', ['Pita Goldoro Mi', 'Pita']],
+  ['Papa Sin Lavar', ['Papa Sin Lavar G']],
+  ['Yogurt Griego', ['Yog Griego Premi']],
+  ['Fettuccine', ['Fettuccine Gramo']],
+  ['Polvo Hornear', ['Polvo De Horneo']],
+  ['Jamón estandar', ['Jaman EstaNdar S']]
+
   // ['Muslo', ['Muslo A Granel']],
 
   // Agrega según veas en tus datos. El diccionario crece con el uso.

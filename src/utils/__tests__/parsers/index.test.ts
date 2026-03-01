@@ -820,14 +820,14 @@ describe('extractProducts', () => {
       const ocr =
         '1\tBOLSA RECICLADA\t\r\n1112\t430.00 B\t\r\n1 @\t430.00\t\r\n2\tSCRUBBER-CLEANZ ESPONJA QUITAM\t\r\n220810003773\t5000.00 B\t\r\n1\t5000.00\t\r\n3\tCANDELA GRANDE DE CUMPLEAÑOS #\t\r\n667888278244\t2500.00 B\t\r\n1\t2500.00\t\r\n4\tALFOMBRA DE BAÑO DE ESPUMA\t\r\n667888388400\t18000.00 B\t\r\n1@\t18000.00\t\r\n5\tMARCADORES MAGNETICOS C/BORRAD\t\r\n667888463459\t12000.00 B\t\r\n1 @ 12000.00\t\r\n6\tGOL BARRA CON ARROZ INFLADO 3U\t\r\n7702007080612\t4000.00 B\t\r\n1 0\t4000.00\t\r\n7 GALLETAS CON ALMENDRA KURABIE\t\r\n7703963056086\t10000.00 B\t\r\n1 @ 10000.00\t\r\n8\tImpuesto Bolsa Plástica\t\r\n999999\t70.00 P\t\r\n1\t70.00\t\r\nTOTAL\tCOP 52000,00\t\r\nMASTERCARD\t\r\nCOP 52000.00\t\r\nREGISTRO DE LA TRANSACCION\t\r\n';
       expect(extractProducts(ocr)).toEqual([
-        { description: 'Bolsa Reciclada', price: 430 },
-        { description: 'Scrubber-Cleanz Esponja Quitam', price: 5000 },
-        { description: 'Candela Grande De CumpleañOs #', price: 2500 },
-        { description: 'Alfombra De BañO De Espuma', price: 18000 },
-        { description: 'Marcadores Magneticos C/Borrad', price: 12000 },
-        { description: 'Gol Barra Con Arroz Inflado 3u', price: 0 }, //4000
-        { description: 'Galletas Con Almendra Kurabie', price: 10000 },
-        { description: 'Impuesto Bolsa PláStica', price: 1 } // 70
+        { description: 'Bolsa Reciclada [DollarCity]', price: 430 },
+        { description: 'Scrubber-Cleanz Esponja Quitam [DollarCity]', price: 5000 },
+        { description: 'Candela Grande De CumpleañOs # [DollarCity]', price: 2500 },
+        { description: 'Alfombra De BañO De Espuma [DollarCity]', price: 18000 },
+        { description: 'Marcadores Magneticos C/Borrad [DollarCity]', price: 12000 },
+        { description: 'Gol Barra Con Arroz Inflado 3u [DollarCity]', price: 0 }, // BUG CONOCIDO: OCR "1 0" falla el match → precio no capturado (real: 4000)
+        { description: 'Galletas Con Almendra Kurabie [DollarCity]', price: 10000 },
+        { description: 'Impuesto Bolsa PláStica [DollarCity]', price: 1 } // BUG CONOCIDO: parseNumber("70.00") trunca en punto → 70, pero taxPriceMatch captura "1" de "1\t70.00"
       ]);
     });
   });

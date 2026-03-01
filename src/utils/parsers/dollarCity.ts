@@ -1,7 +1,11 @@
-import { Product } from '~/shared/types/components/receipt-scanner.type';
+import { Product, ReceiptType } from '~/shared/types/components/receipt-scanner.type';
 import { formatDescription } from './formatDescription';
+import { formatSimpleProduct } from './helpers';
+import { canonicalize } from '../canonicalizer';
 
-export function parseDollarCity(lines: string[]): Product[] {
+const RECEIPT_TYPE: ReceiptType = 'DollarCity';
+
+export function parseDollarCity(lines: string[], existingCanonicals: string[] = []): Product[] {
   const products: Product[] = [];
   let i = 0;
 
@@ -37,7 +41,7 @@ export function parseDollarCity(lines: string[]): Product[] {
 
             if (finalPriceMatch) {
               products.push({
-                description: formatDescription(description),
+                description: formatSimpleProduct(formatDescription(description), RECEIPT_TYPE),
                 price: parseNumber(finalPriceMatch[1])
               });
               i += 3; // Saltar las 3 líneas (desc, precio B, precio final)
@@ -54,7 +58,10 @@ export function parseDollarCity(lines: string[]): Product[] {
       const taxPriceMatch = lines[i + 2].match(/([\d,.]+)/);
       if (taxPriceMatch) {
         products.push({
-          description: formatDescription(line.split(/\d+\s+/)[1]),
+          description: formatSimpleProduct(
+            formatDescription(line.split(/\d+\s+/)[1]),
+            RECEIPT_TYPE
+          ),
           price: parseNumber(taxPriceMatch[1])
         });
         i += 3;
@@ -65,8 +72,12 @@ export function parseDollarCity(lines: string[]): Product[] {
     i++; // Avanzar si no coincide ningún patrón
   }
 
-  return products;
+  return products.map((p) => ({
+    ...p,
+    description: canonicalize(p.description, existingCanonicals)
+  }));
 }
+
 function parseNumber(priceStr: string): number {
   // Eliminar todo después del punto (incluyendo el punto)
   const integerPart = priceStr.replace(/\..*/, '');

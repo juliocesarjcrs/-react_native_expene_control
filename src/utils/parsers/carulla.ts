@@ -16,6 +16,8 @@ const PRICE_PATTERN = /(\d+[.,]?\d*[A-Za-z]?)\s*$/;
 /** Línea de producto Éxito: "PLU <DESCRIPCIÓN> precio[A]" — precio con sufijo letra OCR */
 const EXITO_PRODUCT_PATTERN = /(\d{6,})\s+([A-Z].+?)\s+(\d{1,3}[.,]\s?\d{3})[A-Z]?/;
 
+
+
 // ===== PATRONES DE LÍNEA DE UNIDAD (KGM / 1/u) =====
 // Agrupados aquí porque son la parte más compleja y se usan en processCarullaCase6.
 
@@ -41,7 +43,8 @@ const KGM_NO_ITEM = /^(\d+[.,]\s?\d*\/KGM)\s+\S+\s+([\d.,]+)\s+V\.?\s*Ahorro\s+(
  * Captura: [1]=peso/KGM  [2]=precio_unitario  [3]=ahorro
  * Ejemplo: "1 0.305/KGM x 9.340 V. Ahorro 854"
  */
-const KGM_SAVINGS_SPACE = /^\d+\s+([\d.]+\/KGM)\s+\S+\s+([\d.,]+)\s+V\.\s*Ahorro[ ]+([\d.,]+)\s*$/i;
+const KGM_SAVINGS_SPACE =
+  /^\d+\s+([\d.]+\/KGM)\s+\S+\s+([\d.,]+)\s+V\.\s*Ahorro[ ]+([\d.,]+)\s*$/i;
 
 /**
  * KGM con ahorro + código PLU en la misma línea — descripción+precio en línea siguiente.
@@ -80,6 +83,16 @@ const UNIT_PRICE_INLINE =
 const UNIT_NO_PRICE =
   /^\d+\s+(?:1\/u|\d+\.?\d*\/\w+)\s+\S+\s+:?([\d.,]+)\s+V\.?\s*Ahorro\s+[\d.,]+\s*$/i;
 
+/**
+ * 1/u o KGM con "V. Ahorro" al final sin valor de ahorro — ahorro implícito 0.
+ * El OCR omite el "0" al final, dejando la línea truncada.
+ * Captura: [1]=tipo (1/u o X.XXX/KGM)  [2]=precio_unitario
+ * Ejemplo: "1 1/u x 36.990 V. Ahorro"
+ *           "2 2.300/KGM x 15.900 V. Ahorro"
+ */
+const UNIT_OR_KGM_ZERO_SAVINGS =
+  /^\d+\s+((?:1\/u|[\d.]+\/\w+))\s+\S+\s+([\d.,]+)\s+V\.?\s*Ahorro\s*$/i;
+
 // ===== PATRONES DE LÍNEA DE PRODUCTO =====
 
 /** PLU + descripción + precio (con o sin sufijo letra OCR) */
@@ -89,7 +102,8 @@ const PRODUCT_WITH_PRICE = /^(\d{4,})\s+(.+?)\s+(\d{1,3}[.,]\s?\d{3})[A-Za-z]?$/
 const PRODUCT_NO_PRICE = /^(\d{4,})\s+(.+?)$/;
 
 /** Descripción + precio sin PLU — para P1B donde el PLU está en línea anterior */
-const DESC_WITH_PRICE = /^([A-Za-z][A-Za-z\s.#%&\/\-]+?)\s+(\d{1,3}[.,]\s?\d{3})[A-Za-z]?$/i;
+const DESC_WITH_PRICE =
+  /^([A-Za-z][A-Za-z\s.#%&\/\-]+?)\s+(\d{1,3}[.,]\s?\d{3})[A-Za-z]?$/i;
 
 // ===== HELPERS INTERNOS =====
 
@@ -300,6 +314,7 @@ function processExitoFormat(lines: string[], receiptType: ReceiptType): Product[
   return products;
 }
 
+
 /**
  * Corrige el caso donde un número de ítem queda pegado al peso en OCR de baja calidad.
  * Ejemplo: "41.000/KGM" = ítem "4" + peso "1.000/KGM" → reconstruye "1.000/KGM"
@@ -389,12 +404,7 @@ function processCarullaCase6(lines: string[], joined: string, receiptType: Recei
       const productMatch = next.match(PRODUCT_WITH_PRICE);
       if (productMatch) {
         const price = normalizePrice(productMatch[3]);
-        const description = buildDescription(
-          productMatch[2].trim(),
-          canonicalLine,
-          price,
-          receiptType
-        );
+        const description = buildDescription(productMatch[2].trim(), canonicalLine, price, receiptType);
         products.push({ description, price });
         i += 2;
         continue;
@@ -465,6 +475,25 @@ function processCarullaCase6(lines: string[], joined: string, receiptType: Recei
       if (productMatch) {
         const price = normalizePrice(productMatch[3]);
         const description = buildDescription(productMatch[2].trim(), line, price, receiptType);
+        products.push({ description, price });
+        i += 2;
+        continue;
+      }
+    }
+
+    // P5: 1/u o KGM con "V. Ahorro" al final sin valor — ahorro implícito 0.
+    // OCR omite el "0" en "V. Ahorro 0", dejando la línea truncada.
+    // Ejemplo: "1 1/u x 36.990 V. Ahorro" + "3790206 Toalla 78X150 Cm  36.990A"
+    //           "2 2.300/KGM x 15.900 V. Ahorro" + "737288  Tilapia Roja  36,570"
+    const p5 = line.match(UNIT_OR_KGM_ZERO_SAVINGS);
+    if (p5 && next) {
+      const productMatch = next.match(PRODUCT_WITH_PRICE);
+      if (productMatch) {
+        const price = normalizePrice(productMatch[3]);
+        // Reconstruir línea canónica con ahorro=0 explícito para que
+        // KGM_PATTERN y processUnitAndPrice la procesen correctamente
+        const canonicalLine = `${p5[1]} x ${p5[2]} V. Ahorro 0`;
+        const description = buildDescription(productMatch[2].trim(), canonicalLine, price, receiptType);
         products.push({ description, price });
         i += 2;
         continue;

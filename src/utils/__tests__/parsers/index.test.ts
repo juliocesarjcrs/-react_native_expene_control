@@ -30,7 +30,7 @@ describe('extractProducts', () => {
         const ocr =
           '202b 10191\t\r\nDETALLE\tPRECIO\t\r\nPLU\tV. Ahorro\t6.225\t\r\n1 0.944/KGM x 21.980\t14.524\t\r\n737288 Tilapia Roja\t\r\n2 1/u x 14.950 V. Ahorro 3.738\t11.212A\t\r\n608937 Lavaplatos en Cr\t\r\nTotal Item :2\t\r\n35.699\t\r\n';
         expect(extractProducts(ocr)).toEqual([
-          { description: 'Tilapia Roja [Carulla]', price: 14524 },
+          { description: 'Tilapia [Carulla]', price: 14524 },
           { description: 'Lavaplatos En Cr [Carulla]', price: 11212 }
         ]);
       });
@@ -434,6 +434,28 @@ describe('extractProducts', () => {
         });
       });
 
+      describe('PRIORIDAD 5 — V. Ahorro sin valor (ahorro implícito 0)', () => {
+  it('parses 1/u and KGM lines where OCR omits the 0 after V. Ahorro (case 23)', () => {
+
+         const ocr = `PLU	DETALLE	PRECIO
+          1	1/u x 36.990 V. Ahorro
+          3790206 Toalla 78X150 Cm	36.990A
+          2	2.300/KGM x 15.900 V. Ahorro
+          737288	Tilapia Roja	36,570
+          Total Item :2
+        `;
+        expect(extractProducts(ocr,'Exito')).toEqual([
+          {
+            description: 'Toalla 78x150 Cm — 1 un @ $36.990 [Exito]',
+            price: 36990
+          },
+            {
+            description: 'Tilapia — 2,300 kg @ $15.900/kg [Exito]',
+            price: 36570
+          }
+        ]);
+      });
+    });
       describe('PRIORIDAD 0 + P1 — ítem pegado al peso y V.Ahorro sin espacio', () => {
         it('parses KGM with item number glued to weight, V.Ahorro without space, and duplicate savings (case 22)', () => {
           const ocr = `
@@ -541,7 +563,7 @@ describe('extractProducts', () => {
               description: 'Pepino Res — 0,500 kg @ $20.558/kg (antes $21.640/kg, -5%) [Carulla]',
               price: 1347
             },
-            { description: 'Pecho Corriente [Carulla]', price: 25591 }
+            { description: 'Pecho Corriente — 0,920 kg @ $29.280/kg [Carulla]', price: 25591 }
           ]);
         });
 
@@ -828,6 +850,32 @@ describe('extractProducts', () => {
         { description: 'Gol Barra Con Arroz Inflado 3u [DollarCity]', price: 0 }, // BUG CONOCIDO: OCR "1 0" falla el match → precio no capturado (real: 4000)
         { description: 'Galletas Con Almendra Kurabie [DollarCity]', price: 10000 },
         { description: 'Impuesto Bolsa PláStica [DollarCity]', price: 1 } // BUG CONOCIDO: parseNumber("70.00") trunca en punto → 70, pero taxPriceMatch captura "1" de "1\t70.00"
+      ]);
+    });
+
+   it('should handle bare price line (no quantity prefix) — case(2)', () => {
+      // Variante OCR donde la línea de precio final es solo el número, sin "1\t" ni "1 @" delante
+      // Ejemplo: "4000.00" en vez de "1\t4000.00" o "1 @ 4000.00"
+      const ocr = `COMPROBANTE DE VENTA
+        No. F7W1 - 1256799
+        1	BANDEJA DE SILICONA REDONDA 11
+        30326003183	18000.00 B
+        1	18000.00
+        2	PAQUETE DE PINZAS PLASTICAS MU
+        667888262236	8000.00 B
+        1	8000.00
+        3	JUMBO MIX BARRA CON MANI 60G
+        7702007009989	4000.00 B
+        4000.00
+        4	MOLDE RECT PEQ DE ALUMINIO 3UD
+        828018888928	6000.00 B
+        1 @ 6000.00
+        TOTAL	COP 36000,00	36000.00`;
+      expect(extractProducts(ocr)).toEqual([
+        { description: 'Bandeja De Silicona Redonda 11 [DollarCity]', price: 18000 },
+        { description: 'Paquete De Pinzas Plasticas Mu [DollarCity]', price: 8000 },
+        { description: 'Jumbo Mix Barra Con Mani 60g [DollarCity]', price: 4000 },
+        { description: 'Molde Rect Peq De Aluminio 3ud [DollarCity]', price: 6000 }
       ]);
     });
   });

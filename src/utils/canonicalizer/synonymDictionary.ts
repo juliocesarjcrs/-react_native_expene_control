@@ -8,7 +8,7 @@ export const SYNONYM_GROUPS: [string, string[]][] = [
     ['cebolla junca', 'cebolla de rama', 'cebolla cabezona larga', 'cebolla larga']
   ],
   ['Ahuyama', ['auyama', 'zapallo', 'calabaza']],
-  ['Patilla', ['sandía', 'sandia', 'patilla']],
+  ['Sandia', ['sandía', 'sandia', 'patilla', 'sandiapatilla']],
   ['Cilantro', ['cilantra', 'culantro']], // "cilantra" aparece en tus datos reales
   [
     'Limón Tahití',
@@ -23,12 +23,12 @@ export const SYNONYM_GROUPS: [string, string[]][] = [
   ],
   ['Tomate Chonto', ['tomate chonto (a', 'tomate chonto (aa', 'tomate chonto', 'Tomate Chonto A']],
   ['Chocolo Tierno', ['Chocolo Tiernom']],
-  ['Cebolla Blanca', ['Cebolla Blanca S']],
+  ['Cebolla Blanca', ['Cebolla Blanca S', 'Cebolla Blanca G']],
   ['Zanahoria', ['Zanahoria A Gran']],
   ['Lechuga Crespa', ['Lechuga Hidrop']],
   ['Habichuela', ['Habichuela A Gra']],
   ['Trucha', ['Trucha Xkg El Mar']],
-  ['Tilapia', ['Tilapia Rio Claro']],
+  ['Tilapia', ['Tilapia Rio Claro', 'Tilapia Roja']],
   ['Muslo', ['Muslo A Granel']],
   ['Papaya', ['papaya comun']],
   ['Limón Mandarino', ['Limon Mandarino']],

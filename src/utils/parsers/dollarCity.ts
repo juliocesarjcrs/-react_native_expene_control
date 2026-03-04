@@ -5,7 +5,10 @@ import { canonicalize } from '../canonicalizer';
 
 const RECEIPT_TYPE: ReceiptType = 'DollarCity';
 
-export function parseDollarCity(lines: string[], existingCanonicals: string[] = []): Product[] {
+export function parseDollarCity(
+  lines: string[],
+  existingCanonicals: string[] = []
+): Product[] {
   const products: Product[] = [];
   let i = 0;
 
@@ -34,10 +37,15 @@ export function parseDollarCity(lines: string[], existingCanonicals: string[] = 
         const priceMatch = priceLine.match(/\d+\s+([\d,.]+)\s+B/);
 
         if (priceMatch) {
-          // La línea siguiente debería ser el precio final
+          // La línea siguiente debería ser el precio final.
+          // Acepta dos formatos:
+          //   "1\t18000.00"   → con prefijo (cantidad + tab/espacio)
+          //   "4000.00"       → bare (solo el precio, sin prefijo)
           if (i + 2 < lines.length) {
             const finalPriceLine = lines[i + 2];
-            const finalPriceMatch = finalPriceLine.match(/[\d@]+\s+([\d,.]+)/);
+            const finalPriceMatch =
+              finalPriceLine.match(/[\d@]+\s+([\d,.]+)/) ||
+              finalPriceLine.match(/^([\d,.]+)$/);
 
             if (finalPriceMatch) {
               products.push({

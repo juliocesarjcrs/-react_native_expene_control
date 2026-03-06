@@ -137,12 +137,21 @@ const normalize = (text: string): string =>
 
 /**
  * Determina si un producto se vende por peso basándose en:
- * 1. Si el comentario ya indica 'kg' explícitamente → true
- * 2. Si el nombre normalizado coincide con algún nombre específico → true
- * 3. Si el nombre normalizado contiene alguna categoría pesada → true
- * 4. Fallback → false (se vende por unidad)
+ * 1. Si el comentario indica 'un' explícitamente → false (respeta unidad)
+ * 2. Si el comentario indica 'kg' explícitamente → true
+ * 3. Si el nombre normalizado coincide con algún nombre específico → true
+ * 4. Si el nombre normalizado contiene alguna categoría pesada → true
+ * 5. Fallback → false (se vende por unidad)
  */
-const resolveIsWeighed = (productName: string, hasKgInComment: boolean): boolean => {
+const resolveIsWeighed = (
+  productName: string,
+  hasKgInComment: boolean,
+  hasUnInComment?: boolean
+): boolean => {
+  // Si el comentario dice explícitamente "un", respetarlo
+  if (hasUnInComment === true) return false;
+
+  // Si el comentario dice explícitamente "kg", respetarlo
   if (hasKgInComment) return true;
 
   const norm = normalize(productName);
@@ -267,7 +276,7 @@ export const parseProductCommentary = (
         store,
         unit,
         date,
-        isWeighed: resolveIsWeighed(product, unit === 'kg'),
+        isWeighed: resolveIsWeighed(product, unit === 'kg', unit === 'un'),
         isIncomplete: false
       };
     }
@@ -297,7 +306,35 @@ export const parseProductCommentary = (
         store,
         unit,
         date,
-        isWeighed: resolveIsWeighed(product, unit === 'kg'),
+        isWeighed: resolveIsWeighed(product, unit === 'kg', unit === 'un'),
+        isIncomplete: false
+      };
+    }
+
+    // ----------------------------------------------------------
+    // PATRÓN 2B: Completo sin descuento (@ SIN tienda)
+    // "Producto — X kg @ $P/kg"
+    // "Producto — X un @ $P"
+    // Para casos donde no se capturó la tienda
+    // ----------------------------------------------------------
+    match = text.match(
+      /^([^@\u2014\n]{2,}?)\s*[\u2014\-]\s*(\d+[.,]?\d*)\s*(kg|un)\s*@\s*\$?([,\d.]+)(?:\/(?:kg|un))?$/i
+    );
+
+    if (match && match[1].trim().length >= 2) {
+      const product = match[1].trim();
+      const quantity = parseFloat(match[2].replace(',', '.'));
+      const unit = match[3].toLowerCase() as 'kg' | 'un';
+      const pricePerKg = parseCOPrice(match[4]);
+
+      return {
+        cost,
+        product,
+        quantity,
+        pricePerKg,
+        unit,
+        date,
+        isWeighed: resolveIsWeighed(product, unit === 'kg', unit === 'un'),
         isIncomplete: false
       };
     }
@@ -413,7 +450,36 @@ export const parseProductCommentary = (
         store,
         unit,
         date,
-        isWeighed: resolveIsWeighed(product, unit === 'kg'),
+        isWeighed: resolveIsWeighed(product, unit === 'kg', unit === 'un'),
+        isIncomplete: false
+      };
+    }
+
+    // ----------------------------------------------------------
+    // PATRÓN 4B: Formato antiguo "a" CON tienda
+    // "Producto — X kg a $P/kg [Tienda]"
+    // DEBE IR ANTES DEL PATRÓN 3B porque es más específico
+    // ----------------------------------------------------------
+    match = text.match(
+      /(.+?)\s*[\u2014\-]\s*(\d+[.,]?\d*)\s*(kg|un)\s*a\s*\$?([,\d.]+)(?:\/(?:kg|un))?\s*\[([^\]]+)\]/i
+    );
+
+    if (match) {
+      const product = match[1].trim();
+      const quantity = parseFloat(match[2].replace(',', '.'));
+      const unit = match[3].toLowerCase() as 'kg' | 'un';
+      const pricePerKg = parseCOPrice(match[4]);
+      const store = match[5].trim();
+
+      return {
+        cost,
+        product,
+        quantity,
+        pricePerKg,
+        store,
+        unit,
+        date,
+        isWeighed: resolveIsWeighed(product, unit === 'kg', unit === 'un'),
         isIncomplete: false
       };
     }
@@ -422,8 +488,9 @@ export const parseProductCommentary = (
     // PATRÓN 3B: Solo tienda, sin cantidad ni precio
     // "Sandia(Patilla) [Carulla]"
     // "Pastillas De Cocoa [D1]"
+    // NO debe capturar si hay números, @, — (esos son otros patrones)
     // ----------------------------------------------------------
-    match = text.match(/^(.+?)\s*\[([^\]]+)\]\s*$/);
+    match = text.match(/^([^\d@\u2014\-]+?)\s*\[([^\]]+)\]\s*$/);
 
     if (match) {
       const product = match[1].trim();
@@ -446,6 +513,7 @@ export const parseProductCommentary = (
     // ----------------------------------------------------------
     // PATRÓN 4: Formato antiguo sin @ (retrocompatibilidad)
     // "Producto — Xkg a $P/kg"
+    // SIN tienda al final
     // ----------------------------------------------------------
     match = text.match(/(.+?)\s*[\u2014\-]\s*(\d+[.,]?\d*)\s*(kg|un)\s*a?\s*\$?([,\d.]+)/i);
 
@@ -462,7 +530,7 @@ export const parseProductCommentary = (
         pricePerKg,
         unit,
         date,
-        isWeighed: resolveIsWeighed(product, unit === 'kg'),
+        isWeighed: resolveIsWeighed(product, unit === 'kg', unit === 'un'),
         isIncomplete: false
       };
     }
@@ -486,7 +554,7 @@ export const parseProductCommentary = (
         pricePerKg,
         unit,
         date,
-        isWeighed: resolveIsWeighed(product, unit === 'kg'),
+        isWeighed: resolveIsWeighed(product, unit === 'kg', unit === 'un'),
         isIncomplete: false
       };
     }
@@ -521,14 +589,28 @@ export const parseProductCommentary = (
 /**
  * Encuentra el mejor y peor precio de un producto.
  * Excluye registros incompletos del cálculo de mejor/peor precio.
+ *
+ * NOTA: En la práctica, products ya viene filtrado por nombre (viene del grupo),
+ * así que la comparación de nombres es redundante. Se mantiene por retrocompatibilidad
+ * pero se normaliza correctamente para manejar tildes y caracteres especiales.
  */
 export const findBestPrice = (
   products: ProductPrice[],
   productName: string
 ): { best: ProductPrice | null; worst: ProductPrice | null; savings: number } => {
-  const complete = products.filter(
-    (p) => p.product.toLowerCase().includes(productName.toLowerCase()) && !p.isIncomplete
-  );
+  // Normalizar el nombre del producto para comparación
+  const normalizedSearchName = normalize(productName);
+
+  const complete = products.filter((p) => {
+    if (p.isIncomplete) return false;
+
+    // Si productName está vacío o el array ya viene filtrado, no filtrar por nombre
+    if (!productName || productName === '') return true;
+
+    // Normalizar el nombre del producto actual para comparación con tildes
+    const normalizedProductName = normalize(p.product);
+    return normalizedProductName.includes(normalizedSearchName);
+  });
 
   if (complete.length === 0) {
     return { best: null, worst: null, savings: 0 };

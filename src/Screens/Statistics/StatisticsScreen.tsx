@@ -68,10 +68,15 @@ export default function StatisticsScreen({ navigation }: StatisticsScreenProps) 
       {/* --- ESTADÍSTICAS GENERALES --- */}
       <View style={styles.section}>
         <MenuCardButton title="Comparar Períodos" onPress={go('comparePeriods')} />
+        <MenuCardButton
+          title="Análisis de Comentarios"
+          onPress={go('commentaryAnalysis')}
+          color="#009688"
+        />
       </View>
 
       {/* --- ANÁLISIS DE COMENTARIOS (SOLO ADMIN MIENTRAS SE PRUEBA) --- */}
-      {userLoggued?.role === 1 && (
+      {/* {userLoggued?.role === 1 && (
         <View style={styles.section}>
           <MenuCardButton
             title="Análisis de Comentarios"
@@ -79,7 +84,7 @@ export default function StatisticsScreen({ navigation }: StatisticsScreenProps) 
             color="#009688"
           />
         </View>
-      )}
+      )} */}
     </ScrollView>
   );
 }

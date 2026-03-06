@@ -8,7 +8,7 @@ export const SYNONYM_GROUPS: [string, string[]][] = [
     ['cebolla junca', 'cebolla de rama', 'cebolla cabezona larga', 'cebolla larga']
   ],
   ['Ahuyama', ['auyama', 'zapallo', 'calabaza']],
-  ['Sandia', ['sandía', 'sandia', 'patilla', 'sandiapatilla']],
+  ['Sandia', ['sandía', 'sandia', 'patilla', 'sandiapatilla', 'sandia(patilla)']],
   ['Cilantro', ['cilantra', 'culantro']], // "cilantra" aparece en tus datos reales
   [
     'Limón Tahití',
@@ -38,7 +38,8 @@ export const SYNONYM_GROUPS: [string, string[]][] = [
   ['Yogurt Griego', ['Yog Griego Premi']],
   ['Fettuccine', ['Fettuccine Gramo']],
   ['Polvo Hornear', ['Polvo De Horneo']],
-  ['Jamón estandar', ['Jaman EstaNdar S']]
+  ['Jamón estandar', ['Jaman EstaNdar S']],
+  ['Perejil', ['Perejil Liso']]
 
   // ['Muslo', ['Muslo A Granel']],
 

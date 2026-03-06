@@ -435,27 +435,26 @@ describe('extractProducts', () => {
       });
 
       describe('PRIORIDAD 5 — V. Ahorro sin valor (ahorro implícito 0)', () => {
-  it('parses 1/u and KGM lines where OCR omits the 0 after V. Ahorro (case 23)', () => {
-
-         const ocr = `PLU	DETALLE	PRECIO
+        it('parses 1/u and KGM lines where OCR omits the 0 after V. Ahorro (case 23)', () => {
+          const ocr = `PLU	DETALLE	PRECIO
           1	1/u x 36.990 V. Ahorro
           3790206 Toalla 78X150 Cm	36.990A
           2	2.300/KGM x 15.900 V. Ahorro
           737288	Tilapia Roja	36,570
           Total Item :2
         `;
-        expect(extractProducts(ocr,'Exito')).toEqual([
-          {
-            description: 'Toalla 78x150 Cm — 1 un @ $36.990 [Exito]',
-            price: 36990
-          },
+          expect(extractProducts(ocr, 'Exito')).toEqual([
             {
-            description: 'Tilapia — 2,300 kg @ $15.900/kg [Exito]',
-            price: 36570
-          }
-        ]);
+              description: 'Toalla 78x150 Cm — 1 un @ $36.990 [Exito]',
+              price: 36990
+            },
+            {
+              description: 'Tilapia — 2,300 kg @ $15.900/kg [Exito]',
+              price: 36570
+            }
+          ]);
+        });
       });
-    });
       describe('PRIORIDAD 0 + P1 — ítem pegado al peso y V.Ahorro sin espacio', () => {
         it('parses KGM with item number glued to weight, V.Ahorro without space, and duplicate savings (case 22)', () => {
           const ocr = `
@@ -853,7 +852,7 @@ describe('extractProducts', () => {
       ]);
     });
 
-   it('should handle bare price line (no quantity prefix) — case(2)', () => {
+    it('should handle bare price line (no quantity prefix) — case(2)', () => {
       // Variante OCR donde la línea de precio final es solo el número, sin "1\t" ni "1 @" delante
       // Ejemplo: "4000.00" en vez de "1\t4000.00" o "1 @ 4000.00"
       const ocr = `COMPROBANTE DE VENTA

@@ -56,11 +56,11 @@ import ScenarioConfigScreen from '~/Screens/Settings/investment-comparison/Scena
 import ComparePeriodsScreen from '~/Screens/Statistics/ComparePeriodsScreen';
 import {
   CommentaryAnalysisScreen,
-  ProductPricesScreen,
   RetentionAnalysisScreen,
   StatisticsScreen,
   UtilityAnalysisScreen
 } from '~/Screens';
+import ProductPricesScreen from '~/Screens/Statistics/ProductPrices/ProductPricesScreen';
 
 // Admin
 import AIModelsScreen from '~/Screens/Admin/AIModelsScreen';

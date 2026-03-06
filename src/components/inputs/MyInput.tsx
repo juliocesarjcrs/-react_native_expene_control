@@ -36,6 +36,14 @@ interface MyInputProps {
   clearButton?: boolean;
   onSubmitEditing?: () => void;
 
+  keyboardType?:
+    | 'default'
+    | 'numeric'
+    | 'decimal-pad'
+    | 'phone-pad'
+    | 'email-address'
+    | 'number-pad';
+
   // Estilos personalizados (opcional)
   containerStyle?: object;
   inputStyle?: object;

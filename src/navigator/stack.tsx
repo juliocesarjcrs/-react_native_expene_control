@@ -291,6 +291,11 @@ export default function MyStack() {
           component={Routes.ComparisonResultsScreen}
           options={{ headerShown: false }}
         />
+        <SettingsStack.Screen
+          name="commentaryTemplates"
+          component={Routes.CommentaryTemplatesScreen}
+          options={{ title: 'Plantillas de Comentarios' }}
+        />
       </SettingsStack.Navigator>
     );
   }

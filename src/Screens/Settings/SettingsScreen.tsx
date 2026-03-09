@@ -78,6 +78,7 @@ export default function SettingsScreen({ navigation }: SettingsScreenProps) {
           title="Comparador de Inversiones"
           onPress={go('investmentComparisonHome')}
         />
+        <MenuCardButton title="Plantillas de Comentarios" onPress={go('commentaryTemplates')} />
       </View>
 
       {/* --- SOLO ADMIN --- */}

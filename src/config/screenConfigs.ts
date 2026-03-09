@@ -169,6 +169,10 @@ export const screenConfigs = {
     title: 'Resultados de Comparación',
     subtitle: 'Análisis detallado y recomendación personalizada'
   },
+  commentaryTemplates: {
+    title: 'Plantillas de Comentarios',
+    subtitle: 'Personaliza los formatos de comentario por subcategoría'
+  },
 
   // STATISTICS
   statistics: {

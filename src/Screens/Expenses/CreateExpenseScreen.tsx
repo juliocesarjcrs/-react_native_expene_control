@@ -1,4 +1,5 @@
 import React, { useRef, useState } from 'react';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Keyboard, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSelector } from 'react-redux';
 import { useForm } from 'react-hook-form';
@@ -15,6 +16,7 @@ import { DateSelector } from '~/components/datePicker';
 import MyButton from '~/components/MyButton';
 import ExpenseList from './components/ExpenseList';
 import MyInput from '~/components/inputs/MyInput';
+import CommentaryInput from '~/components/CommentaryInput';
 
 // Types
 import { RootState } from '~/shared/types/reducers';
@@ -25,11 +27,15 @@ import {
   GetExpensesFromSubcategoryResponse
 } from '~/shared/types/services/expense-service.type';
 import { SubcategorySelection } from '~/shared/types/components/dropDown/SelectJoinCategory.type';
+import { RecentExpenseForSuggestion } from '~/shared/types/screens/settings/commentary-templates.types';
 
 // Utils
 import { ShowToast } from '~/utils/toastUtils';
 import { NumberFormat, DateFormat } from '~/utils/Helpers';
 import { showError } from '~/utils/showError';
+import { saveCommentaryToHistory } from '~/utils/commentaryHistory.utils';
+import { saveTemplateConfig } from '~/utils/templateStorage.utils';
+import { getDefaultTemplateConfig } from '~/utils/commentaryTemplates.utils';
 
 // Theme
 import { useThemeColors } from '~/customHooks/useThemeColors';
@@ -41,16 +47,22 @@ import { MEDIUM } from '~/styles/fonts';
 // Configs
 import { screenConfigs } from '~/config/screenConfigs';
 
+// Hooks
+import { useFeatureFlag } from '~/contexts/FeatureFlagsContext';
+
 export default function CreateExpenseScreen(): React.JSX.Element {
   const config = screenConfigs.createExpense;
   const colors = useThemeColors();
   const selectJoinCategoryRef = useRef<any>(null);
 
   const month = useSelector((state: RootState) => state.date.month);
+
   const {
     handleSubmit,
     control,
     reset,
+    watch,
+    setValue,
     formState: { errors }
   } = useForm({
     mode: 'onTouched'
@@ -60,6 +72,13 @@ export default function CreateExpenseScreen(): React.JSX.Element {
   const [sumCost, setSumCost] = useState<number>(0);
   const [expenses, setExpenses] = useState<ExpenseModel[]>([]);
   const [loading, setLoading] = useState<boolean>(false);
+  const [subcategoryName, setSubcategoryName] = useState<string>('');
+  const [categoryName, setCategoryName] = useState<string>('');
+
+  const { isEnabled: isCommentarySuggestionsEnabled } = useFeatureFlag('commentary_suggestions');
+
+  // Valor actual del comentario para el autocompletado
+  const commentaryValue: string = watch('commentary') ?? '';
 
   // Date picker
   const [date, setDate] = useState<Date>(new Date());
@@ -85,6 +104,8 @@ export default function CreateExpenseScreen(): React.JSX.Element {
     try {
       setLoading(true);
       setSubcategoryId(foundSubcategory.value);
+      setSubcategoryName(foundSubcategory.label ?? '');
+      setCategoryName(foundSubcategory.categoryName ?? '');
       const { data } = await getExpensesFromSubcategory(foundSubcategory.value, month);
       setLoading(false);
       setExpenses(data);
@@ -140,6 +161,31 @@ export default function CreateExpenseScreen(): React.JSX.Element {
       const { data } = await CreateExpense(dataSend);
       setLoading(false);
 
+      // Guardar comentario en historial local para sugerencias futuras
+      if (payload.commentary?.trim() && subcategoryId) {
+        saveCommentaryToHistory(
+          subcategoryId,
+          payload.commentary,
+          parseInt(String(newAmount)),
+          DateFormat(date, 'YYYY-MM-DD')
+        );
+      }
+
+      // Registrar config de la subcategoría en AsyncStorage para que aparezca
+      // en la pantalla de Plantillas de Comentarios (Settings), aunque el usuario
+      // no haya editado nada — se guarda como "usada" pero sin isCustomized.
+      if (subcategoryId && subcategoryName && categoryName) {
+        const existingConfig = await AsyncStorage.getItem(`template_config_${subcategoryId}`);
+        if (!existingConfig) {
+          const defaultConfig = getDefaultTemplateConfig(
+            subcategoryId,
+            subcategoryName,
+            categoryName
+          );
+          saveTemplateConfig({ ...defaultConfig, isCustomized: false });
+        }
+      }
+
       const newExpense = [data, ...expenses];
       setExpenses(newExpense);
       calculateTotal(newExpense);
@@ -189,20 +235,32 @@ export default function CreateExpenseScreen(): React.JSX.Element {
             leftIcon="cash"
           />
 
-          <MyInput
-            name="commentary"
-            type="textarea"
-            control={control}
-            label="Comentario"
-            placeholder="Ej: Compra de una camisa"
-            rules={{
-              maxLength: { value: 200, message: 'El comentario no puede superar 200 caracteres' }
-            }}
-            multiline
-            numberOfLines={2}
-            maxLength={200}
-            leftIcon="text"
-          />
+          {isCommentarySuggestionsEnabled ? (
+            <CommentaryInput
+              control={control}
+              setValue={setValue}
+              currentValue={commentaryValue}
+              subcategoryId={subcategoryId}
+              subcategoryName={subcategoryName}
+              categoryName={categoryName}
+              recentExpenses={expenses as RecentExpenseForSuggestion[]}
+            />
+          ) : (
+            <MyInput
+              name="commentary"
+              type="textarea"
+              control={control}
+              label="Comentario"
+              placeholder="Ej: Compra de una camisa"
+              rules={{
+                maxLength: { value: 200, message: 'El comentario no puede superar 200 caracteres' }
+              }}
+              multiline
+              numberOfLines={2}
+              maxLength={200}
+              leftIcon="text"
+            />
+          )}
 
           <SelectJoinCategory
             fetchExpensesSubcategory={fetchExpensesSubcategory}

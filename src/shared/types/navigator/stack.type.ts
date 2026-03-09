@@ -97,6 +97,7 @@ export type SettingsStackParamList = {
   comparisonResults: {
     comparisonId: string;
   };
+  commentaryTemplates: undefined;
 };
 export type StatisticsStackParamList = {
   statisticsHome: undefined;

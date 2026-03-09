@@ -51,6 +51,7 @@ import CreateEditFeatureFlagScreen from '~/Screens/Settings/FeatureFlags/CreateE
 import InvestmentComparisonHomeScreen from '~/Screens/Settings/investment-comparison/InvestmentComparisonHomeScreen';
 import ComparisonResultsScreen from '~/Screens/Settings/investment-comparison/ComparisonResultsScreen';
 import ScenarioConfigScreen from '~/Screens/Settings/investment-comparison/ScenarioConfigScreen';
+import CommentaryTemplatesScreen from '~/Screens/Settings/CommentaryTemplatesScreen';
 
 // Statistics
 import ComparePeriodsScreen from '~/Screens/Statistics/ComparePeriodsScreen';
@@ -117,6 +118,7 @@ export interface StackRoutesType {
   ProductPricesScreen: typeof ProductPricesScreen;
   RetentionAnalysisScreen: typeof RetentionAnalysisScreen;
   StatisticsScreen: typeof StatisticsScreen;
+  CommentaryTemplatesScreen: typeof CommentaryTemplatesScreen;
 }
 
 const stackRoutes: StackRoutesType = {
@@ -170,7 +172,8 @@ const stackRoutes: StackRoutesType = {
   UtilityAnalysisScreen,
   ProductPricesScreen,
   RetentionAnalysisScreen,
-  StatisticsScreen
+  StatisticsScreen,
+  CommentaryTemplatesScreen
 };
 
 export default stackRoutes;

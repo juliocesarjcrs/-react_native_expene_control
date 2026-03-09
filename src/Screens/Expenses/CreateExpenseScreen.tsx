@@ -33,9 +33,9 @@ import { RecentExpenseForSuggestion } from '~/shared/types/screens/settings/comm
 import { ShowToast } from '~/utils/toastUtils';
 import { NumberFormat, DateFormat } from '~/utils/Helpers';
 import { showError } from '~/utils/showError';
-import { saveCommentaryToHistory } from '~/utils/commentaryHistory.utils';
-import { saveTemplateConfig } from '~/utils/templateStorage.utils';
-import { getDefaultTemplateConfig } from '~/utils/commentaryTemplates.utils';
+import { saveCommentaryToHistory } from '~/utils/commentary/commentaryHistory.utils';
+import { saveTemplateConfig } from '~/utils/commentary/templateStorage.utils';
+import { getDefaultTemplateConfig } from '~/utils/commentary/commentaryTemplates.utils';
 
 // Theme
 import { useThemeColors } from '~/customHooks/useThemeColors';

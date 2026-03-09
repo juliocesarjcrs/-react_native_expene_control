@@ -22,7 +22,7 @@ import { useProductExpansion } from './hooks/useProductExpansion';
 // Types
 import { StackNavigationProp } from '@react-navigation/stack';
 import { StatisticsStackParamList } from '~/shared/types/navigator/stack.type';
-import { ProductPrice } from '~/shared/types/screens/Statistics/commentary-analysis.types';
+import { ProductPrice } from '~/shared/types/utils/commentaryParser/product-analysis.types';
 
 // Utils
 import { normalizeSearchText } from './utils/formatters';

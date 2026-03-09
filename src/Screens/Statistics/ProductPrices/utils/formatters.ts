@@ -1,4 +1,4 @@
-import { ProductPrice } from '~/shared/types/screens/Statistics/commentary-analysis.types';
+import { ProductPrice } from '~/shared/types/utils/commentaryParser/commentary-analysis.types';
 import { NumberFormat } from '~/utils/Helpers';
 
 /**

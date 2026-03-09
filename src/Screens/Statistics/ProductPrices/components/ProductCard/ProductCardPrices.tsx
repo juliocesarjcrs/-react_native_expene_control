@@ -1,7 +1,7 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { Icon } from 'react-native-elements';
-import { ProductPrice } from '~/shared/types/screens/Statistics/commentary-analysis.types';
+import { ProductPrice } from '~/shared/types/utils/commentaryParser/commentary-analysis.types';
 import { formatPrice } from '../../utils/formatters';
 import { DateFormat } from '~/utils/Helpers';
 import { useThemeColors } from '~/customHooks/useThemeColors';

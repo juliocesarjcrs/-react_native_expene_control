@@ -12,7 +12,7 @@ import { UtilitySituationDisplay } from './components/UtilitySituationDisplay';
 
 // Types
 import { StatisticsStackParamList } from '~/shared/types/navigator/stack.type';
-import { UtilityConsumption } from '~/shared/types/screens/Statistics/commentary-analysis.types';
+import { UtilityConsumption } from '~/shared/types/utils/commentaryParser/commentary-analysis.types';
 import { StackNavigationProp } from '@react-navigation/stack';
 import { RouteProp } from '@react-navigation/native';
 import { Icon } from 'react-native-elements';

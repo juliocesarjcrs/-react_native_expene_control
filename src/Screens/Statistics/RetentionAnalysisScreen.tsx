@@ -13,7 +13,7 @@ import FilterSelector, { AnalysisFilters } from './components/FilterSelector';
 // Types
 import { StackNavigationProp } from '@react-navigation/stack';
 import { StatisticsStackParamList } from '~/shared/types/navigator/stack.type';
-import { RetentionData } from '~/shared/types/screens/Statistics/retention-analysis.types';
+import { RetentionData } from '~/shared/types/utils/commentaryParser/retention-analysis.types';
 
 // Utils
 import { showError } from '~/utils/showError';

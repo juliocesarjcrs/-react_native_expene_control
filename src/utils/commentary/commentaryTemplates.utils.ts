@@ -111,6 +111,15 @@ export const getDefaultTemplateConfig = (
   if (isCopago(name)) return buildCopagoConfig(subcategoryId, subcategoryName, categoryName);
   if (isCellPlan(name)) return buildCellPlanConfig(subcategoryId, subcategoryName, categoryName);
 
+  if (isTransport(name, cat))
+    return buildTransportConfig(subcategoryId, subcategoryName, categoryName);
+  if (isFamilyAid(name, cat))
+    return buildFamilyAidConfig(subcategoryId, subcategoryName, categoryName);
+  if (isNutrition(name, cat))
+    return buildNutritionConfig(subcategoryId, subcategoryName, categoryName);
+  if (isSports(name, cat)) return buildSportsConfig(subcategoryId, subcategoryName, categoryName);
+  if (isRent(name, cat)) return buildRentConfig(subcategoryId, subcategoryName, categoryName);
+
   return buildFreeConfig(subcategoryId, subcategoryName, categoryName);
 };
 
@@ -162,6 +171,35 @@ const isCopago = (n: string) => n.includes('copago') || n.includes('moderadora')
 
 const isCellPlan = (n: string) =>
   n.includes('celular') || n.includes('plan ') || n.includes('teléfono') || n.includes('telefono');
+
+const isTransport = (n: string, cat: string) =>
+  cat.includes('transporte') ||
+  n.includes('taxi') ||
+  n.includes('uber') ||
+  n.includes('bus') ||
+  n.includes('metrolinea') ||
+  n.includes('megabus') ||
+  n.includes('indriver') ||
+  n.includes('didi') ||
+  n.includes('beat');
+
+const isFamilyAid = (n: string, cat: string) =>
+  n.includes('ayuda') || n.includes('regalo') || (cat.includes('regalo') && n.includes('familiar'));
+
+const isNutrition = (n: string, cat: string) =>
+  n.includes('nutrici') || n.includes('nutric') || (cat.includes('salud') && n.includes('nutrici'));
+
+const isSports = (n: string, cat: string) =>
+  n.includes('deporte') ||
+  n.includes('futsal') ||
+  n.includes('fútbol') ||
+  n.includes('futbol') ||
+  n.includes('gym') ||
+  n.includes('gimnasio') ||
+  (cat.includes('cultura') && n.includes('deporte'));
+
+const isRent = (n: string, cat: string) =>
+  (n.includes('arriendo') || n.includes('arrendamiento')) && cat.includes('vivienda');
 
 // ============================================================
 // BUILDERS
@@ -310,7 +348,7 @@ const buildRetentionConfig = (
     {
       label: 'Retención',
       icon: 'percent',
-      template: 'Retención: 635 mil | Descripción',
+      template: 'Retefu: 635 mil | Descripción',
       hint: 'Retención con notas adicionales'
     }
   ],
@@ -411,6 +449,183 @@ const buildCellPlanConfig = (
   smartPlaceholder: 'Ej: Plan Julio',
   enableValidation: false
 });
+
+const buildTransportConfig = (
+  subcategoryId: number,
+  subcategoryName: string,
+  categoryName: string
+): SubcategoryTemplateConfig => ({
+  subcategoryId,
+  subcategoryName,
+  categoryName,
+  assistanceLevel: 'semi',
+  parserType: 'custom',
+  chips: [
+    {
+      label: 'Origen → Destino',
+      icon: 'map-marker-right',
+      template: 'Origen a Destino',
+      hint: 'Trayecto simple'
+    },
+    {
+      label: 'Ida y vuelta',
+      icon: 'repeat',
+      template: 'Ida y vuelta Origen a Destino',
+      hint: 'Trayecto de ida y regreso'
+    },
+    {
+      label: '2 pasajes',
+      icon: 'account-multiple',
+      template: '2 pasajes Origen a Destino',
+      hint: 'Múltiples pasajeros'
+    }
+  ],
+  smartPlaceholder: 'Ej: Villa Verde a Centro',
+  enableValidation: false
+});
+
+const buildFamilyAidConfig = (
+  subcategoryId: number,
+  subcategoryName: string,
+  categoryName: string
+): SubcategoryTemplateConfig => {
+  const today = dayjs();
+  const currentMonth = normalizeMonthAbbr(today.format('MMM'));
+  const nextMonth = normalizeMonthAbbr(today.add(1, 'month').format('MMM'));
+  const year = today.year();
+
+  return {
+    subcategoryId,
+    subcategoryName,
+    categoryName,
+    assistanceLevel: 'semi',
+    parserType: 'custom',
+    chips: [
+      {
+        label: 'Bimensual',
+        icon: 'account-heart',
+        template: `Ayuda bimensual a Persona ${currentMonth}-${nextMonth} ${year} #1`,
+        hint: 'Ayuda que cubre dos meses'
+      },
+      {
+        label: 'Mensual',
+        icon: 'calendar-month',
+        template: `Ayuda mensual a Persona ${currentMonth} ${year} #1`,
+        hint: 'Ayuda mensual'
+      },
+      {
+        label: 'Saldo',
+        icon: 'cash-check',
+        template: `Saldo de Ayuda bimensual a Persona ${currentMonth}-${nextMonth} ${year} #1`,
+        hint: 'Pago del saldo pendiente'
+      }
+    ],
+    smartPlaceholder: `Ej: Ayuda bimensual a Papá Jairo ${currentMonth}-${nextMonth} ${year} #9`,
+    enableValidation: false
+  };
+};
+
+const buildNutritionConfig = (
+  subcategoryId: number,
+  subcategoryName: string,
+  categoryName: string
+): SubcategoryTemplateConfig => ({
+  subcategoryId,
+  subcategoryName,
+  categoryName,
+  assistanceLevel: 'semi',
+  parserType: 'custom',
+  chips: [
+    {
+      label: 'Semana',
+      icon: 'food-apple',
+      template: 'Semana 1 Natural Body Center',
+      hint: 'Número de semana + nombre del centro'
+    }
+  ],
+  smartPlaceholder: 'Ej: Semana 6 Natural Body Center',
+  enableValidation: false
+});
+
+const buildSportsConfig = (
+  subcategoryId: number,
+  subcategoryName: string,
+  categoryName: string
+): SubcategoryTemplateConfig => {
+  const today = dayjs();
+  const currentMonth = normalizeMonthAbbr(today.format('MMM'));
+
+  return {
+    subcategoryId,
+    subcategoryName,
+    categoryName,
+    assistanceLevel: 'semi',
+    parserType: 'custom',
+    chips: [
+      {
+        label: 'Mensualidad',
+        icon: 'calendar-check',
+        template: `Mensualidad ${currentMonth} (futsal)`,
+        hint: 'Cuota mensual al club o academia'
+      },
+      {
+        label: 'Cancha',
+        icon: 'soccer-field',
+        template: 'Cancha Lugar deporte',
+        hint: 'Alquiler de cancha'
+      },
+      {
+        label: 'Arbitraje',
+        icon: 'whistle',
+        template: 'Arbitraje Futsal Amistoso',
+        hint: 'Pago de árbitro'
+      }
+    ],
+    smartPlaceholder: `Ej: Mensualidad ${currentMonth} (futsal)`,
+    enableValidation: false
+  };
+};
+
+const buildRentConfig = (
+  subcategoryId: number,
+  subcategoryName: string,
+  categoryName: string
+): SubcategoryTemplateConfig => {
+  const today = dayjs();
+  const currentMonth = normalizeMonthAbbr(today.format('MMM'));
+  const year = today.year();
+  const daysInMonth = today.daysInMonth();
+
+  return {
+    subcategoryId,
+    subcategoryName,
+    categoryName,
+    assistanceLevel: 'semi',
+    parserType: 'custom',
+    chips: [
+      {
+        label: 'Mes completo',
+        icon: 'home',
+        template: `Arriendo ${currentMonth} ${year}`,
+        hint: 'Pago del mes completo'
+      },
+      {
+        label: 'Días parciales',
+        icon: 'calendar-range',
+        template: `${daysInMonth} días mes ${currentMonth} ${year}`,
+        hint: 'Pago proporcional por días'
+      },
+      {
+        label: 'Nuevo valor',
+        icon: 'pencil',
+        template: 'Nuevo valor apt descripción',
+        hint: 'Registro de cambio de canon'
+      }
+    ],
+    smartPlaceholder: `Ej: 22 días mes ${currentMonth} ${year}`,
+    enableValidation: false
+  };
+};
 
 const buildFreeConfig = (
   subcategoryId: number,

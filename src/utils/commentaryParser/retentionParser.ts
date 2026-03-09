@@ -3,7 +3,7 @@ import {
   IncapacidadStats,
   PrimaRetention,
   RetentionData
-} from '~/shared/types/screens/Statistics/retention-analysis.types';
+} from '~/shared/types/utils/commentaryParser/retention-analysis.types';
 
 // ─────────────────────────────────────────────
 // HELPERS

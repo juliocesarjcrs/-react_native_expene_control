@@ -9,7 +9,7 @@ import {
   UIManager
 } from 'react-native';
 import { Icon } from 'react-native-elements';
-import { ProductPrice } from '~/shared/types/screens/Statistics/commentary-analysis.types';
+import { ProductPrice } from '~/shared/types/utils/commentaryParser/commentary-analysis.types';
 import { ProductSummary } from '../../types';
 import { IncompleteCardDetail } from './IncompleteCardDetail';
 import { NumberFormat } from '~/utils/Helpers';

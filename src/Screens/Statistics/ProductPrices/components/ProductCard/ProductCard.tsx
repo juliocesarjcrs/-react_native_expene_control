@@ -9,7 +9,7 @@ import {
   Text
 } from 'react-native';
 import { Icon } from 'react-native-elements';
-import { ProductPrice } from '~/shared/types/screens/Statistics/commentary-analysis.types';
+import { ProductPrice } from '~/shared/types/utils/commentaryParser/commentary-analysis.types';
 import { ProductSummary } from '../../types';
 import { ProductCardHeader } from './ProductCardHeader';
 import { ProductCardPrices } from './ProductCardPrices';

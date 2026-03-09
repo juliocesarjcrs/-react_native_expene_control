@@ -1,7 +1,7 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { Icon } from 'react-native-elements';
-import { UtilityConsumption } from '~/shared/types/screens/Statistics/commentary-analysis.types';
+import { UtilityConsumption } from '~/shared/types/utils/commentaryParser/commentary-analysis.types';
 import { useThemeColors } from '~/customHooks/useThemeColors';
 import { SMALL } from '~/styles/fonts';
 

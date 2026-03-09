@@ -8,13 +8,13 @@ import {
 import {
   getDefaultTemplateConfig,
   validateCommentary
-} from '../../utils/commentaryTemplates.utils';
+} from '../../utils/commentary/commentaryTemplates.utils';
 import {
   getCachedHistory,
   mergeHistorySuggestions,
   filterSuggestions
-} from '../../utils/commentaryHistory.utils';
-import { getTemplateConfig } from '../../utils/templateStorage.utils';
+} from '../../utils/commentary/commentaryHistory.utils';
+import { getTemplateConfig } from '../../utils/commentary/templateStorage.utils';
 
 interface UseCommentaryInputProps {
   subcategoryId: number | null;

@@ -28,8 +28,8 @@ import {
   getAllCustomizedTemplates,
   resetTemplateConfig,
   saveTemplateConfig
-} from '~/utils/templateStorage.utils';
-import { getDefaultTemplateConfig } from '~/utils/commentaryTemplates.utils';
+} from '~/utils/commentary/templateStorage.utils';
+import { getDefaultTemplateConfig } from '~/utils/commentary/commentaryTemplates.utils';
 import { showError } from '~/utils/showError';
 
 // Theme

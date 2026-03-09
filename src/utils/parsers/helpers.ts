@@ -9,7 +9,7 @@ import {
   FORMAT_CONSTANTS,
   REGEX_PATTERNS,
   DiscountInfo
-} from '~/shared/types/utils/parsers/parser-types';
+} from '~/shared/types/utils/parsers/invoice-parser-types';
 
 /**
  * Obtiene el nombre de la tienda formateado para el tag

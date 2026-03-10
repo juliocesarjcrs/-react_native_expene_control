@@ -21,8 +21,8 @@ describe('extractProducts', () => {
         const ocr =
           'PRECIO\t\r\nPLU\tDETALLE\t\r\n1 1/u x 23.000 V. Ahorro 0\t\r\n172836 Huevo Napoles De\t23.000\t\r\n2 1/u x 2.350 V. Ahorro 0\t\r\n3343120 Mogolla Integral\t2.350\t\r\nTotal Item :2\t\r\n';
         expect(extractProducts(ocr)).toEqual([
-          { description: 'Huevo Napoles De — 1 un @ $23.000 [Carulla]', price: 23000 },
-          { description: 'Mogolla Integral — 1 un @ $2.350 [Carulla]', price: 2350 }
+          { description: 'Cartón Huevos Nápoles — 1 un @ $23.000 [Carulla]', price: 23000 },
+          { description: 'Pan Integral — 1 un @ $2.350 [Carulla]', price: 2350 }
         ]);
       });
 
@@ -109,7 +109,7 @@ describe('extractProducts', () => {
             price: 4250
           },
           {
-            description: 'Yuca Fresca — 1,560 kg @ $3.290/kg (antes $4.700/kg, -30%) [Carulla]',
+            description: 'Yuca — 1,560 kg @ $3.290/kg (antes $4.700/kg, -30%) [Carulla]',
             price: 5132
           },
           {
@@ -189,7 +189,7 @@ describe('extractProducts', () => {
               price: 14546
             },
             {
-              description: 'Panela 4 Und — 1 un @ $5.652 (antes $5.950, -5%) [Carulla]',
+              description: 'Panela — 1 un @ $5.652 (antes $5.950, -5%) [Carulla]',
               price: 5652
             }
           ]);
@@ -201,13 +201,11 @@ describe('extractProducts', () => {
           const ocr = `PLU\tDETALLE\tPRECIO\t\r\n1 0.305/KGM x 9.340 V. Ahorro 854\t\r\n1138\tRemolacha A Gran\t1.995\t\r\n2 0.750/KGM x 3.060 V. Ahorro 689\t\r\n1862\tAHUYAMA ENTERA\t1.606\t\r\n3 0.800/KGM x 6.600 V. Ahorro 1.584\t\r\n1279\tCebolla Roja.\t3.696\t\r\n4 1.140/KGM x 4.060 V. Ahorro 1.389\t\r\n1025\tChocolo Tierno(M\t3.239\t\r\n5 2. 415/KGM x 3.040 V. Ahorro 2.203\t\r\n1179\tPapaya Comun\t5.139\t\r\n6 0. 435/KGM x 7.460 V. Ahorro 974\t\r\n1002\tAcelga\t2.271\t\r\n7 0.475/KGM x 8.120 V. Ahorro 1.157\t\r\n1188\tPepino Zukini\t2.700\t\r\n8 0.860/KGM x 5.980 V. Ahorro 1.543\t\r\n1098\tTomate Chonto (A\t3.600\t\r\n9\t0.860/KGM x 3.980 V. Ahorro 1.026\t\r\n1141\tZanahoria A Gran\t2,397\t\r\n10 1.455/KGM x 2.960 V. Ahorro 1.292\t\r\n1161\tPlatano Maduro\t3. 015\t\r\n11 1.795/KGM x 4.800 V. Ahorro 2.584\t\r\n1260\tYuca fresca\t6.032\t\r\nTotal Item :11\t\r\nSUBTOTAL\t50.985\t\r\nDESCUENTO\t15.295\t\r\nAHORRO\t15.295\t\r\nVALOR TOTAL\t35.690\t\r\n`;
           expect(extractProducts(ocr)).toEqual([
             {
-              description:
-                'Remolacha A Gran — 0,305 kg @ $6.540/kg (antes $9.340/kg, -30%) [Carulla]',
+              description: 'Remolacha — 0,305 kg @ $6.540/kg (antes $9.340/kg, -30%) [Carulla]',
               price: 1995
             },
             {
-              description:
-                'Ahuyama Entera — 0,750 kg @ $2.141/kg (antes $3.060/kg, -30%) [Carulla]',
+              description: 'Ahuyama — 0,750 kg @ $2.141/kg (antes $3.060/kg, -30%) [Carulla]',
               price: 1606
             },
             {
@@ -245,7 +243,7 @@ describe('extractProducts', () => {
               price: 3015
             },
             {
-              description: 'Yuca Fresca — 1,795 kg @ $3.360/kg (antes $4.800/kg, -30%) [Carulla]',
+              description: 'Yuca — 1,795 kg @ $3.360/kg (antes $4.800/kg, -30%) [Carulla]',
               price: 6032
             }
           ]);
@@ -281,7 +279,7 @@ describe('extractProducts', () => {
             },
             {
               description:
-                'Pepino Calabacin — 0,388 kg @ $3.619/kg (antes $5.720/kg, -37%) [Carulla]',
+                'Pepino Calabacín — 0,388 kg @ $3.619/kg (antes $5.720/kg, -37%) [Carulla]',
               price: 1902
             },
             {
@@ -301,7 +299,7 @@ describe('extractProducts', () => {
               price: 2671
             },
             {
-              description: 'Rabano Rojo — 1 un @ $4.662 (antes $6.660, -30%) [Carulla]',
+              description: 'Rábano — 1 un @ $4.662 (antes $6.660, -30%) [Carulla]',
               price: 4662
             },
             {
@@ -348,7 +346,7 @@ describe('extractProducts', () => {
               description: 'Zanahoria — 1,345 kg @ $2.720/kg [Carulla]',
               price: 3658
             },
-            { description: 'Panela 4 Und — 1 un @ $6.770 [Carulla]', price: 6770 }
+            { description: 'Panela — 1 un @ $6.770 [Carulla]', price: 6770 }
           ]);
         });
 
@@ -361,7 +359,7 @@ describe('extractProducts', () => {
           Total Item :2
         `;
           expect(extractProducts(ocr)).toEqual([
-            { description: 'Panela 4 Und — 1 un @ $6.770 [Carulla]', price: 6770 },
+            { description: 'Panela — 1 un @ $6.770 [Carulla]', price: 6770 },
             {
               description: 'Papaya — 0,710 kg @ $3.900/kg [Carulla]',
               price: 2769
@@ -473,9 +471,9 @@ describe('extractProducts', () => {
           104755 CADERA CORRIENTE	30,092
           Total Item :6`;
           expect(extractProducts(ocr)).toEqual([
-            { description: 'Leche Semid Desl — 1 un @ $2.990 [Carulla]', price: 2990 },
-            { description: 'Leche Semid Desl — 1 un @ $2.990 [Carulla]', price: 2990 },
-            { description: 'Leche Semid Desl — 1 un @ $2.990 [Carulla]', price: 2990 },
+            { description: 'Leche Semideslactosada — 1 un @ $2.990 [Carulla]', price: 2990 },
+            { description: 'Leche Semideslactosada — 1 un @ $2.990 [Carulla]', price: 2990 },
+            { description: 'Leche Semideslactosada — 1 un @ $2.990 [Carulla]', price: 2990 },
             {
               description:
                 'Pechuga Blanca — 1,000 kg @ $16.720/kg (antes $20.900/kg, -20%) [Carulla]',
@@ -514,7 +512,7 @@ describe('extractProducts', () => {
           expect(extractProducts(ocr)).toEqual([
             {
               description:
-                'Pechuga Campesin — 0,965 kg @ $17.199/kg (antes $21.500/kg, -20%) [Carulla]',
+                'Pechuga Campesina — 0,965 kg @ $17.199/kg (antes $21.500/kg, -20%) [Carulla]',
               price: 16598
             },
             {
@@ -591,9 +589,9 @@ describe('extractProducts', () => {
         : 1
         `;
           expect(extractProducts(ocr)).toEqual([
-            { description: 'Huevo Napoles Li — 1 un @ $17.900 [Carulla]', price: 17900 },
+            { description: 'Cartón Huevos Nápoles — 1 un @ $17.900 [Carulla]', price: 17900 },
             { description: 'Bebida Lactea Ba — 1 un @ $17.350 [Carulla]', price: 17350 },
-            { description: 'Granola Familiar — 1 un @ $10.450 [Carulla]', price: 10450 },
+            { description: 'Granola — 1 un @ $10.450 [Carulla]', price: 10450 },
             { description: 'Fresa — 1 un @ $10.380 [Carulla]', price: 10380 },
             {
               description: 'Aguacate Hass — 0,485 kg @ $5.720/kg [Carulla]',
@@ -607,8 +605,8 @@ describe('extractProducts', () => {
               description: 'Banano — 1,390 kg @ $3.160/kg [Carulla]',
               price: 4392
             },
-            { description: 'Leche Semid Desl — 1 un @ $2.980 [Carulla]', price: 2980 },
-            { description: 'Leche Semid Desl — 1 un @ $2.980 [Carulla]', price: 2980 },
+            { description: 'Leche Semideslactosada — 1 un @ $2.980 [Carulla]', price: 2980 },
+            { description: 'Leche Semideslactosada — 1 un @ $2.980 [Carulla]', price: 2980 },
             { description: 'Pasabocas Con To — 1 un @ $2.800 [Carulla]', price: 2800 }
           ]);
         });
@@ -749,7 +747,7 @@ describe('extractProducts', () => {
           { description: 'Toalla Mano 40x6 — 1 un @ $7.990 [Exito]', price: 7990 },
           { description: 'Toalla 40x65cm 3 — 1 un @ $7.990 [Exito]', price: 7990 },
           { description: 'Pasabocas Con To — 1 un @ $2.740 [Exito]', price: 2740 },
-          { description: 'Refajo Rojo Unid — 1 un @ $2.500 [Exito]', price: 2500 },
+          { description: 'Refajo Andina — 1 un @ $2.500 [Exito]', price: 2500 },
           { description: 'Bolsa Reutilizab — 1 un @ $1.700 [Exito]', price: 1700 }
         ]);
       });
@@ -761,8 +759,8 @@ describe('extractProducts', () => {
       const ocr =
         '108 18U811\t\r\nHI\tCAN UM VALOR U\tCODIGO\tDESCRIPCION\tVALOR IU\t\r\n2,300\t\r\n1\t1 UN\t2,300 7700304378074 CREMA DE LECH\t2,300\t\r\n6,990\t\r\n2\t1 UN\t6,990 7700304811090 TOCINETA AHUM\t6,990\t\r\n1 UN\t4,500\t7700304016525 ARROZ PREMIUM\t4,500\t\r\n1 UN\t9,990\t7700304792825 CAFE INSTAN/L\t9,990\t\r\nTOTAL\t23,780\t\r\nOTRO\t-30\t\r\n';
       expect(extractProducts(ocr)).toEqual([
-        { description: 'Crema De Lech [D1]', price: 2300 },
-        { description: 'Tocineta Ahum [D1]', price: 6990 },
+        { description: 'Crema de Leche [D1]', price: 2300 },
+        { description: 'Tocineta Ahumada [D1]', price: 6990 },
         { description: 'Arroz Premium [D1]', price: 4500 },
         { description: 'Cafe Instan/L [D1]', price: 9990 }
       ]);
@@ -772,7 +770,7 @@ describe('extractProducts', () => {
       const ocr =
         '#I\tCAN UM VALOR U\tLLO VU14\tCODIGO\tUo: 19:31\t\r\nDESCRIPCION\t\r\n1\t1\tUN\tVALOR ID\t\r\n4,300 7700304509423 INFUSION FRUT\t4,300 A\t\r\nFFF\tUN\tUN\t2,950 7700304649631 SALSA DE PINA\t2,250 7700304305209 SERVILLETA CO\t1,650 A\t2,950 A\t2,250 A\t\r\n2\tUN\t1,650 7700304861682 ESPONJA MALLA\t\r\n1\tUN\t9,990 7700304792825 CAFE INSTAN/L\t9,990 C\t\r\nTOTAL\t21,140\t\r\n';
       expect(extractProducts(ocr)).toEqual([
-        { description: 'Infusion Frut [D1]', price: 4300 },
+        { description: 'Infusión [D1]', price: 4300 },
         { description: 'Salsa De Pina [D1]', price: 2950 },
         { description: 'Servilleta Co [D1]', price: 2250 },
         { description: 'Esponja Malla [D1]', price: 1650 },
@@ -792,7 +790,7 @@ describe('extractProducts', () => {
         DACAN`;
       expect(extractProducts(ocr)).toEqual([
         { description: 'Cafe Instan/L [D1]', price: 23800 },
-        { description: 'Ajo Malla X [D1]', price: 1300 },
+        { description: 'Ajo [D1]', price: 1300 },
         { description: 'Crema Lavaloz [D1]', price: 3850 },
         { description: 'Gelatina Sin [D1]', price: 2300 },
         { description: 'Gelatina Sabo [D1]', price: 3490 },
@@ -828,10 +826,10 @@ describe('extractProducts', () => {
         38,500`;
       expect(extractProducts(ocr)).toEqual([
         { description: 'Harina De Mai [D1]', price: 2600 },
-        { description: 'Aceite Canola [D1]', price: 25950 },
+        { description: 'Aceite de Canola [D1]', price: 25950 },
         { description: 'Toalla De Coc [D1]', price: 1650 },
         { description: 'Harina De Tri [D1]', price: 1700 },
-        { description: 'Ajo Malla X [D1]', price: 2600 },
+        { description: 'Ajo [D1]', price: 2600 },
         { description: 'Chocolatina W [D1]', price: 4000 }
       ]);
     });

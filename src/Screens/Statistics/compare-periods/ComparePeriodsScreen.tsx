@@ -2,11 +2,11 @@ import React, { useState } from 'react';
 import { View, ScrollView, StyleSheet } from 'react-native';
 import { Button, IconButton } from 'react-native-paper';
 // Components
-import CategorySelector from './components/CategorySelector';
-import DateRangeSelector from './components/DateRangeSelector';
-import ComparisonSummary from './components/ComparisonSummary';
+import CategorySelector from '../components/CategorySelector';
+import DateRangeSelector from '../components/DateRangeSelector';
+import ComparisonSummary from '../components/ComparisonSummary';
 import { useComparePeriods } from '~/customHooks/useComparePeriods';
-import CompareResultsChart from './components/CompareResultsChart';
+import CompareResultsChart from '../components/CompareResultsChart';
 import { ScreenHeader } from '~/components/ScreenHeader';
 
 // Theme

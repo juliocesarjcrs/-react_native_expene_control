@@ -7,12 +7,12 @@ import { findExpensesBySubcategories } from '~/services/expenses';
 // Components
 import { ScreenHeader } from '~/components/ScreenHeader';
 import MyLoading from '~/components/loading/MyLoading';
-import FilterSelector, { AnalysisFilters } from './components/FilterSelector';
-import { UtilitySituationDisplay } from './components/UtilitySituationDisplay';
+import FilterSelector, { AnalysisFilters } from '../components/FilterSelector';
+import { UtilitySituationDisplay } from '../../components/UtilitySituationDisplay';
 
 // Types
 import { StatisticsStackParamList } from '~/shared/types/navigator/stack.type';
-import { UtilityConsumption } from '~/shared/types/utils/commentaryParser/commentary-analysis.types';
+import { UtilityConsumption } from '~/shared/types/utils/commentaryParser/utility-analysis.types';
 import { StackNavigationProp } from '@react-navigation/stack';
 import { RouteProp } from '@react-navigation/native';
 import { Icon } from 'react-native-elements';

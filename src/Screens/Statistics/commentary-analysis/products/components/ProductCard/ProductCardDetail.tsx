@@ -1,6 +1,6 @@
 import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
-import { ProductPrice } from '~/shared/types/utils/commentaryParser/commentary-analysis.types';
+import { ProductPrice } from '~/shared/types/utils/commentaryParser/product-analysis.types';
 import { formatPrice } from '../../utils/formatters';
 import { DateFormat } from '~/utils/Helpers';
 import { useThemeColors } from '~/customHooks/useThemeColors';

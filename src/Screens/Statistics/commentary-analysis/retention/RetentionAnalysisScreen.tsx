@@ -8,7 +8,7 @@ import { findIncomesByCategoryId } from '~/services/incomes';
 // Components
 import { ScreenHeader } from '~/components/ScreenHeader';
 import MyLoading from '~/components/loading/MyLoading';
-import FilterSelector, { AnalysisFilters } from './components/FilterSelector';
+import FilterSelector, { AnalysisFilters } from '../components/FilterSelector';
 
 // Types
 import { StackNavigationProp } from '@react-navigation/stack';

@@ -13,7 +13,7 @@
 // RE-EXPORTS — importar desde aquí, no desde cada parser
 // ─────────────────────────────────────────────
 
-import { UtilityConsumption } from '~/shared/types/utils/commentaryParser/commentary-analysis.types';
+import { UtilityConsumption } from '~/shared/types/utils/commentaryParser/utility-analysis.types';
 import { ProductPrice } from '~/shared/types/utils/commentaryParser/product-analysis.types';
 import { RetentionData } from '~/shared/types/utils/commentaryParser/retention-analysis.types';
 import { TransportData } from '~/shared/types/utils/commentaryParser/transport-analysis.types';

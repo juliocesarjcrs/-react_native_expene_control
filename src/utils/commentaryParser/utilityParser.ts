@@ -16,9 +16,9 @@
  */
 
 import {
-  UtilityConsumption,
-  ConsumptionStats
-} from '~/shared/types/utils/commentaryParser/commentary-analysis.types';
+  ConsumptionStats,
+  UtilityConsumption
+} from '~/shared/types/utils/commentaryParser/utility-analysis.types';
 
 // ============================================================================
 // REGEX PATTERNS (Case Insensitive)

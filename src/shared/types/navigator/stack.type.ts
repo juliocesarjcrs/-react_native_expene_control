@@ -118,4 +118,31 @@ export type StatisticsStackParamList = {
     startDate?: string;
     endDate?: string;
   };
+
+  // ── Análisis nuevos ─────────────────────────────────────────────────
+  transportAnalysis: {
+    subcategory?: string;
+    startDate?: string;
+    endDate?: string;
+  };
+  familyAidAnalysis: {
+    subcategory?: string;
+    startDate?: string;
+    endDate?: string;
+  };
+  nutritionAnalysis: {
+    subcategory?: string;
+    startDate?: string;
+    endDate?: string;
+  };
+  sportsAnalysis: {
+    subcategory?: string;
+    startDate?: string;
+    endDate?: string;
+  };
+  rentAnalysis: {
+    subcategory?: string;
+    startDate?: string;
+    endDate?: string;
+  };
 };

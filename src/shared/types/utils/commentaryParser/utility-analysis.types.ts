@@ -1,7 +1,3 @@
-// Types para análisis de comentarios
-
-export type AnalysisType = 'utilities' | 'products' | 'retention';
-
 // Parseo de servicios públicos
 export interface UtilityConsumption {
   // Datos básicos (obligatorios)
@@ -45,13 +41,4 @@ export interface ConsumptionStats {
   percentageIncrease: number; // Porcentaje de aumento
   aloneCount: number; // Cantidad de registros solos
   withExtraCount: number; // Cantidad de registros con persona
-}
-
-// Patrones para parsear comentarios
-export interface CommentaryPattern {
-  id: string;
-  name: string;
-  regex: RegExp;
-  parser: (commentary: string) => any;
-  example: string;
 }

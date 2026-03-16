@@ -54,14 +54,14 @@ import ScenarioConfigScreen from '~/Screens/Settings/investment-comparison/Scena
 import CommentaryTemplatesScreen from '~/Screens/Settings/CommentaryTemplatesScreen';
 
 // Statistics
-import ComparePeriodsScreen from '~/Screens/Statistics/ComparePeriodsScreen';
+import ComparePeriodsScreen from '~/Screens/Statistics/compare-periods/ComparePeriodsScreen';
 import {
   CommentaryAnalysisScreen,
   RetentionAnalysisScreen,
   StatisticsScreen,
   UtilityAnalysisScreen
 } from '~/Screens';
-import ProductPricesScreen from '~/Screens/Statistics/ProductPrices/ProductPricesScreen';
+import ProductPricesScreen from '~/Screens/Statistics/commentary-analysis/products/ProductPricesScreen';
 
 // Admin
 import AIModelsScreen from '~/Screens/Admin/AIModelsScreen';

@@ -1,5 +1,5 @@
 import { useState, useMemo, useCallback } from 'react';
-import { ProductPrice } from '~/shared/types/utils/commentaryParser/commentary-analysis.types';
+import { ProductPrice } from '~/shared/types/utils/commentaryParser/product-analysis.types';
 import { ProductSummary, GroupedProducts } from '../types';
 import { findExpensesBySubcategories } from '~/services/expenses';
 import { parseProductCommentary, findBestPrice } from '~/utils/commentaryParser/productParser';

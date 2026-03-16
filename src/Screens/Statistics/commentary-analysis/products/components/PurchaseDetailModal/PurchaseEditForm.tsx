@@ -2,10 +2,10 @@ import React, { useState } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, Alert, ActivityIndicator } from 'react-native';
 import { Icon } from 'react-native-elements';
 import { useForm } from 'react-hook-form';
-import { ProductPrice } from '~/shared/types/utils/commentaryParser/commentary-analysis.types';
+import { ProductPrice } from '~/shared/types/utils/commentaryParser/product-analysis.types';
 import MyInput from '~/components/inputs/MyInput';
 import { useThemeColors } from '~/customHooks/useThemeColors';
-import { SMALL, MEDIUM } from '~/styles/fonts';
+import { SMALL } from '~/styles/fonts';
 
 interface PurchaseEditFormProps {
   purchase: ProductPrice;

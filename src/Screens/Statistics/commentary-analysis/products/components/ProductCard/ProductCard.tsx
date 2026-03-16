@@ -9,13 +9,12 @@ import {
   Text
 } from 'react-native';
 import { Icon } from 'react-native-elements';
-import { ProductPrice } from '~/shared/types/utils/commentaryParser/commentary-analysis.types';
+import { ProductPrice } from '~/shared/types/utils/commentaryParser/product-analysis.types';
 import { ProductSummary } from '../../types';
 import { ProductCardHeader } from './ProductCardHeader';
 import { ProductCardPrices } from './ProductCardPrices';
 import { ProductCardDetail } from './ProductCardDetail';
 import { useThemeColors } from '~/customHooks/useThemeColors';
-import { NumberFormat } from '~/utils/Helpers';
 import { formatPrice } from '../../utils/formatters';
 
 // Habilitar animaciones en Android

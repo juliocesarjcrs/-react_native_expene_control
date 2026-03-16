@@ -1,7 +1,7 @@
 import React from 'react';
 import { View, Text, Modal, TouchableOpacity, ScrollView, StyleSheet } from 'react-native';
 import { Icon } from 'react-native-elements';
-import { ProductPrice } from '~/shared/types/utils/commentaryParser/commentary-analysis.types';
+import { ProductPrice } from '~/shared/types/utils/commentaryParser/product-analysis.types';
 import { PurchaseEditForm } from './PurchaseEditForm';
 import { PurchaseDetailView } from './PurchaseDetailView';
 import { useThemeColors } from '~/customHooks/useThemeColors';

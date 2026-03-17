@@ -8,7 +8,7 @@
     "eject": "expo eject",
     "clear:cache": "expo start -c",
     "lint": "expo lint",
-    "test": "jest --watchAll",
+    "test": "jest",
     "test:cov": "jest --coverage",
     "format": "prettier --write ."
   },

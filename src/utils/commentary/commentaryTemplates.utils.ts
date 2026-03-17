@@ -135,11 +135,12 @@ const isUtilityWater = (n: string) => n.includes('agua') && !n.includes('aguardi
 const isUtilityGas = (n: string) => n === 'gas' || n.startsWith('gas(') || n.startsWith('gas ');
 
 const isProteins = (n: string, cat: string) =>
-  n.includes('proteina') ||
+  n.includes('proteina') || // "proteinas" sin tilde
+  n.includes('proteína') || // "proteínas" con tilde ← fix
   n.includes('carne') ||
   n.includes('pollo') ||
   n.includes('pescado') ||
-  (cat.includes('alimentac') && n.includes('proteina'));
+  (cat.includes('alimentac') && (n.includes('proteina') || n.includes('proteína')));
 
 const isGroceries = (n: string, cat: string) =>
   n.includes('mercado') ||
@@ -173,6 +174,7 @@ const isCellPlan = (n: string) =>
   n.includes('celular') || n.includes('plan ') || n.includes('teléfono') || n.includes('telefono');
 
 const isTransport = (n: string, cat: string) =>
+  n.includes('transporte') || // ← fix: buscar también en el nombre
   cat.includes('transporte') ||
   n.includes('taxi') ||
   n.includes('uber') ||
@@ -199,7 +201,9 @@ const isSports = (n: string, cat: string) =>
   (cat.includes('cultura') && n.includes('deporte'));
 
 const isRent = (n: string, cat: string) =>
-  (n.includes('arriendo') || n.includes('arrendamiento')) && cat.includes('vivienda');
+  n.includes('arriendo') || // ← fix: nombre solo es suficiente
+  n.includes('arrendamiento') ||
+  ((n.includes('arriendo') || n.includes('arrendamiento')) && cat.includes('vivienda'));
 
 // ============================================================
 // BUILDERS
@@ -340,19 +344,31 @@ const buildRetentionConfig = (
   parserType: 'retention',
   chips: [
     {
-      label: 'Retefuente',
+      label: 'Normal',
       icon: 'bank-minus',
-      template: 'Retefu: 335.000 | Descripción',
-      hint: 'Retención en la fuente'
+      template: 'Retefu: 517.000',
+      hint: 'Nómina sin incapacidad ni primas'
     },
     {
-      label: 'Retención',
-      icon: 'percent',
-      template: 'Retefu: 635 mil | Descripción',
-      hint: 'Retención con notas adicionales'
+      label: '+ Incapacidad',
+      icon: 'medical-bag',
+      template: 'Retefu: 517.000\nIncapacidad: Prim: 2 días',
+      hint: 'Con días de incapacidad primeros (sin descuento económico)'
+    },
+    {
+      label: '+ EPS',
+      icon: 'hospital-box',
+      template: 'Retefu: 517.000\nIncapacidad: Prim: 2 días, Eps: 13 días',
+      hint: 'Con días EPS (afectan el salario recibido)'
+    },
+    {
+      label: '+ Prima',
+      icon: 'cash-plus',
+      template: 'Retefu: 517.000\nPrima nav: 609.000',
+      hint: 'Nómina con prima — agregar línea por cada prima'
     }
   ],
-  smartPlaceholder: 'Ej: Retefu: 335.000 | Intereses cesantías',
+  smartPlaceholder: 'Ej: Retefu: 517.000\nIncapacidad: Prim: 2 días, Eps: 13 días',
   enableValidation: true
 });
 

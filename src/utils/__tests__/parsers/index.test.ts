@@ -324,7 +324,7 @@ describe('extractProducts', () => {
               description: 'Carne Asar Freir — 0,265 kg @ $26.600/kg [Carulla]',
               price: 7049
             },
-            { description: 'Aguacate Und — 1 un @ $3.780 [Carulla]', price: 3780 }
+            { description: 'Aguacate — 1 un @ $3.780 [Carulla]', price: 3780 }
           ]);
         });
 
@@ -762,7 +762,7 @@ describe('extractProducts', () => {
         { description: 'Crema de Leche [D1]', price: 2300 },
         { description: 'Tocineta Ahumada [D1]', price: 6990 },
         { description: 'Arroz Premium [D1]', price: 4500 },
-        { description: 'Cafe Instan/L [D1]', price: 9990 }
+        { description: 'Café Instantáneo [D1]', price: 9990 }
       ]);
     });
 
@@ -774,7 +774,7 @@ describe('extractProducts', () => {
         { description: 'Salsa De Pina [D1]', price: 2950 },
         { description: 'Servilleta Co [D1]', price: 2250 },
         { description: 'Esponja Malla [D1]', price: 1650 },
-        { description: 'Cafe Instan/L [D1]', price: 9990 }
+        { description: 'Café Instantáneo [D1]', price: 9990 }
       ]);
     });
     it('should handle from invoice type D1 Case 3', () => {
@@ -789,7 +789,7 @@ describe('extractProducts', () => {
         TOTAL	42,230
         DACAN`;
       expect(extractProducts(ocr)).toEqual([
-        { description: 'Cafe Instan/L [D1]', price: 23800 },
+        { description: 'Café Instantáneo [D1]', price: 23800 },
         { description: 'Ajo [D1]', price: 1300 },
         { description: 'Crema Lavaloz [D1]', price: 3850 },
         { description: 'Gelatina Sin [D1]', price: 2300 },
@@ -830,7 +830,7 @@ describe('extractProducts', () => {
         { description: 'Toalla De Coc [D1]', price: 1650 },
         { description: 'Harina De Tri [D1]', price: 1700 },
         { description: 'Ajo [D1]', price: 2600 },
-        { description: 'Chocolatina W [D1]', price: 4000 }
+        { description: 'Chocolatina Jet Wafer [D1]', price: 4000 }
       ]);
     });
   });
@@ -1060,7 +1060,7 @@ describe('extractProducts', () => {
           price: 16435
         },
         {
-          description: 'Muslo A Granel 11618 | 0 — 1,57 kg @ $7.400/kg [SuperCarnesJH]',
+          description: 'Muslo 11618 | 0 — 1,57 kg @ $7.400/kg [SuperCarnesJH]',
           price: 11618
         }
       ]);
@@ -1149,7 +1149,7 @@ describe('extractProducts', () => {
         { description: 'Papa Criolla — 0,445 kg @ $4.400/kg [FruverLaGranja]', price: 1958 },
         { description: 'Platano Verde — 0,395 kg @ $3.580/kg [FruverLaGranja]', price: 1414 },
         { description: 'Bandeja Manzana — 1 un @ $5.500 [FruverLaGranja]', price: 5500 },
-        { description: 'Fresa Bandeja — 1 un @ $4.500 [FruverLaGranja]', price: 4500 }
+        { description: 'Bandeja Fresa — 1 un @ $4.500 [FruverLaGranja]', price: 4500 }
       ]);
     });
 

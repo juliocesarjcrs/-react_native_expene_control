@@ -22,13 +22,13 @@ export const SYNONYM_GROUPS: [string, string[]][] = [
   ],
   ['Cebolla Roja', ['cebolla roja', 'cebolla criolla']],
   ['Cebolla Puerro', ['cebolla puerro']],
+  ['Champiñon Tajado', ['champia a n tajado']],
 
   ['Ahuyama', ['auyama', 'zapallo', 'calabaza', 'ahuyama entera', 'auyama entera']],
   ['Cilantro', ['cilantra', 'culantro']], // "cilantra" aparece en datos reales
   ['Pimentón', ['pimenton', 'pimiento']],
   ['Pepino Cohombro', ['pepino cohombro', 'pepino']], // distinto de pepino calabacín
   ['Pepino Calabacín', ['pepino calabacin', 'pepino calabacín']],
-  ['Pepino Res', ['pepino rez', 'pepino res', 'pepino res*']], // "rez" → OCR corrupto de "res"
   [
     'Pepino Zukini',
     [
@@ -125,6 +125,8 @@ export const SYNONYM_GROUPS: [string, string[]][] = [
     ]
   ],
   ['Fresa', ['fresa', 'fresas']],
+  ['Bandeja Fresa', ['Fresa Bandeja']],
+
   ['Mora', ['mora', 'moras', 'mora para jugo']],
   ['Lulo', ['lulo']],
   ['Maracuyá', ['maracuya', 'maracuyá']],
@@ -134,8 +136,11 @@ export const SYNONYM_GROUPS: [string, string[]][] = [
   ['Granadilla', ['granadilla']],
   ['Uchuva', ['uchuva']],
   ['Manzana', ['manzana gala', 'manzana verde', 'manzana']],
+  ['Bandeja Manzana', ['Bandeja Manzana']],
+
   ['Naranja', ['naranja']],
   ['Pera', ['pera boyacense', 'pera']],
+  ['Aguacate', ['Aguacate Und']],
 
   // ─── PROTEÍNAS ANIMALES ──────────────────────────────────────────────────────
 
@@ -201,6 +206,7 @@ export const SYNONYM_GROUPS: [string, string[]][] = [
     'Sobrebarriga',
     ['sobrebarrigax gr', 'sobrebarriga', 'carne sobrebarriga', 'carne res sobrebarriga']
   ],
+  ['Pepino Res', ['pepino rez', 'pepino res', 'pepino res*']], // "rez" → OCR corrupto de "res"
 
   // Pescado
   [
@@ -604,6 +610,8 @@ export const SYNONYM_GROUPS: [string, string[]][] = [
     [
       'cafe instanta', // OCR [D1]
       'cafe instan/l', // OCR [D1]
+      'Cafe Instan/L',
+      'cafe instan l',
       'café instantáneo',
       'cafe instantáneo',
       'cafe instantaneo',
@@ -815,6 +823,7 @@ export const SYNONYM_GROUPS: [string, string[]][] = [
   ],
   ['Galletas Integrales', ['galleta integral', 'galletas integrales', 'palitos integrales']],
   ['Maíz Pira', ['maiz pira', 'maiz pira diana', 'maíz pira', 'popetas']],
+  ['Chocolatina Jet Wafer', ['Chocolatina W']],
 
   // ─── LICORES ────────────────────────────────────────────────────────────────
 
@@ -865,7 +874,9 @@ export const SYNONYM_GROUPS: [string, string[]][] = [
       'base piña colada',
       'cóctel piña colada marca alicante'
     ]
-  ]
+  ],
+  // ─── ASEO ────────────────────────────────────────────────────────────────
+  ['Esponja Malla', ['esponja malla']]
 ];
 
 // ─── ÍNDICE INVERTIDO O(1): sinónimo → canónico ──────────────────────────────

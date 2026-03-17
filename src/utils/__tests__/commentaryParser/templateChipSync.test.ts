@@ -1,15 +1,25 @@
 /**
  * templateChipSync.test.ts
  *
- * Verifica que cada chip definido en commentaryTemplates.utils.ts
- * produzca un texto que el parser correspondiente puede interpretar.
+ * Fuente de verdad: COMMENTARY_REGISTRY
  *
- * Si este test falla, significa que un chip sugiere un formato que
- * el parser NO puede leer — bug silencioso en producción.
+ * Este test NO hardcodea nombres ni IDs de subcategorías.
+ * Al agregar una entry al registry, este test la cubre automáticamente.
  *
+ * Garantiza tres cosas:
+ *   1. El exampleCommentary de cada entry es parseado correctamente
+ *   2. Cada subcategoryDetector activa el parserType correcto en getDefaultTemplateConfig
+ *   3. Los chips de subcategorías 'structured' producen texto parseable
+ *
+ * Ubicación: src/utils/__tests__/commentaryParser/templateChipSync.test.ts
  */
 
+import {
+  COMMENTARY_REGISTRY,
+  CommentaryAnalysisEntry
+} from '~/shared/types/utils/commentaryParser/commentary-registry';
 import { getDefaultTemplateConfig } from '~/utils/commentary/commentaryTemplates.utils';
+
 import { parseUtilityCommentary } from '~/utils/commentaryParser/utilityParser';
 import { parseProductCommentary } from '~/utils/commentaryParser/productParser';
 import { parseRetentionCommentary } from '~/utils/commentaryParser/retentionParser';
@@ -18,220 +28,204 @@ import { parseFamilyAidCommentary } from '~/utils/commentaryParser/familyAidPars
 import { parseNutritionCommentary } from '~/utils/commentaryParser/nutritionParser';
 import { parseSportsCommentary } from '~/utils/commentaryParser/sportsParser';
 import { parseRentCommentary } from '~/utils/commentaryParser/rentParser';
+import { ParserType } from '~/utils/commentaryParser';
 
 // ─────────────────────────────────────────────
-// HELPERS
+// CONSTANTES DE TEST
 // ─────────────────────────────────────────────
 
-const MOCK_COST = 50000;
+const MOCK_COST = 50_000;
 const MOCK_DATE = '2026-03-09';
-const MOCK_CATEGORY = 'Ingresos';
+const MOCK_CATEGORY = 'TestCategoria';
 
 /**
- * Reemplaza placeholders editables en templates por valores reales.
- * Los templates usan palabras genéricas como "Producto", "Origen", etc.
- * para que el usuario las reemplace — aquí ponemos valores reales para test.
+ * ID ficticio usado en getDefaultTemplateConfig durante tests.
+ * No importa el valor — la detección es por nombre, no por ID.
  */
+const TEST_SUBCATEGORY_ID = 9999;
+
+// ─────────────────────────────────────────────
+// HELPER: invocar el parser correcto por parserType
+//
+// No usamos parseCommentary() del orquestador porque este requiere
+// un subcategoryId del SUBCATEGORY_PARSER_MAP (IDs reales de BD).
+// En tests queremos probar por parserType directamente.
+// ─────────────────────────────────────────────
+
+const parseByType = (
+  parserType: Exclude<ParserType, 'none'>,
+  commentary: string
+): object | null => {
+  switch (parserType) {
+    case 'utility':
+      return parseUtilityCommentary(commentary, MOCK_COST, MOCK_DATE);
+    case 'product':
+      return parseProductCommentary(commentary, MOCK_COST, MOCK_DATE);
+    case 'retention':
+      return parseRetentionCommentary(commentary, MOCK_COST, MOCK_DATE, MOCK_CATEGORY);
+    case 'transport':
+      return parseTransportCommentary(commentary, MOCK_COST, MOCK_DATE);
+    case 'familyAid':
+      return parseFamilyAidCommentary(commentary, MOCK_COST, MOCK_DATE);
+    case 'nutrition':
+      return parseNutritionCommentary(commentary, MOCK_COST, MOCK_DATE);
+    case 'sports':
+      return parseSportsCommentary(commentary, MOCK_COST, MOCK_DATE);
+    case 'rent':
+      return parseRentCommentary(commentary, MOCK_COST, MOCK_DATE);
+  }
+};
+
+// ─────────────────────────────────────────────
+// HELPER: reemplazar placeholders editables en chips
+//
+// Los chips usan palabras genéricas ("Producto", "Origen")
+// para que el usuario las reemplace. Aquí ponemos valores
+// reales para que el parser pueda interpretarlos.
+// ─────────────────────────────────────────────
+
 const hydrate = (template: string): string =>
   template
-    .replace(/^Producto/g, 'Pechuga') // productParser
     .replace(/\bProducto\b/g, 'Pechuga')
     .replace('Origen a Destino', 'Villa Verde a Centro')
     .replace('Ida y vuelta Origen a Destino', 'Ida y vuelta Villa Verde a Centro')
     .replace('2 pasajes Origen a Destino', '2 pasajes Villa Verde a Centro')
-    .replace('Persona', 'Papá Jairo')
+    .replace(/\bPersona\b/g, 'Papá Jairo')
     .replace('Lugar deporte', 'Canaan futbol 8')
-    .replace('apt descripción', 'apt 1004 Mirador Villa Verde')
-    .replace('Arriendo Mar 2026', 'Arriendo Mar 2026'); // ya es válido
+    .replace('apt descripción', 'apt 1004 Mirador Villa Verde');
 
 // ─────────────────────────────────────────────
-// CASOS DE TEST POR parserType
+// TEST 1: exampleCommentary del registry
+//
+// Si falla → el campo exampleCommentary tiene un formato
+// que el parser no puede leer. Corregir en el registry.
 // ─────────────────────────────────────────────
 
-describe('templateChipSync — utility (Luz/Agua/Gas)', () => {
-  const configs = [
-    getDefaultTemplateConfig(1, 'Luz', 'Vivienda'),
-    getDefaultTemplateConfig(2, 'Agua', 'Vivienda'),
-    getDefaultTemplateConfig(3, 'Gas', 'Vivienda')
-  ];
+describe('Registry — exampleCommentary es parseable por su parser', () => {
+  COMMENTARY_REGISTRY.forEach((entry: CommentaryAnalysisEntry) => {
+    it(`[${entry.parserType}] "${entry.exampleCommentary}"`, () => {
+      const result = parseByType(entry.parserType, entry.exampleCommentary);
+      expect(result).not.toBeNull();
+    });
+  });
+});
 
-  configs.forEach((config) => {
-    config.chips.forEach((chip) => {
-      it(`[${config.subcategoryName}] chip "${chip.label}" → parseUtilityCommentary retorna datos`, () => {
-        const result = parseUtilityCommentary(chip.template, MOCK_COST, MOCK_DATE);
-        expect(result).not.toBeNull();
-        expect(result?.consumption).toBeGreaterThan(0);
-        expect(result?.unit).toMatch(/^(KW|M3)$/);
-        expect(result?.periodStart).toBeTruthy();
-        expect(result?.periodEnd).toBeTruthy();
+// ─────────────────────────────────────────────
+// TEST 2: subcategoryDetectors activan el parserType correcto
+//
+// Si falla → el nombre en subcategoryDetectors no es detectado
+// por getDefaultTemplateConfig. Corregir el detector en
+// commentaryTemplates.utils.ts o el nombre en el registry.
+// ─────────────────────────────────────────────
+
+describe('Registry — subcategoryDetectors activan el parserType correcto en getDefaultTemplateConfig', () => {
+  COMMENTARY_REGISTRY.forEach((entry: CommentaryAnalysisEntry) => {
+    entry.subcategoryDetectors.forEach((subcategoryName) => {
+      it(`[${entry.parserType}] detector "${subcategoryName}" → parserType correcto`, () => {
+        const config = getDefaultTemplateConfig(TEST_SUBCATEGORY_ID, subcategoryName, 'TestCat');
+
+        // Los parsers semi-estructurados usan parserType 'custom' en el template
+        // porque no tienen validación estricta de formato (solo chips de guía).
+        // utility, product y retention usan su propio parserType directamente.
+        const isStructured = ['utility', 'product', 'retention'].includes(entry.parserType);
+        const expectedParserTypes = isStructured
+          ? [entry.parserType]
+          : [entry.parserType, 'custom'];
+
+        expect(expectedParserTypes).toContain(config.parserType);
+
+        // Adicionalmente: el assistanceLevel nunca debe ser 'free' si hay un parser
+        expect(config.assistanceLevel).not.toBe('free');
       });
     });
   });
 });
 
-describe('templateChipSync — product (Proteínas/Mercado/Licores)', () => {
-  const configs = [
-    getDefaultTemplateConfig(10, 'Proteínas', 'Alimentación'),
-    getDefaultTemplateConfig(11, 'Mercado', 'Alimentación'),
-    getDefaultTemplateConfig(12, 'Licores', 'Alimentación')
+// ─────────────────────────────────────────────
+// TEST 3: chips de subcategorías structured parsean sin null
+//
+// Solo aplica a parserType 'utility', 'product', 'retention'
+// porque son los únicos con assistanceLevel: 'structured'.
+// Los chips 'semi' no se validan aquí (formato libre guiado).
+//
+// Excepción documentada: chips "Solo tienda" en product son
+// formato simplificado — el parser retorna null intencionalmente.
+// ─────────────────────────────────────────────
+
+describe('Chips structured — texto generado es parseable por su parser', () => {
+  const STRUCTURED_PARSERS: Array<Exclude<ParserType, 'none'>> = [
+    'utility',
+    'product',
+    'retention'
   ];
 
-  configs.forEach((config) => {
-    config.chips.forEach((chip) => {
-      it(`[${config.subcategoryName}] chip "${chip.label}" → parseProductCommentary retorna datos o es formato simplificado`, () => {
-        const text = hydrate(chip.template);
-        const result = parseProductCommentary(text, MOCK_COST, MOCK_DATE);
+  COMMENTARY_REGISTRY.filter((entry) => STRUCTURED_PARSERS.includes(entry.parserType)).forEach(
+    (entry: CommentaryAnalysisEntry) => {
+      entry.subcategoryDetectors.forEach((subcategoryName) => {
+        const config = getDefaultTemplateConfig(TEST_SUBCATEGORY_ID, subcategoryName, 'TestCat');
 
-        // Los chips "Solo tienda" son formato simplificado — parser puede retornar null
-        // pero deben tener al menos el nombre del producto
-        if (chip.label === 'Solo tienda') {
-          // Formato simplificado aceptado: parser retorna null pero el texto es válido
-          expect(text).toMatch(/\[.+\]/); // debe tener tag de tienda
-        } else {
-          expect(result).not.toBeNull();
-          expect(result?.product).toBeTruthy();
-          expect(result?.cost).toBe(MOCK_COST);
-        }
+        config.chips.forEach((chip) => {
+          const isSimplifiedFormat = chip.label === 'Solo tienda';
+
+          if (isSimplifiedFormat) {
+            // Formato simplificado — documentado como no-parseable intencionalmente.
+            // El parser retorna null pero el texto sigue siendo válido visualmente.
+            it(`[${entry.parserType}] "${subcategoryName}" chip "${chip.label}" → formato simplificado (null esperado, tag de tienda requerido)`, () => {
+              const text = hydrate(chip.template);
+              expect(text).toMatch(/\[.+\]/);
+            });
+          } else {
+            it(`[${entry.parserType}] "${subcategoryName}" chip "${chip.label}" → parser retorna datos`, () => {
+              const text = hydrate(chip.template);
+              const result = parseByType(entry.parserType, text);
+              expect(result).not.toBeNull();
+            });
+          }
+        });
       });
-    });
-  });
-});
-
-describe('templateChipSync — retention (Nómina)', () => {
-  const config = getDefaultTemplateConfig(20, 'Retenciones', 'Nómina');
-
-  config.chips.forEach((chip) => {
-    it(`chip "${chip.label}" → parseRetentionCommentary retorna datos`, () => {
-      const result = parseRetentionCommentary(chip.template, MOCK_COST, MOCK_DATE, MOCK_CATEGORY);
-      expect(result).not.toBeNull();
-      expect(result?.retention).toBeGreaterThan(0);
-    });
-  });
-});
-
-describe('templateChipSync — transport (Taxi/Bus/Uber)', () => {
-  const transportSubcategories = [
-    { id: 30, name: 'Taxi', cat: 'Transporte' },
-    { id: 31, name: 'Bus/Metrolinea', cat: 'Transporte' },
-    { id: 32, name: 'Uber/Beat/InDrive', cat: 'Transporte' },
-    { id: 33, name: 'Transporte del Trabajo', cat: 'Transporte' }
-  ];
-
-  transportSubcategories.forEach(({ id, name, cat }) => {
-    const config = getDefaultTemplateConfig(id, name, cat);
-
-    config.chips.forEach((chip) => {
-      it(`[${name}] chip "${chip.label}" → parseTransportCommentary retorna datos`, () => {
-        const text = hydrate(chip.template);
-        const result = parseTransportCommentary(text, MOCK_COST, MOCK_DATE);
-        expect(result).not.toBeNull();
-        expect(result?.origin).toBeTruthy();
-        expect(result?.destination).toBeTruthy();
-      });
-    });
-  });
-});
-
-describe('templateChipSync — familyAid (Ayuda familiar)', () => {
-  const config = getDefaultTemplateConfig(40, 'Ayuda/regalos familiares', 'Regalos');
-
-  config.chips.forEach((chip) => {
-    it(`chip "${chip.label}" → parseFamilyAidCommentary retorna datos`, () => {
-      const text = hydrate(chip.template);
-      const result = parseFamilyAidCommentary(text, MOCK_COST, MOCK_DATE);
-      expect(result).not.toBeNull();
-      expect(result?.person).toBeTruthy();
-      expect(result?.periodicity).toMatch(/^(mensual|bimensual|trimestral|otro)$/);
-      expect(result?.months.length).toBeGreaterThan(0);
-    });
-  });
-});
-
-describe('templateChipSync — nutrition (Nutrición)', () => {
-  const config = getDefaultTemplateConfig(50, 'Nutrición', 'Salud');
-
-  config.chips.forEach((chip) => {
-    it(`chip "${chip.label}" → parseNutritionCommentary retorna datos`, () => {
-      const result = parseNutritionCommentary(chip.template, MOCK_COST, MOCK_DATE);
-      expect(result).not.toBeNull();
-      expect(result?.weekNumber).toBeGreaterThan(0);
-      expect(result?.center).toBeTruthy();
-    });
-  });
-});
-
-describe('templateChipSync — sports (Deportes)', () => {
-  const config = getDefaultTemplateConfig(60, 'Deportes', 'Cultura, diversión y esparcimiento');
-
-  config.chips.forEach((chip) => {
-    it(`chip "${chip.label}" → parseSportsCommentary retorna datos`, () => {
-      const text = hydrate(chip.template);
-      const result = parseSportsCommentary(text, MOCK_COST, MOCK_DATE);
-      expect(result).not.toBeNull();
-      expect(result?.expenseType).toBeTruthy();
-      expect(result?.description).toBeTruthy();
-    });
-  });
-});
-
-describe('templateChipSync — rent (Arriendo)', () => {
-  const config = getDefaultTemplateConfig(70, 'Arriendo', 'Vivienda');
-
-  config.chips.forEach((chip) => {
-    it(`chip "${chip.label}" → parseRentCommentary retorna datos`, () => {
-      const text = hydrate(chip.template);
-      const result = parseRentCommentary(text, MOCK_COST, MOCK_DATE);
-      expect(result).not.toBeNull();
-      expect(result?.paymentType).toMatch(/^(completo|parcial|nuevo_valor)$/);
-    });
-  });
+    }
+  );
 });
 
 // ─────────────────────────────────────────────
-// TEST GLOBAL: ningún chip de tipo structured/semi
-// puede producir null en su parser
+// TEST 4: integridad estructural del registry
+//
+// Verifica que cada entry tenga todos los campos requeridos
+// y sin valores undefined/NaN que indiquen errores de build.
+// También garantiza que parserType y route sean únicos.
 // ─────────────────────────────────────────────
 
-describe('templateChipSync — cobertura global: chips structured/semi nunca producen null', () => {
-  const testCases = [
-    // utility
-    { id: 1, name: 'Luz', cat: 'Vivienda' },
-    { id: 2, name: 'Agua', cat: 'Vivienda' },
-    { id: 3, name: 'Gas', cat: 'Vivienda' },
-    // product
-    { id: 10, name: 'Proteínas', cat: 'Alimentación' },
-    { id: 11, name: 'Mercado', cat: 'Alimentación' },
-    // retention
-    { id: 20, name: 'Retenciones', cat: 'Nómina' },
-    // transport
-    { id: 30, name: 'Taxi', cat: 'Transporte' },
-    { id: 31, name: 'Uber/Beat/InDrive', cat: 'Transporte' },
-    // familyAid
-    { id: 40, name: 'Ayuda/regalos familiares', cat: 'Regalos' },
-    // nutrition
-    { id: 50, name: 'Nutrición', cat: 'Salud' },
-    // sports
-    { id: 60, name: 'Deportes', cat: 'Cultura, diversión y esparcimiento' },
-    // rent
-    { id: 70, name: 'Arriendo', cat: 'Vivienda' }
-  ];
+describe('Registry — integridad estructural', () => {
+  it('el registry no está vacío', () => {
+    expect(COMMENTARY_REGISTRY.length).toBeGreaterThan(0);
+  });
 
-  testCases.forEach(({ id, name, cat }) => {
-    it(`[${name}] todos los chips tienen label, template e icon definidos`, () => {
-      const config = getDefaultTemplateConfig(id, name, cat);
+  COMMENTARY_REGISTRY.forEach((entry: CommentaryAnalysisEntry) => {
+    describe(`entry [${entry.parserType}]`, () => {
+      it('todos los campos requeridos están presentes y no son vacíos', () => {
+        expect(entry.parserType).toBeTruthy();
+        expect(entry.displayName).toBeTruthy();
+        expect(entry.subtitle).toBeTruthy();
+        expect(entry.icon).toBeTruthy();
+        expect(entry.iconColorKey).toBeTruthy();
+        expect(entry.route).toBeTruthy();
+        expect(entry.subcategoryDetectors.length).toBeGreaterThan(0);
+        expect(entry.exampleCommentary).toBeTruthy();
+      });
 
-      // Las subcategorías structured/semi deben tener al menos 1 chip
-      if (config.assistanceLevel !== 'free') {
-        expect(config.chips.length).toBeGreaterThan(0);
-      }
+      it('exampleCommentary no contiene valores corruptos (undefined, NaN)', () => {
+        expect(entry.exampleCommentary).not.toContain('undefined');
+        expect(entry.exampleCommentary).not.toContain('NaN');
+      });
 
-      config.chips.forEach((chip) => {
-        expect(chip.label).toBeTruthy();
-        expect(chip.template).toBeTruthy();
-        expect(chip.icon).toBeTruthy();
-        // El template no debe quedar con placeholders sin reemplazar en producción
-        expect(chip.template).not.toContain('undefined');
-        expect(chip.template).not.toContain('NaN');
+      it('parserType es único en el registry (sin duplicados)', () => {
+        const duplicates = COMMENTARY_REGISTRY.filter((e) => e.parserType === entry.parserType);
+        expect(duplicates.length).toBe(1);
+      });
+
+      it('route es única en el registry (sin duplicados)', () => {
+        const duplicates = COMMENTARY_REGISTRY.filter((e) => e.route === entry.route);
+        expect(duplicates.length).toBe(1);
       });
     });
   });

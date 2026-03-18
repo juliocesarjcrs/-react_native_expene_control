@@ -62,10 +62,21 @@ export const useCommentaryInput = ({
   // ── Cargar config + historial cuando cambia la subcategoría ──
   useEffect(() => {
     if (!subcategoryId || !subcategoryName || !categoryName) {
+      console.log('[useCommentaryInput] guard falló:', {
+        subcategoryId,
+        subcategoryName,
+        categoryName
+      });
       setTemplateConfig(null);
       setAllSuggestions([]);
       return;
     }
+
+    console.log('[useCommentaryInput] cargando config para:', {
+      subcategoryId,
+      subcategoryName,
+      categoryName
+    });
 
     let cancelled = false;
 

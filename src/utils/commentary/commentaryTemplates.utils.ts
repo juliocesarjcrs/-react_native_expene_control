@@ -88,6 +88,8 @@ export const getDefaultTemplateConfig = (
   subcategoryName: string,
   categoryName: string
 ): SubcategoryTemplateConfig => {
+  console.log('[subcategoryName]', subcategoryName);
+  console.log('[subcategoryName]', subcategoryName);
   const name = subcategoryName.toLowerCase().trim();
   const cat = categoryName.toLowerCase().trim();
 
@@ -105,10 +107,10 @@ export const getDefaultTemplateConfig = (
     return buildProductConfig(subcategoryId, subcategoryName, categoryName, 'liquor');
   if (isRetention(name, cat))
     return buildRetentionConfig(subcategoryId, subcategoryName, categoryName);
+  if (isCopago(name)) return buildCopagoConfig(subcategoryId, subcategoryName, categoryName);
   if (isMortgage(name)) return buildMortgageConfig(subcategoryId, subcategoryName, categoryName);
   if (isPsychology(name))
     return buildPsychologyConfig(subcategoryId, subcategoryName, categoryName);
-  if (isCopago(name)) return buildCopagoConfig(subcategoryId, subcategoryName, categoryName);
   if (isCellPlan(name)) return buildCellPlanConfig(subcategoryId, subcategoryName, categoryName);
 
   if (isTransport(name, cat))
@@ -163,12 +165,14 @@ const isMortgage = (n: string) =>
   n.includes('apartamento') ||
   n.includes('préstamo') ||
   n.includes('prestamo') ||
-  n.includes('cuota');
+  // "cuota" solo si NO es moderadora/médica
+  (n.includes('cuota') && !n.includes('moderadora') && !n.includes('copago'));
 
 const isPsychology = (n: string) =>
   n.includes('psicolog') || n.includes('terapia') || n.includes('consulta');
 
-const isCopago = (n: string) => n.includes('copago') || n.includes('moderadora');
+const isCopago = (n: string) =>
+  n.includes('copago') || n.includes('moderadora') || n.includes('cuota moderadora');
 
 const isCellPlan = (n: string) =>
   n.includes('celular') || n.includes('plan ') || n.includes('teléfono') || n.includes('telefono');
@@ -430,18 +434,36 @@ const buildCopagoConfig = (
   subcategoryId,
   subcategoryName,
   categoryName,
-  assistanceLevel: 'semi',
-  parserType: 'custom',
+  assistanceLevel: 'structured',
+  parserType: 'copago',
   chips: [
     {
-      label: 'Copago',
+      label: 'Terapia',
       icon: 'hospital-box',
-      template: 'Copago servicio terapia #1/10',
-      hint: 'Servicio + número de sesión'
+      template: 'Copago Colmedica Terapia Física #1/20',
+      hint: 'Terapia con número de sesión sobre total'
+    },
+    {
+      label: 'Consulta',
+      icon: 'doctor',
+      template: 'Copago Colmedica consulta Neurología',
+      hint: 'Consulta o cita médica sin conteo de sesiones'
+    },
+    {
+      label: 'Control',
+      icon: 'clipboard-check',
+      template: 'Copago Colmedica control Psiquiatría',
+      hint: 'Control de seguimiento'
+    },
+    {
+      label: 'Fisiatría',
+      icon: 'run',
+      template: 'Copago fisiatría #1/10',
+      hint: 'Copago Fisiatría sin institución'
     }
   ],
-  smartPlaceholder: 'Ej: Copago terapia física #3/10',
-  enableValidation: false
+  smartPlaceholder: 'Ej: Copago Colmedica Terapia Física #11/20',
+  enableValidation: true
 });
 
 const buildCellPlanConfig = (

@@ -199,6 +199,10 @@ export const screenConfigs = {
     title: 'Análisis de Retenciones',
     subtitle: 'Calcula retenciones acumuladas en tus ingresos'
   },
+  copagoAnalysis: {
+    title: 'Copagos Médicos',
+    subtitle: 'Total por servicio e historial de citas'
+  },
 
   // ADMIN
   aiModels: {

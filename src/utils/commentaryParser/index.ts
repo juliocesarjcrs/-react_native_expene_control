@@ -21,6 +21,7 @@ import { FamilyAidData } from '~/shared/types/utils/commentaryParser/family-aid-
 import { NutritionData } from '~/shared/types/utils/commentaryParser/nutrition-analysis.types';
 import { SportsData } from '~/shared/types/utils/commentaryParser/sports-analysis.types';
 import { RentData } from '~/shared/types/utils/commentaryParser/rent-analysis.types';
+import { CopagoData } from '~/shared/types/utils/commentaryParser/copago-analysis.types';
 
 import { parseUtilityCommentary } from './utilityParser';
 import { parseProductCommentary } from './productParser';
@@ -30,6 +31,7 @@ import { parseFamilyAidCommentary } from './familyAidParser';
 import { parseNutritionCommentary } from './nutritionParser';
 import { parseSportsCommentary } from './sportsParser';
 import { parseRentCommentary } from './rentParser';
+import { parseCopagoCommentary } from './copagoParser';
 
 export { parseUtilityCommentary, calculateConsumptionPerPerson } from './utilityParser';
 export { parseProductCommentary } from './productParser';
@@ -58,6 +60,7 @@ export type ParserType =
   | 'nutrition'
   | 'sports'
   | 'rent'
+  | 'copago'
   | 'none';
 
 export type ParsedCommentary =
@@ -69,6 +72,7 @@ export type ParsedCommentary =
   | { type: 'nutrition'; data: NutritionData }
   | { type: 'sports'; data: SportsData }
   | { type: 'rent'; data: RentData }
+  | { type: 'copago'; data: CopagoData }
   | { type: 'none'; data: null };
 
 // ─────────────────────────────────────────────
@@ -122,6 +126,7 @@ const SUBCATEGORY_PARSER_MAP: Record<number, ParserType> = {
   // ── Salud ─────────────────────────────────
   // Nutrición
   1465: 'nutrition',
+  1444: 'copago',
 
   // ── Cultura / Deportes ────────────────────
   // Deportes
@@ -157,6 +162,7 @@ export const parseCommentary = (
   category?: string,
   baseSalary?: number
 ): ParsedCommentary => {
+  console.log('[subcategoryId]', subcategoryId);
   const parserType = getParserType(subcategoryId);
 
   switch (parserType) {
@@ -180,6 +186,10 @@ export const parseCommentary = (
       const data = parseFamilyAidCommentary(commentary, cost, date);
       return data ? { type: 'familyAid', data } : { type: 'none', data: null };
     }
+    case 'copago': {
+      const data = parseCopagoCommentary(commentary, cost, date);
+      return data ? { type: 'copago', data } : { type: 'none', data: null };
+    }
     case 'nutrition': {
       const data = parseNutritionCommentary(commentary, cost, date);
       return data ? { type: 'nutrition', data } : { type: 'none', data: null };
@@ -192,6 +202,7 @@ export const parseCommentary = (
       const data = parseRentCommentary(commentary, cost, date);
       return data ? { type: 'rent', data } : { type: 'none', data: null };
     }
+
     default:
       return { type: 'none', data: null };
   }

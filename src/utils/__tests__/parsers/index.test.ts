@@ -791,7 +791,7 @@ describe('extractProducts', () => {
       expect(extractProducts(ocr)).toEqual([
         { description: 'Café Instantáneo [D1]', price: 23800 },
         { description: 'Ajo [D1]', price: 1300 },
-        { description: 'Crema Lavaloz [D1]', price: 3850 },
+        { description: 'Crema Lavaloza [D1]', price: 3850 },
         { description: 'Gelatina Sin [D1]', price: 2300 },
         { description: 'Gelatina Sabo [D1]', price: 3490 },
         { description: 'Chocoramo [D1]', price: 7490 }
@@ -827,7 +827,7 @@ describe('extractProducts', () => {
       expect(extractProducts(ocr)).toEqual([
         { description: 'Harina De Mai [D1]', price: 2600 },
         { description: 'Aceite de Canola [D1]', price: 25950 },
-        { description: 'Toalla De Coc [D1]', price: 1650 },
+        { description: 'Toalla de Cocina [D1]', price: 1650 },
         { description: 'Harina De Tri [D1]', price: 1700 },
         { description: 'Ajo [D1]', price: 2600 },
         { description: 'Chocolatina Jet Wafer [D1]', price: 4000 }

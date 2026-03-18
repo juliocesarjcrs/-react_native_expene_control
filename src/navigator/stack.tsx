@@ -343,6 +343,7 @@ export default function MyStack() {
           component={Routes.RetentionAnalysisScreen}
           options={{ title: 'Retenciones' }}
         />
+        <StatisticsStack.Screen name="copagoAnalysis" component={Routes.CopagoAnalysisScreen} />
       </StatisticsStack.Navigator>
     );
   }

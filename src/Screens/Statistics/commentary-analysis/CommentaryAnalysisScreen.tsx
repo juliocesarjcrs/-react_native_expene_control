@@ -62,6 +62,14 @@ export default function CommentaryAnalysisScreen({ navigation }: ScreenProps) {
       icon: 'trending-down',
       iconColor: colors.ERROR,
       route: 'retentionAnalysis'
+    },
+    {
+      id: 'copago',
+      title: 'Copagos Médicos',
+      subtitle: 'Total por servicio e historial de citas',
+      icon: 'hospital-box',
+      iconColor: colors.INFO,
+      route: 'copagoAnalysis'
     }
   ];
 

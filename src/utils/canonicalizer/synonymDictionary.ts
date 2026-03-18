@@ -207,6 +207,7 @@ export const SYNONYM_GROUPS: [string, string[]][] = [
     ['sobrebarrigax gr', 'sobrebarriga', 'carne sobrebarriga', 'carne res sobrebarriga']
   ],
   ['Pepino Res', ['pepino rez', 'pepino res', 'pepino res*']], // "rez" → OCR corrupto de "res"
+  ['Centro de Pierna', ['st centro de pie']],
 
   // Pescado
   [
@@ -876,7 +877,10 @@ export const SYNONYM_GROUPS: [string, string[]][] = [
     ]
   ],
   // ─── ASEO ────────────────────────────────────────────────────────────────
-  ['Esponja Malla', ['esponja malla']]
+  ['Esponja Malla', ['esponja malla']],
+  ['Detergente Líquido', ['Detergente Li']],
+  ['Toalla de Cocina', ['Toalla De Coc']],
+  ['Crema Lavaloza', ['Crema Lavaloz']]
 ];
 
 // ─── ÍNDICE INVERTIDO O(1): sinónimo → canónico ──────────────────────────────

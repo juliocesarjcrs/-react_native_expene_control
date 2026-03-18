@@ -1,14 +1,6 @@
 /**
  * Test de integridad del commentary registry
  * Ubicación: src/utils/__tests__/commentaryParser/registry-integrity.test.ts
- *
- * Verifica que:
- *   1. Cada entry tiene una route que existe en StatisticsStackParamList
- *   2. El exampleCommentary de cada entry es parseado sin retornar null
- *   3. No hay parserTypes duplicados en el registry
- *   4. Cada parserType del registry existe en el union type ParserType
- *
- * Ejecutar: jest registry-integrity
  */
 
 import { parseUtilityCommentary } from '~/utils/commentaryParser/utilityParser';
@@ -19,6 +11,7 @@ import { parseFamilyAidCommentary } from '~/utils/commentaryParser/familyAidPars
 import { parseNutritionCommentary } from '~/utils/commentaryParser/nutritionParser';
 import { parseSportsCommentary } from '~/utils/commentaryParser/sportsParser';
 import { parseRentCommentary } from '~/utils/commentaryParser/rentParser';
+import { parseCopagoCommentary } from '~/utils/commentaryParser/copagoParser';
 import { ParserType } from '~/utils/commentaryParser';
 import {
   COMMENTARY_REGISTRY,
@@ -41,7 +34,8 @@ const VALID_ROUTES = new Set([
   'familyAidAnalysis',
   'nutritionAnalysis',
   'sportsAnalysis',
-  'rentAnalysis'
+  'rentAnalysis',
+  'copagoAnalysis' // ← fix: ruta de copago
 ] as const);
 
 /** ParserTypes válidos del union type (excluyendo 'none') */
@@ -53,13 +47,14 @@ const VALID_PARSER_TYPES = new Set<Exclude<ParserType, 'none'>>([
   'familyAid',
   'nutrition',
   'sports',
-  'rent'
+  'rent',
+  'copago' // ← fix: parserType de copago
 ]);
 
 /** Fecha y costo ficticios para los parsers que los requieren */
 const MOCK_COST = 100_000;
 const MOCK_DATE = '2026-03-11';
-const MOCK_CATEGORY = 'Nómina'; // Requerido por retentionParser
+const MOCK_CATEGORY = 'Nómina';
 
 // ─────────────────────────────────────────────
 // HELPER: invocar el parser correcto por parserType
@@ -71,27 +66,22 @@ const invokeParser = (entry: CommentaryAnalysisEntry): object | null => {
   switch (parserType) {
     case 'utility':
       return parseUtilityCommentary(exampleCommentary, MOCK_COST, MOCK_DATE);
-
     case 'product':
       return parseProductCommentary(exampleCommentary, MOCK_COST, MOCK_DATE);
-
     case 'retention':
       return parseRetentionCommentary(exampleCommentary, MOCK_COST, MOCK_DATE, MOCK_CATEGORY);
-
     case 'transport':
       return parseTransportCommentary(exampleCommentary, MOCK_COST, MOCK_DATE);
-
     case 'familyAid':
       return parseFamilyAidCommentary(exampleCommentary, MOCK_COST, MOCK_DATE);
-
     case 'nutrition':
       return parseNutritionCommentary(exampleCommentary, MOCK_COST, MOCK_DATE);
-
     case 'sports':
       return parseSportsCommentary(exampleCommentary, MOCK_COST, MOCK_DATE);
-
     case 'rent':
       return parseRentCommentary(exampleCommentary, MOCK_COST, MOCK_DATE);
+    case 'copago':
+      return parseCopagoCommentary(exampleCommentary, MOCK_COST, MOCK_DATE);
   }
 };
 

@@ -29,6 +29,7 @@ import { parseNutritionCommentary } from '~/utils/commentaryParser/nutritionPars
 import { parseSportsCommentary } from '~/utils/commentaryParser/sportsParser';
 import { parseRentCommentary } from '~/utils/commentaryParser/rentParser';
 import { ParserType } from '~/utils/commentaryParser';
+import { parseCopagoCommentary } from '~/utils/commentaryParser/copagoParser';
 
 // ─────────────────────────────────────────────
 // CONSTANTES DE TEST
@@ -73,6 +74,8 @@ const parseByType = (
       return parseSportsCommentary(commentary, MOCK_COST, MOCK_DATE);
     case 'rent':
       return parseRentCommentary(commentary, MOCK_COST, MOCK_DATE);
+    case 'copago':
+      return parseCopagoCommentary(commentary, MOCK_COST, MOCK_DATE);
   }
 };
 

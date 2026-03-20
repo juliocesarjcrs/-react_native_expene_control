@@ -11,6 +11,7 @@ import { findExpensesBySubcategories } from '~/services/expenses';
 // Types
 import { CopagoData } from '~/shared/types/utils/commentaryParser/copago-analysis.types';
 import { AnalysisFilters } from '../../components/FilterSelector';
+import { UnrecognizedExpense } from '~/shared/types/screens/Statistics/commentary-analysis/copago/copago-analysis.types';
 
 // Utils
 import { parseCopagoCommentary } from '~/utils/commentaryParser/copagoParser';
@@ -21,17 +22,20 @@ import { showError } from '~/utils/showError';
 // ─────────────────────────────────────────────
 
 export interface CopagoServiceSummary {
-  serviceType: string; // "terapia_fisica", "consulta", etc.
-  displayName: string; // "Terapia Física", "Consulta"
+  serviceType: string;
+  displayName: string;
   totalCost: number;
   count: number;
   avgCost: number;
+  /** Items del grupo — para drill-down al expandir */
+  items: CopagoData[];
 }
 
 export interface UseCopagoDataReturn {
   loading: boolean;
   parsedData: CopagoData[];
   serviceSummaries: CopagoServiceSummary[];
+  unrecognized: UnrecognizedExpense[];
   currentFilters: AnalysisFilters | null;
   totalCost: number;
   loadData: (filters: AnalysisFilters) => Promise<void>;
@@ -51,18 +55,20 @@ const SERVICE_DISPLAY_NAMES: Record<string, string> = {
   psiquiatra: 'Psiquiatría',
   fisiatria: 'Fisiatría',
   neurocirugia: 'Neurocirugía',
+  medico_domicilio: 'Médico domiciliario',
+  otorrino: 'Otorrino',
   otro: 'Otro'
 };
 
 const buildServiceSummaries = (data: CopagoData[]): CopagoServiceSummary[] => {
-  const map = new Map<string, { totalCost: number; count: number }>();
+  const map = new Map<string, { totalCost: number; items: CopagoData[] }>();
 
   for (const item of data) {
     const key = item.serviceType;
-    const existing = map.get(key) ?? { totalCost: 0, count: 0 };
+    const existing = map.get(key) ?? { totalCost: 0, items: [] };
     map.set(key, {
       totalCost: existing.totalCost + item.cost,
-      count: existing.count + 1
+      items: [...existing.items, item]
     });
   }
 
@@ -71,8 +77,9 @@ const buildServiceSummaries = (data: CopagoData[]): CopagoServiceSummary[] => {
       serviceType,
       displayName: SERVICE_DISPLAY_NAMES[serviceType] ?? serviceType,
       totalCost: stats.totalCost,
-      count: stats.count,
-      avgCost: Math.round(stats.totalCost / stats.count)
+      count: stats.items.length,
+      avgCost: Math.round(stats.totalCost / stats.items.length),
+      items: stats.items
     }))
     .sort((a, b) => b.totalCost - a.totalCost);
 };
@@ -85,6 +92,7 @@ export const useCopagoData = (): UseCopagoDataReturn => {
   const [loading, setLoading] = useState(false);
   const [parsedData, setParsedData] = useState<CopagoData[]>([]);
   const [serviceSummaries, setServiceSummaries] = useState<CopagoServiceSummary[]>([]);
+  const [unrecognized, setUnrecognized] = useState<UnrecognizedExpense[]>([]);
   const [currentFilters, setCurrentFilters] = useState<AnalysisFilters | null>(null);
   const [totalCost, setTotalCost] = useState(0);
 
@@ -101,18 +109,31 @@ export const useCopagoData = (): UseCopagoDataReturn => {
         endDate: filters.endDate
       });
 
-      const parsed = data.expenses
-        .map((expense: any) =>
-          parseCopagoCommentary(expense.commentary, expense.cost, expense.date)
-        )
-        .filter((item): item is CopagoData => item !== null)
-        .sort(
-          (a: CopagoData, b: CopagoData) => new Date(b.date).getTime() - new Date(a.date).getTime()
-        );
+      const parsed: CopagoData[] = [];
+      const failed: UnrecognizedExpense[] = [];
 
-      setParsedData(parsed);
-      setServiceSummaries(buildServiceSummaries(parsed));
-      setTotalCost(parsed.reduce((sum: number, item: CopagoData) => sum + item.cost, 0));
+      for (const expense of data.expenses) {
+        const result = parseCopagoCommentary(expense.commentary ?? '', expense.cost, expense.date);
+        if (result !== null) {
+          parsed.push(result);
+        } else {
+          failed.push({
+            id: expense.id,
+            commentary: expense.commentary ?? '',
+            cost: expense.cost,
+            date: expense.date
+          });
+        }
+      }
+
+      const sortedParsed = [...parsed].sort(
+        (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
+      );
+
+      setParsedData(sortedParsed);
+      setServiceSummaries(buildServiceSummaries(sortedParsed));
+      setUnrecognized(failed);
+      setTotalCost(sortedParsed.reduce((sum, item) => sum + item.cost, 0));
     } catch (error) {
       showError(error);
     } finally {
@@ -121,9 +142,7 @@ export const useCopagoData = (): UseCopagoDataReturn => {
   }, []);
 
   const loadData = useCallback(
-    async (filters: AnalysisFilters) => {
-      await fetchAndParse(filters);
-    },
+    async (filters: AnalysisFilters) => fetchAndParse(filters),
     [fetchAndParse]
   );
 
@@ -135,6 +154,7 @@ export const useCopagoData = (): UseCopagoDataReturn => {
     loading,
     parsedData,
     serviceSummaries,
+    unrecognized,
     currentFilters,
     totalCost,
     loadData,

@@ -47,7 +47,8 @@ const KNOWN_INSTITUTIONS = [
 // ─────────────────────────────────────────────
 
 const classifyService = (service: string): CopagoServiceType => {
-  const s = service.toLowerCase();
+  const s = normalizeText(service);
+
   if (s.includes('físic') || s.includes('fisic')) return 'terapia_fisica';
   if (s.includes('ocupacional')) return 'terapia_ocupacional';
   if (s.includes('psiquiat')) return 'psiquiatra';
@@ -55,6 +56,8 @@ const classifyService = (service: string): CopagoServiceType => {
   if (s.includes('fisiatra') || s.includes('fisiatría') || s.includes('fisiatria'))
     return 'fisiatria';
   if (s.includes('neurocirugía') || s.includes('neurocirugia')) return 'neurocirugia';
+  if (s.includes('otorrino') || s.includes('otorrinolaring')) return 'otorrino';
+  if (s.includes('medico en casa') || s.includes('domicilio')) return 'medico_domicilio';
   if (s.includes('consulta')) return 'consulta';
   if (s.includes('control')) return 'control';
   return 'otro';
@@ -88,8 +91,10 @@ export const parseCopagoCommentary = (
   if (!commentary?.trim()) return null;
 
   try {
+    const normalized = commentary.trim();
+    const lineMatch = normalized.match(PATTERNS.copagoLine);
     // Tomar solo la primera línea que empiece con "Copago"
-    const lineMatch = commentary.match(PATTERNS.copagoLine);
+
     if (!lineMatch) return null;
 
     let rest = lineMatch[1].trim(); // todo lo que sigue después de "Copago "
@@ -204,3 +209,9 @@ export const getTotalByInstitution = (
     .map(([institution, stats]) => ({ institution, ...stats }))
     .sort((a, b) => b.total - a.total);
 };
+
+const normalizeText = (text: string) =>
+  text
+    .toLowerCase()
+    .normalize('NFD') // separa letras de tildes
+    .replace(/[\u0300-\u036f]/g, ''); // elimina tildes

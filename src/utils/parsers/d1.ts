@@ -6,11 +6,70 @@ import { canonicalize } from '../canonicalizer';
 const RECEIPT_TYPE: ReceiptType = 'D1';
 
 /**
- * Parser para recibos de D1
- * Los productos de D1 generalmente no tienen información de peso/precio unitario
+ * Extrae cantidad y precio unitario de una línea D1.
+ * Retorna null si no se puede extraer con suficiente confianza.
  *
- * @param lines - Líneas del recibo OCR
- * @param joined - Texto completo del recibo
+ * Formatos reconocidos:
+ *   "1\t2 UN\t11,900 ..."   → { qty: 2, unitPrice: 11900 }
+ *   "2\tUN\t3,500 ..."      → { qty: 1, unitPrice: 3500 }
+ *   "1 UN\t4,500\t..."      → { qty: 1, unitPrice: 4500 }
+ *   "4,300 770030... "      → { qty: 1, unitPrice: 4300 }  (sin UN explícito)
+ */
+function extractQtyAndUnitPrice(line: string): { qty: number; unitPrice: number } | null {
+  // Patrón 1: N\t[M ]UN\tPRECIO ... o N [M ]UN PRECIO ...
+  // Captura cantidad M (puede ser distinta del ítem N) y precio unitario
+  const fullMatch = line.match(/(?:^\d+\s+)?(\d+)\s+UN\s+([\d.,\s]+?)\s+\d{8,13}/i);
+  if (fullMatch) {
+    const qty = parseInt(fullMatch[1], 10);
+    const unitPrice = parseInt(fullMatch[2].replace(/[.,\s]/g, ''), 10);
+    if (qty > 0 && unitPrice > 0) return { qty, unitPrice };
+  }
+
+  // Patrón 2: UN sin cantidad explícita → qty = 1
+  const unOnlyMatch = line.match(/\bUN\s+([\d.,\s]+?)\s+\d{8,13}/i);
+  if (unOnlyMatch) {
+    const unitPrice = parseInt(unOnlyMatch[1].replace(/[.,\s]/g, ''), 10);
+    if (unitPrice > 0) return { qty: 1, unitPrice };
+  }
+
+  // Patrón 3: precio directo antes del código (sin UN) → qty = 1
+  const priceCodeMatch = line.match(/^([\d.,\s]+?)\s+\d{8,13}/);
+  if (priceCodeMatch) {
+    const unitPrice = parseInt(priceCodeMatch[1].replace(/[.,\s]/g, ''), 10);
+    if (unitPrice > 0) return { qty: 1, unitPrice };
+  }
+
+  return null;
+}
+
+/**
+ * Formatea la descripción de un producto D1 con cantidad y precio unitario.
+ * Formato: "Nombre — N un @ $X.XXX [D1]"
+ * Si no se pudo extraer qty/unitPrice, usa formato simple: "Nombre [D1]"
+ */
+function formatD1Description(
+  rawDescription: string,
+  qtyAndPrice: { qty: number; unitPrice: number } | null
+): string {
+  const formattedName = formatDescription(rawDescription);
+
+  if (!qtyAndPrice) {
+    return formatSimpleProduct(formattedName, RECEIPT_TYPE);
+  }
+
+  const { qty, unitPrice } = qtyAndPrice;
+  const formattedPrice = unitPrice.toLocaleString('es-CO');
+  const tag = `[${RECEIPT_TYPE}]`;
+
+  return `${formattedName} — ${qty} un @ $${formattedPrice} ${tag}`;
+}
+
+/**
+ * Parser para recibos de D1.
+ *
+ * @param lines               - Líneas del recibo OCR
+ * @param joined              - Texto completo del recibo
+ * @param existingCanonicals  - Nombres canónicos ya presentes en BD
  * @returns Array de productos parseados
  */
 export function parseD1(
@@ -21,7 +80,6 @@ export function parseD1(
   console.log('📄 Procesando como tipo D1...');
   const products: Product[] = [];
 
-  // Estrategia mejorada: procesar línea por línea para mejor control
   for (let i = 0; i < lines.length; i++) {
     const line = lines[i].trim();
 
@@ -32,13 +90,13 @@ export function parseD1(
     const multiMatches = [...line.matchAll(multiProductPattern)];
 
     if (multiMatches.length > 1) {
-      // Encontró múltiples productos en la línea
       for (const match of multiMatches) {
-        const [, priceStr, code, descriptionRaw] = match;
+        const [, priceStr, , descriptionRaw] = match;
         const description = descriptionRaw.trim().replace(/\s{2,}/g, ' ');
         const price = parseInt(priceStr.replace(/[.,]/g, ''), 10);
 
         if (!isNaN(price) && description.length >= 3) {
+          // En líneas multi-producto no hay info de UN fiable → formato simple
           const formattedDesc = formatSimpleProduct(formatDescription(description), RECEIPT_TYPE);
           if (!products.find((p) => p.description === formattedDesc && p.price === price)) {
             products.push({ description: formattedDesc, price });
@@ -48,23 +106,20 @@ export function parseD1(
       continue;
     }
 
-    // Patrón mejorado que captura: [cantidad] [precio_unitario] [código] [descripción] [precio_total]
-    // Ejemplo: "1	2 UN	11,900 7700304792825 CAFE INSTAN/L	23,800 C"
+    // Patrón principal: [N\t] [M UN\t] PRECIO_UNIT CODIGO DESC [PRECIO_TOTAL] [letra]
     const match = line.match(
       /(?:\d+\s+)?(?:\d+\s+)?(?:UN\s+)?(\d{1,3}[.,]\s?\d{3})\s+(\d{8,13})\s+([A-ZÁÉÍÓÚÑ'\/\-\s]{3,}?)(?:\s+(\d{1,3}[.,\s]?\d{3}))?(?:\s+[A-Z]\s*)?$/i
     );
 
     if (match) {
-      const [, priceUnit, code, descriptionRaw, priceTotal] = match;
+      const [, priceUnit, , descriptionRaw, priceTotal] = match;
       const description = descriptionRaw.trim().replace(/\s{2,}/g, ' ');
-
-      // Preferir precio total si existe, sino usar precio unitario
       const priceStr = priceTotal || priceUnit;
       const price = parseInt(priceStr.replace(/[.,\s]/g, ''), 10);
 
       if (!isNaN(price) && description.length >= 3) {
-        // Evitar duplicados
-        const formattedDesc = formatSimpleProduct(formatDescription(description), RECEIPT_TYPE);
+        const qtyAndPrice = extractQtyAndUnitPrice(line);
+        const formattedDesc = formatD1Description(description, qtyAndPrice);
         if (!products.find((p) => p.description === formattedDesc && p.price === price)) {
           products.push({ description: formattedDesc, price });
         }
@@ -72,31 +127,29 @@ export function parseD1(
       continue;
     }
 
-    // Patrón alternativo para casos donde el precio total está más separado o tiene espacios
-    // Ejemplo: "UN	1,300 7700304305223 AJO MALLA X 3	2	600 6"
+    // Patrón alternativo: precio total separado o con espacios
+    // Ejemplo: "UN\t1,300 7700304305223 AJO MALLA X 3\t2\t600 6"
     const altMatch = line.match(
       /(?:UN\s+)?(\d{1,3}[.,]\s?\d{3})\s+(\d{8,13})\s+([A-ZÁÉÍÓÚÑ'\/\-\s]{3,})/i
     );
 
     if (altMatch) {
-      const [, priceUnit, code, descriptionRaw] = altMatch;
+      const [, priceUnit, , descriptionRaw] = altMatch;
       const description = descriptionRaw.trim().replace(/\s{2,}/g, ' ');
 
-      // Buscar el precio total después de la descripción en la misma línea
       const restOfLine = line.substring(line.indexOf(description) + description.length);
       const totalPriceMatch = restOfLine.match(/(\d{1,3})[.,\s\t]+(\d{3})/);
 
-      let price;
+      let price: number;
       if (totalPriceMatch) {
-        // Encontró precio total en formato separado
         price = parseInt(totalPriceMatch[1] + totalPriceMatch[2], 10);
       } else {
-        // Usar precio unitario
         price = parseInt(priceUnit.replace(/[.,\s]/g, ''), 10);
       }
 
       if (!isNaN(price) && description.length >= 3) {
-        const formattedDesc = formatSimpleProduct(formatDescription(description), RECEIPT_TYPE);
+        const qtyAndPrice = extractQtyAndUnitPrice(line);
+        const formattedDesc = formatD1Description(description, qtyAndPrice);
         if (!products.find((p) => p.description === formattedDesc && p.price === price)) {
           products.push({ description: formattedDesc, price });
         }
@@ -104,7 +157,7 @@ export function parseD1(
     }
   }
 
-  // Si no encontró productos, intentar con el regex original más flexible
+  // Fallback: regex flexible sobre el texto completo
   if (products.length === 0) {
     let match;
     const regex =
@@ -114,10 +167,8 @@ export function parseD1(
       const [, price1, code, descriptionRaw, price2] = match;
       const description = descriptionRaw.trim().replace(/\s{2,}/g, ' ');
 
-      // Preferir price2 si existe, sino price1
       let priceString = (price2 || price1).replace(/[.,\s]/g, '');
 
-      // Manejo especial para casos donde el precio aparece antes del código
       if (parseInt(priceString, 10) < 10 && code && code.length >= 8) {
         const altPriceMatch = joined.match(new RegExp(`${code}\\s+([\\d.,]+)`));
         if (altPriceMatch && altPriceMatch[1]) {
@@ -128,6 +179,7 @@ export function parseD1(
       const price = parseInt(priceString, 10);
 
       if (!isNaN(price)) {
+        // En fallback no tenemos contexto de línea → formato simple
         const formattedDesc = formatSimpleProduct(formatDescription(description), RECEIPT_TYPE);
         if (!products.find((p) => p.description === formattedDesc && p.price === price)) {
           products.push({ description: formattedDesc, price });
@@ -136,7 +188,7 @@ export function parseD1(
     }
   }
 
-  // Fallback para casos muy mal formateados
+  // Fallback final para casos muy mal formateados
   if (products.length === 0) {
     const d1LooseRegex =
       /(\d{1,3}[.,]\s?\d{1,3})\s+\d+\s+([A-ZÁÉÍÓÚÑ'a-záéíóúñ().,\/\-\s]{3,})\s+(\d{1,3}[.,]\d{1,3})/g;
@@ -145,15 +197,10 @@ export function parseD1(
     while ((matchLoose = d1LooseRegex.exec(joined)) !== null) {
       const [, , descriptionRaw, priceRaw] = matchLoose;
       const description = descriptionRaw.trim().replace(/\s{2,}/g, ' ');
-      let price = 0;
-
-      // Normalizar precio: "2,00" o "2.00" => 200
       const cleanPrice = priceRaw.replace(/\s/g, '');
-      if (/^\d{1,3}[.,]\d{2}$/.test(cleanPrice)) {
-        price = parseInt(cleanPrice.replace(/[.,]/, ''), 10);
-      } else {
-        price = parseInt(cleanPrice.replace(/[.,]/g, ''), 10);
-      }
+      const price = /^\d{1,3}[.,]\d{2}$/.test(cleanPrice)
+        ? parseInt(cleanPrice.replace(/[.,]/, ''), 10)
+        : parseInt(cleanPrice.replace(/[.,]/g, ''), 10);
 
       const formattedDesc = formatSimpleProduct(formatDescription(description), RECEIPT_TYPE);
       if (!products.find((p) => p.description === formattedDesc && p.price === price)) {
@@ -167,10 +214,3 @@ export function parseD1(
     description: canonicalize(p.description, existingCanonicals)
   }));
 }
-
-// Ejemplos de uso:
-// Input: "1	2 UN	11,900 7700304792825 CAFE INSTAN/L	23,800 C"
-// Output: { description: "Cafe Instan/L [D1]", price: 23800 }
-//
-// Input: "2,950 7700304649631 SALSA DE PINA"
-// Output: { description: "Salsa De Pina [D1]", price: 2950 }

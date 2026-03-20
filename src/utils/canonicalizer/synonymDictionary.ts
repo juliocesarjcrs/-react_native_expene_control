@@ -245,6 +245,7 @@ export const SYNONYM_GROUPS: [string, string[]][] = [
   // ─── LÁCTEOS Y DERIVADOS ────────────────────────────────────────────────────
 
   ['Crema de Leche', ['crema de leche', 'crema culinaria', 'crema de lech']],
+  ['Leche en Polvo', ['Leche en Polv']],
   [
     'Yogurt Griego',
     ['yog griego premi', 'yogourt griego', 'yogur griego 1 litro sentu', 'yogurt semidesc']
@@ -471,21 +472,15 @@ export const SYNONYM_GROUPS: [string, string[]][] = [
     'Cuajada',
     ['cuajada', 'quajada', 'quesillo tajado', 'quesillo en bloque', 'quesito pasteurizado']
   ],
+  ['Queso Mozarella Latti Rallado', ['Queso latti m', 'Queso latti']],
   [
     'Queso Doble Crema',
     ['queso doble crema', 'queso doblcr', 'queso de crema', 'queso crema', 'queso crema ara']
   ],
+  ['Queso Campesino', ['queso campesino', 'queso criollo']],
   [
-    'Queso Campesino',
-    [
-      'queso campesino',
-      'queso criollo',
-      'queso sabanero',
-      'queso sabaner',
-      'queso sabane',
-      'queso sabane *',
-      'queso sabanero d1'
-    ]
+    'Queso Sabanero',
+    ['queso sabanero', 'queso sabaner', 'queso sabane', 'queso sabane *', 'queso sabanero d1']
   ],
   [
     'Queso Holandés',

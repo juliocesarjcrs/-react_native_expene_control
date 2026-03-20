@@ -759,10 +759,10 @@ describe('extractProducts', () => {
       const ocr =
         '108 18U811\t\r\nHI\tCAN UM VALOR U\tCODIGO\tDESCRIPCION\tVALOR IU\t\r\n2,300\t\r\n1\t1 UN\t2,300 7700304378074 CREMA DE LECH\t2,300\t\r\n6,990\t\r\n2\t1 UN\t6,990 7700304811090 TOCINETA AHUM\t6,990\t\r\n1 UN\t4,500\t7700304016525 ARROZ PREMIUM\t4,500\t\r\n1 UN\t9,990\t7700304792825 CAFE INSTAN/L\t9,990\t\r\nTOTAL\t23,780\t\r\nOTRO\t-30\t\r\n';
       expect(extractProducts(ocr)).toEqual([
-        { description: 'Crema de Leche [D1]', price: 2300 },
-        { description: 'Tocineta Ahumada [D1]', price: 6990 },
-        { description: 'Arroz Premium [D1]', price: 4500 },
-        { description: 'Café Instantáneo [D1]', price: 9990 }
+        { description: 'Crema de Leche — 1 un @ $2.300 [D1]', price: 2300 },
+        { description: 'Tocineta Ahumada — 1 un @ $6.990 [D1]', price: 6990 },
+        { description: 'Arroz Premium — 1 un @ $4.500 [D1]', price: 4500 },
+        { description: 'Café Instantáneo — 1 un @ $9.990 [D1]', price: 9990 }
       ]);
     });
 
@@ -770,11 +770,11 @@ describe('extractProducts', () => {
       const ocr =
         '#I\tCAN UM VALOR U\tLLO VU14\tCODIGO\tUo: 19:31\t\r\nDESCRIPCION\t\r\n1\t1\tUN\tVALOR ID\t\r\n4,300 7700304509423 INFUSION FRUT\t4,300 A\t\r\nFFF\tUN\tUN\t2,950 7700304649631 SALSA DE PINA\t2,250 7700304305209 SERVILLETA CO\t1,650 A\t2,950 A\t2,250 A\t\r\n2\tUN\t1,650 7700304861682 ESPONJA MALLA\t\r\n1\tUN\t9,990 7700304792825 CAFE INSTAN/L\t9,990 C\t\r\nTOTAL\t21,140\t\r\n';
       expect(extractProducts(ocr)).toEqual([
-        { description: 'Infusión [D1]', price: 4300 },
+        { description: 'Infusión — 1 un @ $4.300 [D1]', price: 4300 },
         { description: 'Salsa De Pina [D1]', price: 2950 },
         { description: 'Servilleta Co [D1]', price: 2250 },
-        { description: 'Esponja Malla [D1]', price: 1650 },
-        { description: 'Café Instantáneo [D1]', price: 9990 }
+        { description: 'Esponja Malla — 2 un @ $1.650 [D1]', price: 1650 },
+        { description: 'Café Instantáneo — 1 un @ $9.990 [D1]', price: 9990 }
       ]);
     });
     it('should handle from invoice type D1 Case 3', () => {
@@ -789,28 +789,28 @@ describe('extractProducts', () => {
         TOTAL	42,230
         DACAN`;
       expect(extractProducts(ocr)).toEqual([
-        { description: 'Café Instantáneo [D1]', price: 23800 },
-        { description: 'Ajo [D1]', price: 1300 },
-        { description: 'Crema Lavaloza [D1]', price: 3850 },
-        { description: 'Gelatina Sin [D1]', price: 2300 },
-        { description: 'Gelatina Sabo [D1]', price: 3490 },
-        { description: 'Chocoramo [D1]', price: 7490 }
+        { description: 'Café Instantáneo — 2 un @ $11.900 [D1]', price: 23800 },
+        { description: 'Ajo — 1 un @ $1.300 [D1]', price: 1300 },
+        { description: 'Crema Lavaloza — 1 un @ $3.850 [D1]', price: 3850 },
+        { description: 'Gelatina Sin — 1 un @ $2.300 [D1]', price: 2300 },
+        { description: 'Gelatina Sabo — 1 un @ $3.490 [D1]', price: 3490 },
+        { description: 'Chocoramo — 1 un @ $7.490 [D1]', price: 7490 }
       ]);
     });
     it('should handle from invoice type D1 Case 4', () => {
       const ocr =
         '#I CAN UM VALOR U\tCODIGO\tDESCRIPCION\tVALOR ID\t\r\n1\t1 UN\t2,600 7702084138039 HARINA DE MAI\t2,600 C\t\r\n2\t1 UN\t2, 100 7700304194575\tCOLORANTE NAT\t2,100\t\r\nTOTAL\t4,700\t\r\nFODMA DE PAGO• CONTANO - VAIOR PAGADO\t700\t\r\n';
       expect(extractProducts(ocr)).toEqual([
-        { description: 'Harina De Mai [D1]', price: 2600 },
-        { description: 'Colorante Nat [D1]', price: 2100 }
+        { description: 'Harina De Mai — 1 un @ $2.600 [D1]', price: 2600 },
+        { description: 'Colorante Nat — 1 un @ $2.100 [D1]', price: 2100 }
       ]);
     });
     it('should handle from invoice type D1 Case 5', () => {
       const ocr =
         '#I CAN UM VALOR U\tCODIGO\tDESCRIPCION\tVALOR ID\t\r\n1\tUN\t3,500 7700304211180\tDETERGENTE MU\t\r\n3,500 A\t\r\n2\tUN\t2,900 7700304530939 BLANQUEADOR B\t\r\n2,900 A\t\r\nTOTAL\t6,400\t\r\n';
       expect(extractProducts(ocr)).toEqual([
-        { description: 'Detergente Mu [D1]', price: 3500 },
-        { description: 'Blanqueador [D1]', price: 2900 }
+        { description: 'Detergente Mu — 1 un @ $3.500 [D1]', price: 3500 },
+        { description: 'Blanqueador — 2 un @ $2.900 [D1]', price: 2900 }
       ]);
     });
     it('should handle from invoice type D1 Case 6', () => {
@@ -825,12 +825,12 @@ describe('extractProducts', () => {
         UN	2,000 7702007224023 CHOCOLATINA W	4,000 A
         38,500`;
       expect(extractProducts(ocr)).toEqual([
-        { description: 'Harina De Mai [D1]', price: 2600 },
-        { description: 'Aceite de Canola [D1]', price: 25950 },
-        { description: 'Toalla de Cocina [D1]', price: 1650 },
-        { description: 'Harina De Tri [D1]', price: 1700 },
-        { description: 'Ajo [D1]', price: 2600 },
-        { description: 'Chocolatina Jet Wafer [D1]', price: 4000 }
+        { description: 'Harina De Mai — 1 un @ $2.600 [D1]', price: 2600 },
+        { description: 'Aceite de Canola — 1 un @ $25.950 [D1]', price: 25950 },
+        { description: 'Toalla de Cocina — 1 un @ $1.650 [D1]', price: 1650 },
+        { description: 'Harina De Tri — 1 un @ $1.700 [D1]', price: 1700 },
+        { description: 'Ajo — 1 un @ $1.300 [D1]', price: 2600 },
+        { description: 'Chocolatina Jet Wafer — 1 un @ $2.000 [D1]', price: 4000 }
       ]);
     });
   });

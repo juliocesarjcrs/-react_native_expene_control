@@ -8,9 +8,9 @@
  *   Copago {servicio} #{N}/{Total}               ← sin institución
  *
  * Ejemplos:
- *   "Copago Colmedica terapia física #11/20"
- *   "Copago Colmedica consulta neurología"
- *   "Copago fisiatría #1/10"
+ *   "Copago Colmedica Terapia Física #11/20"
+ *   "Copago Colmedica consulta Neurología"
+ *   "Copago Fisiatría #1/10"
  */
 
 export type CopagoServiceType =
@@ -22,6 +22,8 @@ export type CopagoServiceType =
   | 'psiquiatra'
   | 'fisiatria'
   | 'neurocirugia'
+  | 'medico_domicilio'
+  | 'otorrino'
   | 'otro';
 
 export interface CopagoData {

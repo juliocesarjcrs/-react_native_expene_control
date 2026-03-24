@@ -70,6 +70,14 @@ export default function CommentaryAnalysisScreen({ navigation }: ScreenProps) {
       icon: 'hospital-box',
       iconColor: colors.INFO,
       route: 'copagoAnalysis'
+    },
+    {
+      id: 'vacation',
+      title: 'Vacaciones',
+      subtitle: 'Alojamiento, tiquetes y gastos por destino',
+      icon: 'airplane',
+      iconColor: colors.SUCCESS,
+      route: 'vacationAnalysis'
     }
   ];
 

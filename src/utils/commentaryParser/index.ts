@@ -22,6 +22,7 @@ import { NutritionData } from '~/shared/types/utils/commentaryParser/nutrition-a
 import { SportsData } from '~/shared/types/utils/commentaryParser/sports-analysis.types';
 import { RentData } from '~/shared/types/utils/commentaryParser/rent-analysis.types';
 import { CopagoData } from '~/shared/types/utils/commentaryParser/copago-analysis.types';
+import { VacationData } from '~/shared/types/utils/commentaryParser/vacation-analysis.types';
 
 import { parseUtilityCommentary } from './utilityParser';
 import { parseProductCommentary } from './productParser';
@@ -32,6 +33,7 @@ import { parseNutritionCommentary } from './nutritionParser';
 import { parseSportsCommentary } from './sportsParser';
 import { parseRentCommentary } from './rentParser';
 import { parseCopagoCommentary } from './copagoParser';
+import { parseVacationCommentary } from './vacationParser';
 
 export { parseUtilityCommentary, calculateConsumptionPerPerson } from './utilityParser';
 export { parseProductCommentary } from './productParser';
@@ -61,6 +63,7 @@ export type ParserType =
   | 'sports'
   | 'rent'
   | 'copago'
+  | 'vacation'
   | 'none';
 
 export type ParsedCommentary =
@@ -73,6 +76,7 @@ export type ParsedCommentary =
   | { type: 'sports'; data: SportsData }
   | { type: 'rent'; data: RentData }
   | { type: 'copago'; data: CopagoData }
+  | { type: 'vacation'; data: VacationData }
   | { type: 'none'; data: null };
 
 // ─────────────────────────────────────────────
@@ -201,6 +205,10 @@ export const parseCommentary = (
     case 'rent': {
       const data = parseRentCommentary(commentary, cost, date);
       return data ? { type: 'rent', data } : { type: 'none', data: null };
+    }
+    case 'vacation': {
+      const data = parseVacationCommentary(commentary, cost, date);
+      return data ? { type: 'vacation', data } : { type: 'none', data: null };
     }
 
     default:

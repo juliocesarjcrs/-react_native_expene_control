@@ -63,6 +63,7 @@ import {
 } from '~/Screens';
 import ProductPricesScreen from '~/Screens/Statistics/commentary-analysis/products/ProductPricesScreen';
 import CopagoAnalysisScreen from '~/Screens/Statistics/commentary-analysis/copago/CopagoAnalysisScreen';
+import VacationAnalysisScreen from '~/Screens/Statistics/commentary-analysis/vacation/VacationAnalysisScreen';
 
 // Admin
 import AIModelsScreen from '~/Screens/Admin/AIModelsScreen';
@@ -121,6 +122,7 @@ export interface StackRoutesType {
   StatisticsScreen: typeof StatisticsScreen;
   CommentaryTemplatesScreen: typeof CommentaryTemplatesScreen;
   CopagoAnalysisScreen: typeof CopagoAnalysisScreen;
+  VacationAnalysisScreen: typeof VacationAnalysisScreen;
 }
 
 const stackRoutes: StackRoutesType = {
@@ -176,7 +178,8 @@ const stackRoutes: StackRoutesType = {
   RetentionAnalysisScreen,
   StatisticsScreen,
   CommentaryTemplatesScreen,
-  CopagoAnalysisScreen
+  CopagoAnalysisScreen,
+  VacationAnalysisScreen
 };
 
 export default stackRoutes;

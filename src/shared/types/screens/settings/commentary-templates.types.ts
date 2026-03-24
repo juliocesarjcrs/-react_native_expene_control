@@ -13,7 +13,14 @@ export type TemplateAssistanceLevel = 'structured' | 'semi' | 'free';
 /**
  * Tipo de template según el parser que lo consume.
  */
-export type TemplateParserType = 'utility' | 'product' | 'retention' | 'copago' | 'custom' | 'none';
+export type TemplateParserType =
+  | 'utility'
+  | 'product'
+  | 'retention'
+  | 'copago'
+  | 'custom'
+  | 'vacation'
+  | 'none';
 
 /**
  * Un chip de acceso rápido que aparece encima del textarea.

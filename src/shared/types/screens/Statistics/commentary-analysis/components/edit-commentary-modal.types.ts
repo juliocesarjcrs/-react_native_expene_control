@@ -1,5 +1,5 @@
 /** Gasto cuyo comentario no pudo ser parseado por copagoParser */
-export interface UnrecognizedExpense {
+export interface ExpenseToEdit {
   id: number;
   commentary: string;
   cost: number;

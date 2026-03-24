@@ -344,6 +344,7 @@ export default function MyStack() {
           options={{ title: 'Retenciones' }}
         />
         <StatisticsStack.Screen name="copagoAnalysis" component={Routes.CopagoAnalysisScreen} />
+        <StatisticsStack.Screen name="vacationAnalysis" component={Routes.VacationAnalysisScreen} />
       </StatisticsStack.Navigator>
     );
   }

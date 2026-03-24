@@ -146,4 +146,5 @@ export type StatisticsStackParamList = {
     endDate?: string;
   };
   copagoAnalysis: { subcategory?: string; startDate?: string; endDate?: string };
+  vacationAnalysis: { subcategory?: string; startDate?: string; endDate?: string };
 };

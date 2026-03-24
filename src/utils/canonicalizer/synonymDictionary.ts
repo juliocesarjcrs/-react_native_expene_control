@@ -287,7 +287,10 @@ export const SYNONYM_GROUPS: [string, string[]][] = [
 
   ['Arroz Premium', ['arroz premium', 'arroz diana', 'arroz basmati']],
   ['Harina de Trigo', ['harina de trigo', 'harina trigo', 'harina']],
-  ['Harina de Maíz', ['harina de maiz', 'harina maiz', 'harina pan diana', 'harina arepa']],
+  [
+    'Harina de Maíz',
+    ['harina de maiz', 'harina maiz', 'harina pan diana', 'harina arepa', 'harina de Mai']
+  ],
   ['Polvo de Hornear', ['polvo hornear', 'polvo de horneo']],
 
   // ─── PASTAS ─────────────────────────────────────────────────────────────────
@@ -875,7 +878,9 @@ export const SYNONYM_GROUPS: [string, string[]][] = [
   ['Esponja Malla', ['esponja malla']],
   ['Detergente Líquido', ['Detergente Li']],
   ['Toalla de Cocina', ['Toalla De Coc']],
-  ['Crema Lavaloza', ['Crema Lavaloz']]
+  ['Crema Lavaloza', ['Crema Lavaloz']],
+  ['Talco Antibacterial', ['talco antibac']],
+  ['Copitos Little', ['Copitos Littl']]
 ];
 
 // ─── ÍNDICE INVERTIDO O(1): sinónimo → canónico ──────────────────────────────

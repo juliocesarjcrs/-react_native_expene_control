@@ -1,9 +1,19 @@
 /**
- * EditCommentaryModal — Modal ligero para corregir el comentario de un gasto
- * Ubicación: src/Screens/Statistics/commentary-analysis/copago/components/EditCommentaryModal.tsx
+ * EditCommentaryModal — Modal genérico para corregir el comentario de un gasto
+ * Ubicación: src/Screens/Statistics/commentary-analysis/components/EditCommentaryModal.tsx
  *
+ * Reutilizable en cualquier pantalla de análisis de comentarios.
  * Llama editExpense(id, { commentary }) sin tocar otros campos.
  * Al guardar exitosamente llama onSaved() para que la pantalla recargue.
+ *
+ * Uso:
+ *   <EditCommentaryModal
+ *     visible={editingExpense !== null}
+ *     expense={editingExpense}
+ *     formatHint="Ej: Copago Colmedica terapia física #11/20"
+ *     onClose={() => setEditingExpense(null)}
+ *     onSaved={refreshData}
+ *   />
  */
 
 import React, { useState, useEffect } from 'react';
@@ -23,9 +33,6 @@ import { Icon } from 'react-native-elements';
 // Services
 import { editExpense } from '~/services/expenses';
 
-// Types
-import { UnrecognizedExpense } from '~/shared/types/screens/Statistics/commentary-analysis/copago/copago-analysis.types';
-
 // Utils
 import { showError } from '~/utils/showError';
 import { ShowToast } from '~/utils/toastUtils';
@@ -37,16 +44,27 @@ import { useThemeColors } from '~/customHooks/useThemeColors';
 // Styles
 import { MEDIUM, SMALL } from '~/styles/fonts';
 
+// Types
+import { ExpenseToEdit } from '~/shared/types/screens/Statistics/commentary-analysis/components/edit-commentary-modal.types';
+
 interface EditCommentaryModalProps {
   visible: boolean;
-  expense: UnrecognizedExpense | null;
+  expense: ExpenseToEdit | null;
+  /** Texto de ayuda que muestra el formato esperado */
+  formatHint?: string;
   onClose: () => void;
+  /** Se llama tras guardar exitosamente — usar para refreshData() */
   onSaved: () => void;
 }
+
+// ─────────────────────────────────────────────
+// COMPONENTE
+// ─────────────────────────────────────────────
 
 export default function EditCommentaryModal({
   visible,
   expense,
+  formatHint,
   onClose,
   onSaved
 }: EditCommentaryModalProps) {
@@ -54,7 +72,6 @@ export default function EditCommentaryModal({
   const [commentary, setCommentary] = useState('');
   const [saving, setSaving] = useState(false);
 
-  // Pre-cargar el comentario actual al abrir
   useEffect(() => {
     if (expense) setCommentary(expense.commentary);
   }, [expense]);
@@ -110,19 +127,19 @@ export default function EditCommentaryModal({
           </View>
 
           {/* Hint de formato */}
-          <View style={[styles.hint, { backgroundColor: colors.INFO + '15' }]}>
-            <Icon
-              type="material-community"
-              name="lightbulb-outline"
-              size={14}
-              color={colors.INFO}
-            />
-            <Text style={[styles.hintText, { color: colors.TEXT_SECONDARY }]}>
-              Formato: Copago Colmedica terapia física #11/20
-            </Text>
-          </View>
+          {formatHint && (
+            <View style={[styles.hint, { backgroundColor: colors.INFO + '15' }]}>
+              <Icon
+                type="material-community"
+                name="lightbulb-outline"
+                size={14}
+                color={colors.INFO}
+              />
+              <Text style={[styles.hintText, { color: colors.TEXT_SECONDARY }]}>{formatHint}</Text>
+            </View>
+          )}
 
-          {/* TextInput del comentario */}
+          {/* TextInput */}
           <TextInput
             value={commentary}
             onChangeText={setCommentary}
@@ -137,7 +154,6 @@ export default function EditCommentaryModal({
                 backgroundColor: colors.BACKGROUND
               }
             ]}
-            placeholder="Ej: Copago Colmedica terapia física #11/20"
             placeholderTextColor={colors.TEXT_SECONDARY}
             autoFocus
           />

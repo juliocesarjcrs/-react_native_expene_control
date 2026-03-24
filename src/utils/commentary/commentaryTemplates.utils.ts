@@ -121,6 +121,8 @@ export const getDefaultTemplateConfig = (
     return buildNutritionConfig(subcategoryId, subcategoryName, categoryName);
   if (isSports(name, cat)) return buildSportsConfig(subcategoryId, subcategoryName, categoryName);
   if (isRent(name, cat)) return buildRentConfig(subcategoryId, subcategoryName, categoryName);
+  if (isVacation(name, cat))
+    return buildVacationConfig(subcategoryId, subcategoryName, categoryName);
 
   return buildFreeConfig(subcategoryId, subcategoryName, categoryName);
 };
@@ -203,6 +205,13 @@ const isSports = (n: string, cat: string) =>
   n.includes('gym') ||
   n.includes('gimnasio') ||
   (cat.includes('cultura') && n.includes('deporte'));
+
+const isVacation = (n: string, cat: string) =>
+  n.includes('vacacion') ||
+  n.includes('vacación') ||
+  n.includes('viaje') ||
+  cat.includes('vacacion') ||
+  (cat.includes('cultura') && n.includes('vacacion'));
 
 const isRent = (n: string, cat: string) =>
   n.includes('arriendo') || // ← fix: nombre solo es suficiente
@@ -665,6 +674,50 @@ const buildRentConfig = (
   };
 };
 
+const buildVacationConfig = (
+  subcategoryId: number,
+  subcategoryName: string,
+  categoryName: string
+): SubcategoryTemplateConfig => {
+  const today = dayjs();
+  const month = normalizeMonthAbbr(today.format('MMM'));
+
+  return {
+    subcategoryId,
+    subcategoryName,
+    categoryName,
+    assistanceLevel: 'semi',
+    parserType: 'vacation',
+    chips: [
+      {
+        label: 'Alojamiento',
+        icon: 'bed',
+        template: `Alojamiento Hotel Nombre ${today.daysInMonth()} noches [Solo alojamiento] [Destino]`,
+        hint: 'Hotel, Airbnb, Hostal, etc. — reemplaza Tipo, Nombre y Destino'
+      },
+      {
+        label: 'Con impuestos',
+        icon: 'receipt',
+        template: `Alojamiento Hotel Nombre 1 noche [Solo alojamiento] [Destino]\nTarifa: 428.618\nImpuestos: 87.037`,
+        hint: 'Alojamiento con desglose de tarifa base e impuestos'
+      },
+      {
+        label: 'Tiquete',
+        icon: 'airplane',
+        template: `Tiquete Avianca Pereira-Destino 2 pasajeros [01 ${month}-05 ${month}]`,
+        hint: 'Vuelo con aerolínea, ruta y número de pasajeros'
+      },
+      {
+        label: 'Gasto',
+        icon: 'map-marker',
+        template: 'Destino: descripción del gasto',
+        hint: 'Gasto suelto — empieza con el destino seguido de dos puntos'
+      }
+    ],
+    smartPlaceholder: 'Ej: Cartagena: almuerzo en La Mulata',
+    enableValidation: false
+  };
+};
 const buildFreeConfig = (
   subcategoryId: number,
   subcategoryName: string,

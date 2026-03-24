@@ -203,6 +203,7 @@ export const screenConfigs = {
     title: 'Copagos Médicos',
     subtitle: 'Total por servicio e historial de citas'
   },
+  vacationAnalysis: { title: 'Vacaciones', subtitle: 'Alojamiento, tiquetes y gastos por destino' },
 
   // ADMIN
   aiModels: {

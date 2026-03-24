@@ -111,6 +111,7 @@ export const categorizeExpense = (
         'snack',
         'papas',
         'chocorramo',
+        'chocoramo',
         'chocolatina',
         'wafer',
         'cocoset',
@@ -226,7 +227,9 @@ export const categorizeExpense = (
         'algodon',
         'dental',
         'tocador',
-        'seda'
+        'seda',
+        'talco',
+        'copitos'
       ],
       exactMatch: true // Palabras más específicas con coincidencia exacta
     }

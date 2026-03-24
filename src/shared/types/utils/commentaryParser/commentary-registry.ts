@@ -152,6 +152,16 @@ export const COMMENTARY_REGISTRY: CommentaryAnalysisEntry[] = [
     route: 'copagoAnalysis',
     subcategoryDetectors: ['Cuota moderadora', 'Copago'],
     exampleCommentary: 'Copago Colmedica terapia física #11/20'
+  },
+  {
+    parserType: 'vacation',
+    displayName: 'Vacaciones',
+    subtitle: 'Alojamiento, tiquetes y gastos por destino',
+    icon: 'airplane',
+    iconColorKey: 'SUCCESS',
+    route: 'vacationAnalysis',
+    subcategoryDetectors: ['Vacaciones', 'Viaje'],
+    exampleCommentary: 'Alojamiento Hotel Cartagena Plaza 4 noches [Todo incluido] [Cartagena]'
   }
 ];
 

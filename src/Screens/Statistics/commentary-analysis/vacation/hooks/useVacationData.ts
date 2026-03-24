@@ -1,6 +1,6 @@
 /**
- * Hook de datos para CopagoAnalysisScreen
- * Ubicación: src/Screens/Statistics/commentary-analysis/copago/hooks/useCopagoData.ts
+ * Hook de datos para VacationAnalysisScreen
+ * Ubicación: src/Screens/Statistics/commentary-analysis/vacation/hooks/useVacationData.ts
  */
 
 import { useState, useCallback } from 'react';
@@ -9,33 +9,35 @@ import { useState, useCallback } from 'react';
 import { findExpensesBySubcategories } from '~/services/expenses';
 
 // Types
-import { CopagoData } from '~/shared/types/utils/commentaryParser/copago-analysis.types';
+import {
+  VacationData,
+  VacationLodging,
+  VacationFlight,
+  VacationDestinationSummary,
+  LodgingComparison
+} from '~/shared/types/utils/commentaryParser/vacation-analysis.types';
 import { AnalysisFilters } from '../../components/FilterSelector';
 import { ExpenseToEdit } from '~/shared/types/screens/Statistics/commentary-analysis/components/edit-commentary-modal.types';
 
 // Utils
-import { parseCopagoCommentary } from '~/utils/commentaryParser/copagoParser';
+import {
+  parseVacationCommentary,
+  getDestinationSummaries,
+  getLodgingComparisons
+} from '~/utils/commentaryParser/vacationParser';
 import { showError } from '~/utils/showError';
 
 // ─────────────────────────────────────────────
 // TIPOS DE RETORNO
 // ─────────────────────────────────────────────
 
-export interface CopagoServiceSummary {
-  serviceType: string;
-  displayName: string;
-  totalCost: number;
-  count: number;
-  avgCost: number;
-  /** Items del grupo — para drill-down al expandir */
-  items: CopagoData[];
-}
-
-export interface UseCopagoDataReturn {
+export interface UseVacationDataReturn {
   loading: boolean;
+  parsedData: VacationData[];
+  destinationSummaries: VacationDestinationSummary[];
+  lodgingComparisons: LodgingComparison[];
+  flights: VacationFlight[];
   unrecognized: ExpenseToEdit[];
-  parsedData: CopagoData[];
-  serviceSummaries: CopagoServiceSummary[];
   currentFilters: AnalysisFilters | null;
   totalCost: number;
   loadData: (filters: AnalysisFilters) => Promise<void>;
@@ -43,55 +45,17 @@ export interface UseCopagoDataReturn {
 }
 
 // ─────────────────────────────────────────────
-// HELPERS
-// ─────────────────────────────────────────────
-
-const SERVICE_DISPLAY_NAMES: Record<string, string> = {
-  terapia_fisica: 'Terapia Física',
-  terapia_ocupacional: 'Terapia Ocupacional',
-  consulta: 'Consulta',
-  control: 'Control',
-  psicologia: 'Psicología',
-  psiquiatra: 'Psiquiatría',
-  fisiatria: 'Fisiatría',
-  neurocirugia: 'Neurocirugía',
-  medico_domicilio: 'Médico domiciliario',
-  otorrino: 'Otorrino',
-  otro: 'Otro'
-};
-
-const buildServiceSummaries = (data: CopagoData[]): CopagoServiceSummary[] => {
-  const map = new Map<string, { totalCost: number; items: CopagoData[] }>();
-
-  for (const item of data) {
-    const key = item.serviceType;
-    const existing = map.get(key) ?? { totalCost: 0, items: [] };
-    map.set(key, {
-      totalCost: existing.totalCost + item.cost,
-      items: [...existing.items, item]
-    });
-  }
-
-  return Array.from(map.entries())
-    .map(([serviceType, stats]) => ({
-      serviceType,
-      displayName: SERVICE_DISPLAY_NAMES[serviceType] ?? serviceType,
-      totalCost: stats.totalCost,
-      count: stats.items.length,
-      avgCost: Math.round(stats.totalCost / stats.items.length),
-      items: stats.items
-    }))
-    .sort((a, b) => b.totalCost - a.totalCost);
-};
-
-// ─────────────────────────────────────────────
 // HOOK
 // ─────────────────────────────────────────────
 
-export const useCopagoData = (): UseCopagoDataReturn => {
+export const useVacationData = (): UseVacationDataReturn => {
   const [loading, setLoading] = useState(false);
-  const [parsedData, setParsedData] = useState<CopagoData[]>([]);
-  const [serviceSummaries, setServiceSummaries] = useState<CopagoServiceSummary[]>([]);
+  const [parsedData, setParsedData] = useState<VacationData[]>([]);
+  const [destinationSummaries, setDestinationSummaries] = useState<VacationDestinationSummary[]>(
+    []
+  );
+  const [lodgingComparisons, setLodgingComparisons] = useState<LodgingComparison[]>([]);
+  const [flights, setFlights] = useState<VacationFlight[]>([]);
   const [unrecognized, setUnrecognized] = useState<ExpenseToEdit[]>([]);
   const [currentFilters, setCurrentFilters] = useState<AnalysisFilters | null>(null);
   const [totalCost, setTotalCost] = useState(0);
@@ -109,11 +73,15 @@ export const useCopagoData = (): UseCopagoDataReturn => {
         endDate: filters.endDate
       });
 
-      const parsed: CopagoData[] = [];
+      const parsed: VacationData[] = [];
       const failed: ExpenseToEdit[] = [];
 
       for (const expense of data.expenses) {
-        const result = parseCopagoCommentary(expense.commentary ?? '', expense.cost, expense.date);
+        const result = parseVacationCommentary(
+          expense.commentary ?? '',
+          expense.cost,
+          expense.date
+        );
         if (result !== null) {
           parsed.push(result);
         } else {
@@ -126,14 +94,16 @@ export const useCopagoData = (): UseCopagoDataReturn => {
         }
       }
 
-      const sortedParsed = [...parsed].sort(
+      const sorted = [...parsed].sort(
         (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
       );
 
-      setParsedData(sortedParsed);
-      setServiceSummaries(buildServiceSummaries(sortedParsed));
+      setParsedData(sorted);
+      setDestinationSummaries(getDestinationSummaries(sorted));
+      setLodgingComparisons(getLodgingComparisons(sorted));
+      setFlights(sorted.filter((d): d is VacationFlight => d.type === 'flight'));
       setUnrecognized(failed);
-      setTotalCost(sortedParsed.reduce((sum, item) => sum + item.cost, 0));
+      setTotalCost(sorted.reduce((sum, item) => sum + item.cost, 0));
     } catch (error) {
       showError(error);
     } finally {
@@ -153,7 +123,9 @@ export const useCopagoData = (): UseCopagoDataReturn => {
   return {
     loading,
     parsedData,
-    serviceSummaries,
+    destinationSummaries,
+    lodgingComparisons,
+    flights,
     unrecognized,
     currentFilters,
     totalCost,

@@ -1,12 +1,14 @@
 /**
- * CopagoAnalysisScreen
- * Ubicación: src/Screens/Statistics/commentary-analysis/copago/CopagoAnalysisScreen.tsx
+ * VacationAnalysisScreen
+ * Ubicación: src/Screens/Statistics/commentary-analysis/vacation/VacationAnalysisScreen.tsx
  *
  * Secciones:
- *   1. Filtros (subcategoría + rango de fechas)
- *   2. Resumen por tipo de servicio con drill-down expandible
- *   3. Lista cronológica de copagos reconocidos
- *   4. Registros no reconocidos con botón para corregir el comentario
+ *   1. Filtros
+ *   2. Resumen por destino (expandible)
+ *   3. Comparación de alojamientos por precio/noche
+ *   4. Lista de tiquetes con precio/persona
+ *   5. Lista cronológica completa
+ *   6. Registros no reconocidos con botón editar
  */
 
 import React, { useState } from 'react';
@@ -19,12 +21,14 @@ import { Icon } from 'react-native-elements';
 import { ScreenHeader } from '~/components/ScreenHeader';
 import MyLoading from '~/components/loading/MyLoading';
 import FilterSelector from '../components/FilterSelector';
-import CopagoSummaryCard from './components/CopagoSummaryCard';
-import CopagoHistoryItem from './components/CopagoHistoryItem';
 import EditCommentaryModal from '../components/EditCommentaryModal';
+import DestinationSummaryCard from './components/DestinationSummaryCard';
+import LodgingComparisonCard from './components/LodgingComparisonCard';
+import FlightListCard from './components/FlightListCard';
+import VacationHistoryItem from './components/VacationHistoryItem';
 
 // Hooks
-import { useCopagoData } from './hooks/useCopagoData';
+import { useVacationData } from './hooks/useVacationData';
 
 // Types
 import { StatisticsStackParamList } from '~/shared/types/navigator/stack.type';
@@ -43,35 +47,32 @@ import { MEDIUM, SMALL } from '~/styles/fonts';
 // Configs
 import { screenConfigs } from '~/config/screenConfigs';
 
-type ScreenNavigationProp = StackNavigationProp<StatisticsStackParamList, 'copagoAnalysis'>;
-type ScreenRouteProp = RouteProp<StatisticsStackParamList, 'copagoAnalysis'>;
+type ScreenNavigationProp = StackNavigationProp<StatisticsStackParamList, 'vacationAnalysis'>;
+type ScreenRouteProp = RouteProp<StatisticsStackParamList, 'vacationAnalysis'>;
 
 interface ScreenProps {
   navigation?: ScreenNavigationProp;
   route?: ScreenRouteProp;
 }
 
-export default function CopagoAnalysisScreen({ navigation, route }: ScreenProps) {
+export default function VacationAnalysisScreen({ navigation, route }: ScreenProps) {
   const colors = useThemeColors();
-  const screenConfig = screenConfigs.copagoAnalysis;
+  const screenConfig = screenConfigs.vacationAnalysis;
 
   const {
     loading,
     parsedData,
-    serviceSummaries,
+    destinationSummaries,
+    lodgingComparisons,
+    flights,
     unrecognized,
     currentFilters,
     totalCost,
     loadData,
     refreshData
-  } = useCopagoData();
+  } = useVacationData();
 
-  // Estado del modal de edición
   const [editingExpense, setEditingExpense] = useState<ExpenseToEdit | null>(null);
-
-  const handleSaved = async () => {
-    await refreshData();
-  };
 
   return (
     <View style={[commonStyles.screenContainer, { backgroundColor: colors.BACKGROUND }]}>
@@ -80,9 +81,9 @@ export default function CopagoAnalysisScreen({ navigation, route }: ScreenProps)
       <ScrollView style={{ flex: 1 }} contentContainerStyle={{ paddingBottom: 20 }}>
         <View style={{ paddingHorizontal: 16, paddingTop: 10 }}>
           {/* Filtros */}
-          <FilterSelector type="expenses" onAnalyze={loadData} defaultDaysBack={365} />
+          <FilterSelector type="expenses" onAnalyze={loadData} defaultDaysBack={730} />
 
-          {/* Info del rango seleccionado */}
+          {/* Info del rango */}
           {currentFilters && (
             <View style={[styles.infoBox, { backgroundColor: colors.INFO + '15' }]}>
               <Icon type="material-community" name="information" size={16} color={colors.INFO} />
@@ -98,26 +99,34 @@ export default function CopagoAnalysisScreen({ navigation, route }: ScreenProps)
             <MyLoading />
           ) : (
             <>
-              {/* ── Datos reconocidos ── */}
               {parsedData.length > 0 && (
                 <>
-                  {/* Resumen por tipo de servicio con drill-down */}
-                  <CopagoSummaryCard summaries={serviceSummaries} totalCost={totalCost} />
+                  {/* 1. Resumen por destino */}
+                  <DestinationSummaryCard summaries={destinationSummaries} totalCost={totalCost} />
 
-                  {/* Lista cronológica */}
+                  {/* 2. Comparación de alojamientos */}
+                  {lodgingComparisons.length > 0 && (
+                    <LodgingComparisonCard lodgings={lodgingComparisons} />
+                  )}
+
+                  {/* 3. Tiquetes */}
+                  {flights.length > 0 && <FlightListCard flights={flights} />}
+
+                  {/* 4. Lista cronológica */}
                   <Text style={[styles.sectionTitle, { color: colors.TEXT_PRIMARY }]}>
-                    Historial de copagos
+                    Historial completo
                   </Text>
                   <Text style={[styles.sectionCount, { color: colors.TEXT_SECONDARY }]}>
-                    {parsedData.length} {parsedData.length === 1 ? 'registro' : 'registros'}
+                    {parsedData.length} {parsedData.length === 1 ? 'registro' : 'registros'} ·{' '}
+                    {NumberFormat(totalCost)} total
                   </Text>
                   {parsedData.map((item, index) => (
-                    <CopagoHistoryItem key={index} item={item} />
+                    <VacationHistoryItem key={index} item={item} />
                   ))}
                 </>
               )}
 
-              {/* ── Registros no reconocidos ── */}
+              {/* 5. No reconocidos */}
               {unrecognized.length > 0 && (
                 <View style={{ marginTop: parsedData.length > 0 ? 24 : 0 }}>
                   <View style={styles.unrecognizedHeader}>
@@ -139,8 +148,10 @@ export default function CopagoAnalysisScreen({ navigation, route }: ScreenProps)
                     style={[styles.unrecognizedHint, { backgroundColor: colors.WARNING + '15' }]}
                   >
                     <Text style={[styles.hintText, { color: colors.TEXT_SECONDARY }]}>
-                      Toca &quot;Editar&quot; para corregir el formato.{'\n'}
-                      Esperado: Copago Colmedica terapia física #11/20
+                      Toca &quot;Editar&quot; para usar el formato estándar:{'\n'}
+                      Alojamiento Hotel Nombre 1 noche [Solo alojamiento] [Destino]{'\n'}
+                      Tiquete Avianca Pereira-Destino 2 pasajeros{'\n'}
+                      Destino: descripción del gasto
                     </Text>
                   </View>
 
@@ -156,15 +167,12 @@ export default function CopagoAnalysisScreen({ navigation, route }: ScreenProps)
                         }
                       ]}
                     >
-                      {/* Comentario actual */}
                       <Text
                         style={[styles.unrecognizedCommentary, { color: colors.TEXT_PRIMARY }]}
                         numberOfLines={2}
                       >
                         {expense.commentary || '(sin comentario)'}
                       </Text>
-
-                      {/* Meta + botón editar */}
                       <View style={styles.unrecognizedFooter}>
                         <Text style={[styles.unrecognizedMeta, { color: colors.TEXT_SECONDARY }]}>
                           {DateFormat(expense.date, 'DD MMM YYYY')} · {NumberFormat(expense.cost)}
@@ -190,35 +198,31 @@ export default function CopagoAnalysisScreen({ navigation, route }: ScreenProps)
                 </View>
               )}
 
-              {/* ── Estado vacío total ── */}
-              {!loading &&
-                currentFilters &&
-                parsedData.length === 0 &&
-                unrecognized.length === 0 && (
-                  <View style={styles.emptyState}>
-                    <Icon
-                      type="material-community"
-                      name="hospital-box-outline"
-                      size={48}
-                      color={colors.TEXT_SECONDARY}
-                    />
-                    <Text style={[styles.emptyText, { color: colors.TEXT_SECONDARY }]}>
-                      No se encontraron gastos en este período
-                    </Text>
-                  </View>
-                )}
+              {/* Estado vacío total */}
+              {currentFilters && parsedData.length === 0 && unrecognized.length === 0 && (
+                <View style={styles.emptyState}>
+                  <Icon
+                    type="material-community"
+                    name="airplane-off"
+                    size={48}
+                    color={colors.TEXT_SECONDARY}
+                  />
+                  <Text style={[styles.emptyText, { color: colors.TEXT_SECONDARY }]}>
+                    No se encontraron gastos en este período
+                  </Text>
+                </View>
+              )}
             </>
           )}
         </View>
       </ScrollView>
 
-      {/* Modal de edición de comentario */}
       <EditCommentaryModal
         visible={editingExpense !== null}
         expense={editingExpense}
-        formatHint="Ej: Copago Colmedica Terapia Física #11/20"
+        formatHint="Ej: Alojamiento Hotel Nombre 2 noches [Con desayuno] [Cartagena]"
         onClose={() => setEditingExpense(null)}
-        onSaved={handleSaved}
+        onSaved={refreshData}
       />
     </View>
   );
@@ -233,35 +237,12 @@ const styles = StyleSheet.create({
     marginBottom: 16,
     gap: 8
   },
-  infoText: {
-    flex: 1,
-    fontSize: SMALL,
-    lineHeight: 18
-  },
-  sectionTitle: {
-    fontSize: MEDIUM,
-    fontWeight: '600',
-    marginBottom: 4
-  },
-  sectionCount: {
-    fontSize: SMALL,
-    marginBottom: 12
-  },
-  unrecognizedHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-    marginBottom: 4
-  },
-  unrecognizedHint: {
-    padding: 12,
-    borderRadius: 8,
-    marginBottom: 12
-  },
-  hintText: {
-    fontSize: SMALL - 1,
-    lineHeight: 18
-  },
+  infoText: { flex: 1, fontSize: SMALL, lineHeight: 18 },
+  sectionTitle: { fontSize: MEDIUM, fontWeight: '600', marginBottom: 4 },
+  sectionCount: { fontSize: SMALL, marginBottom: 12 },
+  unrecognizedHeader: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 4 },
+  unrecognizedHint: { padding: 12, borderRadius: 8, marginBottom: 12 },
+  hintText: { fontSize: SMALL - 1, lineHeight: 20 },
   unrecognizedCard: {
     padding: 12,
     borderRadius: 8,
@@ -270,18 +251,13 @@ const styles = StyleSheet.create({
     marginBottom: 8,
     gap: 8
   },
-  unrecognizedCommentary: {
-    fontSize: SMALL + 1,
-    fontStyle: 'italic'
-  },
+  unrecognizedCommentary: { fontSize: SMALL + 1, fontStyle: 'italic' },
   unrecognizedFooter: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center'
   },
-  unrecognizedMeta: {
-    fontSize: SMALL - 1
-  },
+  unrecognizedMeta: { fontSize: SMALL - 1 },
   editButton: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -290,18 +266,7 @@ const styles = StyleSheet.create({
     paddingVertical: 6,
     borderRadius: 6
   },
-  editButtonText: {
-    fontSize: SMALL,
-    fontWeight: '500'
-  },
-  emptyState: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: 40,
-    gap: 12
-  },
-  emptyText: {
-    fontSize: SMALL + 1,
-    textAlign: 'center'
-  }
+  editButtonText: { fontSize: SMALL, fontWeight: '500' },
+  emptyState: { alignItems: 'center', justifyContent: 'center', paddingVertical: 40, gap: 12 },
+  emptyText: { fontSize: SMALL + 1, textAlign: 'center' }
 });

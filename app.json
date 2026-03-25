@@ -5,8 +5,6 @@
     "version": "1.1.1",
     "orientation": "default",
     "icon": "./assets/icon.png",
-    "jsEngine": "hermes",
-    "newArchEnabled": true,
     "splash": {
       "image": "./assets/splash.png",
       "resizeMode": "contain",
@@ -42,7 +40,10 @@
             "usesCleartextTraffic": true
           }
         }
-      ]
+      ],
+      "@react-native-community/datetimepicker",
+      "expo-sharing",
+      "expo-font"
     ]
   }
 }

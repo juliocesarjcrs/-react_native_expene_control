@@ -88,8 +88,6 @@ export const getDefaultTemplateConfig = (
   subcategoryName: string,
   categoryName: string
 ): SubcategoryTemplateConfig => {
-  console.log('[subcategoryName]', subcategoryName);
-  console.log('[subcategoryName]', subcategoryName);
   const name = subcategoryName.toLowerCase().trim();
   const cat = categoryName.toLowerCase().trim();
 

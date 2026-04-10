@@ -801,7 +801,7 @@ describe('extractProducts', () => {
       const ocr =
         '#I CAN UM VALOR U\tCODIGO\tDESCRIPCION\tVALOR ID\t\r\n1\t1 UN\t2,600 7702084138039 HARINA DE MAI\t2,600 C\t\r\n2\t1 UN\t2, 100 7700304194575\tCOLORANTE NAT\t2,100\t\r\nTOTAL\t4,700\t\r\nFODMA DE PAGO• CONTANO - VAIOR PAGADO\t700\t\r\n';
       expect(extractProducts(ocr)).toEqual([
-        { description: 'Harina De Mai — 1 un @ $2.600 [D1]', price: 2600 },
+        { description: 'Harina de Maíz — 1 un @ $2.600 [D1]', price: 2600 },
         { description: 'Colorante Nat — 1 un @ $2.100 [D1]', price: 2100 }
       ]);
     });
@@ -825,7 +825,7 @@ describe('extractProducts', () => {
         UN	2,000 7702007224023 CHOCOLATINA W	4,000 A
         38,500`;
       expect(extractProducts(ocr)).toEqual([
-        { description: 'Harina De Mai — 1 un @ $2.600 [D1]', price: 2600 },
+        { description: 'Harina de Maíz — 1 un @ $2.600 [D1]', price: 2600 },
         { description: 'Aceite de Canola — 1 un @ $25.950 [D1]', price: 25950 },
         { description: 'Toalla de Cocina — 1 un @ $1.650 [D1]', price: 1650 },
         { description: 'Harina De Tri — 1 un @ $1.700 [D1]', price: 1700 },

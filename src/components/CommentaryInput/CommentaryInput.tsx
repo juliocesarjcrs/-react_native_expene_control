@@ -142,6 +142,9 @@ export default function CommentaryInput({
             leftIcon="text"
             // Override sutil del borde para validación
             containerStyle={borderOverride ? { borderColor: borderOverride } : undefined}
+            onFocus={() => {
+              openSuggestions();
+            }}
           />
         )}
       />

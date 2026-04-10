@@ -33,6 +33,7 @@ interface MyInputProps {
 
   // Comportamiento especial
   autoFocus?: boolean;
+  onFocus?: () => void;
   clearButton?: boolean;
   onSubmitEditing?: () => void;
 
@@ -151,7 +152,8 @@ export default function MyInput({
   inputStyle,
   helperText,
   multiline = false,
-  numberOfLines = 1
+  numberOfLines = 1,
+  onFocus: onFocusProp
 }: MyInputProps): React.JSX.Element {
   const colors = useThemeColors();
   const [isFocused, setIsFocused] = useState(false);
@@ -304,6 +306,7 @@ export default function MyInput({
         // Handler para focus
         const handleFocus = () => {
           setIsFocused(true);
+          onFocusProp?.();
         };
 
         return (

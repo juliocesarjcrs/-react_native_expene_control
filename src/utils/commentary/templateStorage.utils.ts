@@ -78,7 +78,7 @@ export const getTemplateConfig = async (
           ...fresh,
           // Conservar personalización del usuario si la había marcado así
           isCustomized: parsed.isCustomized ?? false,
-          configVersion: CONFIG_VERSION,
+          configVersion: CONFIG_VERSION
         };
         // No await — persistir en background para no bloquear el render
         AsyncStorage.setItem(buildKey(subcategoryId), JSON.stringify(toSave)).catch(() => {});
@@ -127,13 +127,32 @@ export const getAllCustomizedTemplates = async (): Promise<SubcategoryTemplateCo
 // ============================================================
 
 /**
- * Guarda una configuración personalizada de plantilla.
- * Siempre incluye configVersion actualizada.
+ * Guarda una configuración personalizada de plantilla (editada por el usuario).
+ * Siempre marca isCustomized: true y actualiza configVersion.
  */
 export const saveTemplateConfig = async (config: SubcategoryTemplateConfig): Promise<void> => {
   const toSave = {
     ...config,
     isCustomized: true,
+    configVersion: CONFIG_VERSION,
+    updatedAt: new Date().toISOString()
+  };
+  await AsyncStorage.setItem(buildKey(config.subcategoryId), JSON.stringify(toSave));
+};
+
+/**
+ * Registra la config por defecto de una subcategoría al crear el primer gasto.
+ * NO marca isCustomized: true — solo sirve para que la subcategoría aparezca
+ * en Settings > Plantillas y para cachear la versión actual de los chips.
+ *
+ * Usa este método en CreateExpenseScreen/CreateIncomeScreen, NO saveTemplateConfig.
+ */
+export const registerDefaultTemplateConfig = async (
+  config: SubcategoryTemplateConfig
+): Promise<void> => {
+  const toSave = {
+    ...config,
+    isCustomized: false,
     configVersion: CONFIG_VERSION,
     updatedAt: new Date().toISOString()
   };

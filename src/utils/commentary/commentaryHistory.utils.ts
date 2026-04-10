@@ -25,6 +25,7 @@ const buildKey = (subcategoryId: number): string => `${HISTORY_KEY_PREFIX}${subc
 export const getCachedHistory = async (subcategoryId: number): Promise<HistorySuggestion[]> => {
   try {
     const raw = await AsyncStorage.getItem(buildKey(subcategoryId));
+    // console.log('getCachedHistory', raw)
     if (!raw) return [];
     const parsed: CachedCommentaryHistory = JSON.parse(raw);
     return parsed.entries ?? [];

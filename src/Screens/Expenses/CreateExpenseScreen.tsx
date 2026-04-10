@@ -1,5 +1,4 @@
 import React, { useRef, useState } from 'react';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Keyboard, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSelector } from 'react-redux';
 import { useForm } from 'react-hook-form';
@@ -34,7 +33,7 @@ import { ShowToast } from '~/utils/toastUtils';
 import { NumberFormat, DateFormat } from '~/utils/Helpers';
 import { showError } from '~/utils/showError';
 import { saveCommentaryToHistory } from '~/utils/commentary/commentaryHistory.utils';
-import { saveTemplateConfig } from '~/utils/commentary/templateStorage.utils';
+import { registerDefaultTemplateConfig } from '~/utils/commentary/templateStorage.utils';
 import { getDefaultTemplateConfig } from '~/utils/commentary/commentaryTemplates.utils';
 
 // Theme
@@ -172,18 +171,16 @@ export default function CreateExpenseScreen(): React.JSX.Element {
       }
 
       // Registrar config de la subcategoría en AsyncStorage para que aparezca
-      // en la pantalla de Plantillas de Comentarios (Settings), aunque el usuario
-      // no haya editado nada — se guarda como "usada" pero sin isCustomized.
+      // en Settings > Plantillas. Usa registerDefaultTemplateConfig (no saveTemplateConfig)
+      // para NO marcar isCustomized: true. Siempre sobreescribe para mantener
+      // configVersion actualizada y evitar cache obsoleta de producción.
       if (subcategoryId && subcategoryName && categoryName) {
-        const existingConfig = await AsyncStorage.getItem(`template_config_${subcategoryId}`);
-        if (!existingConfig) {
-          const defaultConfig = getDefaultTemplateConfig(
-            subcategoryId,
-            subcategoryName,
-            categoryName
-          );
-          saveTemplateConfig({ ...defaultConfig, isCustomized: false });
-        }
+        const defaultConfig = getDefaultTemplateConfig(
+          subcategoryId,
+          subcategoryName,
+          categoryName
+        );
+        registerDefaultTemplateConfig(defaultConfig).catch(() => {});
       }
 
       const newExpense = [data, ...expenses];

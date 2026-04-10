@@ -25,19 +25,12 @@ interface UseCommentaryInputProps {
 }
 
 interface UseCommentaryInputReturn {
-  /** Config de plantilla para la subcategoría actual */
   templateConfig: SubcategoryTemplateConfig | null;
-  /** Sugerencias filtradas para el dropdown */
   filteredSuggestions: HistorySuggestion[];
-  /** Si mostrar el dropdown de historial */
   showSuggestions: boolean;
-  /** Resultado de validación del texto actual */
   validation: CommentaryValidationResult;
-  /** Si está cargando la config/historial */
   loading: boolean;
-  /** Cerrar el dropdown */
   hideSuggestions: () => void;
-  /** Mostrar el dropdown (al hacer focus) */
   openSuggestions: () => void;
 }
 
@@ -62,21 +55,10 @@ export const useCommentaryInput = ({
   // ── Cargar config + historial cuando cambia la subcategoría ──
   useEffect(() => {
     if (!subcategoryId || !subcategoryName || !categoryName) {
-      console.log('[useCommentaryInput] guard falló:', {
-        subcategoryId,
-        subcategoryName,
-        categoryName
-      });
       setTemplateConfig(null);
       setAllSuggestions([]);
       return;
     }
-
-    console.log('[useCommentaryInput] cargando config para:', {
-      subcategoryId,
-      subcategoryName,
-      categoryName
-    });
 
     let cancelled = false;
 
@@ -92,7 +74,6 @@ export const useCommentaryInput = ({
 
         setTemplateConfig(config);
 
-        // Fusionar backend (live) con cache
         const merged = mergeHistorySuggestions(recentExpenses, cached);
         setAllSuggestions(merged);
         setFilteredSuggestions(merged);
@@ -107,14 +88,13 @@ export const useCommentaryInput = ({
     };
   }, [subcategoryId, subcategoryName, categoryName]);
 
-  // ── Actualizar sugerencias del backend cuando lleguen ──
+  // ── Actualizar sugerencias cuando lleguen recentExpenses del backend ──
   useEffect(() => {
-    if (!subcategoryId || recentExpenses.length === 0) return;
+    if (!subcategoryId) return;
 
     getCachedHistory(subcategoryId).then((cached) => {
       const merged = mergeHistorySuggestions(recentExpenses, cached);
       setAllSuggestions(merged);
-      // Reaplicar filtro actual
       setFilteredSuggestions(filterSuggestions(merged, currentValue));
     });
   }, [recentExpenses]);
@@ -124,10 +104,8 @@ export const useCommentaryInput = ({
     if (debounceRef.current) clearTimeout(debounceRef.current);
 
     debounceRef.current = setTimeout(() => {
-      // Filtrar historial
       setFilteredSuggestions(filterSuggestions(allSuggestions, currentValue));
 
-      // Validar
       if (templateConfig) {
         setValidation(validateCommentary(currentValue, templateConfig));
       }
@@ -140,9 +118,11 @@ export const useCommentaryInput = ({
 
   const hideSuggestions = useCallback(() => setShowSuggestions(false), []);
 
+  // FIX: abrir dropdown si hay sugerencias YA filtradas, no allSuggestions
+  // Evita que no abra cuando allSuggestions aún está vacío al hacer focus
   const openSuggestions = useCallback(() => {
-    if (allSuggestions.length > 0) setShowSuggestions(true);
-  }, [allSuggestions]);
+    if (filteredSuggestions.length > 0) setShowSuggestions(true);
+  }, [filteredSuggestions]);
 
   return {
     templateConfig,

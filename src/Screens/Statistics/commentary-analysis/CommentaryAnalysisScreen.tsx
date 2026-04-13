@@ -9,6 +9,9 @@ import { ScreenHeader } from '~/components/ScreenHeader';
 import { StackNavigationProp } from '@react-navigation/stack';
 import { StatisticsStackParamList } from '~/shared/types/navigator/stack.type';
 
+// Registry
+import { COMMENTARY_REGISTRY } from '~/shared/types/utils/commentaryParser/commentary-registry';
+
 // Theme
 import { useThemeColors } from '~/customHooks/useThemeColors';
 
@@ -25,61 +28,21 @@ interface ScreenProps {
   navigation: ScreenNavigationProp;
 }
 
-interface AnalysisOption {
-  id: string;
-  title: string;
-  subtitle: string;
-  icon: string;
-  iconColor: string;
-  route: keyof StatisticsStackParamList;
-}
-
 export default function CommentaryAnalysisScreen({ navigation }: ScreenProps) {
   const colors = useThemeColors();
   const screenConfig = screenConfigs.commentaryAnalysis;
 
-  const analysisOptions: AnalysisOption[] = [
-    {
-      id: 'utilities',
-      title: 'Servicios Públicos',
-      subtitle: 'Analiza consumo de luz, agua y gas',
-      icon: 'flash',
-      iconColor: colors.WARNING,
-      route: 'utilityAnalysis'
-    },
-    {
-      id: 'products',
-      title: 'Precios de Productos',
-      subtitle: 'Compara precios entre supermercados',
-      icon: 'cart',
-      iconColor: colors.SUCCESS,
-      route: 'productPrices'
-    },
-    {
-      id: 'retention',
-      title: 'Retenciones',
-      subtitle: 'Calcula retenciones acumuladas',
-      icon: 'trending-down',
-      iconColor: colors.ERROR,
-      route: 'retentionAnalysis'
-    },
-    {
-      id: 'copago',
-      title: 'Copagos Médicos',
-      subtitle: 'Total por servicio e historial de citas',
-      icon: 'hospital-box',
-      iconColor: colors.INFO,
-      route: 'copagoAnalysis'
-    },
-    {
-      id: 'vacation',
-      title: 'Vacaciones',
-      subtitle: 'Alojamiento, tiquetes y gastos por destino',
-      icon: 'airplane',
-      iconColor: colors.SUCCESS,
-      route: 'vacationAnalysis'
-    }
-  ];
+  // Las opciones se generan automáticamente desde el registry.
+  // Para agregar una nueva pantalla de análisis, solo actualizar commentary-registry.ts.
+
+  const analysisOptions = COMMENTARY_REGISTRY.filter((entry) => entry.hasScreen).map((entry) => ({
+    id: entry.parserType,
+    title: entry.displayName,
+    subtitle: entry.subtitle,
+    icon: entry.icon,
+    iconColor: colors[entry.iconColorKey] ?? colors.PRIMARY,
+    route: entry.route as keyof StatisticsStackParamList
+  }));
 
   const handleOptionPress = (route: keyof StatisticsStackParamList) => {
     navigation.navigate(route as any);
@@ -99,7 +62,7 @@ export default function CommentaryAnalysisScreen({ navigation }: ScreenProps) {
             </Text>
           </View>
 
-          {/* Opciones de análisis */}
+          {/* Opciones de análisis — generadas desde COMMENTARY_REGISTRY */}
           {analysisOptions.map((option) => (
             <TouchableOpacity
               key={option.id}
@@ -153,15 +116,14 @@ export default function CommentaryAnalysisScreen({ navigation }: ScreenProps) {
               {'\n'}Ejemplos de formatos:
             </Text>
             <View style={styles.exampleContainer}>
-              <Text style={[styles.exampleText, { color: colors.TEXT_SECONDARY }]}>
-                • Luz: &#39;Consumo 100 Kw 18 Dic - 17 Ene&#39;
-              </Text>
-              <Text style={[styles.exampleText, { color: colors.TEXT_SECONDARY }]}>
-                • Productos: &#39;Pollo — 1.5 kg a $18000/kg&#39;
-              </Text>
-              <Text style={[styles.exampleText, { color: colors.TEXT_SECONDARY }]}>
-                • Ingresos: &#39;Retefu: 335000&#39;
-              </Text>
+              {COMMENTARY_REGISTRY.slice(0, 3).map((entry) => (
+                <Text
+                  key={entry.parserType}
+                  style={[styles.exampleText, { color: colors.TEXT_SECONDARY }]}
+                >
+                  • {entry.displayName}: &apos;{entry.exampleCommentary}&apos;
+                </Text>
+              ))}
             </View>
           </View>
         </View>

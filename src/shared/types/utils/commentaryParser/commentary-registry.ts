@@ -50,6 +50,8 @@ export interface CommentaryAnalysisEntry {
    * Usado en registry-integrity.test.ts para smoke-test de cada parser.
    */
   exampleCommentary: string;
+
+  hasScreen?: boolean;
 }
 
 // ─────────────────────────────────────────────
@@ -65,7 +67,8 @@ export const COMMENTARY_REGISTRY: CommentaryAnalysisEntry[] = [
     iconColorKey: 'WARNING',
     route: 'utilityAnalysis',
     subcategoryDetectors: ['Luz', 'Agua', 'Gas'],
-    exampleCommentary: 'Consumo(100 Kw) 18 Dic - 17 Ene 2026 [Solos]'
+    exampleCommentary: 'Consumo(100 Kw) 18 Dic - 17 Ene 2026 [Solos]',
+    hasScreen: true
   },
   {
     parserType: 'product',
@@ -75,7 +78,8 @@ export const COMMENTARY_REGISTRY: CommentaryAnalysisEntry[] = [
     iconColorKey: 'SUCCESS',
     route: 'productPrices',
     subcategoryDetectors: ['Proteínas', 'Mercado', 'Licores'],
-    exampleCommentary: 'Pechuga — 0,500 kg @ $14.000/kg [Carulla]'
+    exampleCommentary: 'Pechuga — 0,500 kg @ $14.000/kg [Carulla]',
+    hasScreen: true
   },
   {
     parserType: 'retention',
@@ -85,7 +89,8 @@ export const COMMENTARY_REGISTRY: CommentaryAnalysisEntry[] = [
     iconColorKey: 'ERROR',
     route: 'retentionAnalysis',
     subcategoryDetectors: ['Retenciones Julio', 'Retenciones Silvia'],
-    exampleCommentary: 'Retefu: 335.000 | Salario ordinario'
+    exampleCommentary: 'Retefu: 335.000 | Salario ordinario',
+    hasScreen: true
   },
   {
     parserType: 'transport',
@@ -151,7 +156,8 @@ export const COMMENTARY_REGISTRY: CommentaryAnalysisEntry[] = [
     iconColorKey: 'INFO',
     route: 'copagoAnalysis',
     subcategoryDetectors: ['Cuota moderadora', 'Copago'],
-    exampleCommentary: 'Copago Colmedica terapia física #11/20'
+    exampleCommentary: 'Copago Colmedica terapia física #11/20',
+    hasScreen: true
   },
   {
     parserType: 'vacation',
@@ -161,7 +167,8 @@ export const COMMENTARY_REGISTRY: CommentaryAnalysisEntry[] = [
     iconColorKey: 'SUCCESS',
     route: 'vacationAnalysis',
     subcategoryDetectors: ['Vacaciones', 'Viaje'],
-    exampleCommentary: 'Alojamiento Hotel Cartagena Plaza 4 noches [Todo incluido] [Cartagena]'
+    exampleCommentary: 'Alojamiento Hotel Cartagena Plaza 4 noches [Todo incluido] [Cartagena]',
+    hasScreen: true
   }
 ];
 

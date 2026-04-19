@@ -34,7 +34,7 @@ export const ProductCardDetail: React.FC<ProductCardDetailProps> = ({
         >
           <View style={styles.purchaseLeft}>
             <Text style={[styles.purchaseDate, { color: colors.TEXT_PRIMARY }]}>
-              📅 {DateFormat(purchase.date, 'DD MMM YYYY')}
+              📅 {DateFormat(purchase.date, 'ddd DD MMM YYYY')}
             </Text>
             <View style={styles.purchaseDetails}>
               <Text style={[styles.purchaseQuantity, { color: colors.TEXT_SECONDARY }]}>

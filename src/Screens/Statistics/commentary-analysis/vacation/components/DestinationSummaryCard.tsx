@@ -109,7 +109,7 @@ export default function DestinationSummaryCard({
               </View>
             </TouchableOpacity>
 
-            {/* Desglose por tipo */}
+            {/* Desglose expandible por tipo y categoría */}
             {isExpanded && (
               <View
                 style={[
@@ -137,13 +137,43 @@ export default function DestinationSummaryCard({
                     </Text>
                   </View>
                 )}
-                {summary.expenseCost > 0 && (
+                {summary.expenseByCategory.comida > 0 && (
                   <View style={styles.breakdownRow}>
                     <Text style={[styles.breakdownLabel, { color: colors.TEXT_SECONDARY }]}>
-                      🧾 Gastos sueltos
+                      🍽 Comida
                     </Text>
                     <Text style={[styles.breakdownValue, { color: colors.TEXT_PRIMARY }]}>
-                      {NumberFormat(summary.expenseCost)}
+                      {NumberFormat(summary.expenseByCategory.comida)}
+                    </Text>
+                  </View>
+                )}
+                {summary.expenseByCategory.transporte > 0 && (
+                  <View style={styles.breakdownRow}>
+                    <Text style={[styles.breakdownLabel, { color: colors.TEXT_SECONDARY }]}>
+                      🚌 Transporte
+                    </Text>
+                    <Text style={[styles.breakdownValue, { color: colors.TEXT_PRIMARY }]}>
+                      {NumberFormat(summary.expenseByCategory.transporte)}
+                    </Text>
+                  </View>
+                )}
+                {summary.expenseByCategory.atraccion > 0 && (
+                  <View style={styles.breakdownRow}>
+                    <Text style={[styles.breakdownLabel, { color: colors.TEXT_SECONDARY }]}>
+                      🎡 Atracciones
+                    </Text>
+                    <Text style={[styles.breakdownValue, { color: colors.TEXT_PRIMARY }]}>
+                      {NumberFormat(summary.expenseByCategory.atraccion)}
+                    </Text>
+                  </View>
+                )}
+                {summary.expenseByCategory.otro > 0 && (
+                  <View style={styles.breakdownRow}>
+                    <Text style={[styles.breakdownLabel, { color: colors.TEXT_SECONDARY }]}>
+                      📦 Otros
+                    </Text>
+                    <Text style={[styles.breakdownValue, { color: colors.TEXT_PRIMARY }]}>
+                      {NumberFormat(summary.expenseByCategory.otro)}
                     </Text>
                   </View>
                 )}

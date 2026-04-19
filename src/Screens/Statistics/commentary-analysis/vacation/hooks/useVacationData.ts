@@ -11,12 +11,11 @@ import { findExpensesBySubcategories } from '~/services/expenses';
 // Types
 import {
   VacationData,
-  VacationLodging,
   VacationFlight,
   VacationDestinationSummary,
   LodgingComparison
 } from '~/shared/types/utils/commentaryParser/vacation-analysis.types';
-import { AnalysisFilters } from '../../components/FilterSelector';
+import { MultiAnalysisFilters } from '../../components/MultiSubcategoryFilter';
 import { ExpenseToEdit } from '~/shared/types/screens/Statistics/commentary-analysis/components/edit-commentary-modal.types';
 
 // Utils
@@ -38,9 +37,9 @@ export interface UseVacationDataReturn {
   lodgingComparisons: LodgingComparison[];
   flights: VacationFlight[];
   unrecognized: ExpenseToEdit[];
-  currentFilters: AnalysisFilters | null;
+  currentFilters: MultiAnalysisFilters | null;
   totalCost: number;
-  loadData: (filters: AnalysisFilters) => Promise<void>;
+  loadData: (filters: MultiAnalysisFilters) => Promise<void>;
   refreshData: () => Promise<void>;
 }
 
@@ -57,18 +56,19 @@ export const useVacationData = (): UseVacationDataReturn => {
   const [lodgingComparisons, setLodgingComparisons] = useState<LodgingComparison[]>([]);
   const [flights, setFlights] = useState<VacationFlight[]>([]);
   const [unrecognized, setUnrecognized] = useState<ExpenseToEdit[]>([]);
-  const [currentFilters, setCurrentFilters] = useState<AnalysisFilters | null>(null);
+  const [currentFilters, setCurrentFilters] = useState<MultiAnalysisFilters | null>(null);
   const [totalCost, setTotalCost] = useState(0);
 
-  const fetchAndParse = useCallback(async (filters: AnalysisFilters) => {
-    if (!filters.subcategoryId) return;
+  const fetchAndParse = useCallback(async (filters: MultiAnalysisFilters) => {
+    // Requiere al menos una subcategoría seleccionada
+    if (filters.subcategoryIds.length === 0) return;
 
     setLoading(true);
     setCurrentFilters(filters);
 
     try {
       const { data } = await findExpensesBySubcategories({
-        subcategoriesId: [filters.subcategoryId],
+        subcategoriesId: filters.subcategoryIds, // ← array directo, sin wrappear
         startDate: filters.startDate,
         endDate: filters.endDate
       });
@@ -112,7 +112,7 @@ export const useVacationData = (): UseVacationDataReturn => {
   }, []);
 
   const loadData = useCallback(
-    async (filters: AnalysisFilters) => fetchAndParse(filters),
+    async (filters: MultiAnalysisFilters) => fetchAndParse(filters),
     [fetchAndParse]
   );
 

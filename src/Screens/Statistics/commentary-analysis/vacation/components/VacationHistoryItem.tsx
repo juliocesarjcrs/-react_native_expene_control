@@ -18,6 +18,7 @@ import { useThemeColors } from '~/customHooks/useThemeColors';
 
 // Styles
 import { SMALL } from '~/styles/fonts';
+import { ThemeColors } from '~/shared/types/services/theme-config-service.type';
 
 interface VacationHistoryItemProps {
   item: VacationData;
@@ -29,11 +30,24 @@ const TYPE_CONFIG = {
   expense: { icon: 'map-marker', colorKey: 'SUCCESS' as const }
 };
 
+const EXPENSE_CATEGORY_CONFIG: Record<string, { icon: string; colorKey: keyof ThemeColors }> = {
+  comida: { icon: 'silverware-fork-knife', colorKey: 'SUCCESS' },
+  transporte: { icon: 'bus', colorKey: 'WARNING' },
+  atraccion: { icon: 'map-marker-star', colorKey: 'PRIMARY' },
+  alojamiento: { icon: 'bed', colorKey: 'INFO' },
+  otro: { icon: 'dots-horizontal', colorKey: 'GRAY' }
+};
+
 export default function VacationHistoryItem({ item }: VacationHistoryItemProps) {
   const colors = useThemeColors();
   const config = TYPE_CONFIG[item.type];
-  const iconColor = colors[config.colorKey];
+  const expenseCategoryConfig =
+    item.type === 'expense'
+      ? (EXPENSE_CATEGORY_CONFIG[item.expenseCategory] ?? EXPENSE_CATEGORY_CONFIG['otro'])
+      : null;
 
+  const iconName = expenseCategoryConfig?.icon ?? config.icon;
+  const iconColor = colors[expenseCategoryConfig?.colorKey ?? config.colorKey];
   const getMainText = (): string => {
     if (item.type === 'lodging') {
       return `${item.lodgingType} ${item.name} · ${item.nights} ${item.nights === 1 ? 'noche' : 'noches'}`;
@@ -67,7 +81,7 @@ export default function VacationHistoryItem({ item }: VacationHistoryItemProps) 
     >
       <View style={styles.left}>
         <View style={[styles.iconContainer, { backgroundColor: iconColor + '15' }]}>
-          <Icon type="material-community" name={config.icon} size={16} color={iconColor} />
+          <Icon type="material-community" name={iconName} size={16} color={iconColor} />
         </View>
         <View style={styles.textContainer}>
           <Text style={[styles.mainText, { color: colors.TEXT_PRIMARY }]} numberOfLines={1}>

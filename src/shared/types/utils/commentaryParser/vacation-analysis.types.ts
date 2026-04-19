@@ -10,6 +10,13 @@
 
 export type VacationExpenseType = 'lodging' | 'flight' | 'expense';
 
+export type VacationExpenseCategory =
+  | 'comida'
+  | 'transporte'
+  | 'alojamiento'
+  | 'atraccion'
+  | 'otro';
+
 export type LodgingModality =
   | 'todo_incluido'
   | 'con_desayuno'
@@ -75,6 +82,7 @@ export interface VacationExpense {
   destination: string; // extraído del prefijo "Destino: ..."
 
   description: string; // lo que sigue después del destino
+  expenseCategory: VacationExpenseCategory; // clasificación explícita
 }
 
 // ─────────────────────────────────────────────
@@ -96,6 +104,8 @@ export interface VacationDestinationSummary {
   lodgingCount: number;
   flightCount: number;
   expenseCount: number;
+  // Desglose de gastos sueltos por categoría
+  expenseByCategory: Record<VacationExpenseCategory, number>;
 }
 
 export interface LodgingComparison {

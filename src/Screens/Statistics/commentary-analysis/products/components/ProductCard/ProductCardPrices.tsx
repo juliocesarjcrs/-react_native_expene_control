@@ -53,7 +53,7 @@ export const ProductCardPrices: React.FC<ProductCardPricesProps> = ({ best, wors
           <Text style={[styles.priceStore, { color: colors.TEXT_SECONDARY }]}>📍 {best.store}</Text>
         )}
         <Text style={[styles.priceDate, { color: colors.TEXT_SECONDARY }]}>
-          {DateFormat(best.date, 'DD MMM YYYY')}
+          {DateFormat(best.date, 'ddd DD MMM YYYY')}
         </Text>
       </View>
 
@@ -78,7 +78,7 @@ export const ProductCardPrices: React.FC<ProductCardPricesProps> = ({ best, wors
           </Text>
         )}
         <Text style={[styles.priceDate, { color: colors.TEXT_SECONDARY }]}>
-          {DateFormat(worst.date, 'DD MMM YYYY')}
+          {DateFormat(worst.date, 'ddd DD MMM YYYY')}
         </Text>
       </View>
     </View>

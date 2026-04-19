@@ -447,29 +447,29 @@ const buildCopagoConfig = (
     {
       label: 'Terapia',
       icon: 'hospital-box',
-      template: 'Copago Colmedica Terapia Física #1/20',
+      template: 'Copago Colmedica terapia física #1/20',
       hint: 'Terapia con número de sesión sobre total'
     },
     {
       label: 'Consulta',
       icon: 'doctor',
-      template: 'Copago Colmedica consulta Neurología',
+      template: 'Copago Colmedica consulta neurología',
       hint: 'Consulta o cita médica sin conteo de sesiones'
     },
     {
       label: 'Control',
       icon: 'clipboard-check',
-      template: 'Copago Colmedica control Psiquiatría',
+      template: 'Copago Colmedica control psiquiatra',
       hint: 'Control de seguimiento'
     },
     {
       label: 'Fisiatría',
       icon: 'run',
       template: 'Copago fisiatría #1/10',
-      hint: 'Copago Fisiatría sin institución'
+      hint: 'Copago fisiatría sin institución'
     }
   ],
-  smartPlaceholder: 'Ej: Copago Colmedica Terapia Física #11/20',
+  smartPlaceholder: 'Ej: Copago Colmedica terapia física #11/20',
   enableValidation: true
 });
 
@@ -706,16 +706,35 @@ const buildVacationConfig = (
         hint: 'Vuelo con aerolínea, ruta y número de pasajeros'
       },
       {
-        label: 'Gasto',
-        icon: 'map-marker',
-        template: 'Destino: descripción del gasto',
-        hint: 'Gasto suelto — empieza con el destino seguido de dos puntos'
+        label: 'Comida',
+        icon: 'silverware-fork-knife',
+        template: 'Destino[comida]: descripción',
+        hint: 'Restaurante, snack, bebida'
+      },
+      {
+        label: 'Transporte',
+        icon: 'bus',
+        template: 'Destino[transporte]: descripción',
+        hint: 'Bus, taxi, uber, cable, tiquete'
+      },
+      {
+        label: 'Atracción',
+        icon: 'map-marker-star',
+        template: 'Destino[atraccion]: descripción',
+        hint: 'Parque, tour, entrada, actividad'
+      },
+      {
+        label: 'Otro',
+        icon: 'dots-horizontal',
+        template: 'Destino[otro]: descripción',
+        hint: 'Gasto que no clasifica en los anteriores'
       }
     ],
-    smartPlaceholder: 'Ej: Cartagena: almuerzo en La Mulata',
+    smartPlaceholder: 'Ej: Manizales[comida]: Almuerzo en Wribs',
     enableValidation: false
   };
 };
+
 const buildFreeConfig = (
   subcategoryId: number,
   subcategoryName: string,

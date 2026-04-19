@@ -23,6 +23,7 @@ import {
   VacationFlight,
   VacationExpense,
   LodgingModality,
+  VacationExpenseCategory,
   VacationDestinationSummary,
   LodgingComparison
 } from '~/shared/types/utils/commentaryParser/vacation-analysis.types';
@@ -80,6 +81,26 @@ const KNOWN_DESTINATIONS = [
 ];
 
 // ─────────────────────────────────────────────
+// CATEGORÍAS DE GASTO SUELTO
+// ─────────────────────────────────────────────
+
+const VALID_EXPENSE_CATEGORIES: VacationExpenseCategory[] = [
+  'comida',
+  'transporte',
+  'alojamiento',
+  'atraccion',
+  'otro'
+];
+
+const parseExpenseCategory = (raw: string): VacationExpenseCategory => {
+  const lower = raw.toLowerCase().trim();
+  if (VALID_EXPENSE_CATEGORIES.includes(lower as VacationExpenseCategory)) {
+    return lower as VacationExpenseCategory;
+  }
+  return 'otro';
+};
+
+// ─────────────────────────────────────────────
 // REGEX PATTERNS
 // ─────────────────────────────────────────────
 
@@ -101,7 +122,10 @@ const PATTERNS = {
   flightDates: /\[(\d{1,2}\s+\w+)-(\d{1,2}\s+\w+)\]/i,
 
   // "{Destino}: {descripción}" — gasto suelto con dos puntos
-  expenseWithColon: /^([^:]{3,30}):\s+(.+)$/s
+  expenseWithColon: /^([^:]{3,30}):\s+(.+)$/s,
+
+  // "{Destino}[categoría]: {descripción}" — gasto con categoría explícita
+  expenseWithCategory: /^([^:]{3,30})\[(\w+)\]:\s+(.+)$/s
 };
 
 // ─────────────────────────────────────────────
@@ -197,7 +221,20 @@ const parseFlight = (commentary: string, cost: number, date: string): VacationFl
 const parseExpense = (commentary: string, cost: number, date: string): VacationExpense | null => {
   const firstLine = commentary.split('\n')[0].trim();
 
-  // Formato estándar: "Destino: descripción"
+  // Formato con categoría: "Destino[categoria]: descripción"
+  const categoryMatch = firstLine.match(PATTERNS.expenseWithCategory);
+  if (categoryMatch) {
+    return {
+      type: 'expense',
+      cost,
+      date,
+      destination: categoryMatch[1].trim(),
+      expenseCategory: parseExpenseCategory(categoryMatch[2]),
+      description: categoryMatch[3].trim()
+    };
+  }
+
+  // Formato estándar sin categoría: "Destino: descripción" → expenseCategory: 'otro'
   const colonMatch = firstLine.match(PATTERNS.expenseWithColon);
   if (colonMatch) {
     return {
@@ -205,6 +242,7 @@ const parseExpense = (commentary: string, cost: number, date: string): VacationE
       cost,
       date,
       destination: colonMatch[1].trim(),
+      expenseCategory: 'otro',
       description: colonMatch[2].trim()
     };
   }
@@ -223,6 +261,7 @@ const parseExpense = (commentary: string, cost: number, date: string): VacationE
           cost,
           date,
           destination: firstLine.slice(0, dest.length),
+          expenseCategory: 'otro',
           description
         };
       }
@@ -264,9 +303,17 @@ export const parseVacationCommentary = (
 // CALCULADORAS
 // ─────────────────────────────────────────────
 
-/** Agrupa gastos por destino con totales por tipo */
+/** Agrupa gastos por destino con totales por tipo y categoría */
 export const getDestinationSummaries = (data: VacationData[]): VacationDestinationSummary[] => {
   const map = new Map<string, VacationDestinationSummary>();
+
+  const emptyByCategory = (): Record<VacationExpenseCategory, number> => ({
+    comida: 0,
+    transporte: 0,
+    alojamiento: 0,
+    atraccion: 0,
+    otro: 0
+  });
 
   for (const item of data) {
     const dest = item.destination;
@@ -278,7 +325,8 @@ export const getDestinationSummaries = (data: VacationData[]): VacationDestinati
       expenseCost: 0,
       lodgingCount: 0,
       flightCount: 0,
-      expenseCount: 0
+      expenseCount: 0,
+      expenseByCategory: emptyByCategory()
     };
 
     existing.totalCost += item.cost;
@@ -291,6 +339,7 @@ export const getDestinationSummaries = (data: VacationData[]): VacationDestinati
     } else {
       existing.expenseCost += item.cost;
       existing.expenseCount += 1;
+      existing.expenseByCategory[item.expenseCategory] += item.cost;
     }
 
     map.set(dest, existing);

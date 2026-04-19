@@ -1,14 +1,6 @@
 /**
  * VacationAnalysisScreen
  * Ubicación: src/Screens/Statistics/commentary-analysis/vacation/VacationAnalysisScreen.tsx
- *
- * Secciones:
- *   1. Filtros
- *   2. Resumen por destino (expandible)
- *   3. Comparación de alojamientos por precio/noche
- *   4. Lista de tiquetes con precio/persona
- *   5. Lista cronológica completa
- *   6. Registros no reconocidos con botón editar
  */
 
 import React, { useState } from 'react';
@@ -20,7 +12,7 @@ import { Icon } from 'react-native-elements';
 // Components
 import { ScreenHeader } from '~/components/ScreenHeader';
 import MyLoading from '~/components/loading/MyLoading';
-import FilterSelector from '../components/FilterSelector';
+import MultiSubcategoryFilter, { MultiAnalysisFilters } from '../components/MultiSubcategoryFilter';
 import EditCommentaryModal from '../components/EditCommentaryModal';
 import DestinationSummaryCard from './components/DestinationSummaryCard';
 import LodgingComparisonCard from './components/LodgingComparisonCard';
@@ -74,6 +66,9 @@ export default function VacationAnalysisScreen({ navigation, route }: ScreenProp
 
   const [editingExpense, setEditingExpense] = useState<ExpenseToEdit | null>(null);
 
+  // Texto legible de subcategorías seleccionadas para el infoBox
+  const subcategoryLabel = currentFilters ? currentFilters.subcategoryNames.join(' + ') : '';
+
   return (
     <View style={[commonStyles.screenContainer, { backgroundColor: colors.BACKGROUND }]}>
       <ScreenHeader title={screenConfig.title} subtitle={screenConfig.subtitle} />
@@ -81,14 +76,18 @@ export default function VacationAnalysisScreen({ navigation, route }: ScreenProp
       <ScrollView style={{ flex: 1 }} contentContainerStyle={{ paddingBottom: 20 }}>
         <View style={{ paddingHorizontal: 16, paddingTop: 10 }}>
           {/* Filtros */}
-          <FilterSelector type="expenses" onAnalyze={loadData} defaultDaysBack={730} />
+          <MultiSubcategoryFilter
+            defaultDaysBack={730}
+            buttonTitle="Analizar Vacaciones"
+            onAnalyze={loadData} // ← conexión directa, sin intermediario
+          />
 
           {/* Info del rango */}
           {currentFilters && (
             <View style={[styles.infoBox, { backgroundColor: colors.INFO + '15' }]}>
               <Icon type="material-community" name="information" size={16} color={colors.INFO} />
               <Text style={[styles.infoText, { color: colors.TEXT_PRIMARY }]}>
-                Analizando {currentFilters.subcategoryName} desde{' '}
+                Analizando {subcategoryLabel} desde{' '}
                 {DateFormat(currentFilters.startDate, 'DD MMM YYYY')} hasta{' '}
                 {DateFormat(currentFilters.endDate, 'DD MMM YYYY')}
               </Text>
@@ -198,7 +197,7 @@ export default function VacationAnalysisScreen({ navigation, route }: ScreenProp
                 </View>
               )}
 
-              {/* Estado vacío total */}
+              {/* Estado vacío */}
               {currentFilters && parsedData.length === 0 && unrecognized.length === 0 && (
                 <View style={styles.emptyState}>
                   <Icon

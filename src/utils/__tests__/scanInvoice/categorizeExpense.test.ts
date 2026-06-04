@@ -65,8 +65,8 @@ describe('categorizeExpense', () => {
       expect(result).toEqual({ categoryId: 414, subcategoryId: 2 });
     });
 
-    it('debería categorizar como "Proteinas" para descripción con "pollo"', () => {
-      const result = categorizeExpense('pechuga de pollo', mockCategories);
+    it('debería categorizar como "Proteinas" para descripción con "Pepino Res"', () => {
+      const result = categorizeExpense('Pepino Res', mockCategories);
       expect(result).toEqual({ categoryId: 414, subcategoryId: 3 });
     });
 

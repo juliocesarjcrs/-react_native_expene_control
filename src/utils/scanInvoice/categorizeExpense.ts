@@ -69,7 +69,8 @@ export const categorizeExpense = (
         'contramuslo',
         'sobrebarriga',
         'higado',
-        'cadera'
+        'cadera',
+        'pepino res'
       ],
       exactMatch: false
     },

@@ -17,11 +17,6 @@ import { ProductCardDetail } from './ProductCardDetail';
 import { useThemeColors } from '~/customHooks/useThemeColors';
 import { formatPrice } from '../../utils/formatters';
 
-// Habilitar animaciones en Android
-if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
-  UIManager.setLayoutAnimationEnabledExperimental(true);
-}
-
 interface ProductCardProps {
   summary: ProductSummary;
   purchases: ProductPrice[];

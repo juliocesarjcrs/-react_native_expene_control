@@ -24,6 +24,9 @@ export type CopagoServiceType =
   | 'neurocirugia'
   | 'medico_domicilio'
   | 'otorrino'
+  | 'medicina_dolor'
+  | 'laboratorio'
+  | 'imagenologia'  // (resonancia, gammagrafía, RX, TAC
   | 'otro';
 
 export interface CopagoData {

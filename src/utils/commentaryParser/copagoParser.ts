@@ -58,6 +58,12 @@ const classifyService = (service: string): CopagoServiceType => {
   if (s.includes('neurocirugía') || s.includes('neurocirugia')) return 'neurocirugia';
   if (s.includes('otorrino') || s.includes('otorrinolaring')) return 'otorrino';
   if (s.includes('medico en casa') || s.includes('domicilio')) return 'medico_domicilio';
+  if (s.includes('dolor')) return 'medicina_dolor';
+  if (s.includes('laboratorio') || s.includes('creatinina') ||
+    s.includes('hemograma') || s.includes('parcial')) return 'laboratorio';
+  if (s.includes('resonancia') || s.includes('gammagraf') ||
+    s.includes('radiograf') || s.includes('tomograf') ||
+    s.includes('ecograf')) return 'imagenologia';
   if (s.includes('consulta')) return 'consulta';
   if (s.includes('control')) return 'control';
   return 'otro';

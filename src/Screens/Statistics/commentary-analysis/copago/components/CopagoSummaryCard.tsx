@@ -37,6 +37,10 @@ const SERVICE_ICONS: Record<string, string> = {
   fisiatria: 'human-handsup',
   neurocirugia: 'medical-bag',
   medico_domicilio: 'home-heart',
+  otorrino: 'ear-hearing',
+  medicina_dolor: 'needle',
+  laboratorio: 'test-tube',
+  imagenologia: 'radiology-box',
   otro: 'help-circle-outline'
 };
 

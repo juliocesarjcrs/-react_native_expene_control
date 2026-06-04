@@ -57,6 +57,9 @@ const SERVICE_DISPLAY_NAMES: Record<string, string> = {
   neurocirugia: 'Neurocirugía',
   medico_domicilio: 'Médico domiciliario',
   otorrino: 'Otorrino',
+  medicina_dolor: 'Medicina del Dolor',
+  laboratorio: 'Laboratorio',
+  imagenologia: 'Imagenología',
   otro: 'Otro'
 };
 

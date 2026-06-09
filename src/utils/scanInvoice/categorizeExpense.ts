@@ -116,7 +116,8 @@ export const categorizeExpense = (
         'chocolatina',
         'wafer',
         'cocoset',
-        'gomitas'
+        'gomitas',
+        'ponque'
       ],
       exactMatch: false
     },

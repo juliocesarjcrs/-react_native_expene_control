@@ -1,14 +1,15 @@
 import React from 'react';
 import { render, fireEvent, waitFor } from '@testing-library/react-native';
 import { Provider } from 'react-redux';
-import configureStore from 'redux-mock-store';
+import createMockStore from 'redux-mock-store';
 import BarSearch from '../BarSearch';
 import { setQuery } from '~/features/search/searchSlice';
 
-const mockStore = configureStore([]);
+const mockStore = createMockStore([]);
 
 // Mock components
 jest.mock('~/components/MyButton', () => {
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
   const { TouchableOpacity, Text } = require('react-native');
 
   const MockMyButton = ({ title, onPress }: any) => (
@@ -24,6 +25,7 @@ jest.mock('~/components/MyButton', () => {
 
 jest.mock('react-native-elements', () => ({
   Icon: ({ name, testID }: any) => {
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
     const { View, Text } = require('react-native');
     return (
       <View testID={testID || `icon-${name}`}>

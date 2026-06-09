@@ -60,18 +60,6 @@ export default function EditUserScreen({ navigation }: EditUserScreenProps) {
   const [fileName, setFileName] = useState<string | null>(null);
   const [loading, setLoading] = useState<boolean>(false);
 
-  useEffect(() => {
-    requestPermissions();
-  }, []);
-
-  useEffect(() => {
-    fetchData();
-    const unsubscribe = navigation.addListener('focus', () => {
-      fetchData();
-    });
-    return unsubscribe;
-  }, [navigation]);
-
   const requestPermissions = async (): Promise<void> => {
     if (Platform.OS !== 'web') {
       const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
@@ -81,6 +69,20 @@ export default function EditUserScreen({ navigation }: EditUserScreenProps) {
           'Necesitamos permisos para acceder a tu galería de fotos'
         );
       }
+    }
+  };
+  const getUrlAws = async (keyImg: string): Promise<void> => {
+    try {
+      if (keyImg) {
+        setLoading(true);
+        const query = { file: keyImg };
+        const { data } = await getUrlSignedAws(query);
+        setLoading(false);
+        setSaveImage(data);
+      }
+    } catch (error) {
+      setLoading(false);
+      showError(error);
     }
   };
 
@@ -107,21 +109,17 @@ export default function EditUserScreen({ navigation }: EditUserScreenProps) {
       showError(error);
     }
   };
+  useEffect(() => {
+    requestPermissions();
+  }, []);
 
-  const getUrlAws = async (keyImg: string): Promise<void> => {
-    try {
-      if (keyImg) {
-        setLoading(true);
-        const query = { file: keyImg };
-        const { data } = await getUrlSignedAws(query);
-        setLoading(false);
-        setSaveImage(data);
-      }
-    } catch (error) {
-      setLoading(false);
-      showError(error);
-    }
-  };
+  useEffect(() => {
+    fetchData();
+    const unsubscribe = navigation.addListener('focus', () => {
+      fetchData();
+    });
+    return unsubscribe;
+  }, [navigation]);
 
   const onSubmit = async (payload: EditUserFormData): Promise<void> => {
     try {

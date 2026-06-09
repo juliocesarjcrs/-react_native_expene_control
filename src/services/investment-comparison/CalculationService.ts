@@ -6,10 +6,6 @@
 import {
   SavingsScenario,
   SavingsResult,
-  FuturePropertyScenario,
-  FuturePropertyResult,
-  ImmediateRentScenario,
-  ImmediateRentResult,
   ExistingPropertyScenario,
   ExistingPropertyResult
 } from '~/shared/types/services/Investment-comparison.types';

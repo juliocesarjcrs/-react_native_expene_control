@@ -1,5 +1,4 @@
-import { StyleSheet, Text } from 'react-native';
-import { View } from 'react-native';
+import { StyleSheet, Text, View } from 'react-native';
 import { useThemeColors } from '~/customHooks/useThemeColors';
 import { UserModel } from '~/shared/types';
 import { MEDIUM, SMALL } from '~/styles/fonts';

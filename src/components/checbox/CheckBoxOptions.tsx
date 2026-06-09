@@ -74,15 +74,6 @@ export default function CheckBoxOptions<T extends StackNavigationProp<ParamListB
       numMonths: 0
     }
   ]);
-
-  useEffect(() => {
-    fetchUserLogued();
-    const unsubscribe = navigation.addListener('focus', () => {
-      fetchUserLogued();
-    });
-    return unsubscribe;
-  }, [navigation]);
-
   const fetchUserLogued = async (): Promise<void> => {
     try {
       const jsonValue = await AsyncStorage.getItem('user');
@@ -108,6 +99,13 @@ export default function CheckBoxOptions<T extends StackNavigationProp<ParamListB
       showError(error);
     }
   };
+  useEffect(() => {
+    fetchUserLogued();
+    const unsubscribe = navigation.addListener('focus', () => {
+      fetchUserLogued();
+    });
+    return unsubscribe;
+  }, [navigation]);
 
   const handleDateChange = (_event: unknown, selectedDate?: Date): void => {
     setShowDatePicker(false);

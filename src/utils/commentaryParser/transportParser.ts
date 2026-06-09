@@ -134,7 +134,7 @@ export const parseTransportCommentary = (
 /** Rutas más frecuentes ordenadas por cantidad de viajes */
 export const getMostFrequentRoutes = (
   data: TransportData[]
-): Array<{ route: string; count: number; totalCost: number; avgCost: number }> => {
+): { route: string; count: number; totalCost: number; avgCost: number }[] => {
   const routeMap = new Map<string, { count: number; totalCost: number }>();
 
   for (const item of data) {

@@ -31,7 +31,6 @@ export default function RenderItemIncome({ item, navigation, updateList }: Rende
       onEdit={handleEdit}
       onDelete={async (id: number) => {
         await deleteIncome(id);
-        updateList();
       }}
       updateList={updateList}
     />

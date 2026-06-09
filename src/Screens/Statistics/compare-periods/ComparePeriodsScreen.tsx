@@ -21,10 +21,10 @@ export default function ComparePeriodsScreen() {
   const colors = useThemeColors();
 
   const [selectedCategories, setSelectedCategories] = useState<
-    Array<{
+    {
       categoryId: number;
       subcategoriesId: number[];
-    }>
+    }[]
   >([]);
 
   const [periodA, setPeriodA] = useState<{ start: Date; end: Date } | null>(null);

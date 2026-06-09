@@ -56,7 +56,7 @@ const TEST_SUBCATEGORY_ID = 9999;
 const parseByType = (
   parserType: Exclude<ParserType, 'none'>,
   commentary: string
-): object | null => {
+): object | null | undefined => {
   switch (parserType) {
     case 'utility':
       return parseUtilityCommentary(commentary, MOCK_COST, MOCK_DATE);
@@ -156,11 +156,7 @@ describe('Registry — subcategoryDetectors activan el parserType correcto en ge
 // ─────────────────────────────────────────────
 
 describe('Chips structured — texto generado es parseable por su parser', () => {
-  const STRUCTURED_PARSERS: Array<Exclude<ParserType, 'none'>> = [
-    'utility',
-    'product',
-    'retention'
-  ];
+  const STRUCTURED_PARSERS: Exclude<ParserType, 'none'>[] = ['utility', 'product', 'retention'];
 
   COMMENTARY_REGISTRY.filter((entry) => STRUCTURED_PARSERS.includes(entry.parserType)).forEach(
     (entry: CommentaryAnalysisEntry) => {

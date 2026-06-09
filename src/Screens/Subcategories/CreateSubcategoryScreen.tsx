@@ -61,14 +61,6 @@ export default function CreateSubcategoryScreen({
     defaultValues: { name: '' }
   });
 
-  useEffect(() => {
-    fetchData();
-    const unsubscribe = navigation.addListener('focus', () => {
-      fetchData();
-    });
-    return unsubscribe;
-  }, [navigation]);
-
   const fetchData = async (): Promise<void> => {
     try {
       if (!idCategory) {
@@ -80,6 +72,13 @@ export default function CreateSubcategoryScreen({
       showError(error);
     }
   };
+  useEffect(() => {
+    fetchData();
+    const unsubscribe = navigation.addListener('focus', () => {
+      fetchData();
+    });
+    return unsubscribe;
+  }, [navigation]);
 
   const create = async (payload: FormData): Promise<void> => {
     try {

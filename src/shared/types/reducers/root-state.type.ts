@@ -1,4 +1,4 @@
-import store from '../../../store/store';
+import appStore from '../../../store/store';
 
-export type RootState = ReturnType<typeof store.getState>;
-export type AppDispatch = typeof store.dispatch;
+export type RootState = ReturnType<typeof appStore.getState>;
+export type AppDispatch = typeof appStore.dispatch;

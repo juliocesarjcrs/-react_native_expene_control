@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import { FlatList, StyleSheet, Text, View } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context'
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { getLastIncomesWithPaginate } from '../../services/incomes';
 
 import { useDispatch, useSelector } from 'react-redux';
@@ -53,6 +53,36 @@ export default function LastIncomesScreen({ navigation }: LastIncomesScreenProps
   const prevQuery = usePrevious(query);
   const isFirstRender = React.useRef(true);
 
+  // fetchData recibe page y reset flag
+  const fetchData = useCallback(
+    async (pageToFetch: number, reset: boolean) => {
+      try {
+        console.log('fetch incomes', pageToFetch);
+        setLoadingFotter(true);
+        const params = {
+          take: 25,
+          page: pageToFetch,
+          query
+        };
+        const { data } = await getLastIncomesWithPaginate(params);
+        setLoadingFotter(false);
+        if (data.data.length <= 0) {
+          setStopeFetch(true);
+        }
+        let newList = [];
+        if (reset) {
+          newList = handlerDataSearch(data.data, [], params.query, prevQuery, params.page);
+        } else {
+          newList = handlerDataSearch(data.data, lastIncomes, params.query, prevQuery, params.page);
+        }
+        setLastIncomes(newList);
+      } catch (e) {
+        setLoadingFotter(false);
+        showError(e);
+      }
+    },
+    [query, lastIncomes, prevQuery, stopeFetch]
+  );
   useFocusEffect(
     React.useCallback(() => {
       // Refresca la lista cada vez que el screen gana foco
@@ -62,7 +92,7 @@ export default function LastIncomesScreen({ navigation }: LastIncomesScreenProps
   // Resetear query solo al montar
   useEffect(() => {
     dispatch(setQuery(null));
-  }, []);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Manejar cambios de búsqueda (query)
   useEffect(() => {
@@ -90,36 +120,6 @@ export default function LastIncomesScreen({ navigation }: LastIncomesScreenProps
     }
   }, [page]);
 
-  // fetchData recibe page y reset flag
-  const fetchData = useCallback(
-    async (pageToFetch: number, reset: boolean) => {
-      try {
-        setLoadingFotter(true);
-        const params = {
-          take: 25,
-          page: pageToFetch,
-          query
-        };
-        const { data } = await getLastIncomesWithPaginate(params);
-        setLoadingFotter(false);
-        if (data.data.length <= 0) {
-          setStopeFetch(true);
-        }
-        let newList = [];
-        if (reset) {
-          newList = handlerDataSearch(data.data, [], params.query, prevQuery, params.page);
-        } else {
-          newList = handlerDataSearch(data.data, lastIncomes, params.query, prevQuery, params.page);
-        }
-        setLastIncomes(newList);
-      } catch (e) {
-        setLoadingFotter(false);
-        showError(e);
-      }
-    },
-    [query, lastIncomes, prevQuery, stopeFetch]
-  );
-
   // Paginador
   const loadMoreData = () => {
     if (!stopeFetch && !loadingFooter) {
@@ -134,9 +134,7 @@ export default function LastIncomesScreen({ navigation }: LastIncomesScreenProps
   };
 
   return (
-    <SafeAreaView
-      style={[commonStyles.screenContentWithPadding, { backgroundColor: colors.BACKGROUND }]}
-    >
+    <SafeAreaView style={[commonStyles.screenContent, { backgroundColor: colors.BACKGROUND }]}>
       <ScreenHeader title={config.title} subtitle={config.subtitle} />
       <FlatList
         testID="flatlist-incomes"

@@ -6,5 +6,10 @@ module.exports = defineConfig([
   // eslintPluginPrettierRecommended,
   {
     ignores: ['node_modules', 'dist/*', 'build', '.expo']
+  },
+  {
+    rules: {
+      'import/no-unresolved': ['error', { ignore: ['@env'] }]
+    }
   }
 ]);

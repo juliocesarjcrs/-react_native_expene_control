@@ -1,13 +1,13 @@
 import React from 'react';
 import { render, waitFor, act } from '@testing-library/react-native';
 import { Provider } from 'react-redux';
-import configureStore from 'redux-mock-store';
+import createMockStore from 'redux-mock-store';
 import LastIncomesScreen, { LastIncomesScreenNavigationProp } from '../LastIncomesScreen';
 import * as incomesService from '../../../services/incomes';
 import { RouteProp } from '@react-navigation/native';
 import { IncomeStackParamList } from '../../../shared/types';
 import { setQuery } from '~/features/search/searchSlice';
-const mockStore = configureStore([]);
+const mockStore = createMockStore([]);
 
 // Mock services
 jest.mock('../../../services/incomes');
@@ -42,8 +42,15 @@ jest.mock('~/components/ScreenHeader', () => ({
   ScreenHeader: () => null
 }));
 
+let capturedUpdateList: (() => void) | undefined;
+
 jest.mock('../components/RenderItemIncome', () => {
-  return jest.fn(() => null);
+  const MockRenderItemIncome = ({ updateList }: { updateList: () => void }) => {
+    capturedUpdateList = updateList;
+    return null;
+  };
+
+  return MockRenderItemIncome;
 });
 
 jest.mock('~/components/search/BarSearch', () => {
@@ -91,7 +98,7 @@ jest.mock('@react-navigation/native', () => {
 });
 
 describe('LastIncomesScreen flows', () => {
-  let store;
+  let store: ReturnType<typeof mockStore>;
 
   beforeEach(() => {
     jest.clearAllMocks();

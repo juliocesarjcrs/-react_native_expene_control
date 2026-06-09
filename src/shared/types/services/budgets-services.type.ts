@@ -16,11 +16,11 @@ export type BudgetSummaryCategory = {
   categoryId: number;
   categoryName: string;
   budget: number;
-  subcategories: Array<{
+  subcategories: {
     subcategoryId: number;
     subcategoryName: string;
     budget: number;
-  }>;
+  }[];
 };
 
 export type GetBudgetSummaryQuery = {

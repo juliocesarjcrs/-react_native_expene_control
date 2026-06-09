@@ -1,7 +1,7 @@
 import { URL_BASE } from '@env';
 import { ApolloClient, ApolloLink, HttpLink, InMemoryCache } from '@apollo/client';
 import { SetContextLink } from '@apollo/client/link/context';
-import { ErrorLink, onError } from '@apollo/client/link/error';
+import { ErrorLink } from '@apollo/client/link/error';
 import { getToken } from './auth';
 import { ToastAndroid } from 'react-native';
 // Crea el enlace HTTP

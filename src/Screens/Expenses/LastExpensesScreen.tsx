@@ -1,6 +1,6 @@
-import React, { useEffect, useState } from 'react';
-import { FlatList, StyleSheet, Text, View } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context'
+import React, { useCallback, useEffect, useState } from 'react';
+import { FlatList, StyleSheet, Text } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { StackNavigationProp } from '@react-navigation/stack';
 import { useDispatch, useSelector } from 'react-redux';
 import { setQuery } from '~/features/search/searchSlice';
@@ -49,12 +49,30 @@ export default function LastExpensesScreen({ navigation }: LastExpenseScreenProp
   const query = useSelector((state: RootState) => state.search.query);
   const isFirstRender = React.useRef(true);
 
-  // Resetear query solo al montar
   useEffect(() => {
     dispatch(setQuery(null));
-  }, []);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // Manejar cambios de búsqueda (query)
+  const fetchData = useCallback(
+    async (pageToFetch: number, reset: boolean) => {
+      try {
+        setLoadingFotter(true);
+        const params = { take: 15, page: pageToFetch, query, orderBy: 'date' };
+        const { data } = await getLastExpensesWithPaginate(params);
+        if (data.data.length <= 0) {
+          setStopeFetch(true);
+        }
+        const mapped = data.data.map((e) => ({ ...e }) as ExtendedExpenseModel);
+        setLastExpenses((prev) => (reset ? mapped : [...prev, ...mapped]));
+      } catch (e) {
+        showError(e);
+      } finally {
+        setLoadingFotter(false);
+      }
+    },
+    [query]
+  );
+
   useEffect(() => {
     if (isFirstRender.current) {
       isFirstRender.current = false;
@@ -63,65 +81,43 @@ export default function LastExpensesScreen({ navigation }: LastExpenseScreenProp
     setLastExpenses([]);
     setPage(1);
     setStopeFetch(false);
-    setLoadingFotter(false);
-    fetchData(1, true);
-  }, [query]);
+    void (async () => {
+      await fetchData(1, true);
+    })();
+  }, [query, fetchData]);
 
-  // Manejar paginación (solo si no es búsqueda nueva)
   useEffect(() => {
     if (page > 1) {
-      fetchData(page, false);
+      void (async () => {
+        await fetchData(page, false);
+      })();
     }
-  }, [page]);
+  }, [page, fetchData]);
 
-  // fetchData recibe page y reset flag
-  const fetchData = async (pageToFetch: number, reset: boolean) => {
-    try {
-      setLoadingFotter(true);
-      const params = {
-        take: 15,
-        page: pageToFetch,
-        query,
-        orderBy: 'date'
-      };
-      const { data } = await getLastExpensesWithPaginate(params);
-      setLoadingFotter(false);
-      if (data.data.length <= 0) {
-        setStopeFetch(true);
-      }
-      let newList: ExtendedExpenseModel[] = [];
-      if (reset) {
-        newList = data.data.map((e) => ({ ...e }) as ExtendedExpenseModel);
-      } else {
-        newList = [...lastExpenses, ...data.data.map((e) => ({ ...e }) as ExtendedExpenseModel)];
-      }
-      setLastExpenses(newList);
-    } catch (e) {
-      setLoadingFotter(false);
-      showError(e);
-    }
-  };
+  const updateList = useCallback(() => {
+    setPage(1);
+    setStopeFetch(false);
 
-  // Función para actualizar la lista desde RenderItem (siempre recarga la primera página)
-  const updateList = () => {
-    fetchData(1, true);
-  };
+    void (async () => {
+      await fetchData(1, true);
+    })();
+  }, [fetchData]);
 
-  // Paginador
   const loadMoreData = () => {
     if (!stopeFetch && !loadingFooter) {
       setPage((prev) => prev + 1);
     }
   };
 
+  // const renderFooter = () => <View>{loadingFooter ? <MyLoading /> : null}</View>;
+  // ✅ Sin footer cuando no hay loading
   const renderFooter = () => {
-    return <View>{loadingFooter ? <MyLoading /> : null}</View>;
+    if (!loadingFooter) return null;
+    return <MyLoading />;
   };
 
   return (
-    <SafeAreaView
-      style={[commonStyles.screenContentWithPadding, { backgroundColor: colors.BACKGROUND }]}
-    >
+    <SafeAreaView style={[commonStyles.screenContent, { backgroundColor: colors.BACKGROUND }]}>
       <ScreenHeader title={config.title} subtitle={config.subtitle} />
       <FlatList
         testID="flatlist-expenses"
@@ -146,11 +142,6 @@ export default function LastExpensesScreen({ navigation }: LastExpenseScreenProp
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#fff',
-    paddingHorizontal: 15
-  },
   textMuted: {
     textAlign: 'center'
   }

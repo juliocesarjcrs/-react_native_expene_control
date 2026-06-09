@@ -1,7 +1,7 @@
 import React from 'react';
 import { render, waitFor, act } from '@testing-library/react-native';
 import { Provider } from 'react-redux';
-import configureStore, { MockStoreEnhanced } from 'redux-mock-store';
+import createMockStore, { MockStoreEnhanced } from 'redux-mock-store';
 import LastExpensesScreen from '../LastExpensesScreen';
 import * as expensesService from '../../../services/expenses';
 import { setQuery } from '~/features/search/searchSlice';
@@ -62,7 +62,15 @@ jest.mock('~/utils/showError', () => ({
   showError: jest.fn()
 }));
 
-const mockStore = configureStore<object>();
+let capturedUpdateList: (() => void) | undefined;
+
+jest.mock('../components/RenderItemExpense', () => {
+  return ({ updateList }: { updateList: () => void }) => {
+    capturedUpdateList = updateList;
+    return null;
+  };
+});
+const mockStore = createMockStore<object>();
 
 describe('LastExpensesScreen behaviors', () => {
   let store: MockStoreEnhanced<object, object>;
@@ -372,6 +380,56 @@ describe('LastExpensesScreen behaviors', () => {
     await waitFor(() => {
       expect(getLastExpensesWithPaginate).toHaveBeenCalledWith(
         expect.objectContaining({ page: 1, query: null })
+      );
+    });
+  });
+
+  it('should restart pagination after updateList', async () => {
+    const { getByTestId } = render(
+      <Provider store={store}>
+        <LastExpensesScreen navigation={mockNavigation} />
+      </Provider>
+    );
+
+    await waitFor(() => {
+      expect(getLastExpensesWithPaginate).toHaveBeenCalledWith(
+        expect.objectContaining({ page: 1 })
+      );
+    });
+
+    const flatList = getByTestId('flatlist-expenses');
+
+    await act(async () => {
+      flatList.props.onEndReached();
+    });
+
+    await waitFor(() => {
+      expect(getLastExpensesWithPaginate).toHaveBeenCalledWith(
+        expect.objectContaining({ page: 2 })
+      );
+    });
+
+    getLastExpensesWithPaginate.mockClear();
+    expect(capturedUpdateList).toBeDefined();
+    await act(async () => {
+      capturedUpdateList?.();
+    });
+
+    await waitFor(() => {
+      expect(getLastExpensesWithPaginate).toHaveBeenCalledWith(
+        expect.objectContaining({ page: 1 })
+      );
+    });
+
+    getLastExpensesWithPaginate.mockClear();
+
+    await act(async () => {
+      flatList.props.onEndReached();
+    });
+
+    await waitFor(() => {
+      expect(getLastExpensesWithPaginate).toHaveBeenCalledWith(
+        expect.objectContaining({ page: 2 })
       );
     });
   });

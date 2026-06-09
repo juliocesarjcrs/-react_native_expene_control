@@ -16,7 +16,6 @@ import { NumberFormat } from '~/utils/Helpers';
 import { useThemeColors } from '~/customHooks/useThemeColors';
 import { SMALL } from '~/styles/fonts';
 
-
 interface IncompleteCardProps {
   summary: ProductSummary;
   purchases: ProductPrice[];

@@ -8,8 +8,8 @@ import {
   StyleSheet,
   Alert,
   ActivityIndicator,
-  KeyboardAvoidingView,
-  Platform
+  TouchableWithoutFeedback,
+  Keyboard
 } from 'react-native';
 import { Icon } from 'react-native-elements';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -39,6 +39,9 @@ const MultiExpenseModal: React.FC<MultiExpenseModalProps> = ({
   const [categories, setCategories] = useState<CategoryDropdown[]>([]);
   const [loading, setLoading] = useState(false);
   const [isDropdownOpen, setIsDropdownOpen] = useState<number | null>(null);
+
+  // ── Refs ─────────────────────────────────────────────────────────
+  const initialExpensesRef = React.useRef(initialExpenses);
 
   const handleBack = useCallback(() => {
     onClose(expenses); // Pasa los productos editados al cerrar
@@ -94,13 +97,6 @@ const MultiExpenseModal: React.FC<MultiExpenseModalProps> = ({
     }
   }, [transformCategories]);
 
-  useEffect(() => {
-    if (visible) {
-      setExpenses(initialExpenses.length > 0 ? [...initialExpenses] : [createNewExpense()]);
-      loadCategories();
-    }
-  }, [visible, initialExpenses, loadCategories]);
-
   const createNewExpense = (): ExpenseModal => ({
     cost: 0,
     description: '',
@@ -108,6 +104,20 @@ const MultiExpenseModal: React.FC<MultiExpenseModalProps> = ({
     subcategoryId: null,
     date: new Date()
   });
+  // Justo antes del useEffect anterior
+  React.useEffect(() => {
+    initialExpensesRef.current = initialExpenses;
+  }, [initialExpenses]);
+
+  // ✅ DESPUÉS - solo reaccionar al cambio de visible
+
+  useEffect(() => {
+    if (!visible) return;
+
+    const initial = initialExpensesRef.current;
+    setExpenses(initial.length > 0 ? [...initial] : [createNewExpense()]);
+    loadCategories();
+  }, [visible, loadCategories]); // initialExpenses fuera de deps, accedido por ref
 
   const handleAddExpense = useCallback(() => {
     setExpenses((prev) => [...prev, createNewExpense()]);
@@ -130,12 +140,25 @@ const MultiExpenseModal: React.FC<MultiExpenseModalProps> = ({
     );
   }, [expenses]);
 
+  // ✅ Declarar ANTES de handleSave, y convertir a useCallback para estabilidad
+
+  const transformToCreatePayload = useCallback(
+    (expenses: ExpenseModal[]): CreateExpensePayload[] => {
+      return expenses.map((expense) => ({
+        cost: expense.cost,
+        date: DateFormat(new Date(), 'YYYY-MM-DD'),
+        subcategoryId: expense.subcategoryId || 0,
+        commentary: expense.description || ''
+      }));
+    },
+    [] // sin dependencias, es una transformación pura
+  );
+
   const handleSave = useCallback(() => {
     if (!validateExpenses()) {
       Alert.alert('Validación', 'Complete todos los campos requeridos');
       return;
     }
-
     // Validación adicional para subcategoryId
     const isValid = expenses.every((exp) => exp.subcategoryId !== null);
     if (!isValid) {
@@ -145,88 +168,78 @@ const MultiExpenseModal: React.FC<MultiExpenseModalProps> = ({
 
     onSave(transformToCreatePayload(expenses));
   }, [expenses, validateExpenses, onSave]);
-  const transformToCreatePayload = (expenses: ExpenseModal[]): CreateExpensePayload[] => {
-    return expenses.map((expense) => ({
-      cost: expense.cost,
-      date: DateFormat(new Date(), 'YYYY-MM-DD'),
-      subcategoryId: expense.subcategoryId || 0,
-      commentary: expense.description || ''
-    }));
-  };
 
   return (
-    <Modal visible={visible} animationType="slide" transparent>
-      <KeyboardAvoidingView
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-        style={styles.keyboardAvoidingView}
-      >
+    <Modal visible={visible} animationType="slide" transparent onRequestClose={handleBack}>
+      {/* TouchableWithoutFeedback cierra teclado al tocar fuera de inputs */}
+      <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
         <View style={styles.modalContainer}>
-          <View style={styles.modalContent}>
-            <ProductsHeader
-              title="Registrar Gastos"
-              count={expenses.length}
-              onClose={handleBack}
-              imageUri={imageUri}
-            />
-            <Text style={styles.total}>Total:{NumberFormat(totalAmount)}</Text>
+          <TouchableWithoutFeedback>
+            {/* Este segundo TWF evita que el tap en el contenido propague al dismiss */}
+            <View style={styles.modalContent}>
+              <ProductsHeader
+                title="Registrar Gastos"
+                count={expenses.length}
+                onClose={handleBack}
+                imageUri={imageUri}
+              />
+              <Text style={styles.total}>Total: {NumberFormat(totalAmount)}</Text>
 
-            {loading ? (
-              <View style={styles.loadingContainer}>
-                <ActivityIndicator size="large" />
-                <Text>Cargando categorías...</Text>
-              </View>
-            ) : (
-              <>
-                <ScrollView
-                  style={styles.scrollContainer}
-                  contentContainerStyle={styles.scrollContent}
-                  nestedScrollEnabled={true} // Importante para scroll anidado
-                >
-                  {expenses.length > 0 ? (
-                    expenses.map((expense, index) => (
-                      <ExpenseItem
-                        key={`expense-${index}`}
-                        item={expense}
-                        index={index}
-                        categories={categories}
-                        onRemove={handleRemoveExpense}
-                        onUpdate={updateExpenseField}
-                        isDropdownOpen={isDropdownOpen}
-                        setIsDropdownOpen={setIsDropdownOpen}
-                      />
-                    ))
-                  ) : (
-                    <Text style={styles.emptyText}>No hay gastos para mostrar</Text>
-                  )}
-                </ScrollView>
-
-                <View style={styles.footer}>
-                  <TouchableOpacity style={styles.addButton} onPress={handleAddExpense}>
-                    <Icon name="add" color="#fff" size={18} />
-                    <Text style={styles.addButtonText}>Agregar</Text>
-                  </TouchableOpacity>
-
-                  <TouchableOpacity
-                    style={[styles.saveButton, !validateExpenses() && styles.disabledButton]}
-                    onPress={handleSave}
-                    disabled={!validateExpenses()}
-                  >
-                    <Text style={styles.saveButtonText}>Guardar ({expenses.length})</Text>
-                  </TouchableOpacity>
+              {loading ? (
+                <View style={styles.loadingContainer}>
+                  <ActivityIndicator size="large" />
+                  <Text>Cargando categorías...</Text>
                 </View>
-              </>
-            )}
-          </View>
+              ) : (
+                <>
+                  <ScrollView
+                    style={styles.scrollContainer}
+                    contentContainerStyle={styles.scrollContent}
+                    nestedScrollEnabled
+                    keyboardShouldPersistTaps="handled" // ← importante para dropdowns
+                  >
+                    {expenses.length > 0 ? (
+                      expenses.map((expense, index) => (
+                        <ExpenseItem
+                          key={`expense-${index}`}
+                          item={expense}
+                          index={index}
+                          categories={categories}
+                          onRemove={handleRemoveExpense}
+                          onUpdate={updateExpenseField}
+                          isDropdownOpen={isDropdownOpen}
+                          setIsDropdownOpen={setIsDropdownOpen}
+                        />
+                      ))
+                    ) : (
+                      <Text style={styles.emptyText}>No hay gastos para mostrar</Text>
+                    )}
+                  </ScrollView>
+
+                  <View style={styles.footer}>
+                    <TouchableOpacity style={styles.addButton} onPress={handleAddExpense}>
+                      <Icon name="add" color="#fff" size={18} />
+                      <Text style={styles.addButtonText}>Agregar</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                      style={[styles.saveButton, !validateExpenses() && styles.disabledButton]}
+                      onPress={handleSave}
+                      disabled={!validateExpenses()}
+                    >
+                      <Text style={styles.saveButtonText}>Guardar ({expenses.length})</Text>
+                    </TouchableOpacity>
+                  </View>
+                </>
+              )}
+            </View>
+          </TouchableWithoutFeedback>
         </View>
-      </KeyboardAvoidingView>
+      </TouchableWithoutFeedback>
     </Modal>
   );
 };
 
 const styles = StyleSheet.create({
-  keyboardAvoidingView: {
-    flex: 1
-  },
   modalContainer: {
     flex: 1,
     backgroundColor: 'rgba(0,0,0,0.5)',

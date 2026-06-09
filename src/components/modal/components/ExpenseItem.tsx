@@ -14,35 +14,42 @@ const ExpenseItem: React.FC<ExpenseItemProps> = ({
 }) => {
   const [isCategoryOpen, setIsCategoryOpen] = useState(false);
   const [isSubcategoryOpen, setIsSubcategoryOpen] = useState(false);
-  const [initialDescriptionProcessed, setInitialDescriptionProcessed] = useState(false);
+  const categorizationDoneRef = React.useRef(false);
 
   useEffect(() => {
-    if (item.description && !initialDescriptionProcessed && !item.categoryId) {
-      const { categoryId, subcategoryId } = categorizeExpense(item.description, categories);
-
-      if (categoryId) {
-        onUpdate(index, 'categoryId', categoryId);
-      }
-      if (subcategoryId) {
-        onUpdate(index, 'subcategoryId', subcategoryId);
-      }
-
-      setInitialDescriptionProcessed(true);
+    if (categorizationDoneRef.current) return; // guard síncrono
+    if (!item.description || item.categoryId) {
+      categorizationDoneRef.current = true;
+      return;
     }
-  }, [item.description, item.categoryId, categories, index, onUpdate, initialDescriptionProcessed]);
+
+    const { categoryId, subcategoryId } = categorizeExpense(item.description, categories);
+    categorizationDoneRef.current = true; // marcar ANTES de llamar onUpdate
+
+    if (categoryId) onUpdate(index, 'categoryId', categoryId);
+    if (subcategoryId) onUpdate(index, 'subcategoryId', subcategoryId);
+  }, []); // sin dependencias: solo al montar
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  // ✅ DESPUÉS - ref para trackear cambio real de categoría
+  const prevCategoryRef = React.useRef<number | null>(item.categoryId);
 
   useEffect(() => {
-    if (item.categoryId && item.subcategoryId) {
-      const currentCategory = categories.find((c) => c.value === item.categoryId);
-      const isValidSubcategory = currentCategory?.subcategories?.some(
-        (s) => s.value === item.subcategoryId
-      );
-      if (!isValidSubcategory) {
-        onUpdate(index, 'subcategoryId', null);
-      }
-    }
-  }, [item.categoryId, item.subcategoryId, categories, index, onUpdate]);
+    const prevCategory = prevCategoryRef.current;
+    prevCategoryRef.current = item.categoryId;
 
+    // Solo actuar si la categoría realmente cambió por acción del usuario
+    if (prevCategory === null || prevCategory === item.categoryId) return;
+    if (!item.subcategoryId) return; // ya está limpio
+
+    // Verificar si la subcategoría actual es válida para la nueva categoría
+    const currentCategory = categories.find((c) => c.value === item.categoryId);
+    const isValid = currentCategory?.subcategories?.some((s) => s.value === item.subcategoryId);
+
+    if (!isValid) {
+      onUpdate(index, 'subcategoryId', null);
+    }
+  }, [item.categoryId]); // ← solo categoryId, no subcategoryId ni onUpdate
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   const transformedCategories = useMemo(() => {
     return categories.map((cat) => ({
       label: cat.label,

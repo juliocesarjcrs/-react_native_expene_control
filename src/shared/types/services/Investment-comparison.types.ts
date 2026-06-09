@@ -263,13 +263,13 @@ export interface ExistingPropertyResult {
     cashOnCashReturn: number; // % retorno sobre inversión inicial
 
     // Flujo por año
-    yearlyBreakdown: Array<{
+    yearlyBreakdown: {
       year: number;
       grossRent: number;
       expenses: number;
       netCashFlow: number;
       propertyValue: number;
-    }>;
+    }[];
   };
 
   // OPCIÓN B: VENDER Y CDT (si compareWithSale = true)

@@ -195,7 +195,7 @@ export const parseFamilyAidCommentary = (
 /** Total ayudado por persona en el período */
 export const getTotalByPerson = (
   data: FamilyAidData[]
-): Array<{ person: string; total: number; count: number }> => {
+): { person: string; total: number; count: number }[] => {
   const map = new Map<string, { total: number; count: number }>();
 
   for (const item of data) {

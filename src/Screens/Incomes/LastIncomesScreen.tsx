@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import { FlatList, StyleSheet, Text, View } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context'
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { getLastIncomesWithPaginate } from '../../services/incomes';
 
 import { useDispatch, useSelector } from 'react-redux';
@@ -53,43 +53,6 @@ export default function LastIncomesScreen({ navigation }: LastIncomesScreenProps
   const prevQuery = usePrevious(query);
   const isFirstRender = React.useRef(true);
 
-  useFocusEffect(
-    React.useCallback(() => {
-      // Refresca la lista cada vez que el screen gana foco
-      fetchData(1, true);
-    }, [query])
-  );
-  // Resetear query solo al montar
-  useEffect(() => {
-    dispatch(setQuery(null));
-  }, []);
-
-  // Manejar cambios de búsqueda (query)
-  useEffect(() => {
-    if (isFirstRender.current) {
-      isFirstRender.current = false;
-      // Si el query es distinto de null, espera a que el reset lo limpie
-      if (query !== null) {
-        return;
-      }
-    }
-    // Reinicia todos los flags de paginación y datos
-    setLastIncomes([]);
-    setPage(1);
-    setStopeFetch(false);
-    setLoadingFotter(false);
-    fetchData(1, true);
-  }, [query]);
-
-  // Manejar paginación (solo si no es búsqueda nueva)
-  useEffect(() => {
-    if (page > 1 && query !== null) {
-      fetchData(page, false); // false: no reset
-    } else if (page > 1 && query === null) {
-      fetchData(page, false);
-    }
-  }, [page]);
-
   // fetchData recibe page y reset flag
   const fetchData = useCallback(
     async (pageToFetch: number, reset: boolean) => {
@@ -119,6 +82,42 @@ export default function LastIncomesScreen({ navigation }: LastIncomesScreenProps
     },
     [query, lastIncomes, prevQuery, stopeFetch]
   );
+  useFocusEffect(
+    React.useCallback(() => {
+      // Refresca la lista cada vez que el screen gana foco
+      fetchData(1, true);
+    }, [query])
+  );
+  // Resetear query solo al montar
+  useEffect(() => {
+    dispatch(setQuery(null));
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Manejar cambios de búsqueda (query)
+  useEffect(() => {
+    if (isFirstRender.current) {
+      isFirstRender.current = false;
+      // Si el query es distinto de null, espera a que el reset lo limpie
+      if (query !== null) {
+        return;
+      }
+    }
+    // Reinicia todos los flags de paginación y datos
+    setLastIncomes([]);
+    setPage(1);
+    setStopeFetch(false);
+    setLoadingFotter(false);
+    fetchData(1, true);
+  }, [query]);
+
+  // Manejar paginación (solo si no es búsqueda nueva)
+  useEffect(() => {
+    if (page > 1 && query !== null) {
+      fetchData(page, false); // false: no reset
+    } else if (page > 1 && query === null) {
+      fetchData(page, false);
+    }
+  }, [page]);
 
   // Paginador
   const loadMoreData = () => {
@@ -134,9 +133,7 @@ export default function LastIncomesScreen({ navigation }: LastIncomesScreenProps
   };
 
   return (
-    <SafeAreaView
-      style={[commonStyles.screenContentWithPadding, { backgroundColor: colors.BACKGROUND }]}
-    >
+    <SafeAreaView style={[commonStyles.screenContent, { backgroundColor: colors.BACKGROUND }]}>
       <ScreenHeader title={config.title} subtitle={config.subtitle} />
       <FlatList
         testID="flatlist-incomes"

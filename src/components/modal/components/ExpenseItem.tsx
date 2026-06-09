@@ -28,8 +28,9 @@ const ExpenseItem: React.FC<ExpenseItemProps> = ({
 
     if (categoryId) onUpdate(index, 'categoryId', categoryId);
     if (subcategoryId) onUpdate(index, 'subcategoryId', subcategoryId);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []); // sin dependencias: solo al montar
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+
   // ✅ DESPUÉS - ref para trackear cambio real de categoría
   const prevCategoryRef = React.useRef<number | null>(item.categoryId);
 
@@ -48,8 +49,9 @@ const ExpenseItem: React.FC<ExpenseItemProps> = ({
     if (!isValid) {
       onUpdate(index, 'subcategoryId', null);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [item.categoryId]); // ← solo categoryId, no subcategoryId ni onUpdate
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+
   const transformedCategories = useMemo(() => {
     return categories.map((cat) => ({
       label: cat.label,

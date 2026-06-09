@@ -37,26 +37,26 @@ export default function MyStack() {
   const dispatch: AppDispatch = useDispatch();
   const isAuth = useSelector((state: RootState) => state.auth.isAuth);
   useEffect(() => {
+    const getData = async () => {
+      try {
+        dispatch(setLoadingAuth(true));
+        const jsonValue = await AsyncStorage.getItem('user');
+        const user: UserModel | null = jsonValue != null ? JSON.parse(jsonValue) : null;
+        if (user && user.id) {
+          const { data } = await getUser(user.id);
+          dispatch(setLoadingAuth(false));
+          dispatch(setUser(data));
+          dispatch(setIsAuth(true));
+        }
+        dispatch(setLoadingAuth(false));
+      } catch (e) {
+        dispatch(setLoadingAuth(false));
+        showError(e);
+      }
+    };
     getData();
   }, []);
 
-  const getData = async () => {
-    try {
-      dispatch(setLoadingAuth(true));
-      const jsonValue = await AsyncStorage.getItem('user');
-      const user: UserModel | null = jsonValue != null ? JSON.parse(jsonValue) : null;
-      if (user && user.id) {
-        const { data } = await getUser(user.id);
-        dispatch(setLoadingAuth(false));
-        dispatch(setUser(data));
-        dispatch(setIsAuth(true));
-      }
-      dispatch(setLoadingAuth(false));
-    } catch (e) {
-      dispatch(setLoadingAuth(false));
-      showError(e);
-    }
-  };
   const Stack = createStackNavigator();
 
   const ExpenseStack = createStackNavigator<ExpenseStackParamList>();

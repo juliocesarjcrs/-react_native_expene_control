@@ -79,7 +79,7 @@ export const SYNONYM_GROUPS: [string, string[]][] = [
   ['Berenjena', ['berenjena', 'verenjena']],
   ['Espinaca', ['espinaca', 'espinaca bogotan', 'manojo de espinaca', 'espinaa']],
   ['Acelga', ['acelga']],
-  ['Coliflor', ['coliflor', 'coliflor 661', 'cloliflor', 'Coli Vinipela','Coliflor Vinipel']],
+  ['Coliflor', ['coliflor', 'coliflor 661', 'cloliflor', 'Coli Vinipela', 'Coliflor Vinipel']],
   ['Brocoli', ['brocoli', 'brócoli', 'Br4coli Vinipela']],
   ['Repollo', ['repollo blanco', 'repollo verde', 'repollo morado', 'repollo']],
   ['Rábano', ['rabano rojo', 'rábano rojo', 'rabano']],

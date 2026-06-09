@@ -74,12 +74,12 @@ export interface InvalidateCacheResponse {
 export interface ExportConfigsResponse {
   exported_at: string;
   count: number;
-  configurations: Array<{
+  configurations: {
     config_key: string;
     config_value: any;
     description: string | null;
     version: number;
-  }>;
+  }[];
 }
 
 /**

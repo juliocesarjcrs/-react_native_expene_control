@@ -107,7 +107,6 @@ export function calculateSavings(input: SavingsCalculationInput): SavingsCalcula
   let currentBalance = initialCapital;
   let totalGrossEarnings = 0;
   let totalWithholdingAmount = 0;
-  let daysAboveThreshold = 0;
 
   for (let day = 1; day <= totalDays; day++) {
     // Agregar aporte mensual cada ~30 días
@@ -125,7 +124,6 @@ export function calculateSavings(input: SavingsCalculationInput): SavingsCalcula
       // Aplicar retención solo sobre el interés de este día
       dailyWithholding = dailyInterest * withholdingTaxDecimal;
       totalWithholdingAmount += dailyWithholding;
-      daysAboveThreshold++;
     }
 
     // Sumar al saldo el interés neto (interés - retención)

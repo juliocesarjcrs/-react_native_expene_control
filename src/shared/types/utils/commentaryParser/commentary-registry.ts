@@ -183,5 +183,5 @@ export const getRegistryEntry = (
   COMMENTARY_REGISTRY.find((e) => e.parserType === parserType);
 
 /** Devuelve todas las rutas registradas. Útil para validar StatisticsStackParamList. */
-export const getRegisteredRoutes = (): Array<keyof StatisticsStackParamList> =>
+export const getRegisteredRoutes = (): (keyof StatisticsStackParamList)[] =>
   COMMENTARY_REGISTRY.map((e) => e.route);

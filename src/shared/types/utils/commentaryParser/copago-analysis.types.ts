@@ -26,7 +26,7 @@ export type CopagoServiceType =
   | 'otorrino'
   | 'medicina_dolor'
   | 'laboratorio'
-  | 'imagenologia'  // (resonancia, gammagrafía, RX, TAC
+  | 'imagenologia' // (resonancia, gammagrafía, RX, TAC
   | 'otro';
 
 export interface CopagoData {

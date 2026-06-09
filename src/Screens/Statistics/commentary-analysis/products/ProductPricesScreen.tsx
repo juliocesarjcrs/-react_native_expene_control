@@ -57,7 +57,7 @@ export default function ProductPricesScreen({ navigation }: ScreenProps) {
   } = useProductData();
 
   // Hook de expansión de cards
-  const { isExpanded, toggleExpanded, collapseAll } = useProductExpansion();
+  const { isExpanded, toggleExpanded } = useProductExpansion();
 
   // Estado del modal
   const [selectedPurchase, setSelectedPurchase] = useState<ProductPrice | null>(null);

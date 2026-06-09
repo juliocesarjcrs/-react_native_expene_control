@@ -51,7 +51,7 @@ function findProblematicField(obj: any, path: string = 'root', depth: number = 0
     obj.forEach((item, index) => {
       try {
         JSON.stringify(item);
-      } catch (err) {
+      } catch {
         console.error(`  ${'  '.repeat(depth)}❌ ${path}[${index}]`);
         if (typeof item === 'object' && item !== null) {
           findProblematicField(item, `${path}[${index}]`, depth + 1);
@@ -65,7 +65,7 @@ function findProblematicField(obj: any, path: string = 'root', depth: number = 0
     Object.keys(obj).forEach((key) => {
       try {
         JSON.stringify(obj[key]);
-      } catch (err) {
+      } catch {
         console.error(`  ${'  '.repeat(depth)}❌ ${path}.${key}`);
 
         const value = obj[key];
@@ -92,7 +92,7 @@ function findProblematicField(obj: any, path: string = 'root', depth: number = 0
               }
               return val;
             });
-          } catch (circularErr) {
+          } catch {
             console.log(`  ${'  '.repeat(depth + 1)}⚠️ Referencia circular detectada`);
           }
 

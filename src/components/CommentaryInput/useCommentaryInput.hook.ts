@@ -5,10 +5,7 @@ import {
   RecentExpenseForSuggestion,
   CommentaryValidationResult
 } from '~/shared/types/screens/settings/commentary-templates.types';
-import {
-  getDefaultTemplateConfig,
-  validateCommentary
-} from '../../utils/commentary/commentaryTemplates.utils';
+import { validateCommentary } from '../../utils/commentary/commentaryTemplates.utils';
 import {
   getCachedHistory,
   mergeHistorySuggestions,

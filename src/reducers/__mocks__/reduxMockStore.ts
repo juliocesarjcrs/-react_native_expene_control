@@ -1,4 +1,4 @@
-import configureStore from 'redux-mock-store';
+import createMockStoreFactory from 'redux-mock-store';
 
 // Default initial state for searchExpenses reducer
 export const initialSearchExpensesState = {
@@ -11,7 +11,7 @@ export const initialRootState = {
   search: initialSearchExpensesState
 };
 
-const mockStore = configureStore([]);
+const mockStore = createMockStoreFactory([]);
 
 export function createMockStore(state = initialRootState) {
   return mockStore(state);

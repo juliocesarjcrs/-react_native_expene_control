@@ -14,10 +14,7 @@
  *   "Nuevo valor apt 1004 Mirador Villa Verde"
  */
 
-import {
-  RentData,
-  RentPaymentType
-} from '~/shared/types/utils/commentaryParser/rent-analysis.types';
+import { RentData } from '~/shared/types/utils/commentaryParser/rent-analysis.types';
 
 // ─────────────────────────────────────────────
 // HELPERS

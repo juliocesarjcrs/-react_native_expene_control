@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import {
   View,
   Text,
@@ -52,11 +52,7 @@ const ReceiptScanner: React.FC<ReceiptScannerProps> = () => {
   const [receiptType, setReceiptType] = useState<ReceiptType | ''>('');
   const [customReceiptType, setCustomReceiptType] = useState<string>('');
 
-  useEffect(() => {
-    updateCsvRowCount();
-  }, []);
-
-  const updateCsvRowCount = async () => {
+  const updateCsvRowCount = useCallback(async () => {
     try {
       const file = new File(Paths.document, fileName);
       if (file.exists) {
@@ -70,7 +66,13 @@ const ReceiptScanner: React.FC<ReceiptScannerProps> = () => {
       console.log('Error contando filas CSV:', e);
       setCsvRows(0);
     }
-  };
+  }, []); // fileName es constante de módulo, no necesita ir en deps
+
+  useEffect(() => {
+    void (async () => {
+      await updateCsvRowCount();
+    })();
+  }, [updateCsvRowCount]);
 
   const processImage = async (base64: string, mock: boolean = false) => {
     setLoading(true);

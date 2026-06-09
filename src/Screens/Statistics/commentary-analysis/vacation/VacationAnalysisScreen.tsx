@@ -12,7 +12,7 @@ import { Icon } from 'react-native-elements';
 // Components
 import { ScreenHeader } from '~/components/ScreenHeader';
 import MyLoading from '~/components/loading/MyLoading';
-import MultiSubcategoryFilter, { MultiAnalysisFilters } from '../components/MultiSubcategoryFilter';
+import MultiSubcategoryFilter from '../components/MultiSubcategoryFilter';
 import EditCommentaryModal from '../components/EditCommentaryModal';
 import DestinationSummaryCard from './components/DestinationSummaryCard';
 import LodgingComparisonCard from './components/LodgingComparisonCard';

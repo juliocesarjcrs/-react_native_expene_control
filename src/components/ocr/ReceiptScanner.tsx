@@ -62,8 +62,7 @@ const ReceiptScanner: React.FC<ReceiptScannerProps> = () => {
       } else {
         setCsvRows(0);
       }
-    } catch (e) {
-      console.log('Error contando filas CSV:', e);
+    } catch {
       setCsvRows(0);
     }
   }, []); // fileName es constante de módulo, no necesita ir en deps
@@ -123,8 +122,7 @@ const ReceiptScanner: React.FC<ReceiptScannerProps> = () => {
       );
 
       Alert.alert('Éxito', 'Gastos guardados correctamente');
-    } catch (error) {
-      console.error('Error al guardar gastos:', error);
+    } catch {
       Alert.alert('Error', 'No se pudieron guardar los gastos');
     }
   };

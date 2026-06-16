@@ -1,5 +1,7 @@
 module.exports = function (api) {
-  api.cache(true);
+  const isTest = api.env('test');
+  api.cache(!isTest);
+
   return {
     presets: ['babel-preset-expo'],
     plugins: [
@@ -13,7 +15,7 @@ module.exports = function (api) {
       [
         'module:react-native-dotenv',
         {
-          envName: 'APP_ENV',
+          envName: 'APP_ENV_NAME',
           moduleName: '@env',
           path: '.env',
           blocklist: null,
@@ -22,7 +24,9 @@ module.exports = function (api) {
           allowUndefined: true
         }
       ],
-      'react-native-reanimated/plugin'
+      'react-native-reanimated/plugin',
+      // Sentry no es compatible con el entorno de Jest
+      // ...(!isTest ? ['@sentry/react-native/expo'] : [])
     ]
   };
 };

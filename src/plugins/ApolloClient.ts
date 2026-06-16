@@ -12,7 +12,6 @@ const httpLink = new HttpLink({
 const errorLink = new ErrorLink(({ error, result }) => {
   // En v4, todos los errores se unifican en la propiedad 'error'
   if (error) {
-    console.log(`[Error]: ${error.message}`);
     // Muestra el error específico según su tipo
     const errorMessage = error.message || 'Error desconocido';
     showToast(errorMessage);

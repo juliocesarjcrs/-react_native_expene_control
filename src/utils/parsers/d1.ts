@@ -77,7 +77,6 @@ export function parseD1(
   joined: string,
   existingCanonicals: string[] = []
 ): Product[] {
-  console.log('📄 Procesando como tipo D1...');
   const products: Product[] = [];
 
   for (let i = 0; i < lines.length; i++) {

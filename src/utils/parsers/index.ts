@@ -23,27 +23,19 @@ export function extractProducts(ocr: string, storeHint?: 'Carulla' | 'Exito'): P
   const isSuperCarnes = isSuperCarnesJH(ocr);
   const isFruver = isFruverLaGranja(ocr);
 
-  console.log('🧾 OCR:', joined.slice(0, 300));
   if (isFruver) {
-    console.log('🍎 isFruverLaGranja:', isFruver);
     return parseFruverLaGranja(lines, joined);
   } else if (isSuperCarnes) {
-    console.log('🥩 isSuperCarnesJH:', isSuperCarnes);
     return parseSuperCarnesJH(lines, joined);
   } else if (isCruzVerde) {
-    console.log('🔍 isCruzVerde:', isCruzVerde);
     return parseCruzVerde(lines);
   } else if (isCarulla) {
-    console.log('🔍 isCarulla:', isCarulla, storeHint ? `(hint: ${storeHint})` : '');
     return parseCarulla(lines, joined, [], storeHint);
   } else if (isD1) {
-    console.log('🔍 isD1:', isD1);
     return parseD1(lines, joined);
   } else if (isDollarCity) {
-    console.log('🔍 isDollarCity:', isDollarCity);
     return parseDollarCity(lines);
   } else if (isAra) {
-    console.log('🔍 isAra:', isAra);
     return parseAra(lines);
   } else {
     return parseGeneric(lines, joined);

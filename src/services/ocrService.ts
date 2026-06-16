@@ -25,7 +25,6 @@ export const callOCRSpaceAPI = async (params: OCRSpaceParams): Promise<OCRSpaceR
 
     return await response.json();
   } catch (error) {
-    console.error('Error calling OCR.space API:', error);
     throw error;
   }
 };

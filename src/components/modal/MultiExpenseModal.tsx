@@ -89,8 +89,7 @@ const MultiExpenseModal: React.FC<MultiExpenseModalProps> = ({
         [CACHE_KEY, JSON.stringify(data.data)],
         [`${CACHE_KEY}_time`, Date.now().toString()]
       ]);
-    } catch (error) {
-      console.error('Error loading categories:', error);
+    } catch {
       Alert.alert('Error', 'No se pudieron cargar las categorías');
     } finally {
       setLoading(false);

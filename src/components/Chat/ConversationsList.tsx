@@ -47,7 +47,6 @@ export function ConversationsList({ onSelect }: ConversationsListProps) {
               setShowMenu(false);
               setSelectedConversation(null);
             } catch (error) {
-              console.error('Error al eliminar la conversación:', error);
               Alert.alert('Error', 'No se pudo eliminar la conversación');
             }
           }

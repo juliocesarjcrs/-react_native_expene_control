@@ -108,23 +108,18 @@ export const InvestmentComparisonProvider: React.FC<Props> = ({ children }) => {
       switch (type) {
         case ScenarioType.SAVINGS:
           newScenarios.savings = scenario as SavingsScenario;
-          console.log('✅ Escenario de Ahorro guardado:', scenario.name);
           break;
         case ScenarioType.FUTURE_PROPERTY:
           newScenarios.futureProperty = scenario as FuturePropertyScenario;
-          console.log('✅ Escenario Vivienda a Futuro guardado:', scenario.name);
           break;
         case ScenarioType.IMMEDIATE_RENT:
           newScenarios.immediateRent = scenario as ImmediateRentScenario;
-          console.log('✅ Escenario Compra Inmediata guardado:', scenario.name);
           break;
         case ScenarioType.EXISTING_PROPERTY:
           newScenarios.existingProperty = scenario as ExistingPropertyScenario;
-          console.log('✅ Escenario Propiedad Existente guardado:', scenario.name);
           break;
 
         default:
-          console.warn('⚠️ Tipo de escenario desconocido:', type);
           return prevState;
       }
 
@@ -174,7 +169,6 @@ export const InvestmentComparisonProvider: React.FC<Props> = ({ children }) => {
           break;
       }
 
-      console.log('🗑️ Escenario eliminado:', type);
       return {
         ...prev,
         scenarios: newScenarios
@@ -192,7 +186,6 @@ export const InvestmentComparisonProvider: React.FC<Props> = ({ children }) => {
         existingProperty: null
       }
     }));
-    console.log('🔄 Todos los escenarios eliminados');
   };
 
   // ============================================

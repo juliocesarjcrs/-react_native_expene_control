@@ -16,8 +16,6 @@ export function parseFruverLaGranja(
   joined: string,
   existingCanonicals: string[] = []
 ): Product[] {
-  console.log('🍎 Procesando como tipo Fruver La Granja...');
-
   const products: Product[] = [];
 
   for (let i = 0; i < lines.length; i++) {

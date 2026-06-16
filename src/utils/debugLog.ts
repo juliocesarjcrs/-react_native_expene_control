@@ -5,7 +5,6 @@ const MAX_ENTRIES = 300;
 
 export const debugLog = async (tag: string, data: Record<string, unknown>) => {
   if (__DEV__) {
-    console.log(`[${tag}]`, data);
     return;
   }
   try {

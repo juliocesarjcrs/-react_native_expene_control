@@ -12,7 +12,6 @@ export const ModelStatusIndicator = () => {
         const data = await getCurrentModel();
         setModel(data);
       } catch (error) {
-        console.error('Error loading model:', error);
       } finally {
         setLoading(false);
       }

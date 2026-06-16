@@ -576,8 +576,7 @@ export const parseProductCommentary = (
       isWeighed,
       isIncomplete: true
     };
-  } catch (error) {
-    console.error('Error parsing product commentary:', error, { commentary, cost });
+  } catch {
     return null;
   }
 };

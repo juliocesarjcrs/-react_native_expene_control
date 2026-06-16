@@ -158,8 +158,7 @@ export const parseCopagoCommentary = (
       totalSessions,
       hasSessions: sessionNumber !== undefined
     };
-  } catch (error) {
-    console.error('Error parsing copago commentary:', error);
+  } catch {
     return null;
   }
 };

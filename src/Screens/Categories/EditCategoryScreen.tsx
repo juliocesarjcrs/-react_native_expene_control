@@ -52,10 +52,6 @@ export default function EditCategoryScreen({ route }: EditCategoryScreenProps) {
   const [icon, setIcon] = useState('home');
   const [loading, setLoading] = useState(false);
 
-  useEffect(() => {
-    fetchData();
-  }, [reset]);
-
   const fetchData = async () => {
     try {
       const { data } = await getCategory(idCategory);
@@ -71,9 +67,11 @@ export default function EditCategoryScreen({ route }: EditCategoryScreenProps) {
       showError(e);
     }
   };
+  useEffect(() => {
+    fetchData();
+  }, [reset]);
 
   const onSubmit = async (payload: CategoryFormData) => {
-    console.log('[EditCategoryScreen] onSubmit payload:', payload);
     try {
       setLoading(true);
       const sendPayload: EditCategoryPayload = {

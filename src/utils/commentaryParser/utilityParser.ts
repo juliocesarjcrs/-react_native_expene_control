@@ -294,8 +294,7 @@ export const parseUtilityCommentary = (
       totalExtraPeople,
       notesForDisplay
     };
-  } catch (error) {
-    console.error('Error parsing utility commentary:', error);
+  } catch {
     return null;
   }
 };

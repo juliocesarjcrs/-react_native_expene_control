@@ -45,7 +45,6 @@ export const NumberFormat = (value: number | string): string => {
 
   // Opcional: validar por si el string no es número
   if (isNaN(num)) {
-    console.warn('NumberFormat recibió un valor no numérico:', value);
     return '$ 0';
   }
 

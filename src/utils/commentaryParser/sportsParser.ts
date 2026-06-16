@@ -144,8 +144,7 @@ export const parseSportsCommentary = (
     }
 
     return null;
-  } catch (error) {
-    console.error('Error parsing sports commentary:', error);
+  } catch {
     return null;
   }
 };

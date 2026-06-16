@@ -181,7 +181,6 @@ function limitProductsByTotal(products: Product[], joined: string): Product[] {
   if (totalMatch) {
     const totalProducts = parseInt(totalMatch[1], 10);
     if (totalProducts > 0 && products.length > totalProducts) {
-      console.log(`🔍 Limitando a ${totalProducts} productos según factura`);
       return products.slice(0, totalProducts);
     }
   }
@@ -196,8 +195,6 @@ export function parseSuperCarnesJH(
   joined: string,
   existingCanonicals: string[] = []
 ): Product[] {
-  console.log('🥩 Procesando como tipo Super Carnes JH...');
-
   const raw = isFormatoB(joined) ? processFormatoB(lines) : processFormatoA(lines);
 
   const limited = limitProductsByTotal(raw, joined);

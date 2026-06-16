@@ -240,9 +240,8 @@ export default function VirtualBudgetScreen({ navigation }: VirtualBudgetScreenP
       });
 
       setCategoryAverages(averagesMap);
-    } catch (error) {
+    } catch {
       // Silencioso - no mostrar error si falla la carga de promedios
-      console.error('Error loading current year averages:', error);
     }
   };
 

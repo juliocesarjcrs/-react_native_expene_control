@@ -98,8 +98,6 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
       // Actualizar lista de conversaciones después de enviar mensaje
       await loadConversations();
     } catch (err) {
-      console.error('Chat error:', err);
-
       // Mensaje amigable para el cuadro rojo del chat
       let errorMessage = 'No se pudo enviar el mensaje.';
 
@@ -135,8 +133,7 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
 
       setMessages(filteredMessages);
       setCurrentConversationId(conversationId);
-    } catch (err) {
-      console.error('Error loading conversation:', err);
+    } catch {
       setError('No se pudo cargar la conversación.');
     } finally {
       setIsLoading(false);
@@ -165,8 +162,7 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
 
       // response.data.data contiene el array de Conversation
       setConversations(response.data.data);
-    } catch (err) {
-      console.error('Error loading conversations:', err);
+    } catch {
       setError('No se pudieron cargar las conversaciones.');
     }
   };
@@ -184,8 +180,7 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
 
       // Recargar la lista de conversaciones
       await loadConversations();
-    } catch (err) {
-      console.error('Error deleting conversation:', err);
+    } catch {
       setError('No se pudo eliminar la conversación.');
     }
   };

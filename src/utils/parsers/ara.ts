@@ -5,8 +5,6 @@ import { formatSimpleProduct } from './helpers';
 const RECEIPT_TYPE: ReceiptType = 'Ara';
 
 export function parseAra(lines: string[]): Product[] {
-  console.log('📄 Procesando como tipo Ara...');
-
   const products: Product[] = [];
 
   // Regex que maneja ambos formatos:

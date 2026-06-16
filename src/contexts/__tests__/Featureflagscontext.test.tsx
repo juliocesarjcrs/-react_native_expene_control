@@ -308,7 +308,6 @@ describe('FeatureFlagsContext', () => {
 
   describe('useFeatureFlags hook', () => {
     it('should throw error when used outside provider', () => {
-      // Suppress console.error for this test
       const consoleError = jest.spyOn(console, 'error').mockImplementation(() => {});
 
       expect(() => {

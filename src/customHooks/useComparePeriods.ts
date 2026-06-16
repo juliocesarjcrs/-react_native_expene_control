@@ -14,8 +14,7 @@ export function useComparePeriods() {
     try {
       const response = await getComparePeriods(payload);
       setCompareResults(response.data);
-    } catch (error) {
-      console.error(error);
+    } catch {
     } finally {
       setIsLoading(false);
     }

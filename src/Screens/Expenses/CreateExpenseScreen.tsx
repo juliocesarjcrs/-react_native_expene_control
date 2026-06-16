@@ -48,22 +48,17 @@ import { screenConfigs } from '~/config/screenConfigs';
 
 // Hooks
 import { useFeatureFlag } from '~/contexts/FeatureFlagsContext';
+import { createLogger } from '~/utils/logger';
 
 export default function CreateExpenseScreen(): React.JSX.Element {
+  const log = createLogger('screen', 'CreateExpense');
   const config = screenConfigs.createExpense;
   const colors = useThemeColors();
   const selectJoinCategoryRef = useRef<any>(null);
 
   const month = useSelector((state: RootState) => state.date.month);
 
-  const {
-    handleSubmit,
-    control,
-    reset,
-    watch,
-    setValue,
-    formState: { errors }
-  } = useForm({
+  const { handleSubmit, control, reset, watch, setValue } = useForm({
     mode: 'onTouched'
   });
 
@@ -190,6 +185,7 @@ export default function CreateExpenseScreen(): React.JSX.Element {
       reset();
       Keyboard.dismiss();
     } catch (error) {
+      log.error('falid to save expense', error);
       setLoading(false);
       showError(error);
     }

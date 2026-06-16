@@ -91,8 +91,7 @@ export default function ComparisonResultsScreen({ navigation, route }: Props) {
 
       setResult({ comparison, recommendation });
       setLoading(false);
-    } catch (error) {
-      console.error('Error loading comparison:', error);
+    } catch {
       ShowToast('Error al cargar comparación');
       setLoading(false);
     }

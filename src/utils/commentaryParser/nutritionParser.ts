@@ -51,8 +51,7 @@ export const parseNutritionCommentary = (
       center: match[2].trim(),
       notes: match[3]?.trim() || undefined
     };
-  } catch (error) {
-    console.error('Error parsing nutrition commentary:', error);
+  } catch {
     return null;
   }
 };

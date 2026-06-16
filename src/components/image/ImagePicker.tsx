@@ -48,8 +48,7 @@ const ImagePickerComponent: React.FC<ImagePickerComponentProps> = ({
             if (manipResult.base64) {
               onImageSelected(manipResult.base64, manipResult.uri);
             }
-          } catch (error) {
-            console.error('Save error:', error);
+          } catch {
             onError('No se pudo procesar la imagen.');
           }
         }

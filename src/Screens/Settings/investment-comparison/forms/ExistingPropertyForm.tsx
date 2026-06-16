@@ -116,8 +116,7 @@ export const ExistingPropertyForm: React.FC<Props> = ({ colors, navigation, exis
         cdtRate: values.cdtRate || 9.4,
         apply4x1000: values.apply4x1000 || false
       });
-    } catch (error) {
-      console.error('Error en preview:', error);
+    } catch {
       return null;
     }
   }, [watchedValues]);

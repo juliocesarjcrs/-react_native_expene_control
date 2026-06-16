@@ -20,8 +20,6 @@ export class CalculationService {
   // ============================================
 
   static calculateSavingsScenario(scenario: SavingsScenario): SavingsResult {
-    console.log('🔵 [Calculation] Calculando Ahorro/Inversión...');
-
     try {
       const productType = (scenario as any).productType || 'cajitas';
 
@@ -70,7 +68,6 @@ export class CalculationService {
         };
       }
     } catch (error) {
-      console.error('🔴 [Calculation] ERROR en Savings:', error);
       throw error;
     }
   }
@@ -82,8 +79,6 @@ export class CalculationService {
   static calculateExistingPropertyScenario(
     scenario: ExistingPropertyScenario
   ): ExistingPropertyResult {
-    console.log('🔵 [Calculation] Calculando Propiedad Existente...');
-
     try {
       return calculateExistingProperty({
         initialInvestment: scenario.initialInvestment,
@@ -106,7 +101,6 @@ export class CalculationService {
         apply4x1000: scenario.apply4x1000
       });
     } catch (error) {
-      console.error('🔴 [Calculation] ERROR en ExistingProperty:', error);
       throw error;
     }
   }

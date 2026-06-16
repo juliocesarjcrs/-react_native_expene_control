@@ -121,8 +121,7 @@ export const parseTransportCommentary = (
     }
 
     return null;
-  } catch (error) {
-    console.error('Error parsing transport commentary:', error);
+  } catch {
     return null;
   }
 };

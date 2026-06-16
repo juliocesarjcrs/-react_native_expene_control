@@ -57,7 +57,6 @@ export default function LastIncomesScreen({ navigation }: LastIncomesScreenProps
   const fetchData = useCallback(
     async (pageToFetch: number, reset: boolean) => {
       try {
-        console.log('fetch incomes', pageToFetch);
         setLoadingFotter(true);
         const params = {
           take: 25,

@@ -182,8 +182,7 @@ export const parseFamilyAidCommentary = (
       months,
       year
     };
-  } catch (error) {
-    console.error('Error parsing family aid commentary:', error);
+  } catch {
     return null;
   }
 };

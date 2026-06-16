@@ -1,6 +1,7 @@
 import React from 'react';
+import * as Sentry from '@sentry/react-native';
 
-import store from './src/store/store';
+import appStore from './src/store/store';
 import { Provider } from 'react-redux';
 import { userSignOut } from './src/actions/authActions';
 import { ChatProvider } from './src/features/chat/ChatContext';
@@ -15,88 +16,72 @@ import client from './src/plugins/ApolloClient';
 import { ThemeProvider } from '~/contexts/ThemeContext';
 import { InvestmentComparisonProvider } from '~/contexts/InvestmentComparisonContext';
 import { ErrorBoundary } from '~/components/ErrorBoundary';
+import { logger } from '~/utils/logger';
+import { APP_ENV, SENTRY_DSN } from '@env';
+
+Sentry.init({
+  dsn: SENTRY_DSN,
+  environment: APP_ENV ?? 'development', // 'development' | 'preview' | 'production'
+  tracesSampleRate: APP_ENV === 'production' ? 0.2 : 1.0,
+  debug: __DEV__,
+  enableNative: true,
+});
 
 export type ApiError = {
   error: string;
 };
 
-export default function App() {
-  /** Intercept any unauthorized request.
-   * dispatch logout action accordingly
-   *  https://stackoverflow.com/questions/52946376/reactjs-axios-interceptors-how-dispatch-a-logout-action
-   **/
-  const { dispatch } = store; // direct access to redux store.
+function App() {
+  const { dispatch } = appStore;
 
   axiosInstance.interceptors.response.use(
-    function (response) {
-      return response;
-    },
-    async function (error) {
-      if (error && error.response) {
-        // console.log('----ERROR, INTERCEPT ---- ',error, );
-        // console.log(error.response);
-        const { status } = error.response;
-        const url = error.config?.url || '';
+    (response) => response,
+    async (error) => {
+      if (!error?.response) return Promise.reject(error);
 
-        // Excluir chatbot de toasts automáticos
-        const isChatbotError = url.includes('chatbot/');
+      const { status } = error.response;
+      const url = error.config?.url ?? '';
+      const isChatbotError = url.includes('chatbot/');
 
-        // Si el servidor respondió pero no cae en 400/401/403:
-        if (![400, 401, 403].includes(status) && !isChatbotError) {
-          const msg = error.response.data?.message || 'Error en el servidor';
-          ToastAndroid.show(msg, ToastAndroid.SHORT);
-        }
-        if (status === 401) {
-          dispatch(userSignOut());
-          await AsyncStorage.removeItem('access_token');
+      if (![400, 401, 403].includes(status) && !isChatbotError) {
+        const msg = error.response.data?.message ?? 'Error en el servidor';
+        ToastAndroid.show(msg, ToastAndroid.SHORT);
+        logger.error(`HTTP ${status} inesperado`, error, { url, status });
+      }
+
+      if (status === 401) {
+        dispatch(userSignOut());
+        await AsyncStorage.removeItem('access_token');
+        const message = formatError(error.response.data.message);
+        showToast(message);
+        logger.warn('Sesión expirada, usuario desconectado', { url });
+      } else if (status === 403) {
+        const message = error.response.data.message ?? 'Sin permisos';
+        showToast(message);
+        logger.warn('Acceso denegado 403', { url, message });
+      } else if (status === 400) {
+        if (isChatbotError) return Promise.reject(error);
+
+        if (error instanceof AxiosError) {
+          const apiError = error.response?.data as ApiError;
+          if (apiError?.error) {
+            showToast(apiError.error);
+            logger.warn('Error 400 del servidor', { url, apiError: apiError.error });
+          }
+        } else {
           const message = formatError(error.response.data.message);
           showToast(message);
-          // await AsyncStorage.setItem("access_token",null);
-        } else if (status === 403) {
-          const message = error.response.data.message
-            ? error.response.data.message
-            : 'Sin definir 1';
-          showToast(message);
-        } else if (status === 400) {
-          // No mostrar toast para errores del chatbot (se manejan en su UI)
-          const url = error.config?.url || '';
-          if (url.includes('chatbot/')) {
-            return Promise.reject(error);
-          }
-          console.log('::: type :::', typeof error);
-          if (error instanceof AxiosError) {
-            const data = error.response?.data;
-
-            console.log('STATUS:', error.response?.status);
-            console.log('DATA:', data);
-
-            // AxiosError tiene propiedades específicas
-            const axiosError = error as AxiosError;
-            // Comprueba si la respuesta tiene una propiedad 'error'
-            const apiError = axiosError.response?.data as ApiError;
-            if (apiError?.error) {
-              showToast(apiError.error);
-            }
-          } else {
-            const message = formatError(error.response.data.message);
-            showToast(message);
-          }
+          logger.error('Error 400 inesperado', error, { url });
         }
       }
+
       return Promise.reject(error);
     }
   );
 
-  const formatError = (msg: string) => {
+  const formatError = (msg: string): string => {
     if (!msg) return 'Sin definir general';
-    const isArray = Array.isArray(msg);
-    if (isArray) {
-      const msgSend = msg[0];
-      // msg.forEach(element => {
-      //   msgSend += element;
-      // });
-      return msgSend;
-    }
+    if (Array.isArray(msg)) return msg[0];
     return msg;
   };
 
@@ -107,7 +92,7 @@ export default function App() {
   return (
     <ErrorBoundary>
       <ApolloProvider client={client}>
-        <Provider store={store}>
+        <Provider store={appStore}>
           <ChatProvider>
             <ThemeProvider>
               <InvestmentComparisonProvider>
@@ -120,3 +105,5 @@ export default function App() {
     </ErrorBoundary>
   );
 }
+
+export default Sentry.wrap(App);

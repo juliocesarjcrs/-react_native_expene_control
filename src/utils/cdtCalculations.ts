@@ -167,8 +167,6 @@ export function calculateCDT(input: CDTCalculationInput): CDTCalculationResult {
       nominalRate
     };
   } catch (error) {
-    console.error('🔴 [CDT] ERROR en calculateCDT:', error);
-    console.error('Input:', JSON.stringify(input, null, 2));
     throw error;
   }
 }
@@ -206,21 +204,12 @@ export function getClosestCDTTerm(days: number): number {
  * Test con ejemplos de CDT
  */
 export function testCDTExamples() {
-  console.log('=== TEST CDT EXAMPLES ===\n');
-
   // Ejemplo 1: $1M a 90 días al 9.10%
   const test1 = calculateCDT({
     capitalAmount: 1000000,
     termDays: 90,
     apply4x1000: false
   });
-
-  console.log('Test 1: $1M a 90 días (9.10% E.A.)');
-  console.log(`Intereses brutos: $${test1.grossInterest.toFixed(2)}`);
-  console.log(`Retención 4%: $${test1.withholdingAmount.toFixed(2)}`);
-  console.log(`Intereses netos: $${test1.netInterest.toFixed(2)}`);
-  console.log(`Total a recibir: $${test1.finalAmount.toFixed(2)}`);
-  console.log(`Tasa efectiva post-impuestos: ${test1.effectiveAnnualRate.toFixed(2)}%\n`);
 
   // Ejemplo 2: $5M a 180 días al 9.30%
   const test2 = calculateCDT({
@@ -229,27 +218,12 @@ export function testCDTExamples() {
     apply4x1000: false
   });
 
-  console.log('Test 2: $5M a 180 días (9.30% E.A.)');
-  console.log(`Intereses brutos: $${test2.grossInterest.toFixed(2)}`);
-  console.log(`Retención 4%: $${test2.withholdingAmount.toFixed(2)}`);
-  console.log(`Intereses netos: $${test2.netInterest.toFixed(2)}`);
-  console.log(`Total a recibir: $${test2.finalAmount.toFixed(2)}`);
-  console.log(`Tasa efectiva post-impuestos: ${test2.effectiveAnnualRate.toFixed(2)}%\n`);
-
   // Ejemplo 3: $10M a 720 días al 9.70% con 4x1000
   const test3 = calculateCDT({
     capitalAmount: 10000000,
     termDays: 720,
     apply4x1000: true
   });
-
-  console.log('Test 3: $10M a 720 días (9.70% E.A.) con 4x1000');
-  console.log(`Intereses brutos: $${test3.grossInterest.toFixed(2)}`);
-  console.log(`Retención 4%: $${test3.withholdingAmount.toFixed(2)}`);
-  console.log(`4x1000 entrada: $${test3.fourPerThousandEntry.toFixed(2)}`);
-  console.log(`4x1000 salida: $${test3.fourPerThousandExit.toFixed(2)}`);
-  console.log(`Total a recibir: $${test3.finalAmount.toFixed(2)}`);
-  console.log(`Tasa efectiva post-impuestos: ${test3.effectiveAnnualRate.toFixed(2)}%\n`);
 
   return { test1, test2, test3 };
 }

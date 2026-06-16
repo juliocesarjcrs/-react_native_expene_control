@@ -111,8 +111,6 @@ export class ScoringService {
     result: ExistingPropertyResult,
     profile: UserProfile
   ): ScenarioScore {
-    console.log('🔵 [Scoring] Calculando score para propiedad existente...');
-
     const maintainResult = result.maintain;
 
     // Rentabilidad: basada en retorno anualizado
@@ -130,19 +128,10 @@ export class ScoringService {
     const cashFlowRatio = (monthlyCashFlow / monthlyInvestment) * 100;
     const cashFlow = Math.min(Math.max(cashFlowRatio * 5, 0), 100);
 
-    console.log('🔵 [Scoring] Scores:', {
-      profitability,
-      liquidity,
-      security,
-      cashFlow
-    });
-
     const totalScore = this.calculateWeightedScore(
       { profitability, liquidity, security, cashFlow },
       profile
     );
-
-    console.log('✅ [Scoring] Score total:', totalScore);
 
     return {
       scenarioType: ScenarioType.EXISTING_PROPERTY,

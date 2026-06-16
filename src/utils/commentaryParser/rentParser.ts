@@ -136,8 +136,7 @@ export const parseRentCommentary = (
     }
 
     return null;
-  } catch (error) {
-    console.error('Error parsing rent commentary:', error);
+  } catch {
     return null;
   }
 };

@@ -348,7 +348,6 @@ class InvestmentComparisonService {
       );
     }
     if (scenarios.existingProperty && results.existingProperty) {
-      console.log('🔵 [Service] Scoring existing property scenario...');
       scores.push(
         ScoringService.scoreExistingPropertyScenario(
           scenarios.existingProperty,
@@ -540,7 +539,6 @@ class InvestmentComparisonService {
       const updated = [comparison.id, ...recent.filter((id) => id !== comparison.id)].slice(0, 10);
       await AsyncStorage.setItem(STORAGE_KEYS.RECENT_COMPARISONS, JSON.stringify(updated));
     } catch (error) {
-      console.error('Error saving comparison:', error);
       throw error;
     }
   }
@@ -549,8 +547,7 @@ class InvestmentComparisonService {
     try {
       const data = await AsyncStorage.getItem(`${STORAGE_KEYS.COMPARISONS}_${id}`);
       return data ? JSON.parse(data) : null;
-    } catch (error) {
-      console.error('Error getting comparison:', error);
+    } catch {
       return null;
     }
   }
@@ -559,8 +556,7 @@ class InvestmentComparisonService {
     try {
       const data = await AsyncStorage.getItem(STORAGE_KEYS.RECENT_COMPARISONS);
       return data ? JSON.parse(data) : [];
-    } catch (error) {
-      console.error('Error getting recent comparisons:', error);
+    } catch {
       return [];
     }
   }
@@ -572,7 +568,6 @@ class InvestmentComparisonService {
       const updated = recent.filter((compId) => compId !== id);
       await AsyncStorage.setItem(STORAGE_KEYS.RECENT_COMPARISONS, JSON.stringify(updated));
     } catch (error) {
-      console.error('Error deleting comparison:', error);
       throw error;
     }
   }
@@ -585,7 +580,6 @@ class InvestmentComparisonService {
       }
       await AsyncStorage.removeItem(STORAGE_KEYS.RECENT_COMPARISONS);
     } catch (error) {
-      console.error('Error clearing comparisons:', error);
       throw error;
     }
   }

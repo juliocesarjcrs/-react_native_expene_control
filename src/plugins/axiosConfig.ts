@@ -1,7 +1,6 @@
 import axios, { AxiosRequestConfig, InternalAxiosRequestConfig } from 'axios';
 import { URL_BASE } from '@env';
 import { getToken } from './auth';
-console.log('env.URL_BASE,', URL_BASE);
 
 const axiosInstance = axios.create({
   baseURL: URL_BASE

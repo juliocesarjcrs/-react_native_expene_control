@@ -244,19 +244,14 @@ export function parseCarulla(
   let products: Product[];
 
   if (isAltCarulla(joined)) {
-    console.log('📄 Procesando como Carulla alternativo (DETALLE antes que PLU)');
     products = processAltCarulla(lines, receiptType);
   } else if (isExitoFormat(joined)) {
-    console.log('🛒 Procesando como Éxito (PLU DETALLE PRECIO sin KGM)');
     products = processExitoFormat(lines, receiptType);
   } else if (isCarullaCase5(joined)) {
-    console.log('🛠️ Procesando como Carulla case5 (PLU DETALLE sin PRECIO en header)');
     products = processCarullaCase5(lines, joined, receiptType);
   } else if (isCarullaCase6(joined)) {
-    console.log('🛠️ Procesando como Carulla case6 (PLU DETALLE PRECIO con KGM)');
     products = processCarullaCase6(lines, joined, receiptType);
   } else {
-    console.log('🔍 Aplicando heurísticas generales (fallback)');
     products = fallbackProcessing(lines, joined, receiptType);
   }
 

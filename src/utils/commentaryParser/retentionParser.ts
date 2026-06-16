@@ -153,8 +153,7 @@ export const parseRetentionCommentary = (
       ...(incapacidad && { incapacidad }),
       ...(notes && { notes })
     };
-  } catch (error) {
-    console.error('Error parsing retention commentary:', error);
+  } catch {
     return null;
   }
 };

@@ -2,6 +2,7 @@
 import React from 'react';
 import { View, Text, Image, StyleSheet, TouchableOpacity } from 'react-native';
 import { Icon } from 'react-native-elements';
+import { logger } from '~/utils/logger';
 
 type ProductsHeaderProps = {
   title: string;
@@ -33,7 +34,7 @@ const ProductsHeader: React.FC<ProductsHeaderProps> = ({ title, count, imageUri,
             source={{ uri: imageUri }}
             style={styles.image}
             resizeMode="contain"
-            onError={(e) => console.log('Error loading image:', e.nativeEvent.error)}
+            onError={(e) => logger.error('Error loading image:', e.nativeEvent.error)}
           />
         </View>
       )}

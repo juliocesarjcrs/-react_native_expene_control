@@ -166,7 +166,6 @@ export const parseCommentary = (
   category?: string,
   baseSalary?: number
 ): ParsedCommentary => {
-  console.log('[subcategoryId]', subcategoryId);
   const parserType = getParserType(subcategoryId);
 
   switch (parserType) {

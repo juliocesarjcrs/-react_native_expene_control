@@ -2,8 +2,6 @@ import { Product } from '~/shared/types/components/receipt-scanner.type';
 import { formatDescription } from './formatDescription';
 
 export function parseCruzVerde(lines: string[]): Product[] {
-  console.log('📄 Procesando como tipo Cruz Verde...');
-
   const products: Product[] = [];
   const productLineRegex = /^(.+)\s+(\d+%)\s*([\d\s\.]+)?$/i;
   let foundProductsSection = false;

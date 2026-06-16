@@ -16,10 +16,6 @@ const searchSlice = createSlice({
       state.query = action.payload;
     },
     clearQuery: (state) => {
-      console.log('🔴 Redux Action: clearQuery', {
-        previousQuery: state.query,
-        timestamp: new Date().toISOString()
-      });
       state.query = null;
     }
   }

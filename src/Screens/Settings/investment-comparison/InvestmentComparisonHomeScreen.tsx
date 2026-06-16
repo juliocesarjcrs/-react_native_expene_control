@@ -135,8 +135,7 @@ export default function InvestmentComparisonHomeScreen({ navigation }: Props) {
 
       navigation.navigate('comparisonResults', { comparisonId: comparison.id });
       ShowToast('Comparación generada');
-    } catch (error) {
-      console.error('🔴 [HomeScreen] ERROR en handleCompare:', error);
+    } catch {
       Alert.alert('Error', 'No se pudo generar la comparación. Intenta de nuevo.');
     }
   };

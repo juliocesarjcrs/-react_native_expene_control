@@ -1,10 +1,10 @@
 import { Alert, ToastAndroid, Platform } from 'react-native';
 import { AxiosError } from 'axios';
+import { logger } from '~/utils/logger';
 
-export function showError(error: any, customMessage?: string) {
+export function showError(error: unknown, customMessage?: string) {
   let message = customMessage || 'Ocurrió un error inesperado. Intenta de nuevo.';
 
-  // Si es un error de Axios, tomamos info del backend
   if (error instanceof AxiosError) {
     const backendMessage = error.response?.data?.message || error.response?.data?.error;
 
@@ -12,10 +12,18 @@ export function showError(error: any, customMessage?: string) {
       message = Array.isArray(backendMessage) ? backendMessage[0] : backendMessage;
     }
 
-    // Si no hay status → no hay conexión
     if (!error.response) {
       message = 'No hay conexión con el servidor.';
     }
+
+    logger.error(message, error, {
+      status: error.response?.status,
+      url: error.config?.url,
+      data: error.response?.data
+    });
+  } else {
+    // Error no esperado (bug en código, no del servidor)
+    logger.error(message, error instanceof Error ? error : new Error(String(error)));
   }
 
   if (Platform.OS === 'android') {
@@ -23,6 +31,4 @@ export function showError(error: any, customMessage?: string) {
   } else {
     Alert.alert('Error', message);
   }
-
-  console.log('🔴 ERROR:', error);
 }

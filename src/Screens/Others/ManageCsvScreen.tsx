@@ -54,8 +54,7 @@ export default function ManageCSVsScreen(): React.JSX.Element {
             const file = new File(Paths.document, fileName);
             await file.delete();
             fetchCsvFiles();
-          } catch (error) {
-            console.log('Error deleted CSV files:', error);
+          } catch {
             Alert.alert('Error', 'No se pudo eliminar el archivo');
           }
         }

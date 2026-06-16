@@ -293,8 +293,7 @@ export const parseVacationCommentary = (
       parseFlight(commentary, cost, date) ??
       parseExpense(commentary, cost, date)
     );
-  } catch (error) {
-    console.error('Error parsing vacation commentary:', error);
+  } catch {
     return null;
   }
 };

@@ -3,8 +3,6 @@ import { formatDescription } from './formatDescription';
 
 export function parseGeneric(lines: string[], joined: string): Product[] {
   // const products: Product[] = [];
-  console.log('🧠 Procesando con heurística genérica (sin encabezados)...');
-
   // Primero intentamos el patrón de productos con precios en columnas
   const columnProducts = tryColumnFormat(lines, joined);
   if (columnProducts.length > 0) {
@@ -23,8 +21,6 @@ function tryColumnFormat(lines: string[], joined: string): Product[] {
     /(Producto|Descripción|Item)\s+(Cant|Cantidad|Qty)?\s*(Unit|Precio|Valor Unitario)?\s*(Total|Valor)?/i;
 
   if (columnHeaderPattern.test(joined)) {
-    console.log('📊 Detectado posible formato de columnas');
-
     // Patrón para líneas de producto en formato de columnas
     const productLinePattern =
       /^([A-ZÁÉÍÓÚÑa-záéíóúñ().,\/\- ]+?)\s+(?:\d+[.,]?\d*\s+)?(\d+[.,]\d{3})(?:\s+\d+[.,]\d{3})?/im;
@@ -90,7 +86,6 @@ function fallbackHeuristicProcessing(joined: string): Product[] {
   }
 
   if (products.length === 0) {
-    console.warn('⚠️ Ningún producto detectado con heurística.');
   }
 
   return products;

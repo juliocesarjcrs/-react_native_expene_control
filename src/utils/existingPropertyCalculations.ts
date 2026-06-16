@@ -86,9 +86,6 @@ export interface ExistingPropertyResult {
  * Calcula el escenario de mantener la propiedad actual
  */
 export function calculateExistingProperty(input: ExistingPropertyInput): ExistingPropertyResult {
-  console.log('🔵 [ExistingProperty] Calculando escenario...');
-  console.log('🔵 [ExistingProperty] Input:', input);
-
   try {
     const {
       initialInvestment,
@@ -112,7 +109,6 @@ export function calculateExistingProperty(input: ExistingPropertyInput): Existin
     // ============================================
     // OPCIÓN A: MANTENER PROPIEDAD
     // ============================================
-    console.log('🔵 [ExistingProperty] Calculando opción MANTENER...');
 
     const yearlyBreakdown: YearlyBreakdown[] = [];
     let totalGrossRent = 0;
@@ -151,10 +147,6 @@ export function calculateExistingProperty(input: ExistingPropertyInput): Existin
         netCashFlow,
         propertyValue
       });
-
-      console.log(
-        `  Año ${year}: Renta $${grossRent}, Gastos $${totalYearExpenses}, Neto $${netCashFlow}`
-      );
     }
 
     const totalNetCashFlow = totalGrossRent - totalExpenses;
@@ -166,12 +158,6 @@ export function calculateExistingProperty(input: ExistingPropertyInput): Existin
     const roi = (totalReturn / currentValue) * 100;
     const annualizedReturn = (Math.pow(1 + totalReturn / currentValue, 1 / horizonYears) - 1) * 100;
     const cashOnCashReturn = (totalNetCashFlow / initialInvestment) * 100;
-
-    console.log('✅ [ExistingProperty] Mantener calculado:');
-    console.log(`  - Flujo neto total: $${totalNetCashFlow}`);
-    console.log(`  - Ganancia capital: $${capitalGain}`);
-    console.log(`  - Retorno total: $${totalReturn}`);
-    console.log(`  - ROI: ${roi.toFixed(2)}%`);
 
     const maintain: MaintainOption = {
       totalGrossRent,
@@ -193,8 +179,6 @@ export function calculateExistingProperty(input: ExistingPropertyInput): Existin
     let comparison: ComparisonResult | undefined;
 
     if (compareWithSale) {
-      console.log('🔵 [ExistingProperty] Calculando opción VENDER...');
-
       const saleAmount = currentValue;
       const termDays = cdtTermDays || EXISTING_PROPERTY_DEFAULTS.CDT_TERM_DAYS;
       const rate = cdtRate || EXISTING_PROPERTY_DEFAULTS.CDT_RATE;
@@ -203,9 +187,6 @@ export function calculateExistingProperty(input: ExistingPropertyInput): Existin
       const totalDays = horizonYears * 365;
       const cdtPeriods = Math.floor(totalDays / termDays);
       const remainingDays = totalDays % termDays;
-
-      console.log(`  - Períodos de CDT: ${cdtPeriods} de ${termDays} días`);
-      console.log(`  - Días restantes: ${remainingDays}`);
 
       // Simular reinversión de CDTs
       let currentBalance = saleAmount;
@@ -225,10 +206,6 @@ export function calculateExistingProperty(input: ExistingPropertyInput): Existin
         totalCdtInterest += cdtResult.grossInterest;
         totalCdtTaxes += cdtResult.withholdingAmount + cdtResult.fourPerThousandTotal;
         currentBalance = cdtResult.finalAmount; // Reinvertir
-
-        console.log(
-          `  Período ${period + 1}: Interés $${cdtResult.netInterest}, Saldo $${currentBalance}`
-        );
       }
 
       // Si sobran días, calcular proporcionalmente
@@ -245,24 +222,12 @@ export function calculateExistingProperty(input: ExistingPropertyInput): Existin
         totalCdtInterest += partialResult.grossInterest;
         totalCdtTaxes += partialResult.withholdingAmount;
         currentBalance = partialResult.finalAmount;
-
-        console.log(
-          `  Período parcial (${remainingDays} días): Interés $${partialResult.netInterest}`
-        );
       }
 
       const finalAmount = currentBalance;
       const totalReturn = finalAmount - saleAmount;
       const roi = (totalReturn / saleAmount) * 100;
       const annualizedReturn = (Math.pow(finalAmount / saleAmount, 1 / horizonYears) - 1) * 100;
-
-      console.log('✅ [ExistingProperty] Vender calculado:');
-      console.log(`  - Monto venta: $${saleAmount}`);
-      console.log(`  - Intereses CDT: $${totalCdtInterest}`);
-      console.log(`  - Impuestos: $${totalCdtTaxes}`);
-      console.log(`  - Monto final: $${finalAmount}`);
-      console.log(`  - Retorno total: $${totalReturn}`);
-      console.log(`  - ROI: ${roi.toFixed(2)}%`);
 
       sell = {
         saleAmount,
@@ -277,7 +242,6 @@ export function calculateExistingProperty(input: ExistingPropertyInput): Existin
       // ============================================
       // COMPARACIÓN
       // ============================================
-      console.log('🔵 [ExistingProperty] Comparando opciones...');
 
       const maintainTotal = maintain.totalReturn;
       const sellTotal = sell.totalReturn;
@@ -291,9 +255,6 @@ export function calculateExistingProperty(input: ExistingPropertyInput): Existin
       } else {
         recommendation = `💡 VENDER y poner en CDT genera $${difference.toLocaleString('es-CO', { maximumFractionDigits: 0 })} MÁS (${differencePercent.toFixed(1)}%) que mantener la propiedad. Ganarías liquidez y eliminarías gastos de administración.`;
       }
-
-      console.log(`✅ [ExistingProperty] Recomendación: ${maintainBetter ? 'MANTENER' : 'VENDER'}`);
-      console.log(`  - Diferencia: $${difference} (${differencePercent.toFixed(1)}%)`);
 
       comparison = {
         maintainBetter,
@@ -312,10 +273,8 @@ export function calculateExistingProperty(input: ExistingPropertyInput): Existin
       comparison
     };
 
-    console.log('✅ [ExistingProperty] Cálculo completado');
     return result;
   } catch (error) {
-    console.error('🔴 [ExistingProperty] ERROR:', error);
     throw error;
   }
 }

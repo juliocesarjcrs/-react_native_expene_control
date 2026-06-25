@@ -1,8 +1,9 @@
-import { OCRSpaceParams, OCRSpaceResponse } from '~/shared/types/services/ocr-services.type';
+import { OcrApiResponse } from '~/shared/types/components/receipt-scanner.type';
+import { OCRImageParams, OCRPdfParams } from '~/shared/types/services/ocr-services.type';
 
 const OCR_API_KEY = process.env.OCR_API_KEY;
 
-export const callOCRSpaceAPI = async (params: OCRSpaceParams): Promise<OCRSpaceResponse> => {
+export const callOCRSpaceAPI = async (params: OCRImageParams): Promise<OcrApiResponse> => {
   const { base64Image, language = 'spa', isTable = true, OCREngine = 2 } = params;
 
   const formData = new FormData();
@@ -10,23 +11,40 @@ export const callOCRSpaceAPI = async (params: OCRSpaceParams): Promise<OCRSpaceR
   formData.append('language', language);
   formData.append('isTable', String(isTable));
   formData.append('OCREngine', String(OCREngine));
-  try {
-    const response = await fetch('https://api.ocr.space/parse/image', {
-      method: 'POST',
-      headers: {
-        apikey: OCR_API_KEY // La API key ahora está interna
-      },
-      body: formData
-    });
 
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
-    }
+  const response = await fetch('https://api.ocr.space/parse/image', {
+    method: 'POST',
+    headers: { apikey: OCR_API_KEY },
+    body: formData
+  });
 
-    return await response.json();
-  } catch (error) {
-    throw error;
-  }
+  if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+  return response.json();
+};
+
+// ─── PDF (nuevo) ──────────────────────────────────────────────────────────────
+
+export const callOCRSpaceAPIPdf = async (params: OCRPdfParams): Promise<OcrApiResponse> => {
+  const { base64Pdf, language = 'spa', isTable = true, OCREngine = 2 } = params;
+
+  const formData = new FormData();
+  // OCR.space acepta PDF en base64 con este prefijo
+  formData.append('base64Image', `data:application/pdf;base64,${base64Pdf}`);
+  formData.append('language', language);
+  formData.append('isTable', String(isTable));
+  formData.append('OCREngine', String(OCREngine));
+  // Importante: indica a OCR.space que procese todas las páginas del PDF
+  formData.append('isCreateSearchablePdf', 'false');
+  formData.append('isSearchablePdfHideTextLayer', 'false');
+
+  const response = await fetch('https://api.ocr.space/parse/image', {
+    method: 'POST',
+    headers: { apikey: OCR_API_KEY },
+    body: formData
+  });
+
+  if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+  return response.json();
 };
 
 // Mock function remains the same

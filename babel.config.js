@@ -24,7 +24,7 @@ module.exports = function (api) {
           allowUndefined: true
         }
       ],
-      'react-native-reanimated/plugin',
+      'react-native-reanimated/plugin'
       // Sentry no es compatible con el entorno de Jest
       // ...(!isTest ? ['@sentry/react-native/expo'] : [])
     ]

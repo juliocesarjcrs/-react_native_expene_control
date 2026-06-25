@@ -23,6 +23,7 @@ export type SubcategoryDropdown = {
 
 export type MultiExpenseModalProps = {
   imageUri?: string | null;
+  sourceType?: 'image' | 'pdf';
   visible: boolean;
   onSave: (expenses: CreateExpensePayload[]) => void;
   onClose: (updatedProducts?: ExpenseModal[]) => void;

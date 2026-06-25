@@ -30,6 +30,7 @@ const CACHE_EXPIRATION = 24 * 60 * 60 * 1000; // 24 horas
 
 const MultiExpenseModal: React.FC<MultiExpenseModalProps> = ({
   imageUri,
+  sourceType,
   visible,
   onSave,
   onClose,
@@ -181,6 +182,7 @@ const MultiExpenseModal: React.FC<MultiExpenseModalProps> = ({
                 count={expenses.length}
                 onClose={handleBack}
                 imageUri={imageUri}
+                sourceType={sourceType}
               />
               <Text style={styles.total}>Total: {NumberFormat(totalAmount)}</Text>
 

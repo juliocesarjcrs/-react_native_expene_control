@@ -4,5 +4,4 @@ declare module '@env' {
   export const OCR_API_KEY: string;
   export const SENTRY_DSN: string;
   export const APP_ENV: string;
-
 }

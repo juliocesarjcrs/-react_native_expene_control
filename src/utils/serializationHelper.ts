@@ -44,6 +44,7 @@ function findProblematicField(obj: any, path: string = 'root', depth: number = 0
       try {
         JSON.stringify(item);
       } catch {
+        console.error(`  ${'  '.repeat(depth)}❌ ${path}[${index}]`);
         if (typeof item === 'object' && item !== null) {
           findProblematicField(item, `${path}[${index}]`, depth + 1);
         }

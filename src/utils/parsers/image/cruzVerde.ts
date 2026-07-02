@@ -1,5 +1,5 @@
 import { Product } from '~/shared/types/components/receipt-scanner.type';
-import { formatDescription } from './formatDescription';
+import { formatDescription } from '../formatDescription';
 
 export function parseCruzVerde(lines: string[]): Product[] {
   const products: Product[] = [];

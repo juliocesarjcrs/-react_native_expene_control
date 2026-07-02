@@ -9,15 +9,15 @@
  */
 
 import { Product } from '~/shared/types/components/receipt-scanner.type';
-import { parseCarulla } from './carulla';
-import { parseD1 } from './d1';
-import { parseGeneric } from './parseGeneric';
-import { parseDollarCity } from './dollarCity';
-import { parseAra } from './ara';
-import { parseCruzVerde } from './cruzVerde';
-import { isSuperCarnesJH, parseSuperCarnesJH } from './superCarnesJH';
-import { isFruverLaGranja, parseFruverLaGranja } from './fruverLaGranja';
-import { parsePdfText, detectPdfStore } from './pdfNormalizer';
+import { parseCarulla } from './image/carulla';
+import { parseD1 } from './image/d1';
+import { parseGeneric } from './image/parseGeneric';
+import { parseDollarCity } from './image/dollarCity';
+import { parseAra } from './image/ara';
+import { parseCruzVerde } from './image/cruzVerde';
+import { isSuperCarnesJH, parseSuperCarnesJH } from './image/superCarnesJH';
+import { isFruverLaGranja, parseFruverLaGranja } from './image/fruverLaGranja';
+import { parsePdfText, detectPdfStore } from './pdf/pdfNormalizer';
 
 export type SourceType = 'image' | 'pdf';
 

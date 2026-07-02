@@ -1,6 +1,6 @@
 import { Product, ReceiptType } from '~/shared/types/components/receipt-scanner.type';
-import { formatDescription } from './formatDescription';
-import { canonicalize } from '../canonicalizer';
+import { formatDescription } from '../formatDescription';
+import { canonicalize } from '../../canonicalizer';
 
 const RECEIPT_TYPE: ReceiptType = 'FruverLaGranja';
 

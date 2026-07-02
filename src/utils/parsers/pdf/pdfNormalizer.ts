@@ -14,7 +14,7 @@
  */
 
 import { Product } from '~/shared/types/components/receipt-scanner.type';
-import { parseD1Pdf } from './pdf/parseD1Pdf';
+import { parseD1Pdf } from './parseD1Pdf';
 
 // ─── Tipo de parser PDF ───────────────────────────────────────────────────────
 

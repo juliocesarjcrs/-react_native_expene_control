@@ -1,6 +1,6 @@
 import { Product, ReceiptType } from '~/shared/types/components/receipt-scanner.type';
-import { formatDescription } from './formatDescription';
-import { formatSimpleProduct } from './helpers';
+import { formatDescription } from '../formatDescription';
+import { formatSimpleProduct } from '../helpers';
 
 const RECEIPT_TYPE: ReceiptType = 'Ara';
 

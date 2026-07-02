@@ -1,7 +1,12 @@
 import { Product, ReceiptType } from '~/shared/types/components/receipt-scanner.type';
-import { formatDescription } from './formatDescription';
-import { formatSimpleProduct, processWeightAndSavings, cleanPrice, limitProducts } from './helpers';
-import { canonicalize } from '../canonicalizer';
+import { formatDescription } from '../formatDescription';
+import {
+  formatSimpleProduct,
+  processWeightAndSavings,
+  cleanPrice,
+  limitProducts
+} from '../helpers';
+import { canonicalize } from '../../canonicalizer';
 
 // ===== PATRONES GLOBALES =====
 // Nombrados para documentar qué formato capturan, no solo cómo.

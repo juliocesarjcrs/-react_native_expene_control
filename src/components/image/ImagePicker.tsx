@@ -59,7 +59,6 @@ const ImagePickerComponent: React.FC<ImagePickerComponentProps> = ({
     }
 
     const sizeInBytes = (base64.length * 3) / 4;
-    log.info('Image picked', { sizeInBytes, uri });
 
     if (sizeInBytes <= MAX_SIZE_BYTES) {
       onImageSelected(base64, uri);
@@ -67,7 +66,6 @@ const ImagePickerComponent: React.FC<ImagePickerComponentProps> = ({
     }
 
     // Image exceeds 1MB — compress before sending to OCR
-    log.info('Image exceeds 1MB, compressing', { sizeInBytes });
     try {
       const manipResult = await ImageManipulator.manipulateAsync(
         uri,
@@ -77,7 +75,6 @@ const ImagePickerComponent: React.FC<ImagePickerComponentProps> = ({
 
       if (manipResult.base64) {
         const compressedSize = (manipResult.base64.length * 3) / 4;
-        log.info('Image compressed successfully', { compressedSize });
         onImageSelected(manipResult.base64, manipResult.uri);
       } else {
         log.error('Compression returned no base64', { uri });
@@ -137,8 +134,6 @@ const ImagePickerComponent: React.FC<ImagePickerComponentProps> = ({
       setImageUri(null);
       setPdfName(fileName);
 
-      log.info('PDF picked, copying to cache', { fileName, originalUri: asset.uri });
-
       // Copiar manualmente al directorio de caché donde tenemos permisos garantizados
       // Paths.cache es siempre accesible por la app sin permisos externos
       const destination = new ExpoFile(Paths.cache, `ocr_pdf_${Date.now()}.pdf`);
@@ -146,14 +141,9 @@ const ImagePickerComponent: React.FC<ImagePickerComponentProps> = ({
       await source.copy(destination);
 
       cachedUri = destination.uri;
-      log.info('PDF copied to cache', { cachedUri });
 
       // Leer desde la copia en caché — aquí sí tenemos READ
       const base64 = await destination.base64();
-      log.info('PDF read as base64 successfully', {
-        fileName,
-        base64Length: base64.length
-      });
 
       onPdfSelected(base64, cachedUri);
     } catch (e: any) {

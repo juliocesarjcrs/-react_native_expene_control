@@ -24,6 +24,7 @@ import {
 } from '~/shared/types/components/modal/MultiExpenseModal.type';
 import ProductsHeader from './components/ProductsHeader';
 import { DateFormat, NumberFormat } from '~/utils/Helpers';
+import * as Crypto from 'expo-crypto';
 
 const CACHE_KEY = 'expense_categories_cache';
 const CACHE_EXPIRATION = 24 * 60 * 60 * 1000; // 24 horas
@@ -102,7 +103,8 @@ const MultiExpenseModal: React.FC<MultiExpenseModalProps> = ({
     description: '',
     categoryId: null,
     subcategoryId: null,
-    date: new Date()
+    date: new Date(),
+    idempotencyKey: Crypto.randomUUID()
   });
   // Justo antes del useEffect anterior
   React.useEffect(() => {
@@ -115,9 +117,16 @@ const MultiExpenseModal: React.FC<MultiExpenseModalProps> = ({
     if (!visible) return;
 
     const initial = initialExpensesRef.current;
-    setExpenses(initial.length > 0 ? [...initial] : [createNewExpense()]);
+    setExpenses(
+      initial.length > 0
+        ? initial.map((exp) => ({
+            ...exp,
+            idempotencyKey: exp.idempotencyKey ?? Crypto.randomUUID()
+          }))
+        : [createNewExpense()]
+    );
     loadCategories();
-  }, [visible, loadCategories]); // initialExpenses fuera de deps, accedido por ref
+  }, [visible, loadCategories]);
 
   const handleAddExpense = useCallback(() => {
     setExpenses((prev) => [...prev, createNewExpense()]);
@@ -148,7 +157,8 @@ const MultiExpenseModal: React.FC<MultiExpenseModalProps> = ({
         cost: expense.cost,
         date: DateFormat(new Date(), 'YYYY-MM-DD'),
         subcategoryId: expense.subcategoryId || 0,
-        commentary: expense.description || ''
+        commentary: expense.description || '',
+        idempotencyKey: expense.idempotencyKey
       }));
     },
     [] // sin dependencias, es una transformación pura

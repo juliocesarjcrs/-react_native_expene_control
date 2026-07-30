@@ -7,6 +7,7 @@ export type ExpenseModal = {
   categoryId: number | null;
   subcategoryId: number | null;
   date?: Date;
+  idempotencyKey?: string;
 };
 
 export type CategoryDropdown = {

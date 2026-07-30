@@ -2,7 +2,7 @@ import React, { useRef, useState } from 'react';
 import { Keyboard, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSelector } from 'react-redux';
 import { useForm } from 'react-hook-form';
-
+import * as Crypto from 'expo-crypto';
 // Services
 import { CreateExpense, getExpensesFromSubcategory } from '~/services/expenses';
 import { getExchangeCurrency } from '~/services/external';
@@ -78,6 +78,8 @@ export default function CreateExpenseScreen(): React.JSX.Element {
   const [date, setDate] = useState<Date>(new Date());
   const [showDate, setShowDate] = useState<boolean>(false);
 
+  const idempotencyKeyRef = useRef<string>(Crypto.randomUUID());
+
   const handleStartDateChange = (selectedDate?: Date): void => {
     setShowDate(false);
     if (selectedDate) {
@@ -148,7 +150,8 @@ export default function CreateExpenseScreen(): React.JSX.Element {
         ...payload,
         cost: parseInt(String(newAmount)),
         subcategoryId,
-        date: DateFormat(date, 'YYYY-MM-DD')
+        date: DateFormat(date, 'YYYY-MM-DD'),
+        idempotencyKey: idempotencyKeyRef.current
       };
 
       setLoading(true);
@@ -183,6 +186,7 @@ export default function CreateExpenseScreen(): React.JSX.Element {
       calculateTotal(newExpense);
       ShowToast('Gasto creado exitosamente');
       reset();
+      idempotencyKeyRef.current = Crypto.randomUUID();
       Keyboard.dismiss();
     } catch (error) {
       log.error('falid to save expense', error);

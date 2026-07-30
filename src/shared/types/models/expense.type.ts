@@ -6,6 +6,7 @@ export type ExpenseModel = {
   date: string;
   userId: number;
   subcategoryId: number;
+  idempotencyKey?: string;
 };
 
 export type ExtendedExpenseModel = ExpenseModel & {

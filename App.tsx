@@ -23,7 +23,7 @@ Sentry.init({
   dsn: SENTRY_DSN,
   environment: APP_ENV ?? 'development', // 'development' | 'preview' | 'production'
   tracesSampleRate: APP_ENV === 'production' ? 0.2 : 1.0,
-  debug: __DEV__,
+  debug: false,
   enableNative: true
 });
 

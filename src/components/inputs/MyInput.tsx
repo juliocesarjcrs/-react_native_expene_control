@@ -38,12 +38,7 @@ interface MyInputProps {
   onSubmitEditing?: () => void;
 
   keyboardType?:
-    | 'default'
-    | 'numeric'
-    | 'decimal-pad'
-    | 'phone-pad'
-    | 'email-address'
-    | 'number-pad';
+    'default' | 'numeric' | 'decimal-pad' | 'phone-pad' | 'email-address' | 'number-pad';
 
   // Estilos personalizados (opcional)
   containerStyle?: object;

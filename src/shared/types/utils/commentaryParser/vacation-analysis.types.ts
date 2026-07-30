@@ -11,11 +11,7 @@
 export type VacationExpenseType = 'lodging' | 'flight' | 'expense';
 
 export type VacationExpenseCategory =
-  | 'comida'
-  | 'transporte'
-  | 'alojamiento'
-  | 'atraccion'
-  | 'otro';
+  'comida' | 'transporte' | 'alojamiento' | 'atraccion' | 'otro';
 
 export type LodgingModality =
   | 'todo_incluido'

@@ -1,3 +1,4 @@
+import { ExpenseNature } from '../../models/expense.type';
 import { SubcategoryExpense } from '../../services';
 
 export type CategoryExpensesFormat = {
@@ -9,6 +10,7 @@ export type CategoryExpensesFormat = {
 export type FormExpensesValues = {
   cost: string;
   commentary: string;
+  nature?: ExpenseNature;
 };
 
 export type SubcategoryExpensesFormat = {

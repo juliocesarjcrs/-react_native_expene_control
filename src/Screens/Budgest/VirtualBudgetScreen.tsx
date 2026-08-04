@@ -194,7 +194,8 @@ export default function VirtualBudgetScreen({ navigation }: VirtualBudgetScreenP
       setLoadingAverage(true);
       const { data } = await getAverageBySubcategories({
         year: selectedYear,
-        referenceYear: year
+        referenceYear: year,
+        nature: 'operational'
       });
 
       // Crear nuevos valores de presupuesto basados en los promedios
@@ -230,7 +231,8 @@ export default function VirtualBudgetScreen({ navigation }: VirtualBudgetScreenP
       const currentYear = new Date().getFullYear();
       const { data } = await getAverageBySubcategories({
         year: currentYear,
-        referenceYear: currentYear
+        referenceYear: currentYear,
+        nature: 'operational'
       });
 
       // Crear mapa de promedios por categoría

@@ -16,6 +16,7 @@ import MyButton from '~/components/MyButton';
 import ExpenseList from './components/ExpenseList';
 import MyInput from '~/components/inputs/MyInput';
 import CommentaryInput from '~/components/CommentaryInput';
+import ExpenseNatureSelector from '~/components/inputs/ExpenseNatureSelector';
 
 // Types
 import { RootState } from '~/shared/types/reducers';
@@ -151,6 +152,7 @@ export default function CreateExpenseScreen(): React.JSX.Element {
         cost: parseInt(String(newAmount)),
         subcategoryId,
         date: DateFormat(date, 'YYYY-MM-DD'),
+        nature: payload.nature ?? 'operational',
         idempotencyKey: idempotencyKeyRef.current
       };
 
@@ -227,10 +229,12 @@ export default function CreateExpenseScreen(): React.JSX.Element {
             rules={{
               required: 'El gasto es obligatorio',
               min: { value: 1, message: 'El mínimo valor aceptado es 1' },
-              max: { value: 99999999, message: 'El gasto no puede superar 99.999.999' }
+              max: { value: 999999999, message: 'El gasto no puede superar 999.999.999' }
             }}
             leftIcon="cash"
           />
+
+          <ExpenseNatureSelector control={control} />
 
           {isCommentarySuggestionsEnabled ? (
             <CommentaryInput

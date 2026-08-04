@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Keyboard, Platform, StyleSheet, Text, View } from 'react-native';
+import { Keyboard, Platform, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSelector } from 'react-redux';
 import { useForm } from 'react-hook-form';
 import { Icon } from 'react-native-elements';
@@ -14,6 +14,7 @@ import ErrorText from '../../components/ErrorText';
 import MyLoading from '~/components/loading/MyLoading';
 import { ScreenHeader } from '~/components/ScreenHeader';
 import MyInput from '~/components/inputs/MyInput';
+import ExpenseNatureSelector from '~/components/inputs/ExpenseNatureSelector';
 
 // Types
 import DateTimePicker, { DateTimePickerEvent } from '@react-native-community/datetimepicker';
@@ -61,7 +62,8 @@ export default function EditExpenseScreen({ route, navigation }: EditExpenseScre
 
   const [expenseEdit, setExpenseEdit] = useState<FormValues>({
     cost: objectExpense.cost,
-    commentary: objectExpense.commentary ?? ''
+    commentary: objectExpense.commentary ?? '',
+    nature: objectExpense.nature ?? 'operational'
   });
 
   const {
@@ -112,20 +114,58 @@ export default function EditExpenseScreen({ route, navigation }: EditExpenseScre
   const showDatepicker = () => {
     showMode('date');
   };
+  const sendDataSubcategory = (index: number | null) => {
+    if (!index || Number.isNaN(index)) {
+      setExpenses([]);
+      setSumCost(0);
+    } else {
+      // Si quieres descomentar fetchExpenses
+      // fetchExpenses(index);
+    }
+  };
+  const formatOptionsSubcategories = (data: SubcategoryModel[] = []) => {
+    return data.map((e) => {
+      return { label: e.name, value: e.id };
+    });
+  };
+  const sendFromDropDownPickerCategory = (index: number | null) => {
+    setExpenses([]);
+    setSumCost(0);
 
-  // efectos para category/subcategory
-  useEffect(() => {
-    sendFromDropDownPickerCategory(idCategory);
-  }, [idCategory, categories]);
+    const indexArray = categories.findIndex((e) => {
+      return e.value === index;
+    });
+    if (indexArray >= 0) {
+      const dataFormat = formatOptionsSubcategories(categories[indexArray].subcategories ?? []);
+      setSubcategories(dataFormat);
+    } else {
+      setSubcategories([]);
+    }
+  };
+  const defaultIdCategory = async () => {
+    try {
+      const { data } = await getOneExpense(idExpense);
+      // rellena formulario
+      setExpenseEdit({
+        cost: data.cost ?? 0,
+        commentary: data.commentary ?? '',
+        nature: data.nature ?? 'operational'
+      });
+      reset({
+        cost: data.cost ?? 0,
+        commentary: data.commentary ?? '',
+        nature: data.nature ?? 'operational'
+      });
 
-  useEffect(() => {
-    sendDataSubcategory(subcategoryId);
-  }, [subcategoryId]);
-
-  useEffect(() => {
-    fetchCategories();
-  }, []);
-
+      // data.subcategory existe según contrato
+      const idCategoryEdit = data.subcategory?.category?.id ?? null;
+      setIdCategory(idCategoryEdit);
+      const idsubcategoryEdit = data.subcategory?.id ?? null;
+      setSubcategoryId(idsubcategoryEdit);
+    } catch (error) {
+      showError(error);
+    }
+  };
   // ---------------------- Fetching ----------------------
 
   const fetchCategories = async () => {
@@ -146,44 +186,18 @@ export default function EditExpenseScreen({ route, navigation }: EditExpenseScre
     }
   };
 
-  const defaultIdCategory = async () => {
-    try {
-      const { data } = await getOneExpense(idExpense);
-      // rellena formulario
-      setExpenseEdit({
-        cost: data.cost ?? 0,
-        commentary: data.commentary ?? ''
-      });
-      reset({
-        cost: data.cost ?? 0,
-        commentary: data.commentary ?? ''
-      });
+  // efectos para category/subcategory
+  useEffect(() => {
+    sendFromDropDownPickerCategory(idCategory);
+  }, [idCategory, categories]);
 
-      // data.subcategory existe según contrato
-      const idCategoryEdit = data.subcategory?.category?.id ?? null;
-      setIdCategory(idCategoryEdit);
-      const idsubcategoryEdit = data.subcategory?.id ?? null;
-      setSubcategoryId(idsubcategoryEdit);
-    } catch (error) {
-      showError(error);
-    }
-  };
+  useEffect(() => {
+    sendDataSubcategory(subcategoryId);
+  }, [subcategoryId]);
 
-  const sendDataSubcategory = (index: number | null) => {
-    if (!index || Number.isNaN(index)) {
-      setExpenses([]);
-      setSumCost(0);
-    } else {
-      // Si quieres descomentar fetchExpenses
-      // fetchExpenses(index);
-    }
-  };
-
-  const formatOptionsSubcategories = (data: SubcategoryModel[] = []) => {
-    return data.map((e) => {
-      return { label: e.name, value: e.id };
-    });
-  };
+  useEffect(() => {
+    fetchCategories();
+  }, []);
 
   // ---------------------- Submit ----------------------
 
@@ -196,7 +210,8 @@ export default function EditExpenseScreen({ route, navigation }: EditExpenseScre
         ...payload,
         cost: payload.cost,
         subcategoryId,
-        date: DateFormat(date, 'YYYY-MM-DD')
+        date: DateFormat(date, 'YYYY-MM-DD'),
+        nature: payload.nature ?? 'operational'
       };
       setLoading(true);
       await editExpense(idExpense, dataSend);
@@ -212,188 +227,184 @@ export default function EditExpenseScreen({ route, navigation }: EditExpenseScre
     }
   };
 
-  const sendFromDropDownPickerCategory = (index: number | null) => {
-    setExpenses([]);
-    setSumCost(0);
-
-    const indexArray = categories.findIndex((e) => {
-      return e.value === index;
-    });
-    if (indexArray >= 0) {
-      const dataFormat = formatOptionsSubcategories(categories[indexArray].subcategories ?? []);
-      setSubcategories(dataFormat);
-    } else {
-      setSubcategories([]);
-    }
-  };
-
   return (
     <View style={[commonStyles.screenContentWithPadding, { backgroundColor: colors.BACKGROUND }]}>
       <ScreenHeader title={config.title} subtitle={config.subtitle} />
-      <View
-        style={[
-          styles.card,
-          { backgroundColor: colors.CARD_BACKGROUND, borderColor: colors.BORDER }
-        ]}
+      <ScrollView
+        style={{ flex: 1 }}
+        contentContainerStyle={styles.scrollContent}
+        keyboardShouldPersistTaps="handled"
       >
-        {/* COST */}
-        <MyInput
-          name="cost"
-          type="currency"
-          control={control}
-          label="Gasto"
-          placeholder="0"
-          rules={{
-            required: 'El gasto es obligatorio',
-            min: { value: 1, message: 'El mínimo valor aceptado es 1' },
-            max: {
-              value: 99999999,
-              message: 'El gasto no puede superar el valor de 99.999.999'
-            }
-          }}
-          leftIcon="cash"
-          autoFocus
-        />
-
-        {/* COMMENTARY */}
-        <MyInput
-          name="commentary"
-          type="textarea"
-          control={control}
-          label="Comentario"
-          placeholder="Ej: Compra de una camisa"
-          rules={{
-            maxLength: {
-              value: 200,
-              message: 'El comentario no puede superar los 200 caracteres'
-            }
-          }}
-          multiline
-          numberOfLines={2}
-          maxLength={200}
-          leftIcon="text"
-        />
-
-        {/* CATEGORY */}
-        <Text style={[styles.label, { color: colors.TEXT_PRIMARY }]}>Categoría</Text>
-
-        <DropDownPicker
-          open={open}
-          value={idCategory}
-          items={categories}
-          setOpen={setOpen}
-          setValue={setIdCategory as any}
-          setItems={setCategories as any}
-          maxHeight={ITEM_HEIGHT * Math.max(1, categories.length)}
-          placeholder="Seleccione una categoría"
-          zIndex={2000}
-          zIndexInverse={1000}
-          loading={loading}
-          ActivityIndicatorComponent={() => <MyLoading />}
-          activityIndicatorSize={30}
-          dropDownContainerStyle={{
-            backgroundColor: colors.CARD_BACKGROUND,
-            borderColor: colors.BORDER
-          }}
-          listMode="MODAL"
-          selectedItemContainerStyle={{
-            backgroundColor: colors.PRIMARY + '22'
-          }}
-          itemSeparator={true}
-          itemSeparatorStyle={{
-            backgroundColor: colors.BORDER
-          }}
-          selectedItemLabelStyle={{
-            fontWeight: 'bold',
-            color: colors.TEXT_PRIMARY
-          }}
-        />
-        {!idCategory ? <ErrorText msg="Necesita seleccionar una  Categoria" /> : null}
-
-        {/* SUBCATEGORY */}
-        <Text style={[styles.label, { color: colors.TEXT_PRIMARY, marginTop: 12 }]}>
-          Subcategoría
-        </Text>
-
-        <DropDownPicker
-          open={open2}
-          value={subcategoryId}
-          items={subcategories}
-          setOpen={setOpen2}
-          setValue={setSubcategoryId as any}
-          setItems={setSubcategories as any}
-          maxHeight={ITEM_HEIGHT * Math.max(1, subcategories.length)}
-          placeholder="Seleccione una subcategoría"
-          zIndex={1000}
-          zIndexInverse={2000}
-          loading={loading}
-          listMode="MODAL"
-          dropDownContainerStyle={{
-            backgroundColor: colors.CARD_BACKGROUND,
-            borderColor: colors.BORDER
-          }}
-          selectedItemContainerStyle={{
-            backgroundColor: colors.PRIMARY + '22'
-          }}
-          itemSeparator={true}
-          itemSeparatorStyle={{
-            backgroundColor: colors.BORDER
-          }}
-          selectedItemLabelStyle={{
-            fontWeight: 'bold',
-            color: colors.TEXT_PRIMARY
-          }}
-        />
-        {!subcategoryId ? <ErrorText msg="Necesita seleccionar una subcategoria" /> : null}
-
-        {/* DATE PICKER */}
-        <View style={styles.containerDate}>
-          <MyButton
-            title="Fecha"
-            onPress={showDatepicker}
-            icon={
-              <Icon
-                type="material-community"
-                name="calendar"
-                size={20}
-                color={colors.TEXT_PRIMARY}
-              />
-            }
-            variant="primary"
-            size="medium"
+        <View
+          style={[
+            styles.card,
+            { backgroundColor: colors.CARD_BACKGROUND, borderColor: colors.BORDER }
+          ]}
+        >
+          {/* COST */}
+          <MyInput
+            name="cost"
+            type="currency"
+            control={control}
+            label="Gasto"
+            placeholder="0"
+            rules={{
+              required: 'El gasto es obligatorio',
+              min: { value: 1, message: 'El mínimo valor aceptado es 1' },
+              max: {
+                value: 999999999,
+                message: 'El gasto no puede superar el valor de 999.999.999'
+              }
+            }}
+            leftIcon="cash"
+            autoFocus
           />
-          <Text style={[styles.textDate, { backgroundColor: colors.PRIMARY, color: colors.WHITE }]}>
-            {dateString}
+
+          {/* NATURE */}
+          <ExpenseNatureSelector control={control} defaultValue={expenseEdit.nature} />
+
+          {/* COMMENTARY */}
+          <MyInput
+            name="commentary"
+            type="textarea"
+            control={control}
+            label="Comentario"
+            placeholder="Ej: Compra de una camisa"
+            rules={{
+              maxLength: {
+                value: 200,
+                message: 'El comentario no puede superar los 200 caracteres'
+              }
+            }}
+            multiline
+            numberOfLines={2}
+            maxLength={200}
+            leftIcon="text"
+          />
+
+          {/* CATEGORY */}
+          <Text style={[styles.label, { color: colors.TEXT_PRIMARY }]}>Categoría</Text>
+
+          <DropDownPicker
+            open={open}
+            value={idCategory}
+            items={categories}
+            setOpen={setOpen}
+            setValue={setIdCategory as any}
+            setItems={setCategories as any}
+            maxHeight={ITEM_HEIGHT * Math.max(1, categories.length)}
+            placeholder="Seleccione una categoría"
+            zIndex={2000}
+            zIndexInverse={1000}
+            loading={loading}
+            ActivityIndicatorComponent={() => <MyLoading />}
+            activityIndicatorSize={30}
+            dropDownContainerStyle={{
+              backgroundColor: colors.CARD_BACKGROUND,
+              borderColor: colors.BORDER
+            }}
+            listMode="MODAL"
+            selectedItemContainerStyle={{
+              backgroundColor: colors.PRIMARY + '22'
+            }}
+            itemSeparator={true}
+            itemSeparatorStyle={{
+              backgroundColor: colors.BORDER
+            }}
+            selectedItemLabelStyle={{
+              fontWeight: 'bold',
+              color: colors.TEXT_PRIMARY
+            }}
+          />
+          {!idCategory ? <ErrorText msg="Necesita seleccionar una  Categoria" /> : null}
+
+          {/* SUBCATEGORY */}
+          <Text style={[styles.label, { color: colors.TEXT_PRIMARY, marginTop: 12 }]}>
+            Subcategoría
           </Text>
-        </View>
 
-        {show && (
-          <DateTimePicker
-            testID="dateTimePicker"
-            value={date}
-            mode={mode}
-            is24Hour={true}
-            display="default"
-            onChange={onChange}
+          <DropDownPicker
+            open={open2}
+            value={subcategoryId}
+            items={subcategories}
+            setOpen={setOpen2}
+            setValue={setSubcategoryId as any}
+            setItems={setSubcategories as any}
+            maxHeight={ITEM_HEIGHT * Math.max(1, subcategories.length)}
+            placeholder="Seleccione una subcategoría"
+            zIndex={1000}
+            zIndexInverse={2000}
+            loading={loading}
+            listMode="MODAL"
+            dropDownContainerStyle={{
+              backgroundColor: colors.CARD_BACKGROUND,
+              borderColor: colors.BORDER
+            }}
+            selectedItemContainerStyle={{
+              backgroundColor: colors.PRIMARY + '22'
+            }}
+            itemSeparator={true}
+            itemSeparatorStyle={{
+              backgroundColor: colors.BORDER
+            }}
+            selectedItemLabelStyle={{
+              fontWeight: 'bold',
+              color: colors.TEXT_PRIMARY
+            }}
           />
-        )}
+          {!subcategoryId ? <ErrorText msg="Necesita seleccionar una subcategoria" /> : null}
 
-        {/* SUBMIT */}
-        <View style={{ marginTop: 10 }}>
-          {loading ? (
-            <MyLoading />
-          ) : (
+          {/* DATE PICKER */}
+          <View style={styles.containerDate}>
             <MyButton
-              title="Editar"
-              onPress={handleSubmit(onSubmit)}
+              title="Fecha"
+              onPress={showDatepicker}
+              icon={
+                <Icon
+                  type="material-community"
+                  name="calendar"
+                  size={20}
+                  color={colors.TEXT_PRIMARY}
+                />
+              }
               variant="primary"
-              size="large"
-              fullWidth
-              loading={loading}
+              size="medium"
+            />
+            <Text
+              style={[styles.textDate, { backgroundColor: colors.PRIMARY, color: colors.WHITE }]}
+            >
+              {dateString}
+            </Text>
+          </View>
+
+          {show && (
+            <DateTimePicker
+              testID="dateTimePicker"
+              value={date}
+              mode={mode}
+              is24Hour={true}
+              display="default"
+              onChange={onChange}
             />
           )}
+
+          {/* SUBMIT */}
+          <View style={{ marginTop: 10 }}>
+            {loading ? (
+              <MyLoading />
+            ) : (
+              <MyButton
+                title="Editar"
+                onPress={handleSubmit(onSubmit)}
+                variant="primary"
+                size="large"
+                fullWidth
+                loading={loading}
+              />
+            )}
+          </View>
         </View>
-      </View>
+      </ScrollView>
     </View>
   );
 }
@@ -424,5 +435,9 @@ const styles = StyleSheet.create({
     marginTop: 8,
     marginBottom: 6,
     fontWeight: '600'
+  },
+  scrollContent: {
+    flexGrow: 1,
+    paddingBottom: 20
   }
 });

@@ -1,7 +1,8 @@
 import { ExpenseModel, SubcategoryModel } from '../models';
+import { ExpenseNature } from '../models/expense.type';
 
 export type CreateExpensePayload = Omit<ExpenseModel, 'id' | 'createdAt' | 'userId'> &
-  Partial<Pick<ExpenseModel, 'commentary'>>;
+  Partial<Pick<ExpenseModel, 'commentary' | 'nature'>>;
 export type EditExpensePayload = Partial<ExpenseModel>;
 
 export type ExpenseSearchOptionsQuery = {
@@ -151,6 +152,7 @@ export type CategoryAverage = {
 export type GetAverageBySubcategoriesQuery = {
   year: number;
   referenceYear?: number;
+  nature?: ExpenseNature;
 };
 
 export type GetAverageBySubcategoriesResponse = {

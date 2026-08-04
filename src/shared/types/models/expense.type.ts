@@ -1,3 +1,4 @@
+export type ExpenseNature = 'operational' | 'investment' | 'atypical';
 export type ExpenseModel = {
   id: number;
   createdAt: string;
@@ -7,6 +8,7 @@ export type ExpenseModel = {
   userId: number;
   subcategoryId: number;
   idempotencyKey?: string;
+  nature: ExpenseNature;
 };
 
 export type ExtendedExpenseModel = ExpenseModel & {

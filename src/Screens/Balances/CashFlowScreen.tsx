@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { StyleSheet, Text, View, ScrollView, TouchableOpacity } from 'react-native';
+import { StyleSheet, Text, View, ScrollView, TouchableOpacity, Switch } from 'react-native';
 import { useSelector } from 'react-redux';
 import { Icon } from 'react-native-elements';
 import { useQuery } from '@apollo/client/react';
@@ -21,7 +21,7 @@ import { ScreenHeader } from '~/components/ScreenHeader';
 import { SavingsAnalysisCard } from './components/SavingsAnalysisCard';
 
 // Types
-import { FinancialRecord } from '../../shared/types/services';
+import { FinancialRecord, GetSavingsByUserResponse } from '../../shared/types/services';
 import { RootState } from '../../shared/types/reducers';
 import { BalanceStackParamList } from '../../shared/types';
 import { GetLoanResult } from '../../shared/types/graphql';
@@ -79,6 +79,10 @@ export default function CashFlowScreen({ navigation }: CashFlowScreenProps) {
   // Estado para mostrar/ocultar información sensible
   const [showSensitiveInfo, setShowSensitiveInfo] = useState(false);
 
+  // Datos crudos del último fetch + toggle de vista operativa
+  const [rawData, setRawData] = useState<GetSavingsByUserResponse | null>(null);
+  const [excludeInvestments, setExcludeInvestments] = useState<boolean>(false);
+
   const { loading: loadingGraphql, error, data } = useQuery<GetLoanResult>(GET_LOANS);
 
   useEffect(() => {
@@ -93,7 +97,7 @@ export default function CashFlowScreen({ navigation }: CashFlowScreenProps) {
     }
   }, [error]);
 
-  const fetchSavingsByUser = async () => {
+  const fetchSavingsByUser = async (): Promise<void> => {
     try {
       setLoading(true);
       const query = {
@@ -101,76 +105,83 @@ export default function CashFlowScreen({ navigation }: CashFlowScreenProps) {
       };
       const { data } = await getSavingsByUser(query);
       setLoading(false);
-
-      const allDataSavings = filterLimitDataForGraph<FinancialRecord>(data.data, numMonthsQuery);
-      const sumPercentSaving = allDataSavings.reduce((acu, val) => {
-        return acu + (val.income > 0 ? (val.saving * 100) / val.income : 0);
-      }, 0);
-      const meanSavingsByNumMonths =
-        allDataSavings.length > 0 ? Math.round(sumPercentSaving / allDataSavings.length) : 0;
-      const dataTable = allDataSavings.map((e) => {
-        const meanSaaving = e.income > 0 ? Math.round((e.saving * 100) / e.income) : 0;
-        return [
-          `${DateFormat(e.date, 'MMMM YYYY')}`,
-          `${meanSaaving} %`,
-          `${NumberFormat(e.saving)}`
-        ];
-      });
-
-      const sumSaving = allDataSavings.reduce((acu, val) => {
-        return acu + val.saving;
-      }, 0);
-      const meanSavingsValByNumMonths =
-        allDataSavings.length > 0 ? sumSaving / allDataSavings.length : 0;
-
-      dataTable.push([
-        'Promedio',
-        `${meanSavingsByNumMonths} %`,
-        `${NumberFormat(meanSavingsValByNumMonths)}`
-      ]);
-      setTableData(dataTable);
-
-      const filterLabels = filterLimitDataForGraph<string>(data.graph.labels, numMonthsQuery);
-      const filterExpenses = filterLimitDataForGraph<number>(data.graph.expenses, numMonthsQuery);
-      const filterIncomes = filterLimitDataForGraph<number>(data.graph.incomes, numMonthsQuery);
-      const filterSavings = filterLimitDataForGraph<number>(data.graph.savings, numMonthsQuery);
-      const previosExpenses = filterExpenses.slice(0);
-      previosExpenses.pop();
-      const previosIncomes = filterIncomes.slice(0);
-      previosIncomes.pop();
-      const previosSavings = filterSavings.slice(0);
-      previosSavings.pop();
-
-      setLabels(filterLabels);
-      setSearchTotalInMonth(data.data);
-
-      setDataExpenses(filterExpenses);
-      setAverageExpenses(calculateAverage(filterExpenses));
-      setPreviousAverageExpenses(calculateAverage(previosExpenses));
-
-      setDataIncomes(filterIncomes);
-      setAverageIncomes(calculateAverage(filterIncomes));
-      setPreviousAverageIncomes(calculateAverage(previosIncomes));
-
-      const acuPreviosSavings = previosSavings.reduce((acu, val) => {
-        return acu + val;
-      }, 0);
-      setDataSavings(filterSavings);
-      setSumPreviousSavings(acuPreviosSavings);
-
-      historySaving(data.graph.savings);
+      setRawData(data);
     } catch (e) {
       setLoading(false);
       showError(e);
     }
   };
 
+  // Recalcula tabla, gráficas y totales cada vez que cambian los datos crudos
+  // o el toggle de vista operativa. No dispara ningún request nuevo.
   useEffect(() => {
-    fetchSavingsByUser();
-    return navigation.addListener('focus', () => {
-      fetchSavingsByUser();
+    if (!rawData) return;
+    processSavingsData(rawData, excludeInvestments);
+  }, [rawData, excludeInvestments]);
+
+  const processSavingsData = (data: GetSavingsByUserResponse, excludeInv: boolean): void => {
+    const allDataSavings = filterLimitDataForGraph<FinancialRecord>(data.data, numMonthsQuery);
+
+    const getSaving = (e: FinancialRecord) => (excludeInv ? e.operationalSaving : e.saving);
+    const getExpense = (e: FinancialRecord) => (excludeInv ? e.operationalExpense : e.expense);
+
+    const sumPercentSaving = allDataSavings.reduce((acu, val) => {
+      const saving = getSaving(val);
+      return acu + (val.income > 0 ? (saving * 100) / val.income : 0);
+    }, 0);
+    const meanSavingsByNumMonths =
+      allDataSavings.length > 0 ? Math.round(sumPercentSaving / allDataSavings.length) : 0;
+    const dataTable = allDataSavings.map((e) => {
+      const saving = getSaving(e);
+      const meanSaaving = e.income > 0 ? Math.round((saving * 100) / e.income) : 0;
+      return [`${DateFormat(e.date, 'MMMM YYYY')}`, `${meanSaaving} %`, `${NumberFormat(saving)}`];
     });
-  }, [month, numMonthsQuery]);
+
+    const sumSaving = allDataSavings.reduce((acu, val) => acu + getSaving(val), 0);
+    const meanSavingsValByNumMonths =
+      allDataSavings.length > 0 ? sumSaving / allDataSavings.length : 0;
+
+    dataTable.push([
+      'Promedio',
+      `${meanSavingsByNumMonths} %`,
+      `${NumberFormat(meanSavingsValByNumMonths)}`
+    ]);
+    setTableData(dataTable);
+
+    const filterLabels = filterLimitDataForGraph<string>(data.graph.labels, numMonthsQuery);
+    const filterExpenses = filterLimitDataForGraph<number>(
+      excludeInv ? data.graph.operationalExpenses : data.graph.expenses,
+      numMonthsQuery
+    );
+    const filterIncomes = filterLimitDataForGraph<number>(data.graph.incomes, numMonthsQuery);
+    const filterSavings = filterLimitDataForGraph<number>(
+      excludeInv ? data.graph.operationalSavings : data.graph.savings,
+      numMonthsQuery
+    );
+    const previosExpenses = filterExpenses.slice(0);
+    previosExpenses.pop();
+    const previosIncomes = filterIncomes.slice(0);
+    previosIncomes.pop();
+    const previosSavings = filterSavings.slice(0);
+    previosSavings.pop();
+
+    setLabels(filterLabels);
+    setSearchTotalInMonth(data.data, excludeInv);
+
+    setDataExpenses(filterExpenses);
+    setAverageExpenses(calculateAverage(filterExpenses));
+    setPreviousAverageExpenses(calculateAverage(previosExpenses));
+
+    setDataIncomes(filterIncomes);
+    setAverageIncomes(calculateAverage(filterIncomes));
+    setPreviousAverageIncomes(calculateAverage(previosIncomes));
+
+    const acuPreviosSavings = previosSavings.reduce((acu, val) => acu + val, 0);
+    setDataSavings(filterSavings);
+    setSumPreviousSavings(acuPreviosSavings);
+
+    historySaving(excludeInv ? data.graph.operationalSavings : data.graph.savings);
+  };
 
   const historySaving = async (history: number[]) => {
     let totalHistory = 0;
@@ -193,6 +204,13 @@ export default function CashFlowScreen({ navigation }: CashFlowScreenProps) {
     }
   };
 
+  useEffect(() => {
+    fetchSavingsByUser();
+    return navigation.addListener('focus', () => {
+      fetchSavingsByUser();
+    });
+  }, [month, numMonthsQuery]);
+
   const updateAllSavingsByUser = async () => {
     try {
       setLoading(true);
@@ -210,16 +228,16 @@ export default function CashFlowScreen({ navigation }: CashFlowScreenProps) {
     }
   };
 
-  const setSearchTotalInMonth = (allData: FinancialRecord[]) => {
+  const setSearchTotalInMonth = (allData: FinancialRecord[], excludeInv: boolean): void => {
     const startMonthFormat = getDateStartOfMonth(month);
     const objData = allData.filter((e) => e.date === startMonthFormat);
     let totalExpenseByMonth = 0;
     let totalIncomeByMonth = 0;
     let totalSavingByMonth = 0;
     if (objData.length > 0) {
-      totalExpenseByMonth = objData[0].expense;
+      totalExpenseByMonth = excludeInv ? objData[0].operationalExpense : objData[0].expense;
       totalIncomeByMonth = objData[0].income;
-      totalSavingByMonth = objData[0].saving;
+      totalSavingByMonth = excludeInv ? objData[0].operationalSaving : objData[0].saving;
     }
     setTotalExpenses(totalExpenseByMonth);
     setTotalIncomes(totalIncomeByMonth);
@@ -255,6 +273,24 @@ export default function CashFlowScreen({ navigation }: CashFlowScreenProps) {
           <MyLoading />
         ) : (
           <View>
+            {/* Toggle vista operativa */}
+            <View style={[styles.natureToggle, { backgroundColor: colors.CARD_BACKGROUND }]}>
+              <View style={{ flex: 1 }}>
+                <Text style={[styles.natureToggleLabel, { color: colors.TEXT_PRIMARY }]}>
+                  Vista operativa
+                </Text>
+                <Text style={[styles.natureToggleDescription, { color: colors.TEXT_SECONDARY }]}>
+                  Excluye compras marcadas como inversión o atípicas
+                </Text>
+              </View>
+              <Switch
+                value={excludeInvestments}
+                onValueChange={setExcludeInvestments}
+                trackColor={{ false: colors.GRAY, true: colors.SUCCESS + '80' }}
+                thumbColor={excludeInvestments ? colors.SUCCESS : colors.WHITE}
+              />
+            </View>
+
             {/* Cards minimalistas sin iconos */}
             <View style={styles.cardsGrid}>
               <View style={[styles.miniCard, { backgroundColor: colors.CARD_BACKGROUND }]}>
@@ -294,20 +330,6 @@ export default function CashFlowScreen({ navigation }: CashFlowScreenProps) {
                 </Text>
               </View>
             </View>
-
-            {/* Balance destacado */}
-            {/* <View style={[
-              styles.balanceCard,
-              { backgroundColor: colors.CARD_BACKGROUND }
-            ]}>
-              <Text style={[styles.balanceLabel, { color: colors.TEXT_SECONDARY }]}>Balance</Text>
-              <Text style={[
-                styles.balanceValue,
-                { color: isPositiveBalance ? colors.SUCCESS : colors.ERROR }
-              ]} numberOfLines={1} adjustsFontSizeToFit>
-                {isPositiveBalance ? '+' : ''}{NumberFormat(monthBalance)}
-              </Text>
-            </View> */}
 
             {/* Botón para info sensible */}
             <TouchableOpacity
@@ -499,6 +521,27 @@ const styles = StyleSheet.create({
     fontWeight: '500',
     marginTop: 2
   },
+  natureToggle: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    padding: 14,
+    borderRadius: 12,
+    marginBottom: 12,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 4,
+    elevation: 2
+  },
+  natureToggleLabel: {
+    fontSize: 13,
+    fontWeight: '600'
+  },
+  natureToggleDescription: {
+    fontSize: 11,
+    marginTop: 2
+  },
   cardsGrid: {
     flexDirection: 'row',
     gap: 10,
@@ -524,27 +567,6 @@ const styles = StyleSheet.create({
   miniCardValue: {
     fontSize: 14,
     fontWeight: '800'
-  },
-  balanceCard: {
-    padding: 16,
-    borderRadius: 12,
-    marginBottom: 12,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.05,
-    shadowRadius: 4,
-    elevation: 2
-  },
-  balanceLabel: {
-    fontSize: 11,
-    fontWeight: '600',
-    marginBottom: 6,
-    textTransform: 'uppercase',
-    letterSpacing: 0.5
-  },
-  balanceValue: {
-    fontSize: 24,
-    fontWeight: '900'
   },
   toggleButton: {
     flexDirection: 'row',

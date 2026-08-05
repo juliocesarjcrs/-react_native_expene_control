@@ -47,6 +47,7 @@ export default function SavingsAnalysisScreen({ navigation }: SavingsAnalysisScr
   );
   const [endDate, setEndDate] = useState(new Date());
   const [compareWithPrevious, setCompareWithPrevious] = useState(false);
+  const [excludeInvestments, setExcludeInvestments] = useState<boolean>(false);
   const [analysisData, setAnalysisData] = useState<SavingsPeriodAnalysisResponse | null>(null);
   const [hasSearched, setHasSearched] = useState(false);
 
@@ -67,9 +68,39 @@ export default function SavingsAnalysisScreen({ navigation }: SavingsAnalysisScr
     }
   };
 
-  const getTrendIcon = () => {
-    if (!analysisData) return 'minus';
-    switch (analysisData.trend.direction) {
+  // Valores derivados según el toggle "vista operativa"
+  const displayTotalSaving = analysisData
+    ? excludeInvestments
+      ? analysisData.periodData.totalOperationalSaving
+      : analysisData.periodData.totalSaving
+    : 0;
+
+  const displayAvgMonthlySaving = analysisData
+    ? excludeInvestments
+      ? analysisData.periodData.avgMonthlyOperationalSaving
+      : analysisData.periodData.avgMonthlySaving
+    : 0;
+
+  const displaySavingPercentage = analysisData
+    ? excludeInvestments
+      ? analysisData.periodData.operationalSavingPercentage
+      : analysisData.periodData.savingPercentage
+    : 0;
+
+  const displayTotalExpense = analysisData
+    ? excludeInvestments
+      ? analysisData.periodData.totalOperationalExpense
+      : analysisData.periodData.totalExpense
+    : 0;
+
+  const displayTrend = analysisData
+    ? excludeInvestments
+      ? analysisData.trend.operational
+      : analysisData.trend
+    : { direction: 'stable' as const, percentage: 0 };
+
+  const getTrendIcon = (): string => {
+    switch (displayTrend.direction) {
       case 'up':
         return 'trending-up';
       case 'down':
@@ -79,9 +110,8 @@ export default function SavingsAnalysisScreen({ navigation }: SavingsAnalysisScr
     }
   };
 
-  const getTrendColor = () => {
-    if (!analysisData) return colors.TEXT_SECONDARY;
-    switch (analysisData.trend.direction) {
+  const getTrendColor = (): string => {
+    switch (displayTrend.direction) {
       case 'up':
         return colors.SUCCESS;
       case 'down':
@@ -174,6 +204,24 @@ export default function SavingsAnalysisScreen({ navigation }: SavingsAnalysisScr
           {/* Resultados */}
           {!loading && hasSearched && analysisData && (
             <>
+              {/* Toggle vista operativa - solo visible con resultados */}
+              <View style={[styles.natureToggleCard, { backgroundColor: colors.CARD_BACKGROUND }]}>
+                <View style={{ flex: 1 }}>
+                  <Text style={[styles.switchLabel, { color: colors.TEXT_PRIMARY }]}>
+                    Vista operativa
+                  </Text>
+                  <Text style={[styles.switchDescription, { color: colors.TEXT_SECONDARY }]}>
+                    Excluye compras marcadas como inversión o atípicas
+                  </Text>
+                </View>
+                <Switch
+                  value={excludeInvestments}
+                  onValueChange={setExcludeInvestments}
+                  trackColor={{ false: colors.GRAY, true: colors.SUCCESS + '80' }}
+                  thumbColor={excludeInvestments ? colors.SUCCESS : colors.WHITE}
+                />
+              </View>
+
               {/* Resumen Principal */}
               <View style={styles.resultsSection}>
                 <View style={styles.sectionHeader}>
@@ -191,32 +239,32 @@ export default function SavingsAnalysisScreen({ navigation }: SavingsAnalysisScr
                 <View style={styles.metricsGrid}>
                   {renderMetricCard(
                     'Ahorro Total',
-                    NumberFormat(analysisData.periodData.totalSaving),
+                    NumberFormat(displayTotalSaving),
                     'piggy-bank',
                     colors.SUCCESS,
                     `${analysisData.periodData.monthsCount} ${analysisData.periodData.monthsCount === 1 ? 'mes' : 'meses'}`
                   )}
                   {renderMetricCard(
                     'Promedio Mensual',
-                    NumberFormat(analysisData.periodData.avgMonthlySaving),
+                    NumberFormat(displayAvgMonthlySaving),
                     'calculator',
                     colors.INFO
                   )}
                   {renderMetricCard(
                     'Porcentaje de Ahorro',
-                    `${analysisData.periodData.savingPercentage.toFixed(1)}%`,
+                    `${displaySavingPercentage.toFixed(1)}%`,
                     'percent',
                     colors.PRIMARY,
                     'Del total de ingresos'
                   )}
                   {renderMetricCard(
                     'Tendencia',
-                    `${analysisData.trend.percentage > 0 ? '+' : ''}${analysisData.trend.percentage.toFixed(1)}%`,
+                    `${displayTrend.percentage > 0 ? '+' : ''}${displayTrend.percentage.toFixed(1)}%`,
                     getTrendIcon(),
                     getTrendColor(),
-                    analysisData.trend.direction === 'up'
+                    displayTrend.direction === 'up'
                       ? 'Mejorando'
-                      : analysisData.trend.direction === 'down'
+                      : displayTrend.direction === 'down'
                         ? 'Disminuyendo'
                         : 'Estable'
                   )}
@@ -239,7 +287,7 @@ export default function SavingsAnalysisScreen({ navigation }: SavingsAnalysisScr
                       Gastos Totales
                     </Text>
                     <Text style={[styles.totalValue, { color: colors.ERROR }]}>
-                      {NumberFormat(analysisData.periodData.totalExpense)}
+                      {NumberFormat(displayTotalExpense)}
                     </Text>
                   </View>
                 </View>
@@ -271,7 +319,11 @@ export default function SavingsAnalysisScreen({ navigation }: SavingsAnalysisScr
                         Ahorro período anterior
                       </Text>
                       <Text style={[styles.comparisonValue, { color: colors.TEXT_PRIMARY }]}>
-                        {NumberFormat(analysisData.comparison.previousPeriod.totalSaving)}
+                        {NumberFormat(
+                          excludeInvestments
+                            ? analysisData.comparison.previousPeriod.totalOperationalSaving
+                            : analysisData.comparison.previousPeriod.totalSaving
+                        )}
                       </Text>
                     </View>
 
@@ -279,55 +331,51 @@ export default function SavingsAnalysisScreen({ navigation }: SavingsAnalysisScr
                       <Text style={[styles.comparisonLabel, { color: colors.TEXT_SECONDARY }]}>
                         Diferencia
                       </Text>
-                      <Text
-                        style={[
-                          styles.comparisonValue,
-                          {
-                            color:
-                              analysisData.comparison.difference >= 0
-                                ? colors.SUCCESS
-                                : colors.ERROR
-                          }
-                        ]}
-                      >
-                        {analysisData.comparison.difference >= 0 ? '+' : ''}
-                        {NumberFormat(analysisData.comparison.difference)}
-                      </Text>
+                      {(() => {
+                        const diff = excludeInvestments
+                          ? analysisData.comparison.operationalDifference
+                          : analysisData.comparison.difference;
+                        return (
+                          <Text
+                            style={[
+                              styles.comparisonValue,
+                              { color: diff >= 0 ? colors.SUCCESS : colors.ERROR }
+                            ]}
+                          >
+                            {diff >= 0 ? '+' : ''}
+                            {NumberFormat(diff)}
+                          </Text>
+                        );
+                      })()}
                     </View>
 
                     <View style={styles.comparisonRow}>
                       <Text style={[styles.comparisonLabel, { color: colors.TEXT_SECONDARY }]}>
                         Variación
                       </Text>
-                      <View style={styles.percentageContainer}>
-                        <Icon
-                          type="material-community"
-                          name={
-                            analysisData.comparison.percentageChange >= 0
-                              ? 'arrow-up-bold'
-                              : 'arrow-down-bold'
-                          }
-                          size={18}
-                          color={
-                            analysisData.comparison.percentageChange >= 0
-                              ? colors.SUCCESS
-                              : colors.ERROR
-                          }
-                        />
-                        <Text
-                          style={[
-                            styles.percentageText,
-                            {
-                              color:
-                                analysisData.comparison.percentageChange >= 0
-                                  ? colors.SUCCESS
-                                  : colors.ERROR
-                            }
-                          ]}
-                        >
-                          {Math.abs(analysisData.comparison.percentageChange).toFixed(1)}%
-                        </Text>
-                      </View>
+                      {(() => {
+                        const pctChange = excludeInvestments
+                          ? analysisData.comparison.operationalPercentageChange
+                          : analysisData.comparison.percentageChange;
+                        return (
+                          <View style={styles.percentageContainer}>
+                            <Icon
+                              type="material-community"
+                              name={pctChange >= 0 ? 'arrow-up-bold' : 'arrow-down-bold'}
+                              size={18}
+                              color={pctChange >= 0 ? colors.SUCCESS : colors.ERROR}
+                            />
+                            <Text
+                              style={[
+                                styles.percentageText,
+                                { color: pctChange >= 0 ? colors.SUCCESS : colors.ERROR }
+                              ]}
+                            >
+                              {Math.abs(pctChange).toFixed(1)}%
+                            </Text>
+                          </View>
+                        );
+                      })()}
                     </View>
                   </View>
                 </View>
@@ -362,52 +410,84 @@ export default function SavingsAnalysisScreen({ navigation }: SavingsAnalysisScr
                   </View>
 
                   {/* Filas de datos */}
-                  {analysisData.monthlyBreakdown.map((item, index) => (
-                    <View
-                      key={item.id}
-                      style={[
-                        styles.tableRow,
-                        index !== analysisData.monthlyBreakdown.length - 1 && {
-                          borderBottomWidth: 1,
-                          borderBottomColor: colors.BORDER
-                        }
-                      ]}
-                    >
-                      <Text style={[styles.tableCell, { color: colors.TEXT_PRIMARY, flex: 2 }]}>
-                        {item.month}
-                      </Text>
-                      <Text
+                  {analysisData.monthlyBreakdown.map((item, index) => {
+                    const rowSaving = excludeInvestments ? item.operationalSaving : item.saving;
+                    const rowPercentage = excludeInvestments
+                      ? item.operationalSavingPercentage
+                      : item.savingPercentage;
+                    const hasExcludedExpense = item.expense !== item.operationalExpense;
+
+                    return (
+                      <View
+                        key={item.id}
                         style={[
-                          styles.tableCell,
-                          {
-                            color: item.saving >= 0 ? colors.SUCCESS : colors.ERROR,
-                            flex: 2,
-                            fontWeight: '600'
+                          styles.tableRow,
+                          index !== analysisData.monthlyBreakdown.length - 1 && {
+                            borderBottomWidth: 1,
+                            borderBottomColor: colors.BORDER
                           }
                         ]}
                       >
-                        {NumberFormat(item.saving)}
-                      </Text>
-                      <View style={[styles.percentageBadge, { flex: 1 }]}>
+                        <View style={{ flex: 2, flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+                          <Text style={[styles.tableCell, { color: colors.TEXT_PRIMARY, textAlign: 'left' }]}>
+                            {item.month}
+                          </Text>
+                          {hasExcludedExpense && (
+                            <Icon
+                              type="material-community"
+                              name="home-city-outline"
+                              size={14}
+                              color={colors.SUCCESS}
+                            />
+                          )}
+                        </View>
                         <Text
                           style={[
-                            styles.percentageBadgeText,
+                            styles.tableCell,
                             {
-                              color:
-                                item.savingPercentage >= 20
-                                  ? colors.SUCCESS
-                                  : item.savingPercentage >= 10
-                                    ? colors.WARNING
-                                    : colors.ERROR
+                              color: rowSaving >= 0 ? colors.SUCCESS : colors.ERROR,
+                              flex: 2,
+                              fontWeight: '600'
                             }
                           ]}
                         >
-                          {item.savingPercentage.toFixed(1)}%
+                          {NumberFormat(rowSaving)}
                         </Text>
+                        <View style={[styles.percentageBadge, { flex: 1 }]}>
+                          <Text
+                            style={[
+                              styles.percentageBadgeText,
+                              {
+                                color:
+                                  rowPercentage >= 20
+                                    ? colors.SUCCESS
+                                    : rowPercentage >= 10
+                                      ? colors.WARNING
+                                      : colors.ERROR
+                              }
+                            ]}
+                          >
+                            {rowPercentage.toFixed(1)}%
+                          </Text>
+                        </View>
                       </View>
-                    </View>
-                  ))}
+                    );
+                  })}
                 </View>
+
+                {analysisData.monthlyBreakdown.some((item) => item.expense !== item.operationalExpense) && (
+                  <View style={styles.legendRow}>
+                    <Icon
+                      type="material-community"
+                      name="home-city-outline"
+                      size={14}
+                      color={colors.SUCCESS}
+                    />
+                    <Text style={[styles.legendText, { color: colors.TEXT_SECONDARY }]}>
+                      Mes con inversión o gasto atípico registrado
+                    </Text>
+                  </View>
+                )}
               </View>
             </>
           )}
@@ -475,6 +555,19 @@ const styles = StyleSheet.create({
     gap: 12,
     marginBottom: 16,
     paddingVertical: 8
+  },
+  natureToggleCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    borderRadius: 12,
+    padding: 16,
+    marginBottom: 16,
+    shadowColor: '#000',
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    shadowOffset: { width: 0, height: 2 },
+    elevation: 2
   },
   switchLabel: {
     fontSize: SMALL + 1,
@@ -639,6 +732,16 @@ const styles = StyleSheet.create({
   percentageBadgeText: {
     fontSize: SMALL,
     fontWeight: '600'
+  },
+  legendRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    marginTop: 8,
+    paddingHorizontal: 4
+  },
+  legendText: {
+    fontSize: SMALL - 1
   },
   emptyState: {
     paddingVertical: 60,

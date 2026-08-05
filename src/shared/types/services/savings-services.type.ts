@@ -4,6 +4,8 @@ export type FinancialRecord = {
   saving: number;
   expense: number;
   income: number;
+  operationalExpense: number;
+  operationalSaving: number;
   commentary: string | null;
   date: string;
   userId: number;
@@ -17,6 +19,8 @@ export type Graph = {
   expenses: number[];
   incomes: number[];
   savings: number[];
+  operationalExpenses: number[];
+  operationalSavings: number[];
 };
 export type GetSavingsByUserResponse = {
   data: FinancialRecord[];
@@ -42,6 +46,10 @@ export type PeriodData = {
   avgMonthlySaving: number;
   savingPercentage: number;
   monthsCount: number;
+  totalOperationalExpense: number;
+  totalOperationalSaving: number;
+  avgMonthlyOperationalSaving: number;
+  operationalSavingPercentage: number;
 };
 
 export type MonthlyBreakdownItem = {
@@ -52,11 +60,18 @@ export type MonthlyBreakdownItem = {
   income: number;
   expense: number;
   savingPercentage: number;
+  operationalExpense: number;
+  operationalSaving: number;
+  operationalSavingPercentage: number;
 };
 
-export type TrendData = {
+export type TrendInfo = {
   direction: 'up' | 'down' | 'stable';
   percentage: number;
+};
+
+export type TrendData = TrendInfo & {
+  operational: TrendInfo;
 };
 
 export type ComparisonData = {
@@ -64,9 +79,14 @@ export type ComparisonData = {
     totalSaving: number;
     avgMonthlySaving: number;
     savingPercentage: number;
+    totalOperationalSaving: number;
+    avgMonthlyOperationalSaving: number;
+    operationalSavingPercentage: number;
   };
   difference: number;
   percentageChange: number;
+  operationalDifference: number;
+  operationalPercentageChange: number;
 };
 
 export type SavingsPeriodAnalysisResponse = {

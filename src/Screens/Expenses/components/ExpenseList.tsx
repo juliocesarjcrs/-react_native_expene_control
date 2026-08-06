@@ -8,6 +8,7 @@ import { deleteExpense } from '~/services/expenses';
 // Utils
 import { showError } from '~/utils/showError';
 import { DateFormat, NumberFormat } from '~/utils/Helpers';
+import { EXPENSE_NATURE_META } from '~/constants/expenseNature';
 
 // Theme
 import { useThemeColors } from '~/customHooks/useThemeColors';
@@ -93,6 +94,9 @@ interface ExpenseListItemProps {
 
 const ExpenseListItem = ({ item, onDelete, colors }: ExpenseListItemProps) => {
   const hasCommentary = item.commentary && item.commentary.trim().length > 0;
+  const natureMeta = EXPENSE_NATURE_META[item.nature] ?? EXPENSE_NATURE_META.operational;
+  const natureColor = colors[natureMeta.colorKey];
+  const isNotOperational = item.nature !== 'operational';
 
   const tooltipProps: TooltipProps = {
     withPointer: true,
@@ -126,13 +130,13 @@ const ExpenseListItem = ({ item, onDelete, colors }: ExpenseListItemProps) => {
         itemStyles.card,
         {
           backgroundColor: colors.CARD_BACKGROUND,
-          borderLeftColor: colors.WARNING
+          borderLeftColor: natureColor
         }
       ]}
     >
-      {/* Indicador de gasto */}
-      <View style={[itemStyles.indicator, { backgroundColor: colors.WARNING + '15' }]}>
-        <Icon type="material-community" name="cash-minus" size={20} color={colors.WARNING} />
+      {/* Indicador de gasto - refleja la naturaleza (normal/inversión/atípico) */}
+      <View style={[itemStyles.indicator, { backgroundColor: natureColor + '15' }]}>
+        <Icon type="material-community" name={natureMeta.icon} size={20} color={natureColor} />
       </View>
 
       {/* Información del gasto */}
@@ -173,6 +177,15 @@ const ExpenseListItem = ({ item, onDelete, colors }: ExpenseListItemProps) => {
           <Text style={[itemStyles.date, { color: colors.TEXT_SECONDARY }]}>
             {DateFormat(item.createdAt, 'hh:mm a')}
           </Text>
+
+          {isNotOperational && (
+            <>
+              <Text style={[itemStyles.separator, { color: colors.TEXT_SECONDARY }]}>•</Text>
+              <Text style={[itemStyles.natureBadgeText, { color: natureColor }]}>
+                {natureMeta.label}
+              </Text>
+            </>
+          )}
         </View>
 
         {/* Mostrar comentario directamente si existe */}
@@ -243,6 +256,10 @@ const itemStyles = StyleSheet.create({
   separator: {
     marginHorizontal: 6,
     fontSize: SMALL
+  },
+  natureBadgeText: {
+    fontSize: SMALL,
+    fontWeight: '700'
   },
   commentaryContainer: {
     marginTop: 4,

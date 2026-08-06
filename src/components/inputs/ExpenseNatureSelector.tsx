@@ -1,3 +1,4 @@
+// ~/components/inputs/ExpenseNatureSelector.tsx
 import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { Controller, Control } from 'react-hook-form';
@@ -5,6 +6,7 @@ import { Icon } from 'react-native-elements';
 
 // Types
 import { ExpenseNature } from '~/shared/types/models/expense.type';
+import { EXPENSE_NATURE_META } from '~/constants/expenseNature';
 
 // Theme
 import { useThemeColors } from '~/customHooks/useThemeColors';
@@ -12,37 +14,7 @@ import { useThemeColors } from '~/customHooks/useThemeColors';
 // Styles
 import { SMALL, MEDIUM } from '~/styles/fonts';
 
-interface ExpenseNatureOption {
-  value: ExpenseNature;
-  label: string;
-  icon: string;
-  description: string;
-  colorKey: 'PRIMARY' | 'SUCCESS' | 'WARNING';
-}
-
-const NATURE_OPTIONS: ExpenseNatureOption[] = [
-  {
-    value: 'operational',
-    label: 'Normal',
-    icon: 'cart-outline',
-    description: 'Gasto de consumo habitual',
-    colorKey: 'PRIMARY'
-  },
-  {
-    value: 'investment',
-    label: 'Inversión',
-    icon: 'home-city-outline',
-    description: 'Compra de un activo: terreno, apartamento, inversión financiera',
-    colorKey: 'SUCCESS'
-  },
-  {
-    value: 'atypical',
-    label: 'Atípico',
-    icon: 'alert-circle-outline',
-    description: 'Gasto grande no recurrente: emergencia, reparación mayor',
-    colorKey: 'WARNING'
-  }
-];
+const NATURE_VALUES: ExpenseNature[] = ['operational', 'investment', 'atypical'];
 
 interface ExpenseNatureSelectorProps {
   control: Control<any>;
@@ -63,21 +35,22 @@ export default function ExpenseNatureSelector({
       control={control}
       defaultValue={defaultValue}
       render={({ field: { value, onChange } }) => {
-        const selectedOption = NATURE_OPTIONS.find((o) => o.value === value);
+        const selectedMeta = EXPENSE_NATURE_META[value as ExpenseNature];
 
         return (
           <View style={styles.container}>
             <Text style={[styles.label, { color: colors.TEXT_PRIMARY }]}>Tipo de gasto</Text>
 
             <View style={styles.optionsRow}>
-              {NATURE_OPTIONS.map((option) => {
-                const isSelected = value === option.value;
-                const optionColor = colors[option.colorKey];
+              {NATURE_VALUES.map((natureValue) => {
+                const meta = EXPENSE_NATURE_META[natureValue];
+                const isSelected = value === natureValue;
+                const optionColor = colors[meta.colorKey];
 
                 return (
                   <TouchableOpacity
-                    key={option.value}
-                    onPress={() => onChange(option.value)}
+                    key={natureValue}
+                    onPress={() => onChange(natureValue)}
                     activeOpacity={0.7}
                     style={[
                       styles.option,
@@ -89,7 +62,7 @@ export default function ExpenseNatureSelector({
                   >
                     <Icon
                       type="material-community"
-                      name={option.icon}
+                      name={meta.icon}
                       size={20}
                       color={isSelected ? optionColor : colors.TEXT_SECONDARY}
                     />
@@ -99,16 +72,16 @@ export default function ExpenseNatureSelector({
                         { color: isSelected ? optionColor : colors.TEXT_SECONDARY }
                       ]}
                     >
-                      {option.label}
+                      {meta.label}
                     </Text>
                   </TouchableOpacity>
                 );
               })}
             </View>
 
-            {selectedOption ? (
+            {selectedMeta ? (
               <Text style={[styles.description, { color: colors.TEXT_SECONDARY }]}>
-                {selectedOption.description}
+                {selectedMeta.description}
               </Text>
             ) : null}
           </View>

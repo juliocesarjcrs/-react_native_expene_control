@@ -7,9 +7,13 @@ import Popover from 'react-native-popover-view';
 import { ShowToast } from '~/utils/toastUtils';
 import { DateFormat, NumberFormat } from '~/utils/Helpers';
 import { showError } from '~/utils/showError';
+import { EXPENSE_NATURE_META } from '~/constants/expenseNature';
 
 // Theme
 import { useThemeColors } from '~/customHooks/useThemeColors';
+
+// Types
+import { ExpenseNature } from '~/shared/types/models/expense.type';
 
 // Styles
 import { MEDIUM, SMALL } from '~/styles/fonts';
@@ -23,6 +27,7 @@ interface BaseTransaction {
   iconCategory: string | null;
   category?: string;
   subcategory?: string;
+  nature?: ExpenseNature;
 }
 
 interface TransactionItemWithActionsProps<T extends BaseTransaction> {
@@ -45,6 +50,11 @@ export default function TransactionItemWithActions<T extends BaseTransaction>({
 
   const displayName = type === 'expense' ? item.subcategory : item.category;
   const typeColor = type === 'expense' ? colors.WARNING : colors.SUCCESS;
+
+  // La naturaleza solo aplica a gastos; se ignora por completo en ingresos.
+  const natureMeta = type === 'expense' && item.nature ? EXPENSE_NATURE_META[item.nature] : null;
+  const showNatureIndicator = !!natureMeta && item.nature !== 'operational';
+  const natureColor = natureMeta ? colors[natureMeta.colorKey] : undefined;
 
   const handleEdit = (): void => {
     setShowPopover(false);
@@ -86,7 +96,13 @@ export default function TransactionItemWithActions<T extends BaseTransaction>({
   return (
     <View style={[styles.container, { borderBottomColor: colors.BORDER }]}>
       {/* Icon */}
-      <View style={[styles.iconContainer, { backgroundColor: typeColor + '15' }]}>
+      <View
+        style={[
+          styles.iconContainer,
+          { backgroundColor: typeColor + '15' },
+          showNatureIndicator && { borderWidth: 2, borderColor: natureColor }
+        ]}
+      >
         <Icon type="font-awesome" name={item.iconCategory || 'home'} size={20} color={typeColor} />
       </View>
 
@@ -124,6 +140,20 @@ export default function TransactionItemWithActions<T extends BaseTransaction>({
           <Text style={[styles.date, { color: colors.TEXT_SECONDARY }]}>
             {DateFormat(item.createdAt, 'hh:mm a')}
           </Text>
+
+          {showNatureIndicator && (
+            <>
+              <Text style={[styles.separator, { color: colors.TEXT_SECONDARY }]}>•</Text>
+              <Icon
+                type="material-community"
+                name={natureMeta!.icon}
+                size={11}
+                color={natureColor}
+                containerStyle={{ marginRight: 3 }}
+              />
+              <Text style={[styles.natureText, { color: natureColor }]}>{natureMeta!.label}</Text>
+            </>
+          )}
         </View>
       </View>
 
@@ -213,7 +243,8 @@ const styles = StyleSheet.create({
   },
   dateRow: {
     flexDirection: 'row',
-    alignItems: 'center'
+    alignItems: 'center',
+    flexWrap: 'wrap'
   },
   date: {
     fontSize: SMALL - 1
@@ -221,6 +252,10 @@ const styles = StyleSheet.create({
   separator: {
     marginHorizontal: 4,
     fontSize: SMALL - 1
+  },
+  natureText: {
+    fontSize: SMALL - 1,
+    fontWeight: '700'
   },
   amountContainer: {
     alignItems: 'flex-end',

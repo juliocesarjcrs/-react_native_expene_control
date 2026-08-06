@@ -428,8 +428,15 @@ export default function SavingsAnalysisScreen({ navigation }: SavingsAnalysisScr
                           }
                         ]}
                       >
-                        <View style={{ flex: 2, flexDirection: 'row', alignItems: 'center', gap: 4 }}>
-                          <Text style={[styles.tableCell, { color: colors.TEXT_PRIMARY, textAlign: 'left' }]}>
+                        <View
+                          style={{ flex: 2, flexDirection: 'row', alignItems: 'center', gap: 4 }}
+                        >
+                          <Text
+                            style={[
+                              styles.tableCell,
+                              { color: colors.TEXT_PRIMARY, textAlign: 'left' }
+                            ]}
+                          >
                             {item.month}
                           </Text>
                           {hasExcludedExpense && (
@@ -475,7 +482,9 @@ export default function SavingsAnalysisScreen({ navigation }: SavingsAnalysisScr
                   })}
                 </View>
 
-                {analysisData.monthlyBreakdown.some((item) => item.expense !== item.operationalExpense) && (
+                {analysisData.monthlyBreakdown.some(
+                  (item) => item.expense !== item.operationalExpense
+                ) && (
                   <View style={styles.legendRow}>
                     <Icon
                       type="material-community"

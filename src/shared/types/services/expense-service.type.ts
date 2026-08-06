@@ -58,6 +58,7 @@ export type LastExpense = {
   cost: number;
   commentary: string;
   date: string;
+  nature: ExpenseNature;
   dateFormat: string;
   category: string;
   iconCategory: string;

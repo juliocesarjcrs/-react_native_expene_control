@@ -141,6 +141,11 @@ export default function MyStack() {
           options={{ title: 'Crear Categoría' }}
         />
         <IncomeStack.Screen
+          name="editCategory"
+          component={Routes.EditCategoryScreen}
+          options={{ title: 'Editar Categoría' }}
+        />
+        <IncomeStack.Screen
           name="lastIncomes"
           component={Routes.LastIncomesScreen}
           options={{ title: 'Últimos ingresos' }}

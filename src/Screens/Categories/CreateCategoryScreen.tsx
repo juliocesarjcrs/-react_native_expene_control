@@ -1,5 +1,5 @@
-import React, { useEffect, useState } from 'react';
-import { StyleSheet, Text, View, Keyboard } from 'react-native';
+import React, { useCallback, useEffect, useState } from 'react';
+import { StyleSheet, Text, View, Keyboard, Switch } from 'react-native';
 import { useForm } from 'react-hook-form';
 import { RadioButton } from 'react-native-paper';
 import { StackNavigationProp } from '@react-navigation/stack';
@@ -28,6 +28,7 @@ import { useThemeColors } from '~/customHooks/useThemeColors';
 
 // Styles
 import { commonStyles } from '~/styles/common';
+import { MEDIUM, SMALL } from '~/styles/fonts';
 
 // Configs
 import { screenConfigs } from '~/config/screenConfigs';
@@ -53,16 +54,13 @@ export default function CreateCategoryScreen({ navigation }: CreateCategoryScree
   const [categories, setCategories] = useState<CategoryModel[]>([]);
   const [loading, setLoading] = useState<boolean>(false);
   const [type, setType] = useState<CategoryType>(0);
+  const [isOperational, setIsOperational] = useState<boolean>(true);
 
   const { handleSubmit, control, reset } = useForm<CreateCategoryFormData>({
     defaultValues: { name: '' }
   });
 
-  useEffect(() => {
-    fetchData();
-  }, [type]);
-
-  const fetchData = async (): Promise<void> => {
+  const fetchData = useCallback(async (): Promise<void> => {
     try {
       const params = { type };
       const { data } = await getCategories(params);
@@ -70,11 +68,40 @@ export default function CreateCategoryScreen({ navigation }: CreateCategoryScree
     } catch (error) {
       showError(error);
     }
-  };
+  }, [type]);
+
+  useEffect(() => {
+    let ignore = false;
+
+    const loadCategories = async (): Promise<void> => {
+      try {
+        const params = { type };
+        const { data } = await getCategories(params);
+        if (!ignore) {
+          setCategories(data);
+        }
+      } catch (error) {
+        if (!ignore) {
+          showError(error);
+        }
+      }
+    };
+
+    loadCategories();
+
+    return () => {
+      ignore = true;
+    };
+  }, [type]);
 
   const onSubmit = async (payload: CreateCategoryFormData): Promise<void> => {
     try {
-      const dataTransform: CreateCategoryPayload = { ...payload, icon, type };
+      const dataTransform: CreateCategoryPayload = {
+        ...payload,
+        icon,
+        type,
+        isOperational
+      };
       setLoading(true);
       const { data } = await CreateCategory(dataTransform);
       setLoading(false);
@@ -82,6 +109,7 @@ export default function CreateCategoryScreen({ navigation }: CreateCategoryScree
       const newCategories = [...categories, data];
       setCategories(newCategories);
       reset();
+      setIsOperational(true);
       Keyboard.dismiss();
       ShowToast('Categoría creada exitosamente');
     } catch (error) {
@@ -158,6 +186,29 @@ export default function CreateCategoryScreen({ navigation }: CreateCategoryScree
 
         <ModalIcon icon={icon} setIcon={handleIconChange} />
 
+        <View
+          style={[
+            styles.switchCard,
+            { backgroundColor: colors.CARD_BACKGROUND, borderColor: colors.BORDER }
+          ]}
+        >
+          <View style={styles.switchText}>
+            <Text style={[styles.switchLabel, { color: colors.TEXT_PRIMARY }]}>
+              Categoría operativa
+            </Text>
+            <Text style={[styles.switchDescription, { color: colors.TEXT_SECONDARY }]}>
+              Se incluye en el promedio de ahorro. Desactívala para ingresos o gastos esporádicos
+              (ej. cesantías, compra de activos).
+            </Text>
+          </View>
+          <Switch
+            value={isOperational}
+            onValueChange={setIsOperational}
+            trackColor={{ false: colors.GRAY, true: colors.SUCCESS }}
+            thumbColor={colors.WHITE}
+          />
+        </View>
+
         {loading ? <MyLoading /> : <MyButton onPress={handleSubmit(onSubmit)} title="Guardar" />}
         <CategoryList data={categories} updateList={updateList} />
       </View>
@@ -184,5 +235,27 @@ const styles = StyleSheet.create({
   radioOption: {
     flexDirection: 'row',
     alignItems: 'center'
+  },
+  switchCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    borderRadius: 12,
+    borderWidth: 1,
+    padding: 12,
+    marginTop: 8,
+    marginBottom: 16
+  },
+  switchText: {
+    flex: 1,
+    marginRight: 12
+  },
+  switchLabel: {
+    fontSize: MEDIUM,
+    fontWeight: '600',
+    marginBottom: 4
+  },
+  switchDescription: {
+    fontSize: SMALL
   }
 });

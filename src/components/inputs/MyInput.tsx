@@ -1,7 +1,14 @@
 import React, { useState, useRef } from 'react';
 import { View, TextInput, Text, StyleSheet, TouchableOpacity, TextInputProps } from 'react-native';
 import { Icon } from 'react-native-elements';
-import { Control, Controller, FieldError } from 'react-hook-form';
+import {
+  Control,
+  Controller,
+  FieldError,
+  FieldValues,
+  Path,
+  RegisterOptions
+} from 'react-hook-form';
 import { useThemeColors } from '~/customHooks/useThemeColors';
 import { MEDIUM, SMALL } from '~/styles/fonts';
 
@@ -11,11 +18,11 @@ import { MEDIUM, SMALL } from '~/styles/fonts';
 
 type InputType = 'text' | 'number' | 'currency' | 'password' | 'search' | 'textarea';
 
-interface MyInputProps {
+interface MyInputProps<TFieldValues extends FieldValues = FieldValues> {
   // React Hook Form
-  name: string;
-  control: Control<any>;
-  rules?: object;
+  name: Path<TFieldValues>;
+  control: Control<TFieldValues>;
+  rules?: RegisterOptions<TFieldValues, Path<TFieldValues>>;
 
   // Configuración básica
   label?: string;
@@ -106,6 +113,10 @@ const parseFormattedNumber = (text: string): number => {
 /**
  * MyInput - Componente general de inputs para la aplicación
  *
+ * Genérico sobre TFieldValues: el tipo de `name` y `control` se infiere
+ * automáticamente del formulario que llama al componente (useForm<T>),
+ * sin necesidad de castear en cada pantalla.
+ *
  * @example
  * // Input de moneda
  * <MyInput
@@ -128,7 +139,7 @@ const parseFormattedNumber = (text: string): number => {
  *   rules={{ required: 'El nombre es obligatorio' }}
  * />
  */
-export default function MyInput({
+export default function MyInput<TFieldValues extends FieldValues = FieldValues>({
   name,
   control,
   rules,
@@ -149,7 +160,7 @@ export default function MyInput({
   multiline = false,
   numberOfLines = 1,
   onFocus: onFocusProp
-}: MyInputProps): React.JSX.Element {
+}: MyInputProps<TFieldValues>): React.JSX.Element {
   const colors = useThemeColors();
   const [isFocused, setIsFocused] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
@@ -250,6 +261,8 @@ export default function MyInput({
     return colors.CARD_BACKGROUND;
   };
 
+  const isRequired = Boolean(rules && 'required' in rules && rules.required);
+
   // ==========================================
   // RENDER
   // ==========================================
@@ -258,7 +271,7 @@ export default function MyInput({
       name={name}
       control={control}
       rules={rules}
-      defaultValue={defaultValue}
+      defaultValue={defaultValue as never}
       render={({ field: { onChange, onBlur, value }, fieldState: { error } }) => {
         // ==========================================
         // MANEJO DE VALORES SEGÚN TIPO
@@ -310,9 +323,7 @@ export default function MyInput({
             {label && (
               <Text style={[styles.label, { color: colors.TEXT_PRIMARY }]}>
                 {label}
-                {rules && (rules as any).required && (
-                  <Text style={{ color: colors.ERROR }}> *</Text>
-                )}
+                {isRequired && <Text style={{ color: colors.ERROR }}> *</Text>}
               </Text>
             )}
 

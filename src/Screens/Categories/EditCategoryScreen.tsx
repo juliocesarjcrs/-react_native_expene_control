@@ -1,6 +1,6 @@
 import { StatusBar } from 'expo-status-bar';
-import React, { useEffect, useState } from 'react';
-import { Keyboard, View, ScrollView } from 'react-native';
+import React, { useCallback, useEffect, useState } from 'react';
+import { Keyboard, View, ScrollView, Text, StyleSheet, Switch } from 'react-native';
 import { useForm } from 'react-hook-form';
 import { RouteProp } from '@react-navigation/native';
 
@@ -27,6 +27,7 @@ import { useThemeColors } from '~/customHooks/useThemeColors';
 
 // Styles
 import { commonStyles } from '~/styles/common';
+import { MEDIUM, SMALL } from '~/styles/fonts';
 
 // Configs
 import { screenConfigs } from '~/config/screenConfigs';
@@ -37,48 +38,62 @@ interface EditCategoryScreenProps {
   route: EditCategoryScreenRouteProp;
 }
 
-export type CategoryFormData = Omit<CategoryModel, 'budget'> & { budget: number };
+// Solo los campos realmente controlados por react-hook-form.
+// Mantenerlo angosto evita el choque de tipos con Control<any> de MyInput.
+type EditCategoryFormValues = {
+  name: string;
+  budget: number;
+};
 
 export default function EditCategoryScreen({ route }: EditCategoryScreenProps) {
   const screenConfig = screenConfigs.editCategory;
   const colors = useThemeColors();
   const idCategory = route.params.idCategory;
 
-  const [category, setCategory] = useState<CategoryFormData | undefined>(undefined);
-  const { handleSubmit, control, reset } = useForm<CategoryFormData>({
+  const [category, setCategory] = useState<CategoryModel | undefined>(undefined);
+  const { handleSubmit, control, reset } = useForm<EditCategoryFormValues>({
     mode: 'onTouched',
-    defaultValues: category
+    defaultValues: { name: '', budget: 0 }
   });
-  const [icon, setIcon] = useState('home');
-  const [loading, setLoading] = useState(false);
+  const [icon, setIcon] = useState<string>('home');
+  const [isOperational, setIsOperational] = useState<boolean>(true);
+  const [loading, setLoading] = useState<boolean>(false);
 
-  const fetchData = async () => {
-    try {
-      const { data } = await getCategory(idCategory);
-      const dataTransform: CategoryFormData = {
-        ...data,
-        budget: data.budget ?? 0
-      };
-      const editIcon = data.icon ? data.icon : 'home';
-      setIcon(editIcon);
-      setCategory(dataTransform);
-      reset(dataTransform);
-    } catch (e) {
-      showError(e);
-    }
-  };
   useEffect(() => {
-    fetchData();
-  }, [reset]);
+    let ignore = false;
 
-  const onSubmit = async (payload: CategoryFormData) => {
+    const loadCategory = async (): Promise<void> => {
+      try {
+        const { data } = await getCategory(idCategory);
+        if (ignore) return;
+
+        const editIcon = data.icon ? data.icon : 'home';
+        setIcon(editIcon);
+        setIsOperational(data.isOperational ?? true);
+        setCategory(data);
+        reset({ name: data.name, budget: data.budget ?? 0 });
+      } catch (error) {
+        if (!ignore) {
+          showError(error);
+        }
+      }
+    };
+
+    loadCategory();
+
+    return () => {
+      ignore = true;
+    };
+  }, [idCategory, reset]);
+
+  const onSubmit = async (payload: EditCategoryFormValues): Promise<void> => {
     try {
-      setLoading(true);
       const sendPayload: EditCategoryPayload = {
         ...payload,
         icon,
-        budget: payload.budget
+        isOperational
       };
+      setLoading(true);
       await EditCategory(idCategory, sendPayload);
       setLoading(false);
       Keyboard.dismiss();
@@ -89,7 +104,7 @@ export default function EditCategoryScreen({ route }: EditCategoryScreenProps) {
     }
   };
 
-  const setIconHandle = (val: string) => {
+  const setIconHandle = (val: string): void => {
     setIcon(val);
   };
 
@@ -139,9 +154,57 @@ export default function EditCategoryScreen({ route }: EditCategoryScreenProps) {
 
           <ModalIcon icon={icon} setIcon={setIconHandle} />
 
+          <View
+            style={[
+              styles.switchCard,
+              { backgroundColor: colors.CARD_BACKGROUND, borderColor: colors.BORDER }
+            ]}
+          >
+            <View style={styles.switchText}>
+              <Text style={[styles.switchLabel, { color: colors.TEXT_PRIMARY }]}>
+                Categoría operativa
+              </Text>
+              <Text style={[styles.switchDescription, { color: colors.TEXT_SECONDARY }]}>
+                Se incluye en el promedio de ahorro. Desactívala para ingresos o gastos esporádicos
+                (ej. cesantías, compra de activos).
+              </Text>
+            </View>
+            <Switch
+              value={isOperational}
+              onValueChange={setIsOperational}
+              trackColor={{ false: colors.GRAY, true: colors.SUCCESS }}
+              thumbColor={colors.WHITE}
+            />
+          </View>
+
           {loading ? <MyLoading /> : <MyButton onPress={handleSubmit(onSubmit)} title="Editar" />}
         </View>
       </ScrollView>
     </View>
   );
 }
+
+const styles = StyleSheet.create({
+  switchCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    borderRadius: 12,
+    borderWidth: 1,
+    padding: 12,
+    marginTop: 8,
+    marginBottom: 16
+  },
+  switchText: {
+    flex: 1,
+    marginRight: 12
+  },
+  switchLabel: {
+    fontSize: MEDIUM,
+    fontWeight: '600',
+    marginBottom: 4
+  },
+  switchDescription: {
+    fontSize: SMALL
+  }
+});

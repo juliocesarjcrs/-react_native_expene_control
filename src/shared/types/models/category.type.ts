@@ -5,5 +5,6 @@ export type CategoryModel = {
   icon: string | null;
   type: number;
   budget: number | null;
+  isOperational: boolean;
   userId: number;
 };

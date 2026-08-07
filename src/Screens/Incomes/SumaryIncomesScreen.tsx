@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, ScrollView, StyleSheet } from 'react-native';
+import { View, Text, ScrollView } from 'react-native';
 import { useSelector } from 'react-redux';
 import { RouteProp } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
@@ -52,13 +52,6 @@ export default function SumaryIncomesScreen({ navigation }: SumaryIncomesScreenP
   const [loading, setLoading] = useState(false);
   const month = useSelector((state: RootState) => state.date.month);
 
-  useEffect(() => {
-    fetchData();
-    const unsubscribe = navigation.addListener('focus', () => {
-      fetchData();
-    });
-    return unsubscribe;
-  }, [month]);
   const fetchData = async () => {
     try {
       setLoading(true);
@@ -71,6 +64,38 @@ export default function SumaryIncomesScreen({ navigation }: SumaryIncomesScreenP
       showError(e);
     }
   };
+  useEffect(() => {
+    let ignore = false;
+
+    const loadData = async (): Promise<void> => {
+      try {
+        setLoading(true);
+        const { data } = await getCategoryTypeIncome(month);
+        if (!ignore) {
+          setLoading(false);
+          setTotal(data.total);
+          setCategories(data.data);
+        }
+      } catch (e) {
+        if (!ignore) {
+          setLoading(false);
+          showError(e);
+        }
+      }
+    };
+
+    loadData();
+
+    const unsubscribe = navigation.addListener('focus', () => {
+      loadData();
+    });
+
+    return () => {
+      ignore = true;
+      unsubscribe();
+    };
+  }, [month, navigation]);
+
   const sendEditCategoryScreen = (id: number) => {
     navigation.navigate('editCategory', { idCategory: id });
   };

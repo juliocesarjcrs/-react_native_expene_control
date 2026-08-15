@@ -5,6 +5,7 @@ export type FinancialRecord = {
   expense: number;
   income: number;
   operationalExpense: number;
+  operationalIncome: number;
   operationalSaving: number;
   commentary: string | null;
   date: string;
@@ -20,6 +21,7 @@ export type Graph = {
   incomes: number[];
   savings: number[];
   operationalExpenses: number[];
+  operationalIncomes: number[];
   operationalSavings: number[];
 };
 export type GetSavingsByUserResponse = {

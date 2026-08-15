@@ -85,18 +85,6 @@ export default function CashFlowScreen({ navigation }: CashFlowScreenProps) {
 
   const { loading: loadingGraphql, error, data } = useQuery<GetLoanResult>(GET_LOANS);
 
-  useEffect(() => {
-    if (!loadingGraphql && !error && data) {
-      fetchSavingsByUser();
-    }
-  }, [loadingGraphql, error, data]);
-
-  useEffect(() => {
-    if (error) {
-      showError(error);
-    }
-  }, [error]);
-
   const fetchSavingsByUser = async (): Promise<void> => {
     try {
       setLoading(true);
@@ -111,19 +99,59 @@ export default function CashFlowScreen({ navigation }: CashFlowScreenProps) {
       showError(e);
     }
   };
-
-  // Recalcula tabla, gráficas y totales cada vez que cambian los datos crudos
-  // o el toggle de vista operativa. No dispara ningún request nuevo.
   useEffect(() => {
-    if (!rawData) return;
-    processSavingsData(rawData, excludeInvestments);
-  }, [rawData, excludeInvestments]);
+    if (!loadingGraphql && !error && data) {
+      fetchSavingsByUser();
+    }
+  }, [loadingGraphql, error, data]);
+
+  useEffect(() => {
+    if (error) {
+      showError(error);
+    }
+  }, [error]);
+
+  const setSearchTotalInMonth = (allData: FinancialRecord[], excludeInv: boolean): void => {
+    const startMonthFormat = getDateStartOfMonth(month);
+    const objData = allData.filter((e) => e.date === startMonthFormat);
+    let totalExpenseByMonth = 0;
+    let totalIncomeByMonth = 0;
+    let totalSavingByMonth = 0;
+    if (objData.length > 0) {
+      totalExpenseByMonth = excludeInv ? objData[0].operationalExpense : objData[0].expense;
+      totalIncomeByMonth = excludeInv ? objData[0].operationalIncome : objData[0].income;
+      totalSavingByMonth = excludeInv ? objData[0].operationalSaving : objData[0].saving;
+    }
+    setTotalExpenses(totalExpenseByMonth);
+    setTotalIncomes(totalIncomeByMonth);
+    setTotalSavings(totalSavingByMonth);
+  };
+  const historySaving = async (history: number[]) => {
+    let totalHistory = 0;
+    const acuHistorySavings = history.reduce((acu, val) => {
+      return acu + val;
+    }, 0);
+    totalHistory = acuHistorySavings;
+    if (data) {
+      const filter = data.loans.find((e) => e.type === 1);
+      if (filter) {
+        totalHistory += filter.amount;
+      }
+      const filterLoans = data.loans.filter((e) => e.type !== 1);
+      const acuLoans = filterLoans.reduce((acu, val) => {
+        return acu + val.amount;
+      }, 0);
+      setTotalSavingsWithLoansHistory(totalHistory);
+      totalHistory -= acuLoans;
+      setTotalSavingsHistory(totalHistory);
+    }
+  };
 
   const processSavingsData = (data: GetSavingsByUserResponse, excludeInv: boolean): void => {
     const allDataSavings = filterLimitDataForGraph<FinancialRecord>(data.data, numMonthsQuery);
 
     const getSaving = (e: FinancialRecord) => (excludeInv ? e.operationalSaving : e.saving);
-    const getExpense = (e: FinancialRecord) => (excludeInv ? e.operationalExpense : e.expense);
+    // const getExpense = (e: FinancialRecord) => (excludeInv ? e.operationalExpense : e.expense);
 
     const sumPercentSaving = allDataSavings.reduce((acu, val) => {
       const saving = getSaving(val);
@@ -153,7 +181,10 @@ export default function CashFlowScreen({ navigation }: CashFlowScreenProps) {
       excludeInv ? data.graph.operationalExpenses : data.graph.expenses,
       numMonthsQuery
     );
-    const filterIncomes = filterLimitDataForGraph<number>(data.graph.incomes, numMonthsQuery);
+    const filterIncomes = filterLimitDataForGraph<number>(
+      excludeInv ? data.graph.operationalIncomes : data.graph.incomes,
+      numMonthsQuery
+    );
     const filterSavings = filterLimitDataForGraph<number>(
       excludeInv ? data.graph.operationalSavings : data.graph.savings,
       numMonthsQuery
@@ -183,26 +214,12 @@ export default function CashFlowScreen({ navigation }: CashFlowScreenProps) {
     historySaving(excludeInv ? data.graph.operationalSavings : data.graph.savings);
   };
 
-  const historySaving = async (history: number[]) => {
-    let totalHistory = 0;
-    const acuHistorySavings = history.reduce((acu, val) => {
-      return acu + val;
-    }, 0);
-    totalHistory = acuHistorySavings;
-    if (data) {
-      const filter = data.loans.find((e) => e.type === 1);
-      if (filter) {
-        totalHistory += filter.amount;
-      }
-      const filterLoans = data.loans.filter((e) => e.type !== 1);
-      const acuLoans = filterLoans.reduce((acu, val) => {
-        return acu + val.amount;
-      }, 0);
-      setTotalSavingsWithLoansHistory(totalHistory);
-      totalHistory -= acuLoans;
-      setTotalSavingsHistory(totalHistory);
-    }
-  };
+  // Recalcula tabla, gráficas y totales cada vez que cambian los datos crudos
+  // o el toggle de vista operativa. No dispara ningún request nuevo.
+  useEffect(() => {
+    if (!rawData) return;
+    processSavingsData(rawData, excludeInvestments);
+  }, [rawData, excludeInvestments]);
 
   useEffect(() => {
     fetchSavingsByUser();
@@ -226,22 +243,6 @@ export default function CashFlowScreen({ navigation }: CashFlowScreenProps) {
       setLoading(false);
       showError(error);
     }
-  };
-
-  const setSearchTotalInMonth = (allData: FinancialRecord[], excludeInv: boolean): void => {
-    const startMonthFormat = getDateStartOfMonth(month);
-    const objData = allData.filter((e) => e.date === startMonthFormat);
-    let totalExpenseByMonth = 0;
-    let totalIncomeByMonth = 0;
-    let totalSavingByMonth = 0;
-    if (objData.length > 0) {
-      totalExpenseByMonth = excludeInv ? objData[0].operationalExpense : objData[0].expense;
-      totalIncomeByMonth = objData[0].income;
-      totalSavingByMonth = excludeInv ? objData[0].operationalSaving : objData[0].saving;
-    }
-    setTotalExpenses(totalExpenseByMonth);
-    setTotalIncomes(totalIncomeByMonth);
-    setTotalSavings(totalSavingByMonth);
   };
 
   const updateNum = (val: number) => {

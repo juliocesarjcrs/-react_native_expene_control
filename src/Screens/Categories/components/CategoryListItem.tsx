@@ -1,9 +1,18 @@
 import React from 'react';
-import { StyleSheet, Text, View, TouchableOpacity } from 'react-native';
+import { StyleSheet, Text, View } from 'react-native';
 import { Icon } from 'react-native-elements';
-import { useThemeColors } from '~/customHooks/useThemeColors';
+
+// Components
+
+// Types
 import { CategoryModel } from '~/shared/types';
+
+// Theme
+import { useThemeColors } from '~/customHooks/useThemeColors';
+
+// Styles
 import { MEDIUM, SMALL } from '~/styles/fonts';
+import MyIconButton from '~/components/buttons/MyIconButton';
 
 interface CategoryListItemProps {
   item: CategoryModel;
@@ -12,13 +21,9 @@ interface CategoryListItemProps {
 }
 
 export const CategoryListItem = ({ item, onDelete, colors }: CategoryListItemProps) => {
-  const getTypeLabel = (type: number): string => {
-    return type === 1 ? 'Ingreso' : 'Gasto';
-  };
-
-  const getTypeBadgeColor = (type: number): string => {
-    return type === 1 ? colors.SUCCESS : colors.WARNING;
-  };
+  const isIncome = item.type === 1;
+  const typeLabel = isIncome ? 'Ingreso' : 'Gasto';
+  const typeColor = isIncome ? colors.SUCCESS : colors.WARNING;
 
   return (
     <View
@@ -26,23 +31,13 @@ export const CategoryListItem = ({ item, onDelete, colors }: CategoryListItemPro
         itemStyles.container,
         {
           backgroundColor: colors.CARD_BACKGROUND,
-          borderLeftColor: item.type === 1 ? colors.SUCCESS : colors.WARNING
+          borderLeftColor: typeColor
         }
       ]}
     >
       {/* Icono de categoría */}
-      <View
-        style={[
-          itemStyles.iconContainer,
-          { backgroundColor: (item.type === 1 ? colors.SUCCESS : colors.WARNING) + '15' }
-        ]}
-      >
-        <Icon
-          type="font-awesome"
-          name={item.icon || 'home'}
-          size={20}
-          color={item.type === 1 ? colors.SUCCESS : colors.WARNING}
-        />
+      <View style={[itemStyles.iconContainer, { backgroundColor: typeColor + '15' }]}>
+        <Icon type="font-awesome" name={item.icon || 'home'} size={20} color={typeColor} />
       </View>
 
       {/* Información de la categoría */}
@@ -53,12 +48,8 @@ export const CategoryListItem = ({ item, onDelete, colors }: CategoryListItemPro
 
         <View style={itemStyles.metaInfo}>
           {/* Badge de tipo */}
-          <View
-            style={[itemStyles.typeBadge, { backgroundColor: getTypeBadgeColor(item.type) + '20' }]}
-          >
-            <Text style={[itemStyles.typeText, { color: getTypeBadgeColor(item.type) }]}>
-              {getTypeLabel(item.type)}
-            </Text>
+          <View style={[itemStyles.typeBadge, { backgroundColor: typeColor + '20' }]}>
+            <Text style={[itemStyles.typeText, { color: typeColor }]}>{typeLabel}</Text>
           </View>
 
           {/* Indicador de presupuesto */}
@@ -69,7 +60,7 @@ export const CategoryListItem = ({ item, onDelete, colors }: CategoryListItemPro
                 name="wallet-outline"
                 size={12}
                 color={colors.INFO}
-                containerStyle={{ marginRight: 3 }}
+                containerStyle={itemStyles.budgetIcon}
               />
               <Text style={[itemStyles.budgetText, { color: colors.INFO }]}>Con presupuesto</Text>
             </View>
@@ -78,12 +69,7 @@ export const CategoryListItem = ({ item, onDelete, colors }: CategoryListItemPro
       </View>
 
       {/* Botón eliminar */}
-      <TouchableOpacity
-        onPress={() => onDelete(item.id, item.name)}
-        style={itemStyles.deleteButton}
-      >
-        <Icon type="material-community" name="delete-outline" size={22} color={colors.ERROR} />
-      </TouchableOpacity>
+      <MyIconButton variant="delete" onPress={() => onDelete(item.id, item.name)} />
     </View>
   );
 };
@@ -92,7 +78,7 @@ const itemStyles = StyleSheet.create({
   container: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: 10,
+    paddingVertical: 8,
     paddingHorizontal: 12,
     marginVertical: 4,
     borderRadius: 12,
@@ -123,12 +109,13 @@ const itemStyles = StyleSheet.create({
   metaInfo: {
     flexDirection: 'row',
     alignItems: 'center',
-    flexWrap: 'wrap'
+    flexWrap: 'wrap',
+    gap: 8
   },
   typeBadge: {
     paddingHorizontal: 8,
-    paddingVertical: 3,
-    borderRadius: 10
+    paddingVertical: 4,
+    borderRadius: 12
   },
   typeText: {
     fontSize: SMALL,
@@ -136,13 +123,12 @@ const itemStyles = StyleSheet.create({
   },
   budgetIndicator: {
     flexDirection: 'row',
-    alignItems: 'center',
-    marginLeft: 6
+    alignItems: 'center'
+  },
+  budgetIcon: {
+    marginRight: 4
   },
   budgetText: {
     fontSize: SMALL - 1
-  },
-  deleteButton: {
-    padding: 6
   }
 });

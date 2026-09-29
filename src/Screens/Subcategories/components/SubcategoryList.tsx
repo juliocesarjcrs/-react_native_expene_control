@@ -1,28 +1,23 @@
 import React from 'react';
-import {
-  Alert,
-  FlatList,
-  StyleSheet,
-  Text,
-  View,
-  TouchableOpacity,
-  ListRenderItem
-} from 'react-native';
+import { Alert, FlatList, ListRenderItem, StyleSheet, Text, View } from 'react-native';
 import { Icon } from 'react-native-elements';
 
 // Services
 import { deleteSubategory } from '~/services/subcategories';
+
+// Components
+import MyIconButton from '~/components/buttons/MyIconButton';
+
+// Types
+import { SubcategoriesWithExpenses } from '~/shared/types/services/subcategories-services.type';
+import { StackNavigationProp } from '@react-navigation/stack';
+import { ExpenseStackParamList } from '~/shared/types';
 
 // Utils
 import { showError } from '~/utils/showError';
 
 // Theme
 import { useThemeColors } from '~/customHooks/useThemeColors';
-
-// Types
-import { SubcategoriesWithExpenses } from '~/shared/types/services/subcategories-services.type';
-import { StackNavigationProp } from '@react-navigation/stack';
-import { ExpenseStackParamList } from '~/shared/types';
 
 // Styles
 import { MEDIUM, SMALL } from '~/styles/fonts';
@@ -36,20 +31,6 @@ interface SubcategoryListProps {
 export default function SubcategoryList({ data, updateList, navigation }: SubcategoryListProps) {
   const colors = useThemeColors();
 
-  const confirmDelete = (id: number, name: string): void => {
-    Alert.alert('Eliminar subcategoría', `¿Estás seguro de que deseas eliminar "${name}"?`, [
-      {
-        text: 'Cancelar',
-        style: 'cancel'
-      },
-      {
-        text: 'Eliminar',
-        onPress: () => deleteItem(id),
-        style: 'destructive'
-      }
-    ]);
-  };
-
   const deleteItem = async (id: number): Promise<void> => {
     try {
       await deleteSubategory(id);
@@ -59,17 +40,19 @@ export default function SubcategoryList({ data, updateList, navigation }: Subcat
     }
   };
 
+  const confirmDelete = (id: number, name: string): void => {
+    Alert.alert('Eliminar subcategoría', `¿Estás seguro de que deseas eliminar "${name}"?`, [
+      { text: 'Cancelar', style: 'cancel' },
+      { text: 'Eliminar', onPress: () => deleteItem(id), style: 'destructive' }
+    ]);
+  };
+
   const sendEditSubcategoryScreen = (subcategory: SubcategoriesWithExpenses): void => {
     navigation.navigate('editSubcategory', { subcategoryObject: subcategory });
   };
 
   const renderItem: ListRenderItem<SubcategoriesWithExpenses> = ({ item }) => (
-    <SubcategoryListItem
-      item={item}
-      onEdit={sendEditSubcategoryScreen}
-      onDelete={confirmDelete}
-      colors={colors}
-    />
+    <SubcategoryListItem item={item} onEdit={sendEditSubcategoryScreen} onDelete={confirmDelete} />
   );
 
   if (data.length === 0) {
@@ -98,23 +81,6 @@ export default function SubcategoryList({ data, updateList, navigation }: Subcat
   );
 }
 
-const styles = StyleSheet.create({
-  listContainer: {
-    paddingHorizontal: 8,
-    paddingTop: 16
-  },
-  emptyContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    paddingVertical: 60
-  },
-  emptyText: {
-    fontSize: MEDIUM,
-    marginTop: 12
-  }
-});
-
 // ====================================
 // COMPONENTE SEPARADO: SubcategoryListItem
 // ====================================
@@ -123,10 +89,10 @@ interface SubcategoryListItemProps {
   item: SubcategoriesWithExpenses;
   onEdit: (subcategory: SubcategoriesWithExpenses) => void;
   onDelete: (id: number, name: string) => void;
-  colors: ReturnType<typeof useThemeColors>;
 }
 
-const SubcategoryListItem = ({ item, onEdit, onDelete, colors }: SubcategoryListItemProps) => {
+const SubcategoryListItem = ({ item, onEdit, onDelete }: SubcategoryListItemProps) => {
+  const colors = useThemeColors();
   const expenseCount = item.expenses?.length || 0;
   const hasExpenses = expenseCount > 0;
 
@@ -158,7 +124,7 @@ const SubcategoryListItem = ({ item, onEdit, onDelete, colors }: SubcategoryList
               name="receipt-text-outline"
               size={14}
               color={colors.TEXT_SECONDARY}
-              containerStyle={{ marginRight: 4 }}
+              containerStyle={itemStyles.expenseIcon}
             />
             <Text style={[itemStyles.expenseCount, { color: colors.TEXT_SECONDARY }]}>
               {expenseCount} {expenseCount === 1 ? 'gasto' : 'gastos'}
@@ -169,22 +135,12 @@ const SubcategoryListItem = ({ item, onEdit, onDelete, colors }: SubcategoryList
 
       {/* Botones de acción */}
       <View style={itemStyles.actionsContainer}>
-        <TouchableOpacity onPress={() => onEdit(item)} style={itemStyles.actionButton}>
-          <Icon type="material-community" name="pencil-outline" size={20} color={colors.INFO} />
-        </TouchableOpacity>
-
-        <TouchableOpacity
+        <MyIconButton variant="edit" onPress={() => onEdit(item)} />
+        <MyIconButton
+          variant="delete"
           onPress={() => onDelete(item.id, item.name)}
-          style={itemStyles.actionButton}
           disabled={hasExpenses}
-        >
-          <Icon
-            type="material-community"
-            name="delete-outline"
-            size={20}
-            color={hasExpenses ? colors.TEXT_SECONDARY : colors.ERROR}
-          />
-        </TouchableOpacity>
+        />
       </View>
 
       {/* Badge de advertencia si tiene gastos */}
@@ -195,7 +151,7 @@ const SubcategoryListItem = ({ item, onEdit, onDelete, colors }: SubcategoryList
             name="alert"
             size={14}
             color={colors.WARNING}
-            containerStyle={{ marginRight: 4 }}
+            containerStyle={itemStyles.expenseIcon}
           />
           <Text style={[itemStyles.warningText, { color: colors.WARNING }]}>
             No se puede eliminar (tiene gastos)
@@ -206,9 +162,26 @@ const SubcategoryListItem = ({ item, onEdit, onDelete, colors }: SubcategoryList
   );
 };
 
+const styles = StyleSheet.create({
+  listContainer: {
+    paddingHorizontal: 8,
+    paddingTop: 16
+  },
+  emptyContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingVertical: 60
+  },
+  emptyText: {
+    fontSize: MEDIUM,
+    marginTop: 12
+  }
+});
+
 const itemStyles = StyleSheet.create({
   container: {
-    marginVertical: 4, // ← Reduce de 6 a 4
+    marginVertical: 4,
     borderRadius: 12,
     borderLeftWidth: 3,
     shadowColor: '#000',
@@ -217,31 +190,34 @@ const itemStyles = StyleSheet.create({
     shadowRadius: 4,
     elevation: 3,
     overflow: 'hidden',
-    flexDirection: 'row', // ← AGREGA ESTO (faltaba!)
-    alignItems: 'center' // ← AGREGA ESTO
+    flexDirection: 'row',
+    alignItems: 'center'
   },
   iconContainer: {
-    width: 36, // ← Reduce de 40 a 36
-    height: 40, // ← Reduce de 40 a 36
-    borderRadius: 18,
+    width: 40,
+    height: 40,
+    borderRadius: 20,
     justifyContent: 'center',
     alignItems: 'center',
-    margin: 12, // ← Reduce de 12 a 10
-    marginRight: 10
+    margin: 12,
+    marginRight: 12
   },
   infoContainer: {
     flex: 1,
-    paddingVertical: 10,
+    paddingVertical: 12,
     paddingRight: 8
   },
   name: {
     fontSize: MEDIUM,
     fontWeight: '600',
-    marginBottom: 2
+    marginBottom: 4
   },
   expenseInfo: {
     flexDirection: 'row',
     alignItems: 'center'
+  },
+  expenseIcon: {
+    marginRight: 4
   },
   expenseCount: {
     fontSize: SMALL
@@ -250,10 +226,6 @@ const itemStyles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     paddingRight: 8
-  },
-  actionButton: {
-    padding: 8,
-    marginLeft: 4
   },
   warningBadge: {
     position: 'absolute',

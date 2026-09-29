@@ -9,21 +9,22 @@ import { StackNavigationProp } from '@react-navigation/stack';
 // Services
 import { login } from '../../services/auth';
 
+// Apollo
+import { clearApolloCache } from '~/plugins/ApolloClient';
+
 // Types
 import { PayloadLogin } from '../../shared/types/services';
-// import { setIsAuthAction, setUserAction } from "../../actions/authActions";
 import { setIsAuth, setUser } from '../../features/auth/authSlice';
+import { AuthStackParamList } from '../../shared/types';
+import { RootState } from '../../shared/types/reducers';
+import { AppDispatch } from '../../shared/types/reducers/root-state.type';
 
 // Components
 import MyLoading from '../../components/loading/MyLoading';
 import MyButton from '../../components/MyButton';
-import { AuthStackParamList } from '../../shared/types';
-import { RootState } from '../../shared/types/reducers';
-import { AppDispatch } from '../../shared/types/reducers/root-state.type';
 import MyInput from '~/components/inputs/MyInput';
 
 // Utils
-import { ShowToast } from '../../utils/toastUtils';
 import { showError } from '~/utils/showError';
 
 // Theme
@@ -42,43 +43,40 @@ interface LoginScreenProps {
   navigation: LoginScreenNavigationProp;
 }
 
+const EMAIL_REGEX =
+  /^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
+
 export default function LoginScreen({ navigation }: LoginScreenProps) {
   const colors = useThemeColors();
-  const EMAIL_REGEX =
-    /^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
 
   const { handleSubmit, control } = useForm<LoginFormData>();
-  const loadingAuth = useSelector((state: RootState) => {
-    return state.auth.loadingAuth;
-  });
+  const loadingAuth = useSelector((state: RootState) => state.auth.loadingAuth);
   const [loading, setLoading] = useState(false);
   const dispatch: AppDispatch = useDispatch();
-  const onSubmit = async (payload: PayloadLogin) => {
+
+  const onSubmit = async (payload: PayloadLogin): Promise<void> => {
     try {
       setLoading(true);
       const { data } = await login(payload);
-      ShowToast('reponde ok login');
-      setLoading(false);
+
+      // Guardar sesión del nuevo usuario
       await AsyncStorage.setItem('access_token', data.access_token);
-      const jsonValue = JSON.stringify(data.user);
-      await AsyncStorage.setItem('user', jsonValue);
+      await AsyncStorage.setItem('user', JSON.stringify(data.user));
+
+      // Limpiar caché de Apollo ANTES de marcar isAuth, para no mostrar datos del usuario anterior
+      await clearApolloCache();
+
       dispatch(setUser(data.user));
       dispatch(setIsAuth(true));
     } catch (error) {
-      if (typeof error === 'string') {
-        ShowToast(`Error: ${error}`);
-      } else if (typeof error === 'object' && error !== null) {
-        const errorMessage = error.toString ? error.toString() : 'Unknown error';
-        ShowToast(`Obj: ${errorMessage}`);
-      } else {
-        ShowToast('Unknown error');
-      }
-      setLoading(false);
       dispatch(setUser(null));
       dispatch(setIsAuth(false));
       showError(error);
+    } finally {
+      setLoading(false);
     }
   };
+
   return (
     <View style={[commonStyles.screenContentWithPadding, { backgroundColor: colors.BACKGROUND }]}>
       {loadingAuth ? (
@@ -113,17 +111,19 @@ export default function LoginScreen({ navigation }: LoginScreenProps) {
             leftIcon="lock"
             onSubmitEditing={handleSubmit(onSubmit)}
           />
-          {loading ? (
-            <MyLoading />
-          ) : (
-            <MyButton title="Iniciar sesión" onPress={handleSubmit(onSubmit)} />
-          )}
+
+          <MyButton
+            title="Iniciar sesión"
+            onPress={handleSubmit(onSubmit)}
+            variant="primary"
+            loading={loading}
+          />
 
           <MyButton
             title="Recuperar contraseña"
-            onPress={() => {
-              navigation.navigate('forgotPassword');
-            }}
+            variant="ghost"
+            onPress={() => navigation.navigate('forgotPassword')}
+            disabled={loading}
           />
         </View>
       )}

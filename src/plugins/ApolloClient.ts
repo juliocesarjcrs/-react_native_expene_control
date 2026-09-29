@@ -40,4 +40,8 @@ const client = new ApolloClient({
   cache: new InMemoryCache()
 });
 
+export const clearApolloCache = async (): Promise<void> => {
+  await client.clearStore(); // borra la caché SIN refetch de queries activas
+};
+
 export default client;

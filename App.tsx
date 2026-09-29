@@ -12,7 +12,7 @@ import MyStack from './src/navigator/stack';
 import { AxiosError } from 'axios';
 
 import { ApolloProvider } from '@apollo/client/react';
-import client from './src/plugins/ApolloClient';
+import client, { clearApolloCache } from './src/plugins/ApolloClient';
 import { ThemeProvider } from '~/contexts/ThemeContext';
 import { InvestmentComparisonProvider } from '~/contexts/InvestmentComparisonContext';
 import { ErrorBoundary } from '~/components/ErrorBoundary';
@@ -52,6 +52,7 @@ function App() {
       if (status === 401) {
         dispatch(userSignOut());
         await AsyncStorage.removeItem('access_token');
+        await clearApolloCache();
         const message = formatError(error.response.data.message);
         showToast(message);
         logger.warn('Sesión expirada, usuario desconectado', { url });

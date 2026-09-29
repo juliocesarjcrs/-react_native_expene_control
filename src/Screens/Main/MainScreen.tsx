@@ -45,6 +45,7 @@ import { MEDIUM, SMALL } from '~/styles/fonts';
 
 // Configs
 import { screenConfigs } from '~/config/screenConfigs';
+import { clearApolloCache } from '~/plugins/ApolloClient';
 
 type MainScreenNavigationProp = StackNavigationProp<ExpenseStackParamList, 'main'>;
 
@@ -161,6 +162,7 @@ export default function MainScreen({ navigation }: MainScreenProps) {
       await AsyncStorage.removeItem('access_token');
       await AsyncStorage.removeItem('user');
       dispatch(setIsAuth(false));
+      await clearApolloCache();
     } catch (error) {
       showError(error);
     }

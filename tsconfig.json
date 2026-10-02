@@ -3,9 +3,9 @@
   "compilerOptions": {
     "strict": true,
     "types": ["node", "jest"],
-    "baseUrl": "./src",
+    "baseUrl": ".",
     "paths": {
-      "~/*": ["*"]
+      "~/*": ["src/*"]
     }
   }
 }

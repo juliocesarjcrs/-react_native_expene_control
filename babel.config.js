@@ -6,13 +6,6 @@ module.exports = function (api) {
     presets: ['babel-preset-expo'],
     plugins: [
       [
-        'babel-plugin-root-import',
-        {
-          rootPathPrefix: '~',
-          rootPathSuffix: 'src'
-        }
-      ],
-      [
         'module:react-native-dotenv',
         {
           envName: 'APP_ENV_NAME',
@@ -23,8 +16,7 @@ module.exports = function (api) {
           safe: false,
           allowUndefined: true
         }
-      ],
-      'react-native-reanimated/plugin'
+      ]
       // Sentry no es compatible con el entorno de Jest
       // ...(!isTest ? ['@sentry/react-native/expo'] : [])
     ]

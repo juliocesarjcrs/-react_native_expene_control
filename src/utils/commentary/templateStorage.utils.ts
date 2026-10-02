@@ -15,9 +15,10 @@ const TEMPLATE_KEY_PREFIX = 'template_config_';
 // Historial:
 //   v1 — inicial (sin versión)
 //   v2 — copago estructurado, vacaciones, fix isMortgage/isCopago
+//   v3 — parser asset (bienes)
 // ============================================================
 
-const CONFIG_VERSION = 2;
+const CONFIG_VERSION = 3;
 
 // ============================================================
 // HELPERS
@@ -38,9 +39,14 @@ const isConfigStale = (config: SubcategoryTemplateConfig & { configVersion?: num
   if (!config.configVersion || config.configVersion < CONFIG_VERSION) return true;
 
   // Chips vacíos en subcategoría que debería tenerlos
-  const shouldHaveChips = ['utility', 'product', 'retention', 'copago', 'vacation'].includes(
-    config.parserType
-  );
+  const shouldHaveChips = [
+    'utility',
+    'product',
+    'retention',
+    'copago',
+    'vacation',
+    'asset'
+  ].includes(config.parserType);
   if (shouldHaveChips && config.chips.length === 0) return true;
 
   return false;
@@ -92,7 +98,20 @@ export const getTemplateConfig = async (
     // Fallback a defaults si el JSON está corrupto
   }
 
-  return getDefaultTemplateConfig(subcategoryId, subcategoryName, categoryName);
+  try {
+    return getDefaultTemplateConfig(subcategoryId, subcategoryName, categoryName);
+  } catch (e) {
+    console.warn('[templateStorage] getDefaultTemplateConfig falló:', e);
+    return {
+      subcategoryId,
+      subcategoryName,
+      categoryName,
+      assistanceLevel: 'free',
+      parserType: 'none',
+      chips: [],
+      enableValidation: false
+    };
+  }
 };
 
 /**

@@ -34,6 +34,8 @@ import { parseSportsCommentary } from './sportsParser';
 import { parseRentCommentary } from './rentParser';
 import { parseCopagoCommentary } from './copagoParser';
 import { parseVacationCommentary } from './vacationParser';
+import { AssetData } from '~/shared/types/utils/commentaryParser/asset-analysis.types';
+import { parseAssetCommentary } from './assetParser';
 
 export { parseUtilityCommentary, calculateConsumptionPerPerson } from './utilityParser';
 export { parseProductCommentary } from './productParser';
@@ -64,6 +66,7 @@ export type ParserType =
   | 'rent'
   | 'copago'
   | 'vacation'
+  | 'asset'
   | 'none';
 
 export type ParsedCommentary =
@@ -77,6 +80,7 @@ export type ParsedCommentary =
   | { type: 'rent'; data: RentData }
   | { type: 'copago'; data: CopagoData }
   | { type: 'vacation'; data: VacationData }
+  | { type: 'asset'; data: AssetData }
   | { type: 'none'; data: null };
 
 // ─────────────────────────────────────────────
@@ -208,6 +212,10 @@ export const parseCommentary = (
     case 'vacation': {
       const data = parseVacationCommentary(commentary, cost, date);
       return data ? { type: 'vacation', data } : { type: 'none', data: null };
+    }
+    case 'asset': {
+      const data = parseAssetCommentary(commentary, cost, date);
+      return data ? { type: 'asset', data } : { type: 'none', data: null };
     }
 
     default:

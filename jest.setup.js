@@ -1,56 +1,39 @@
 // jest.setup.js
-import '@testing-library/jest-native/extend-expect';
 
-// Mock AsyncStorage
+// Mock AsyncStorage (descomenta si tus tests usan storage)
 // jest.mock('@react-native-async-storage/async-storage', () =>
 //   require('@react-native-async-storage/async-storage/jest/async-storage-mock')
 // );
-
-// Mock react-native-reanimated
-jest.mock('react-native-reanimated', () => {
-  const Reanimated = require('react-native-reanimated/mock');
-  Reanimated.default.call = () => {};
-  return Reanimated;
-});
 
 // Mock expo-status-bar
 jest.mock('expo-status-bar', () => ({
   StatusBar: 'StatusBar'
 }));
 
-// Suppress specific warnings
+// Mock Sentry (el plugin de Babel no corre en Jest)
+jest.mock('@sentry/react-native', () => ({
+  init: jest.fn(),
+  captureException: jest.fn(),
+  captureMessage: jest.fn(),
+  wrap: (component) => component
+}));
+
+// Silenciar solo warnings conocidos de animaciones
 const originalWarn = console.warn;
-const originalError = console.error;
 
 beforeAll(() => {
   console.warn = jest.fn((...args) => {
     const message = args[0];
-    // Only suppress specific warnings
     if (
       typeof message === 'string' &&
-      (message.includes('Animated:') ||
-        message.includes('useNativeDriver') ||
-        message.includes('ViewPropTypes'))
+      (message.includes('Animated:') || message.includes('useNativeDriver'))
     ) {
       return;
     }
     originalWarn(...args);
   });
-
-  console.error = jest.fn((...args) => {
-    const message = args[0];
-    // Only suppress specific errors
-    if (
-      typeof message === 'string' &&
-      (message.includes('Warning: ReactDOM.render') || message.includes('not wrapped in act'))
-    ) {
-      return;
-    }
-    originalError(...args);
-  });
 });
 
 afterAll(() => {
   console.warn = originalWarn;
-  console.error = originalError;
 });

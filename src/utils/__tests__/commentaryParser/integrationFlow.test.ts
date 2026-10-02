@@ -139,7 +139,7 @@ describe('Flujo 3 — segunda vez con config guardada en AsyncStorage', () => {
     const savedConfig = {
       ...getDefaultTemplateConfig(SUBCATEGORY_ID, SUBCATEGORY_NAME, CATEGORY_NAME),
       isCustomized: false,
-      configVersion: 2 // versión actual
+      configVersion: 3 // versión actual
     };
     mockAsyncStorage.getItem.mockResolvedValueOnce(JSON.stringify(savedConfig));
 

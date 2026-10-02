@@ -6,58 +6,12 @@ import {
   CommentaryValidationResult
 } from '~/shared/types/screens/settings/commentary-templates.types';
 
+import { normalizeMonthAbbr, formatDateShort } from './commentaryDate.utils';
+import { getAssetTemplateConfig, validateAssetCommentary } from './assetTemplates.utils';
+export { normalizeMonthAbbr, formatDateShort, formatDateWithYear } from './commentaryDate.utils';
+
 // dayjs ya está configurado con locale 'es' en Helpers.ts — lo reusamos aquí
 // sin volver a llamar dayjs.locale() para no tener efectos secundarios duplicados
-
-// ============================================================
-// HELPERS DE FECHA
-// ============================================================
-
-/**
- * Normaliza abreviaciones de mes al estándar del parser.
- * Corrige typos reales encontrados en BD: "Enr" → "Ene", etc.
- * dayjs en español puede devolver variantes según la versión.
- */
-export const normalizeMonthAbbr = (raw: string): string => {
-  const map: Record<string, string> = {
-    enr: 'Ene',
-    ene: 'Ene',
-    jan: 'Ene',
-    feb: 'Feb',
-    mar: 'Mar',
-    abr: 'Abr',
-    apr: 'Abr',
-    may: 'May',
-    jun: 'Jun',
-    jul: 'Jul',
-    ago: 'Ago',
-    aug: 'Ago',
-    sep: 'Sep',
-    oct: 'Oct',
-    nov: 'Nov',
-    dic: 'Dic',
-    dec: 'Dic'
-  };
-  return map[raw.toLowerCase().trim()] ?? raw;
-};
-
-/**
- * Formatea una fecha como "18 Dic" usando dayjs (locale es, igual que Helpers.ts).
- */
-export const formatDateShort = (date: Date): string => {
-  const d = dayjs(date);
-  const month = normalizeMonthAbbr(d.format('MMM'));
-  return `${d.date()} ${month}`;
-};
-
-/**
- * Formatea una fecha como "18 Dic 2026" usando dayjs.
- */
-export const formatDateWithYear = (date: Date): string => {
-  const d = dayjs(date);
-  const month = normalizeMonthAbbr(d.format('MMM'));
-  return `${d.date()} ${month} ${d.year()}`;
-};
 
 /**
  * Genera el periodo de ~30 días anterior a hoy para servicios públicos.
@@ -90,6 +44,8 @@ export const getDefaultTemplateConfig = (
 ): SubcategoryTemplateConfig => {
   const name = subcategoryName.toLowerCase().trim();
   const cat = categoryName.toLowerCase().trim();
+  const assetConfig = getAssetTemplateConfig(subcategoryId, subcategoryName, categoryName);
+  if (assetConfig) return assetConfig;
 
   if (isUtilityLight(name))
     return buildUtilityConfig(subcategoryId, subcategoryName, categoryName, 'Kw', 79);
@@ -769,6 +725,8 @@ export const validateCommentary = (
       return validateProduct(commentary.trim());
     case 'retention':
       return validateRetention(commentary.trim());
+    case 'asset':
+      return validateAssetCommentary(commentary.trim());
     default:
       return { state: 'neutral' };
   }

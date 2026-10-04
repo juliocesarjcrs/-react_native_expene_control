@@ -350,6 +350,7 @@ export default function MyStack() {
         />
         <StatisticsStack.Screen name="copagoAnalysis" component={Routes.CopagoAnalysisScreen} />
         <StatisticsStack.Screen name="vacationAnalysis" component={Routes.VacationAnalysisScreen} />
+        <StatisticsStack.Screen name="assetAnalysis" component={Routes.AssetAnalysisScreen} />
       </StatisticsStack.Navigator>
     );
   }

@@ -43,6 +43,34 @@ const buildPeriod = (
   return months >= 1 ? { startYear, startMonth, endYear, endMonth, months, isAnnual } : null;
 };
 
+const daysInMonth = (y: number, m: number): number => new Date(Date.UTC(y, m, 0)).getUTCDate();
+
+/** Período dado por fechas: reparte por días entre los meses que toca. */
+const buildDayPeriod = (
+  y1: number,
+  m1: number,
+  d1: number,
+  y2: number,
+  m2: number,
+  d2: number
+): AssetPeriod | null => {
+  if (d1 < 1 || d1 > daysInMonth(y1, m1) || d2 < 1 || d2 > daysInMonth(y2, m2)) return null;
+  const base = buildPeriod(y1, m1, y2, m2);
+  if (!base) return null;
+  const days: number[] = [];
+  for (let i = 0; i < base.months; i++) {
+    const idx = y1 * 12 + (m1 - 1) + i;
+    const y = Math.floor(idx / 12);
+    const mo = (idx % 12) + 1;
+    const from = i === 0 ? d1 : 1;
+    const to = i === base.months - 1 ? d2 : daysInMonth(y, mo);
+    days.push(to - from + 1);
+  }
+  if (days.some((d) => d <= 0)) return null; // la fecha final es anterior a la inicial
+  const total = days.reduce((a, b) => a + b, 0);
+  return { ...base, weights: days.map((d) => d / total) };
+};
+
 const findAll = (source: string, text: string): RegExpExecArray[] => {
   const re = new RegExp(source, 'g');
   const out: RegExpExecArray[] = [];
@@ -55,10 +83,22 @@ const findAll = (source: string, text: string): RegExpExecArray[] => {
 };
 
 /**
- * Orden de prueba: rango cruzando año → rango mismo año → mes → año.
- *   "Dic 2025 - Ene 2026" | "Mar-Abr 2026" | "Mar 2026" | "2026"
+ * Orden de prueba: fechas → rango cruzando año → rango mismo año → mes → año.
+ *   "15 Oct - 14 Nov 2026" | "Dic 2025 - Ene 2026" | "Mar-Abr 2026" | "Mar 2026" | "2026"
+ * En el formato con fechas el año es el de la fecha final ("20 Dic - 19 Ene 2026").
  */
 const parsePeriod = (text: string): AssetPeriod | undefined => {
+  for (const m of findAll(
+    `(\\d{1,2})\\s+(${WORD})\\s*[-–]\\s*(\\d{1,2})\\s+(${WORD})\\s+(\\d{4})`,
+    text
+  )) {
+    const s = toMonth(m[2]);
+    const e = toMonth(m[4]);
+    if (!s || !e) continue;
+    const y2 = Number(m[5]);
+    const p = buildDayPeriod(s > e ? y2 - 1 : y2, s, Number(m[1]), y2, e, Number(m[3]));
+    if (p) return p;
+  }
   for (const m of findAll(`(${WORD})\\s+(\\d{4})\\s*[-–]\\s*(${WORD})\\s+(\\d{4})`, text)) {
     const s = toMonth(m[1]);
     const e = toMonth(m[3]);
@@ -125,7 +165,13 @@ export const parseAssetCommentary = (
   const rate = rateMatch ? Number(rateMatch[1].replace(',', '.')) : undefined;
   const rateType = rateMatch?.[2]?.toUpperCase();
 
-  const extracted = [deedTag, debtTag, rateTag];
+  // [Bien: Apt 1102] — exige los dos puntos para no confundir con otras etiquetas
+  const propertyTag = tags.find((t) => /^bien\s*:/i.test(t));
+  const property = propertyTag
+    ? propertyTag.replace(/^bien\s*:\s*/i, '').trim() || undefined
+    : undefined;
+
+  const extracted = [deedTag, debtTag, rateTag, propertyTag];
   const otherTags = tags.filter((t) => t.length > 0 && !extracted.includes(t));
 
   const refMatch = body.match(/\$\s*([\d.]+(?:,\d+)?)/);
@@ -153,6 +199,7 @@ export const parseAssetCommentary = (
     deedValue,
     referenceAmount,
     percentage,
+    property,
     debtBalance,
     rate,
     rateType,

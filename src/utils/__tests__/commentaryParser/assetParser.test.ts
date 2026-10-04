@@ -2,6 +2,7 @@ import {
   getAssetTemplateConfig,
   validateAssetCommentary
 } from '~/utils/commentary/assetTemplates.utils';
+import { normalizeAlias } from '~/utils/commentaryParser/assetConcepts';
 import { parseAssetCommentary } from '~/utils/commentaryParser/assetParser';
 
 const COST = 1_000;
@@ -187,12 +188,27 @@ describe('chips → parser (cada chip debe parsear sin null)', () => {
     getAssetTemplateConfig(100_554, 'Arriendo Apt 1102', 'Ingresos')
   ];
 
+  // El usuario reemplaza «Nombre» por el nombre real del bien
+  const hydrate = (t: string) => t.replace('[Bien: Nombre]', '[Bien: Apt 1102]');
+
   it.each(
     configs.flatMap((c) => c!.chips.map((chip) => [c!.chips.length, chip.label, chip.template]))
   )('chip %s — %s', (_n, label, template) => {
-    const r = parse(template as string);
-    expect(r).not.toBeNull();
-    expect(validateAssetCommentary(template as string).state).toBe('valid');
+    const text = hydrate(template as string);
+    expect(parse(text)).not.toBeNull();
+    expect(validateAssetCommentary(text).state).toBe('valid');
+  });
+
+  it('los chips de ingreso sin reemplazar «Nombre» avisan', () => {
+    const income = configs[1]!;
+    for (const chip of income.chips) {
+      const v = validateAssetCommentary(chip.template);
+      expect([chip.label, v.state, v.message]).toEqual([
+        chip.label,
+        'warning',
+        'Reemplaza «Nombre» por el nombre del bien'
+      ]);
+    }
   });
 });
 
@@ -297,5 +313,76 @@ describe('chips de gasto — lista final', () => {
       'Comisión',
       'Otros'
     ]);
+  });
+});
+
+describe('[Bien: ...] — a qué bien pertenece un ingreso', () => {
+  it('extrae el bien y lo quita de las etiquetas', () => {
+    const r = parse('Arriendo: Oct 2026 [Parcial] [Bien: Apt 1102]');
+    expect(r?.property).toBe('Apt 1102');
+    expect(r?.tags).toEqual(['Parcial']);
+  });
+
+  it('exige los dos puntos: "[Bien Apt]" es una etiqueta cualquiera', () => {
+    const r = parse('Arriendo: Oct 2026 [Bien Apt]');
+    expect(r?.property).toBeUndefined();
+    expect(r?.tags).toEqual(['Bien Apt']);
+  });
+
+  it('etiqueta vacía no cuenta como bien', () => {
+    expect(parse('Arriendo: Oct 2026 [Bien: ]')?.property).toBeUndefined();
+  });
+
+  it('el validador exige el bien en los ingresos (no en los gastos)', () => {
+    expect(validateAssetCommentary('Arriendo: Oct 2026').message).toMatch(/Falta \[Bien/);
+    expect(validateAssetCommentary('Arriendo: Oct 2026 [Bien: ]').state).toBe('warning');
+    expect(validateAssetCommentary('Arriendo: Oct 2026 [Bien: Apt 1102]').state).toBe('valid');
+    expect(validateAssetCommentary('Administración: Mar 2026').state).toBe('valid');
+  });
+
+  it('normalizeAlias ignora mayúsculas, tildes, espacios y puntuación', () => {
+    expect(normalizeAlias('Apt. 1102')).toBe(normalizeAlias('APT 1102'));
+    expect(normalizeAlias('Local  133')).toBe('local133');
+    expect(normalizeAlias('Apartamento')).not.toBe(normalizeAlias('Apto'));
+  });
+});
+
+describe('períodos con fechas ("15 Oct - 14 Nov 2026")', () => {
+  const period = (t: string) => parse(`Arriendo: ${t}`)?.period;
+
+  it('un solo mes: peso 1 (tu formato real de la Torre 2)', () => {
+    const r = parse('Arriendo: #1 Torre 2 Apt 1102 01 Oct - 30 Oct 2026 [Bien: Apt 1102]');
+    expect(r?.period).toMatchObject({ startYear: 2026, startMonth: 10, months: 1, weights: [1] });
+  });
+
+  it('cruza de mes: reparte por días', () => {
+    const p = period('Apt 1102 15 Oct - 14 Nov 2026');
+    expect(p).toMatchObject({ startMonth: 10, endMonth: 11, months: 2 });
+    expect(p?.weights?.[0]).toBeCloseTo(17 / 31);
+    expect(p?.weights?.[1]).toBeCloseTo(14 / 31);
+  });
+
+  it('cruza de año: el año es el de la fecha final', () => {
+    const p = period('20 Dic - 19 Ene 2026');
+    expect(p).toMatchObject({
+      startYear: 2025,
+      startMonth: 12,
+      endYear: 2026,
+      endMonth: 1,
+      months: 2
+    });
+    expect(p?.weights?.[0]).toBeCloseTo(12 / 31);
+    expect(p?.weights?.[1]).toBeCloseTo(19 / 31);
+  });
+
+  it('fechas imposibles o al revés no inventan un período: caen al mes escrito', () => {
+    expect(period('31 Feb - 5 Mar 2026')).toMatchObject({ startMonth: 3, months: 1 });
+    expect(period('15 Oct - 10 Oct 2026')).toMatchObject({ startMonth: 10, months: 1 });
+    expect(period('15 Oct - 10 Oct 2026')?.weights).toBeUndefined();
+  });
+
+  it('los períodos por mes no cambian (sin pesos)', () => {
+    expect(period('Oct 2026')?.weights).toBeUndefined();
+    expect(period('Mar-Abr 2026')).toMatchObject({ months: 2 });
   });
 });

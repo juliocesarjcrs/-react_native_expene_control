@@ -14,6 +14,7 @@
 
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import {
+  CONFIG_VERSION,
   getTemplateConfig,
   registerDefaultTemplateConfig
 } from '~/utils/commentary/templateStorage.utils';
@@ -139,7 +140,7 @@ describe('Flujo 3 — segunda vez con config guardada en AsyncStorage', () => {
     const savedConfig = {
       ...getDefaultTemplateConfig(SUBCATEGORY_ID, SUBCATEGORY_NAME, CATEGORY_NAME),
       isCustomized: false,
-      configVersion: 3 // versión actual
+      configVersion: CONFIG_VERSION
     };
     mockAsyncStorage.getItem.mockResolvedValueOnce(JSON.stringify(savedConfig));
 

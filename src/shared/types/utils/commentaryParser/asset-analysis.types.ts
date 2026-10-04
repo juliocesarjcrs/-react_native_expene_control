@@ -65,6 +65,12 @@ export interface AssetPeriod {
   months: number;
   /** true cuando el comentario solo trae el año ("Predial: 2026") */
   isAnnual: boolean;
+  /**
+   * Reparto por días entre los meses del período (suma 1), alineado con los meses
+   * desde startYear/startMonth. Solo existe cuando el comentario trae fechas
+   * ("15 Oct - 14 Nov 2026"); sin él, el reparto es en partes iguales.
+   */
+  weights?: number[];
 }
 
 export interface AssetData {
@@ -89,6 +95,9 @@ export interface AssetData {
   referenceAmount?: number;
   /** Porcentaje del detalle (ej: 2,3% notariales) */
   percentage?: number;
+
+  /** [Bien: Apt 1102] — a qué bien pertenece (ingresos de una categoría compartida) */
+  property?: string;
 
   /** Arriendo proporcional */
   isPartial: boolean;

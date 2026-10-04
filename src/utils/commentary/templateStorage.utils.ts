@@ -18,7 +18,7 @@ const TEMPLATE_KEY_PREFIX = 'template_config_';
 //   v3 — parser asset (bienes)
 // ============================================================
 
-const CONFIG_VERSION = 3;
+export const CONFIG_VERSION = 4;
 
 // ============================================================
 // HELPERS

@@ -9,7 +9,7 @@
  */
 import * as templates from '~/utils/commentary/commentaryTemplates.utils';
 import { getDefaultTemplateConfig } from '~/utils/commentary/commentaryTemplates.utils';
-import { getTemplateConfig } from '~/utils/commentary/templateStorage.utils';
+import { CONFIG_VERSION, getTemplateConfig } from '~/utils/commentary/templateStorage.utils';
 
 // AsyncStorage en memoria
 jest.mock(
@@ -123,7 +123,7 @@ describe('getTemplateConfig — storage', () => {
     expect(cfg.chips.length).toBeGreaterThan(10);
   });
 
-  it('caché v2 sin chips (config antigua) → se regenera y se persiste en v3', async () => {
+  it('caché de versión anterior sin chips → se regenera y se persiste en la versión actual', async () => {
     AsyncStorage.__store[key] = JSON.stringify({
       subcategoryId: ID,
       subcategoryName: NAME,
@@ -132,15 +132,15 @@ describe('getTemplateConfig — storage', () => {
       parserType: 'none',
       chips: [],
       enableValidation: false,
-      configVersion: 2
+      configVersion: CONFIG_VERSION - 1
     });
     const cfg = await getTemplateConfig(ID, NAME, BANK);
     await flush();
     expect(cfg.parserType).toBe('asset');
-    expect(JSON.parse(AsyncStorage.__store[key]).configVersion).toBe(3);
+    expect(JSON.parse(AsyncStorage.__store[key]).configVersion).toBe(CONFIG_VERSION);
   });
 
-  it('caché v3 de tipo asset pero sin chips → se considera obsoleta', async () => {
+  it('caché actual de tipo asset pero sin chips → se considera obsoleta', async () => {
     AsyncStorage.__store[key] = JSON.stringify({
       subcategoryId: ID,
       subcategoryName: NAME,
@@ -149,12 +149,12 @@ describe('getTemplateConfig — storage', () => {
       parserType: 'asset',
       chips: [],
       enableValidation: true,
-      configVersion: 3
+      configVersion: CONFIG_VERSION
     });
     expect((await getTemplateConfig(ID, NAME, BANK)).chips.length).toBeGreaterThan(10);
   });
 
-  it('caché v3 personalizada → se respeta tal cual', async () => {
+  it('caché de la versión actual personalizada → se respeta tal cual', async () => {
     const custom = {
       subcategoryId: ID,
       subcategoryName: NAME,
@@ -164,10 +164,26 @@ describe('getTemplateConfig — storage', () => {
       chips: [{ label: 'Mío', icon: 'star', template: 'Otros: mío' }],
       enableValidation: true,
       isCustomized: true,
-      configVersion: 3
+      configVersion: CONFIG_VERSION
     };
     AsyncStorage.__store[key] = JSON.stringify(custom);
     expect((await getTemplateConfig(ID, NAME, BANK)).chips[0].label).toBe('Mío');
+  });
+
+  it('chips de ingreso guardados con la versión anterior (sin [Bien: ...]) se regeneran', async () => {
+    const incomeKey = 'template_config_100554';
+    AsyncStorage.__store[incomeKey] = JSON.stringify({
+      subcategoryId: 100554,
+      subcategoryName: 'Arriendos',
+      categoryName: 'Ingresos',
+      assistanceLevel: 'structured',
+      parserType: 'asset',
+      chips: [{ label: 'Arriendo', icon: 'home-account', template: 'Arriendo: Oct 2026' }],
+      enableValidation: true,
+      configVersion: CONFIG_VERSION - 1
+    });
+    const cfg = await getTemplateConfig(100554, 'Arriendos', 'Ingresos');
+    expect(cfg.chips.every((c) => c.template.includes('[Bien:'))).toBe(true);
   });
 
   it('JSON corrupto → default, sin lanzar', async () => {

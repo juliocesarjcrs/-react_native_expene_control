@@ -14,7 +14,11 @@ import {
   TemplateChip,
   CommentaryValidationResult
 } from '~/shared/types/screens/settings/commentary-templates.types';
-import { ASSET_CONCEPTS, resolveAssetConcept } from '~/utils/commentaryParser/assetConcepts';
+import {
+  ASSET_CONCEPTS,
+  normalizeAlias,
+  resolveAssetConcept
+} from '~/utils/commentaryParser/assetConcepts';
 import { normalizeMonthAbbr } from './commentaryDate.utils';
 
 // ============================================================
@@ -188,25 +192,25 @@ const buildIncomeChips = (): TemplateChip[] => {
     {
       label: 'Arriendo',
       icon: 'home-account',
-      template: `Arriendo: ${my}`,
-      hint: 'Canon del mes completo'
+      template: `Arriendo: ${my} [Bien: Nombre]`,
+      hint: 'Canon del mes completo. Reemplaza «Nombre» por el nombre del bien (ej: Apt 1102)'
     },
     {
       label: 'Parcial',
       icon: 'calendar-range',
-      template: `Arriendo: 15 días ${my} [Parcial]`,
-      hint: 'Canon proporcional por días'
+      template: `Arriendo: 15 días ${my} [Parcial] [Bien: Nombre]`,
+      hint: 'Canon proporcional por días. Reemplaza «Nombre» por el nombre del bien'
     },
     {
       label: 'Reembolso',
       icon: 'cash-refund',
-      template: `Reembolso: administración ${my}`,
+      template: `Reembolso: administración ${my} [Bien: Nombre]`,
       hint: 'El inquilino reembolsa un gasto (se resta de esa cubeta)'
     },
     {
       label: 'Depósito',
       icon: 'safe',
-      template: 'Depósito: garantía [Inquilino]',
+      template: 'Depósito: garantía [Inquilino] [Bien: Nombre]',
       hint: 'Depósito en garantía — NO cuenta como ingreso'
     }
   ];
@@ -272,6 +276,15 @@ export const validateAssetCommentary = (text: string): CommentaryValidationResul
 
   const concept = resolveAssetConcept(head[1]);
   if (!concept) return { state: 'warning', message: `Concepto no reconocido: "${head[1].trim()}"` };
+
+  // Los ingresos comparten categoría ("Arriendos"): sin [Bien: ...] no se sabe de cuál es
+  if (ASSET_CONCEPTS[concept].direction === 'income') {
+    const bien = head[2].match(/\[\s*bien\s*:\s*([^\]]*)\]/i);
+    if (!bien || bien[1].trim() === '')
+      return { state: 'warning', message: 'Falta [Bien: nombre] para saber a qué bien pertenece' };
+    if (normalizeAlias(bien[1]) === 'nombre')
+      return { state: 'warning', message: 'Reemplaza «Nombre» por el nombre del bien' };
+  }
 
   if (ASSET_CONCEPTS[concept].recurring && !/\b20\d{2}\b/.test(head[2]))
     return { state: 'warning', message: 'Falta el período con año (ej: Mar 2026 o 2026)' };

@@ -221,6 +221,10 @@ export const normalizeConceptKey = (raw: string): string =>
     .replace(/[úùü]/g, 'u')
     .replace(/\s+/g, '');
 
+/** Para comparar nombres de bienes: "Apt. 1102" y "APT 1102" son el mismo. */
+export const normalizeAlias = (raw: string): string =>
+  normalizeConceptKey(raw).replace(/[^a-z0-9ñ]/g, '');
+
 /** Devuelve el concepto para un prefijo de comentario o null si no se reconoce. */
 export const resolveAssetConcept = (rawLabel: string): AssetConcept | null => {
   const key = normalizeConceptKey(rawLabel);

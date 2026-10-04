@@ -30,6 +30,7 @@ import { parseSportsCommentary } from '~/utils/commentaryParser/sportsParser';
 import { parseRentCommentary } from '~/utils/commentaryParser/rentParser';
 import { ParserType } from '~/utils/commentaryParser';
 import { parseCopagoCommentary } from '~/utils/commentaryParser/copagoParser';
+import { parseAssetCommentary } from '~/utils/commentaryParser/assetParser';
 
 // ─────────────────────────────────────────────
 // CONSTANTES DE TEST
@@ -76,6 +77,8 @@ const parseByType = (
       return parseRentCommentary(commentary, MOCK_COST, MOCK_DATE);
     case 'copago':
       return parseCopagoCommentary(commentary, MOCK_COST, MOCK_DATE);
+    case 'asset':
+      return parseAssetCommentary(commentary, MOCK_COST, MOCK_DATE);
   }
 };
 
@@ -125,12 +128,18 @@ describe('Registry — subcategoryDetectors activan el parserType correcto en ge
   COMMENTARY_REGISTRY.forEach((entry: CommentaryAnalysisEntry) => {
     entry.subcategoryDetectors.forEach((subcategoryName) => {
       it(`[${entry.parserType}] detector "${subcategoryName}" → parserType correcto`, () => {
-        const config = getDefaultTemplateConfig(TEST_SUBCATEGORY_ID, subcategoryName, 'TestCat');
+        const config = getDefaultTemplateConfig(
+          TEST_SUBCATEGORY_ID,
+          subcategoryName,
+          entry.detectorCategoryName ?? 'TestCat'
+        );
 
         // Los parsers semi-estructurados usan parserType 'custom' en el template
         // porque no tienen validación estricta de formato (solo chips de guía).
         // utility, product y retention usan su propio parserType directamente.
-        const isStructured = ['utility', 'product', 'retention'].includes(entry.parserType);
+        const isStructured = ['utility', 'product', 'retention', 'asset'].includes(
+          entry.parserType
+        );
         const expectedParserTypes = isStructured
           ? [entry.parserType]
           : [entry.parserType, 'custom'];
@@ -156,12 +165,21 @@ describe('Registry — subcategoryDetectors activan el parserType correcto en ge
 // ─────────────────────────────────────────────
 
 describe('Chips structured — texto generado es parseable por su parser', () => {
-  const STRUCTURED_PARSERS: Exclude<ParserType, 'none'>[] = ['utility', 'product', 'retention'];
+  const STRUCTURED_PARSERS: Exclude<ParserType, 'none'>[] = [
+    'utility',
+    'product',
+    'retention',
+    'asset'
+  ];
 
   COMMENTARY_REGISTRY.filter((entry) => STRUCTURED_PARSERS.includes(entry.parserType)).forEach(
     (entry: CommentaryAnalysisEntry) => {
       entry.subcategoryDetectors.forEach((subcategoryName) => {
-        const config = getDefaultTemplateConfig(TEST_SUBCATEGORY_ID, subcategoryName, 'TestCat');
+        const config = getDefaultTemplateConfig(
+          TEST_SUBCATEGORY_ID,
+          subcategoryName,
+          entry.detectorCategoryName ?? 'TestCat'
+        );
 
         config.chips.forEach((chip) => {
           const isSimplifiedFormat = chip.label === 'Solo tienda';

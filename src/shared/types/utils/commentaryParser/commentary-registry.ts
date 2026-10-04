@@ -52,6 +52,7 @@ export interface CommentaryAnalysisEntry {
   exampleCommentary: string;
 
   hasScreen?: boolean;
+  detectorCategoryName?: string;
 }
 
 // ─────────────────────────────────────────────
@@ -168,6 +169,18 @@ export const COMMENTARY_REGISTRY: CommentaryAnalysisEntry[] = [
     route: 'vacationAnalysis',
     subcategoryDetectors: ['Vacaciones', 'Viaje'],
     exampleCommentary: 'Alojamiento Hotel Cartagena Plaza 4 noches [Todo incluido] [Cartagena]',
+    hasScreen: true
+  },
+  {
+    parserType: 'asset',
+    displayName: 'Bienes e Inversiones',
+    subtitle: 'Costo, deuda, arriendo y rentabilidad de apartamentos y lotes',
+    icon: 'home-analytics',
+    iconColorKey: 'PRIMARY',
+    route: 'assetAnalysis',
+    subcategoryDetectors: ['Apartamento', 'Lote', 'Casa', 'Finca'],
+    detectorCategoryName: 'Bancarios y de inversión',
+    exampleCommentary: 'Administración: Mar 2026',
     hasScreen: true
   }
 ];

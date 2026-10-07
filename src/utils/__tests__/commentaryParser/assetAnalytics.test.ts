@@ -47,7 +47,12 @@ describe('Lote — sin arriendo ni préstamo', () => {
   });
 
   it('sin arriendo no hay rentabilidad ni recuperación (no inventa números)', () => {
-    expect(m.yields).toEqual({ gross: null, net: null, netAfterInterest: null, onEquity: null });
+    expect(m.yields).toEqual({
+      gross: null,
+      net: null,
+      netAfterInterest: null,
+      onEquity: null
+    });
     expect(m.payback).toEqual({ years: null, equityYears: null });
   });
 
@@ -111,7 +116,11 @@ const TORRE_INC: AssetRecord[] = [
 ];
 
 describe('Torre 2 — arriendo + préstamo', () => {
-  const m = computeAssetMetrics({ expenses: TORRE_EXP, incomes: TORRE_INC, asOf: AS_OF });
+  const m = computeAssetMetrics({
+    expenses: TORRE_EXP,
+    incomes: TORRE_INC,
+    asOf: AS_OF
+  });
 
   it('costo: abono de capital NO suma; compra = 320 M', () => {
     expect(m.cost.purchase).toBe(320_000_000);
@@ -137,7 +146,13 @@ describe('Torre 2 — arriendo + préstamo', () => {
   });
 
   it('ventana: abr–sep (6 meses), anualizada', () => {
-    expect(m.window).toEqual({ start: '2026-04', end: '2026-09', months: 6, annualized: true });
+    expect(m.window).toEqual({
+      start: '2026-04',
+      end: '2026-09',
+      months: 6,
+      annualized: true,
+      provisional: false
+    });
     expect(m.warnings.some((w) => w.code === 'annualized')).toBe(true);
   });
 
@@ -291,11 +306,57 @@ describe('avisos y casos límite', () => {
     expect(m.annual.net).toBe(0);
   });
 
-  it('arriendo solo en el mes actual: ventana vacía, sin rentabilidad', () => {
+  it('arriendo solo en el mes en curso: cifras provisionales con ese mes (no vacío)', () => {
     const m = computeAssetMetrics({
       expenses: [rec(1, 100_000_000, 'Saldo: firma', 'investment', '2026-01-01')],
-      incomes: [rec(2, 1_000_000, 'Arriendo: Oct 2026', 'investment', '2026-10-01')],
-      asOf: AS_OF
+      incomes: [rec(2, 2_000_000, 'Arriendo: Oct 2026', 'investment', '2026-10-01')],
+      asOf: '2026-10-05'
+    });
+    expect(m.window).toEqual({
+      start: '2026-10',
+      end: '2026-10',
+      months: 1,
+      annualized: true,
+      provisional: true
+    });
+    expect(m.annual.rent).toBeCloseTo(24_000_000);
+    expect(m.yields.gross).toBeCloseTo(0.24);
+    expect(m.warnings.find((w) => w.code === 'annualized')?.message).toMatch(/mes en curso/);
+  });
+
+  it('con un mes completo antes del actual NO es provisional', () => {
+    const m = computeAssetMetrics({
+      expenses: [rec(1, 100_000_000, 'Saldo: firma', 'investment', '2026-01-01')],
+      incomes: [
+        rec(2, 2_000_000, 'Arriendo: Sep 2026', 'investment', '2026-09-01'),
+        rec(3, 2_000_000, 'Arriendo: Oct 2026', 'investment', '2026-10-01')
+      ],
+      asOf: '2026-10-05'
+    });
+    expect(m.window).toMatchObject({
+      start: '2026-09',
+      end: '2026-09',
+      months: 1,
+      provisional: false
+    });
+  });
+
+  it('con includeCurrentMonth tampoco es provisional', () => {
+    const m = computeAssetMetrics({
+      expenses: [],
+      incomes: [rec(2, 2_000_000, 'Arriendo: Oct 2026', 'investment', '2026-10-01')],
+      asOf: '2026-10-05',
+      includeCurrentMonth: true
+    });
+    expect(m.window.provisional).toBe(false);
+    expect(m.window.months).toBe(1);
+  });
+
+  it('primer arriendo en un mes futuro: sin ventana y sin rentabilidad', () => {
+    const m = computeAssetMetrics({
+      expenses: [rec(1, 100_000_000, 'Saldo: firma', 'investment', '2026-01-01')],
+      incomes: [rec(2, 2_000_000, 'Arriendo: Dic 2026', 'investment', '2026-10-01')],
+      asOf: '2026-10-05'
     });
     expect(m.window.months).toBe(0);
     expect(m.yields.gross).toBeNull();
@@ -416,5 +477,152 @@ describe('arriendo con fechas que cruzan de mes', () => {
     });
     expect(m.monthly.find((r) => r.month === '2026-10')?.rent).toBe(3_100_000);
     expect(m.monthly.find((r) => r.month === '2026-11')?.rent).toBe(0);
+  });
+});
+
+describe('caso real: Torre 2 en octubre, con los ingresos del log', () => {
+  const INCOMES: AssetRecord[] = [
+    rec(2728, 150_000, '51 pago 50% Local 133 Piedecuesta Jun 2026', 'investment', '2026-07-01'),
+    rec(2734, 150_000, '52 pago 50% Local 133 Piedecuesta Jul 2026', 'investment', '2026-07-19'),
+    rec(2750, 150_000, '53 pago 50% Local 133 Piedecuesta Ago 2026', 'investment', '2026-08-16'),
+    rec(
+      2768,
+      150_000,
+      'Arriendo: #54 Sep 2026 pago 50% [Bien: Local 133 Piedecuesta]',
+      'investment',
+      '2026-09-27'
+    ),
+    // sin espacios alrededor de la etiqueta, tal como lo escribiste
+    rec(
+      2771,
+      2_000_000,
+      'Arriendo: #1 01 Oct - 30 Oct 2026[Bien:Torre 2 Apt 1102]',
+      'investment',
+      '2026-09-29'
+    )
+  ];
+  const EXP = [
+    rec(1, 320_000_000, 'Saldo: firma de escrituras', 'investment', '2026-03-01'),
+    rec(
+      2,
+      8_499_602,
+      'Escrituración: notariales [Valor escritura $320.000.000]',
+      'investment',
+      '2026-03-01'
+    )
+  ];
+  const run = (aliases: string[]) =>
+    computeAssetMetrics({
+      expenses: EXP,
+      incomes: INCOMES,
+      asOf: '2026-10-05',
+      propertyAliases: aliases
+    });
+
+  it('Torre 2: toma solo el arriendo de octubre y calcula rentabilidad provisional', () => {
+    const m = run(['Torre 2 Apt 1102']);
+    expect(m.monthly.reduce((s, r) => s + r.rent, 0)).toBe(2_000_000);
+    expect(m.window).toMatchObject({
+      start: '2026-10',
+      months: 1,
+      provisional: true
+    });
+    expect(m.yields.gross).not.toBeNull();
+    expect(m.warnings.filter((w) => w.code === 'unassignedIncome')[0].message).toMatch(
+      /^3 ingreso/
+    );
+  });
+
+  it('Local: con el nombre exacto "Local 133 Piedecuesta" solo ve el pago ya migrado', () => {
+    const m = run(['Local 133 Piedecuesta']);
+    expect(m.monthly.reduce((s, r) => s + r.rent, 0)).toBe(150_000);
+  });
+
+  it('el nombre debe coincidir completo: "Local 133" no es "Local 133 Piedecuesta"', () => {
+    expect(run(['Local 133']).monthly.reduce((s, r) => s + r.rent, 0)).toBe(0);
+  });
+});
+
+describe('Trámite / Autenticar — hereda la naturaleza del gasto', () => {
+  it('operational → gasto "otros" del mes; investment → costo de adquisición', () => {
+    const op = computeAssetMetrics({
+      expenses: [rec(1, 18_000, 'Autenticar: Contrato arrendamiento', 'operational', '2026-09-30')],
+      incomes: [],
+      asOf: AS_OF
+    });
+    expect(op.cost.total).toBe(0);
+    expect(op.monthly.find((r) => r.month === '2026-09')?.opex.other).toBe(18_000);
+    expect(op.warnings).toEqual([]); // ya no es "sin formato"
+
+    const inv = computeAssetMetrics({
+      expenses: [rec(2, 6_600, 'Trámite: autenticar otro sí', 'investment', '2026-08-28')],
+      incomes: [],
+      asOf: AS_OF
+    });
+    expect(inv.cost.acquisitionCosts).toBe(6_600);
+    expect(inv.cost.total).toBe(6_600);
+  });
+});
+
+describe('detalle por mes — tus gastos reales de agosto y septiembre', () => {
+  const EXP = [
+    rec(3, 6_600, 'Autenticar fotocopia otro Si', 'operational', '2026-08-28'),
+    rec(8, 170_000, 'Mantenimiento: Reemplazo vidrios baño', 'operational', '2026-09-29'),
+    rec(9, 18_000, 'Autenticar: Contrato arrendamiento', 'operational', '2026-09-30'),
+    rec(10, 35_450, 'Servicios: Agua 17 Ago - 14 Sep 2026', 'operational', '2026-09-30')
+  ];
+  const m = computeAssetMetrics({
+    expenses: EXP,
+    incomes: [],
+    asOf: '2026-10-05'
+  });
+  const row = (mo: string) => m.monthly.find((r) => r.month === mo)!;
+
+  it('agosto = fotocopia + 15/29 del recibo de agua', () => {
+    expect(row('2026-08').opexTotal).toBeCloseTo(6_600 + (35_450 * 15) / 29, 2);
+    expect(Math.round(row('2026-08').opexTotal)).toBe(24_936);
+  });
+
+  it('septiembre = mantenimiento + contrato + 14/29 del recibo de agua', () => {
+    expect(Math.round(row('2026-09').opexTotal)).toBe(205_114);
+  });
+
+  it('el detalle del mes lista cada movimiento y marca los repartidos', () => {
+    const items = row('2026-09').items;
+    expect(items.map((i) => i.label)).toEqual(
+      [
+        'Mantenimiento: Reemplazo vidrios baño',
+        'Trámite: Contrato arrendamiento',
+        'Servicios: Agua 17 Ago - 14 Sep 2026'
+      ].sort((a, b) => {
+        const amt = (l: string) => items.find((i) => i.label === l)!.amount;
+        return amt(b) - amt(a);
+      })
+    );
+    const agua = items.find((i) => i.label.startsWith('Servicios'))!;
+    expect(agua.total).toBe(35_450);
+    expect(agua.amount).toBeCloseTo((35_450 * 14) / 29, 2);
+    expect(agua.kind).toBe('opex');
+  });
+
+  it('la suma del detalle es igual al total del mes (incluye reembolsos y arriendo)', () => {
+    const full = computeAssetMetrics({
+      expenses: EXP,
+      incomes: [
+        rec(20, 2_000_000, 'Arriendo: Sep 2026 [Bien: X]', 'investment', '2026-09-03'),
+        rec(21, 50_000, 'Reembolso: administración Sep 2026 [Bien: X]', 'investment', '2026-09-04')
+      ],
+      asOf: '2026-10-05'
+    });
+    const sep = full.monthly.find((r) => r.month === '2026-09')!;
+    const gastos = sep.items.filter((i) => i.kind !== 'rent').reduce((s, i) => s + i.amount, 0);
+    const rent = sep.items.filter((i) => i.kind === 'rent').reduce((s, i) => s + i.amount, 0);
+    expect(gastos).toBeCloseTo(sep.opexTotal + sep.interest, 2);
+    expect(rent).toBe(sep.rent);
+    expect(sep.items.some((i) => i.kind === 'reimbursement' && i.amount === -50_000)).toBe(true);
+  });
+
+  it('un mes sin movimientos tiene detalle vacío', () => {
+    expect(row('2026-10').items).toEqual([]);
   });
 });

@@ -3,7 +3,7 @@ import {
   formatPercent,
   formatYears,
   OPEX_LABELS
-} from '~/shared/types/utils/commentaryParser/assetFormat.utils';
+} from '~/utils/commentaryParser/assetFormat.utils';
 
 describe('formatMonth', () => {
   it('"2026-04" → "Abr 2026"', () => {

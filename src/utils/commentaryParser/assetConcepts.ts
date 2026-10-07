@@ -151,6 +151,15 @@ export const ASSET_CONCEPTS: Record<AssetConcept, AssetConceptInfo> = {
     recurring: false,
     capitalRole: null
   },
+  procedure: {
+    label: 'Trámite',
+    aliases: ['tramite', 'tramites', 'autenticar', 'autenticacion'],
+    bucket: 'other',
+    direction: 'expense',
+    expectedNature: null, // hereda: investment → costo del bien · operational → gasto
+    recurring: false,
+    capitalRole: null
+  },
   // ── Financiación ──
   interest: {
     label: 'Intereses',

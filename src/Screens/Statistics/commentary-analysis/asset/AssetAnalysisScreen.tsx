@@ -75,7 +75,7 @@ export default function AssetAnalysisScreen(_props: ScreenProps) {
       <ScrollView style={{ flex: 1 }} contentContainerStyle={{ paddingBottom: 20 }}>
         <View style={{ paddingHorizontal: 16, paddingTop: 10 }}>
           <MultiSubcategoryFilter
-            defaultDaysBack={3650}
+            defaultDaysBack={360}
             buttonTitle="Analizar bien"
             onAnalyze={loadData}
           />

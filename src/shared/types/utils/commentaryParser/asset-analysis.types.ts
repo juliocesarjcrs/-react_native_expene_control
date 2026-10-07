@@ -22,6 +22,8 @@ export type AssetConcept =
   | 'commission' //      Comisión
   | 'utilities' //       Servicios
   | 'other' //           Otros
+  // ── Hereda la nature del gasto (compra → costo del bien; operación → gasto) ──
+  | 'procedure' //       Trámite / Autenticar (notaría, copias, certificados)
   // ── Financiación (préstamo del bien) ──
   | 'interest' //        Intereses (operational)
   | 'principalPayment' // Abono capital (reduce deuda; NO es costo del bien)

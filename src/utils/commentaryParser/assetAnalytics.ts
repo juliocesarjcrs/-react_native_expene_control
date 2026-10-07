@@ -11,11 +11,13 @@
  *  - Abono capital NO suma al costo (la compra ya lo incluye) → reduce deuda.
  *  - Depósito en garantía NO es ingreso.
  *  - Ventana de rentabilidad: hasta 12 meses completos, empezando en el primer mes con
- *    arriendo; si son menos de 12 se anualiza (y se avisa).
+ *    arriendo; si son menos de 12 se anualiza (y se avisa). Si el primer arriendo es del
+ *    mes en curso (aún no hay ningún mes completo) se usa ese mes como cifra provisional.
  */
 import { AssetData } from '~/shared/types/utils/commentaryParser/asset-analysis.types';
 import {
   AssetMetrics,
+  AssetMonthItem,
   AssetMonthRow,
   AssetRecord,
   AssetWarning,
@@ -88,7 +90,10 @@ const bucketFromText = (text: string): OpexBucket => {
 };
 
 type Classified =
-  | { kind: 'cost'; costKind: 'purchase' | 'acquisitionCosts' | 'improvement' | 'unclassified' }
+  | {
+      kind: 'cost';
+      costKind: 'purchase' | 'acquisitionCosts' | 'improvement' | 'unclassified';
+    }
   | { kind: 'debtRepayment' }
   | { kind: 'interest' }
   | { kind: 'opex'; bucket: OpexBucket };
@@ -175,7 +180,20 @@ const classifyExpense = (
   return { kind: 'opex', bucket: BUCKET_TO_OPEX[parsed.bucket] ?? 'other' };
 };
 
-type MonthAcc = { rent: number; opex: Record<OpexBucket, number>; interest: number };
+type MonthAcc = {
+  rent: number;
+  opex: Record<OpexBucket, number>;
+  interest: number;
+  items: AssetMonthItem[];
+};
+
+/** "Servicios: Agua 17 Ago - 14 Sep 2026" — texto corto para el detalle del mes */
+const itemLabel = (rec: AssetRecord, parsed: AssetData | null): string => {
+  const text = (
+    parsed ? `${ASSET_CONCEPTS[parsed.concept].label}: ${parsed.detail}` : rec.commentary
+  ).trim();
+  return text.length > 70 ? `${text.slice(0, 67)}…` : text;
+};
 
 export const computeAssetMetrics = (input: ComputeAssetMetricsInput): AssetMetrics => {
   const {
@@ -192,14 +210,19 @@ export const computeAssetMetrics = (input: ComputeAssetMetricsInput): AssetMetri
   const acc = (idx: number): MonthAcc => {
     let m = months.get(idx);
     if (!m) {
-      m = { rent: 0, opex: emptyBuckets(), interest: 0 };
+      m = { rent: 0, opex: emptyBuckets(), interest: 0, items: [] };
       months.set(idx, m);
     }
     return m;
   };
 
   // ── Gastos ──────────────────────────────────────────────────────────────
-  const cost = { purchase: 0, acquisitionCosts: 0, improvements: 0, unclassified: 0 };
+  const cost = {
+    purchase: 0,
+    acquisitionCosts: 0,
+    improvements: 0,
+    unclassified: 0
+  };
   let interestPaid = 0;
   let principalPaid = 0;
   let hasLoan = false;
@@ -238,12 +261,30 @@ export const computeAssetMetrics = (input: ComputeAssetMetricsInput): AssetMetri
       case 'interest':
         hasLoan = true;
         interestPaid += rec.cost;
-        for (const [idx, amt] of spread(rec.cost, parsed, rec.date, basis))
+        for (const [idx, amt] of spread(rec.cost, parsed, rec.date, basis)) {
           acc(idx).interest += amt;
+          acc(idx).items.push({
+            id: rec.id,
+            source: 'expense',
+            kind: 'interest',
+            label: itemLabel(rec, parsed),
+            amount: amt,
+            total: rec.cost
+          });
+        }
         break;
       case 'opex':
-        for (const [idx, amt] of spread(rec.cost, parsed, rec.date, basis))
+        for (const [idx, amt] of spread(rec.cost, parsed, rec.date, basis)) {
           acc(idx).opex[c.bucket] += amt;
+          acc(idx).items.push({
+            id: rec.id,
+            source: 'expense',
+            kind: 'opex',
+            label: itemLabel(rec, parsed),
+            amount: amt,
+            total: rec.cost
+          });
+        }
         break;
     }
   }
@@ -302,12 +343,31 @@ export const computeAssetMetrics = (input: ComputeAssetMetricsInput): AssetMetri
 
     switch (parsed.concept) {
       case 'rentIncome':
-        for (const [idx, amt] of spread(rec.cost, parsed, rec.date, basis)) acc(idx).rent += amt;
+        for (const [idx, amt] of spread(rec.cost, parsed, rec.date, basis)) {
+          acc(idx).rent += amt;
+          acc(idx).items.push({
+            id: rec.id,
+            source: 'income',
+            kind: 'rent',
+            label: itemLabel(rec, parsed),
+            amount: amt,
+            total: rec.cost
+          });
+        }
         break;
       case 'reimbursement': {
         const bucket = bucketFromText(parsed.detail);
-        for (const [idx, amt] of spread(rec.cost, parsed, rec.date, basis))
+        for (const [idx, amt] of spread(rec.cost, parsed, rec.date, basis)) {
           acc(idx).opex[bucket] -= amt;
+          acc(idx).items.push({
+            id: rec.id,
+            source: 'income',
+            kind: 'reimbursement',
+            label: itemLabel(rec, parsed),
+            amount: -amt,
+            total: rec.cost
+          });
+        }
         break;
       }
       case 'securityDeposit':
@@ -358,7 +418,12 @@ export const computeAssetMetrics = (input: ComputeAssetMetricsInput): AssetMetri
   const lastIdx = Math.max(asOfIdx, ...known.filter((k) => k <= asOfIdx));
   const monthly: AssetMonthRow[] = [];
   for (let idx = firstIdx; idx <= lastIdx; idx++) {
-    const m = months.get(idx) ?? { rent: 0, opex: emptyBuckets(), interest: 0 };
+    const m = months.get(idx) ?? {
+      rent: 0,
+      opex: emptyBuckets(),
+      interest: 0,
+      items: []
+    };
     const opexTotal = OPEX_BUCKETS.reduce((s, b) => s + m.opex[b], 0);
     monthly.push({
       month: monthLabel(idx),
@@ -367,15 +432,19 @@ export const computeAssetMetrics = (input: ComputeAssetMetricsInput): AssetMetri
       opexTotal,
       interest: m.interest,
       net: m.rent - opexTotal,
+      items: [...m.items].sort((a, b) => Math.abs(b.amount) - Math.abs(a.amount)),
       netAfterInterest: m.rent - opexTotal - m.interest
     });
   }
 
   // ── Ventana de rentabilidad ─────────────────────────────────────────────
-  const windowEnd = includeCurrentMonth ? asOfIdx : asOfIdx - 1;
   const rentIdx = [...months.entries()].filter(([, m]) => m.rent > 0).map(([i]) => i);
+  const firstRent = rentIdx.length ? Math.min(...rentIdx) : null;
+  // Primer arriendo en el mes en curso: no hay meses completos → se usa el mes en curso
+  const provisional = !includeCurrentMonth && firstRent === asOfIdx;
+  const windowEnd = includeCurrentMonth || provisional ? asOfIdx : asOfIdx - 1;
   let windowStart = windowEnd - 11;
-  if (rentIdx.length) windowStart = Math.max(windowStart, Math.min(...rentIdx));
+  if (firstRent !== null) windowStart = Math.max(windowStart, firstRent);
   const windowMonths = Math.max(windowEnd - windowStart + 1, 0);
   const annualized = windowMonths > 0 && windowMonths < 12;
   const factor = windowMonths > 0 ? 12 / windowMonths : 0;
@@ -397,7 +466,9 @@ export const computeAssetMetrics = (input: ComputeAssetMetricsInput): AssetMetri
   if (annualized && rentIdx.length > 0) {
     warnings.push({
       code: 'annualized',
-      message: `Solo ${windowMonths} mes(es) con arriendo: las cifras anuales están proyectadas`
+      message: provisional
+        ? 'Solo hay el mes en curso con arriendo: cifras provisionales, proyectadas a 12 meses'
+        : `Solo ${windowMonths} mes(es) con arriendo: las cifras anuales están proyectadas`
     });
   }
 
@@ -439,7 +510,8 @@ export const computeAssetMetrics = (input: ComputeAssetMetricsInput): AssetMetri
       start: windowMonths > 0 ? monthLabel(windowStart) : null,
       end: monthLabel(windowEnd),
       months: windowMonths,
-      annualized
+      annualized,
+      provisional
     },
     annual: {
       rent,

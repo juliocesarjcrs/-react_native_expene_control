@@ -35,6 +35,19 @@ export interface AssetWarning {
   message: string;
 }
 
+/** Un movimiento que compone un mes (para explicar las cifras de "Últimos meses"). */
+export interface AssetMonthItem {
+  id: number;
+  source: 'expense' | 'income';
+  kind: 'rent' | 'opex' | 'interest' | 'reimbursement';
+  /** "Mantenimiento: Reemplazo vidrios baño" */
+  label: string;
+  /** Parte que cae en este mes. Negativa en reembolsos (restan de los gastos) */
+  amount: number;
+  /** Monto del pago original: si es mayor que `amount`, el pago se reparte entre meses */
+  total: number;
+}
+
 export interface AssetMonthRow {
   /** "YYYY-MM" */
   month: string;
@@ -45,6 +58,8 @@ export interface AssetMonthRow {
   interest: number;
   /** rent − opexTotal */
   net: number;
+  /** Movimientos que componen el mes, de mayor a menor */
+  items: AssetMonthItem[];
   /** net − interest */
   netAfterInterest: number;
 }
@@ -79,7 +94,14 @@ export interface AssetMetrics {
   /** Depósitos en garantía recibidos (NO son ingreso) */
   depositsHeld: number;
   monthly: AssetMonthRow[];
-  window: { start: string | null; end: string; months: number; annualized: boolean };
+  window: {
+    start: string | null;
+    end: string;
+    months: number;
+    annualized: boolean;
+    /** El primer arriendo es del mes en curso: aún no hay ningún mes completo */
+    provisional: boolean;
+  };
   /** Valores de la ventana, anualizados (×12/months) */
   annual: {
     rent: number;

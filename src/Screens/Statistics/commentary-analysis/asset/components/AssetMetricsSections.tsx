@@ -2,8 +2,9 @@
  * Tarjetas de resultados del bien: costo, deuda, rentabilidad, gastos y meses.
  * Ubicación: src/Screens/Statistics/commentary-analysis/asset/components/AssetMetricsSections.tsx
  */
-import React from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import React, { useState } from 'react';
+import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
+import { Icon } from 'react-native-elements';
 
 import { AssetCard, AssetRow } from './AssetCard';
 import {
@@ -15,7 +16,7 @@ import {
   formatPercent,
   formatYears,
   OPEX_LABELS
-} from '~/shared/types/utils/commentaryParser/assetFormat.utils';
+} from '~/utils/commentaryParser/assetFormat.utils';
 import { NumberFormat } from '~/utils/Helpers';
 import { useThemeColors } from '~/customHooks/useThemeColors';
 import { SMALL } from '~/styles/fonts';
@@ -30,6 +31,7 @@ interface Props {
 
 export default function AssetMetricsSections({ metrics, hasIncomeLink, incomesFailed }: Props) {
   const colors = useThemeColors();
+  const [expandedMonth, setExpandedMonth] = useState<string | null>(null);
   const { cost, debt, equity, annual, yields, payback, window } = metrics;
 
   const buckets = (Object.keys(annual.opexByBucket) as OpexBucket[])
@@ -135,9 +137,11 @@ export default function AssetMetricsSections({ metrics, hasIncomeLink, incomesFa
             <AssetRow label="Recuperar tu capital" value={formatYears(payback.equityYears)} />
           )}
           <Text style={[styles.note, { color: colors.TEXT_SECONDARY }]}>
-            {window.annualized
-              ? `Basado en ${window.months} ${window.months === 1 ? 'mes' : 'meses'} con arriendo, proyectado a 12.`
-              : 'Basado en los últimos 12 meses completos.'}
+            {window.provisional
+              ? 'Cifras provisionales: solo hay el mes en curso con arriendo y todavía no ha terminado. Se proyecta a 12 meses.'
+              : window.annualized
+                ? `Basado en ${window.months} ${window.months === 1 ? 'mes' : 'meses'} con arriendo, proyectado a 12.`
+                : 'Basado en los últimos 12 meses completos.'}
           </Text>
         </AssetCard>
       )}
@@ -157,27 +161,102 @@ export default function AssetMetricsSections({ metrics, hasIncomeLink, incomesFa
       {/* 5. Últimos meses */}
       {lastMonths.length > 0 && (
         <AssetCard title="Últimos meses" icon="calendar-month" accentKey="INFO">
+          <View style={styles.monthRow}>
+            <Text style={[styles.colMonth, styles.colHeader, { color: colors.TEXT_SECONDARY }]}>
+              Mes
+            </Text>
+            <Text style={[styles.colNum, styles.colHeader, { color: colors.TEXT_SECONDARY }]}>
+              Arriendo
+            </Text>
+            <Text style={[styles.colNum, styles.colHeader, { color: colors.TEXT_SECONDARY }]}>
+              Gastos
+            </Text>
+            <Text style={[styles.colNum, styles.colHeader, { color: colors.TEXT_SECONDARY }]}>
+              Neto
+            </Text>
+          </View>
           {lastMonths.map((row) => (
-            <View key={row.month} style={styles.monthRow}>
-              <View style={{ flex: 1 }}>
-                <Text style={[styles.monthLabel, { color: colors.TEXT_PRIMARY }]}>
-                  {formatMonth(row.month)}
+            <React.Fragment key={row.month}>
+              <TouchableOpacity
+                style={styles.monthRow}
+                activeOpacity={0.7}
+                onPress={() => setExpandedMonth(expandedMonth === row.month ? null : row.month)}
+              >
+                <View style={[styles.colMonth, styles.monthLabelWrap]}>
+                  <Icon
+                    type="material-community"
+                    name={expandedMonth === row.month ? 'chevron-down' : 'chevron-right'}
+                    size={16}
+                    color={colors.TEXT_SECONDARY}
+                  />
+                  <Text style={{ color: colors.TEXT_PRIMARY, fontSize: SMALL }}>
+                    {formatMonth(row.month)}
+                  </Text>
+                </View>
+                <Text style={[styles.colNum, { color: colors.TEXT_PRIMARY }]}>
+                  {NumberFormat(row.rent)}
                 </Text>
-                <Text style={[styles.monthSub, { color: colors.TEXT_SECONDARY }]}>
-                  Arriendo {NumberFormat(row.rent)} · Gastos{' '}
+                <Text style={[styles.colNum, { color: colors.TEXT_PRIMARY }]}>
                   {NumberFormat(row.opexTotal + row.interest)}
                 </Text>
-              </View>
-              <Text
-                style={[
-                  styles.monthNet,
-                  { color: row.netAfterInterest < 0 ? colors.ERROR : colors.SUCCESS }
-                ]}
-              >
-                {NumberFormat(row.netAfterInterest)}
-              </Text>
-            </View>
+                <Text
+                  style={[
+                    styles.colNum,
+                    styles.bold,
+                    {
+                      color: row.netAfterInterest < 0 ? colors.ERROR : colors.SUCCESS
+                    }
+                  ]}
+                >
+                  {NumberFormat(row.netAfterInterest)}
+                </Text>
+              </TouchableOpacity>
+              {expandedMonth === row.month && (
+                <View style={[styles.detailBox, { backgroundColor: colors.INFO + '10' }]}>
+                  {row.items.length === 0 ? (
+                    <Text style={[styles.detailText, { color: colors.TEXT_SECONDARY }]}>
+                      Sin movimientos este mes.
+                    </Text>
+                  ) : (
+                    row.items.map((item, i) => (
+                      <View key={`${item.source}-${item.id}-${i}`} style={styles.detailItem}>
+                        <View style={{ flex: 1 }}>
+                          <Text style={[styles.detailText, { color: colors.TEXT_PRIMARY }]}>
+                            {item.label}
+                          </Text>
+                          {Math.abs(item.total) - Math.abs(item.amount) >= 1 && (
+                            <Text style={[styles.detailSub, { color: colors.TEXT_SECONDARY }]}>
+                              parte de un pago de {NumberFormat(Math.abs(item.total))}, repartido
+                              entre meses
+                            </Text>
+                          )}
+                        </View>
+                        <Text
+                          style={[
+                            styles.detailText,
+                            {
+                              color:
+                                item.kind === 'rent' || item.amount < 0
+                                  ? colors.SUCCESS
+                                  : colors.TEXT_PRIMARY
+                            }
+                          ]}
+                        >
+                          {item.kind === 'rent' ? '+' : item.amount < 0 ? '−' : ''}
+                          {NumberFormat(Math.abs(item.amount))}
+                        </Text>
+                      </View>
+                    ))
+                  )}
+                </View>
+              )}
+            </React.Fragment>
           ))}
+          <Text style={[styles.note, { color: colors.TEXT_SECONDARY }]}>
+            Toca un mes para ver qué lo compone. Gastos incluye intereses y se reparte por el
+            período que cubre cada pago (un recibo del 17 Ago al 14 Sep se divide entre los dos
+            meses). Neto = Arriendo − Gastos.
+          </Text>
         </AssetCard>
       )}
     </>
@@ -186,8 +265,19 @@ export default function AssetMetricsSections({ metrics, hasIncomeLink, incomesFa
 
 const styles = StyleSheet.create({
   note: { fontSize: SMALL, lineHeight: 18 },
-  monthRow: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 4 },
-  monthLabel: { fontSize: SMALL + 1, fontWeight: '600' },
-  monthSub: { fontSize: SMALL - 1 },
-  monthNet: { fontSize: SMALL + 1, fontWeight: '700' }
+  monthRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    paddingVertical: 4
+  },
+  colMonth: { flex: 1.1, fontSize: SMALL },
+  monthLabelWrap: { flexDirection: 'row', alignItems: 'center', gap: 2 },
+  detailBox: { borderRadius: 8, padding: 10, gap: 6, marginBottom: 4 },
+  detailItem: { flexDirection: 'row', alignItems: 'flex-start', gap: 8 },
+  detailText: { fontSize: SMALL },
+  detailSub: { fontSize: SMALL - 1 },
+  colNum: { flex: 1, textAlign: 'right', fontSize: SMALL },
+  colHeader: { fontWeight: '600' },
+  bold: { fontWeight: '700' }
 });

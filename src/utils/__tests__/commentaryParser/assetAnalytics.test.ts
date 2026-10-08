@@ -626,3 +626,38 @@ describe('detalle por mes — tus gastos reales de agosto y septiembre', () => {
     expect(row('2026-10').items).toEqual([]);
   });
 });
+
+describe('póliza de seguro con fechas en ambas puntas (caso real)', () => {
+  const SEGURO = rec(
+    9,
+    571_026,
+    'Seguro: HDI 06 Oct 2026 - 06 Oct 2027',
+    'operational',
+    '2026-10-06'
+  );
+
+  it('la póliza se reparte en el tiempo y la suma de los meses es la prima completa', () => {
+    const m = computeAssetMetrics({ expenses: [SEGURO], incomes: [], asOf: '2027-11-15' });
+    const total = m.monthly.reduce((s, r) => s + r.opex.insurance, 0);
+    expect(total).toBeCloseTo(571_026, 2);
+    expect(m.monthly.find((r) => r.month === '2026-10')?.opex.insurance).toBeCloseTo(
+      (571_026 * 26) / 366,
+      2
+    );
+  });
+
+  it('ya no se cuenta la prima entera en octubre ni se multiplica por 12', () => {
+    const m = computeAssetMetrics({
+      expenses: [SEGURO],
+      incomes: [
+        rec(3, 2_000_000, 'Arriendo: #1 01 Oct - 30 Oct 2026 [Bien: X]', 'investment', '2026-09-29')
+      ],
+      asOf: '2026-10-07',
+      propertyAliases: ['X']
+    });
+    expect(m.window).toMatchObject({ months: 1, provisional: true });
+    expect(m.monthly.find((r) => r.month === '2026-10')?.opexTotal).toBeLessThan(571_026);
+    expect(m.annual.opexByBucket.insurance).toBeLessThan(571_026); // antes: 6.852.312
+    expect(m.annual.opexByBucket.insurance).toBeGreaterThan(400_000);
+  });
+});

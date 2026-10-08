@@ -1,4 +1,6 @@
+import { computeAssetMetrics } from '~/utils/commentaryParser/assetAnalytics';
 import {
+  getYieldCardState,
   formatMonth,
   formatPercent,
   formatYears,
@@ -48,5 +50,68 @@ describe('OPEX_LABELS', () => {
       'taxes',
       'utilities'
     ]);
+  });
+});
+
+describe('getYieldCardState — qué muestra la tarjeta de rentabilidad', () => {
+  const rec = (
+    id: number,
+    cost: number,
+    commentary: string,
+    nature: 'investment' | 'operational',
+    date: string
+  ) => ({
+    id,
+    cost,
+    commentary,
+    nature,
+    date
+  });
+  const COMPRA = rec(1, 100_000_000, 'Saldo: firma', 'investment', '2026-01-01');
+  const ARRIENDOS = ['Jun', 'Jul', 'Ago', 'Sep'].map((m, i) =>
+    rec(10 + i, 150_000, `Arriendo: ${m} 2026 [Bien: Local]`, 'investment', `2026-0${6 + i}-10`)
+  );
+  const ADMIN = rec(20, 60_840, 'Administración: Jul 2026', 'operational', '2026-07-20');
+  const m = (expenses: ReturnType<typeof rec>[], incomes: ReturnType<typeof rec>[]) =>
+    computeAssetMetrics({ expenses, incomes, asOf: '2026-10-07', propertyAliases: ['Local'] });
+  const opts = { hasIncomeLink: true, incomesFailed: false };
+
+  it('arriendo y costo → completa', () => {
+    expect(getYieldCardState(m([COMPRA, ADMIN], ARRIENDOS), opts)).toEqual({ mode: 'full' });
+  });
+
+  it('arriendo SIN costo registrado (bien comprado antes de la app) → solo ganancia neta', () => {
+    const metrics = m([ADMIN], ARRIENDOS);
+    expect(metrics.cost.total).toBe(0);
+    expect(getYieldCardState(metrics, opts)).toEqual({ mode: 'netOnly' });
+    // las cifras de ganancia sí existen aunque no haya rentabilidad
+    expect(metrics.annual.rent).toBeCloseTo(1_800_000);
+    expect(metrics.annual.net).toBeGreaterThan(0);
+    expect(metrics.yields.gross).toBeNull();
+    expect(metrics.payback.years).toBeNull();
+  });
+
+  it('sin arriendo en el rango → mensaje según el motivo (ya no dice "no hay arriendos" si los hay)', () => {
+    const sinArriendo = m([COMPRA], []);
+    expect(getYieldCardState(sinArriendo, opts)).toEqual({
+      mode: 'empty',
+      message: 'Aún no hay arriendos registrados en el rango elegido.'
+    });
+    expect(
+      getYieldCardState(sinArriendo, { hasIncomeLink: false, incomesFailed: false })
+    ).toMatchObject({
+      mode: 'empty',
+      message: expect.stringMatching(/Sin arriendo vinculado/)
+    });
+    expect(
+      getYieldCardState(sinArriendo, { hasIncomeLink: true, incomesFailed: true })
+    ).toMatchObject({
+      mode: 'empty',
+      message: expect.stringMatching(/No se pudieron cargar los ingresos/)
+    });
+  });
+
+  it('un lote sin arriendo ni costo → vacío', () => {
+    expect(getYieldCardState(m([], []), opts).mode).toBe('empty');
   });
 });

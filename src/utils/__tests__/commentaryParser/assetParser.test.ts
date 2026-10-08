@@ -1,9 +1,14 @@
+import { parseAssetCommentary } from '~/utils/commentaryParser/assetParser';
+import { normalizeAlias } from '~/utils/commentaryParser/assetConcepts';
 import {
   getAssetTemplateConfig,
   validateAssetCommentary
 } from '~/utils/commentary/assetTemplates.utils';
-import { normalizeAlias } from '~/utils/commentaryParser/assetConcepts';
-import { parseAssetCommentary } from '~/utils/commentaryParser/assetParser';
+
+// // import {
+//   getAssetTemplateConfig,
+//   validateAssetCommentary
+// } from '~/utils/commentary/assetTemplates.utils';
 
 const COST = 1_000;
 const DATE = '2026-03-01';
@@ -54,7 +59,12 @@ describe('parseAssetCommentary — adquisición', () => {
 describe('parseAssetCommentary — operación y períodos', () => {
   it('mes simple', () => {
     const p = parse('Administración: Mar 2026')?.period;
-    expect(p).toMatchObject({ startMonth: 3, endMonth: 3, startYear: 2026, months: 1 });
+    expect(p).toMatchObject({
+      startMonth: 3,
+      endMonth: 3,
+      startYear: 2026,
+      months: 1
+    });
     expect(p?.isAnnual).toBe(false);
   });
 
@@ -352,7 +362,12 @@ describe('períodos con fechas ("15 Oct - 14 Nov 2026")', () => {
 
   it('un solo mes: peso 1 (tu formato real de la Torre 2)', () => {
     const r = parse('Arriendo: #1 Torre 2 Apt 1102 01 Oct - 30 Oct 2026 [Bien: Apt 1102]');
-    expect(r?.period).toMatchObject({ startYear: 2026, startMonth: 10, months: 1, weights: [1] });
+    expect(r?.period).toMatchObject({
+      startYear: 2026,
+      startMonth: 10,
+      months: 1,
+      weights: [1]
+    });
   });
 
   it('cruza de mes: reparte por días', () => {
@@ -376,9 +391,65 @@ describe('períodos con fechas ("15 Oct - 14 Nov 2026")', () => {
   });
 
   it('fechas imposibles o al revés no inventan un período: caen al mes escrito', () => {
-    expect(period('31 Feb - 5 Mar 2026')).toMatchObject({ startMonth: 3, months: 1 });
-    expect(period('15 Oct - 10 Oct 2026')).toMatchObject({ startMonth: 10, months: 1 });
+    expect(period('31 Feb - 5 Mar 2026')).toMatchObject({
+      startMonth: 3,
+      months: 1
+    });
+    expect(period('15 Oct - 10 Oct 2026')).toMatchObject({
+      startMonth: 10,
+      months: 1
+    });
     expect(period('15 Oct - 10 Oct 2026')?.weights).toBeUndefined();
+  });
+
+  it('año en las dos fechas (póliza): reparte por días entre los 13 meses que toca', () => {
+    const p = parse('Seguro: HDI 06 Oct 2026 - 06 Oct 2027')?.period;
+    expect(p).toMatchObject({
+      startYear: 2026,
+      startMonth: 10,
+      endYear: 2027,
+      endMonth: 10,
+      months: 13,
+      isAnnual: false
+    });
+    // 06 Oct 2026 → 06 Oct 2027 inclusive = 366 días
+    expect(p?.weights?.[0]).toBeCloseTo(26 / 366); // 6–31 Oct 2026
+    expect(p?.weights?.[1]).toBeCloseTo(30 / 366); // Nov 2026
+    expect(p?.weights?.[12]).toBeCloseTo(6 / 366); // 1–6 Oct 2027
+    expect(p?.weights?.reduce((a, b) => a + b, 0)).toBeCloseTo(1);
+  });
+
+  it('año en las dos fechas, terminando el día anterior (365 días)', () => {
+    const p = parse('Seguro: HDI 06 Oct 2026 - 05 Oct 2027')?.period;
+    expect(p?.months).toBe(13);
+    expect(p?.weights?.[0]).toBeCloseTo(26 / 365);
+    expect(p?.weights?.[12]).toBeCloseTo(5 / 365);
+  });
+
+  it('año en las dos fechas dentro del mismo año o con texto delante', () => {
+    expect(parse('Arriendo: Apt 1102 01 Oct 2026 - 30 Oct 2026')?.period).toMatchObject({
+      startMonth: 10,
+      months: 1,
+      weights: [1]
+    });
+    expect(parse('Seguro: HDI póliza 123 vigencia 06 Oct 2026 - 06 Oct 2027')?.period?.months).toBe(
+      13
+    );
+  });
+
+  it('fechas imposibles o al revés con año en ambas puntas no inventan un período', () => {
+    expect(parse('Seguro: HDI 06 Oct 2027 - 06 Oct 2026')?.period?.weights).toBeUndefined();
+    expect(parse('Seguro: HDI 31 Feb 2026 - 06 Oct 2027')?.period?.weights).toBeUndefined();
+  });
+
+  it('los formatos anteriores siguen leyéndose igual', () => {
+    const p = parse('Seguro: HDI Oct 2026 - Sep 2027')?.period;
+    expect(p?.months).toBe(12);
+    expect(p?.weights).toBeUndefined(); // por mes: reparto en partes iguales
+    expect(parse('Servicios: Agua 17 Ago - 14 Sep 2026')?.period).toMatchObject({
+      startMonth: 8,
+      months: 2
+    });
   });
 
   it('los períodos por mes no cambian (sin pesos)', () => {

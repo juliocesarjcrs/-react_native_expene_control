@@ -83,11 +83,25 @@ const findAll = (source: string, text: string): RegExpExecArray[] => {
 };
 
 /**
- * Orden de prueba: fechas → rango cruzando año → rango mismo año → mes → año.
- *   "15 Oct - 14 Nov 2026" | "Dic 2025 - Ene 2026" | "Mar-Abr 2026" | "Mar 2026" | "2026"
- * En el formato con fechas el año es el de la fecha final ("20 Dic - 19 Ene 2026").
+ * Orden de prueba: fechas con año en ambas puntas → fechas con año al final → rango cruzando
+ * año → rango mismo año → mes → año.
+ *   "06 Oct 2026 - 06 Oct 2027" | "15 Oct - 14 Nov 2026" | "Dic 2025 - Ene 2026" |
+ *   "Mar-Abr 2026" | "Mar 2026" | "2026"
+ * Con fechas se reparte por días entre los meses que toca. Si el año va una sola vez al final,
+ * es el de la fecha final ("20 Dic - 19 Ene 2026").
  */
 const parsePeriod = (text: string): AssetPeriod | undefined => {
+  // "06 Oct 2026 - 06 Oct 2027" (p. ej. una póliza de seguro): el año va en las dos fechas
+  for (const m of findAll(
+    `(\\d{1,2})\\s+(${WORD})\\s+(\\d{4})\\s*[-–]\\s*(\\d{1,2})\\s+(${WORD})\\s+(\\d{4})`,
+    text
+  )) {
+    const s = toMonth(m[2]);
+    const e = toMonth(m[5]);
+    if (!s || !e) continue;
+    const p = buildDayPeriod(Number(m[3]), s, Number(m[1]), Number(m[6]), e, Number(m[4]));
+    if (p) return p;
+  }
   for (const m of findAll(
     `(\\d{1,2})\\s+(${WORD})\\s*[-–]\\s*(\\d{1,2})\\s+(${WORD})\\s+(\\d{4})`,
     text

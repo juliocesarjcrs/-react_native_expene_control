@@ -15,7 +15,8 @@ import {
   formatMonth,
   formatPercent,
   formatYears,
-  OPEX_LABELS
+  OPEX_LABELS,
+  getYieldCardState
 } from '~/utils/commentaryParser/assetFormat.utils';
 import { NumberFormat } from '~/utils/Helpers';
 import { useThemeColors } from '~/customHooks/useThemeColors';
@@ -33,6 +34,8 @@ export default function AssetMetricsSections({ metrics, hasIncomeLink, incomesFa
   const colors = useThemeColors();
   const [expandedMonth, setExpandedMonth] = useState<string | null>(null);
   const { cost, debt, equity, annual, yields, payback, window } = metrics;
+  const yieldState = getYieldCardState(metrics, { hasIncomeLink, incomesFailed });
+  const showReturns = yieldState.mode === 'full';
 
   const buckets = (Object.keys(annual.opexByBucket) as OpexBucket[])
     .filter((b) => Math.abs(annual.opexByBucket[b]) >= 1)
@@ -90,19 +93,17 @@ export default function AssetMetricsSections({ metrics, hasIncomeLink, incomesFa
         </AssetCard>
       )}
 
-      {/* 3. Rentabilidad */}
-      {yields.gross === null ? (
+      {/* 3. Rentabilidad (o solo ganancia neta si no hay costo registrado) */}
+      {yieldState.mode === 'empty' ? (
         <AssetCard title="Rentabilidad" icon="chart-line" accentKey="SUCCESS">
-          <Text style={[styles.note, { color: colors.TEXT_SECONDARY }]}>
-            {incomesFailed
-              ? 'No se pudieron cargar los ingresos, por eso no hay rentabilidad.'
-              : hasIncomeLink
-                ? 'Aún no hay arriendos registrados en el rango elegido.'
-                : 'Sin arriendo vinculado: solo se muestran costo, deuda y gastos.'}
-          </Text>
+          <Text style={[styles.note, { color: colors.TEXT_SECONDARY }]}>{yieldState.message}</Text>
         </AssetCard>
       ) : (
-        <AssetCard title="Rentabilidad y recuperación" icon="chart-line" accentKey="SUCCESS">
+        <AssetCard
+          title={showReturns ? 'Rentabilidad y recuperación' : 'Ganancia neta'}
+          icon="chart-line"
+          accentKey="SUCCESS"
+        >
           <AssetRow label="Arriendo anual" value={NumberFormat(annual.rent)} />
           <AssetRow label="Gastos anuales (sin intereses)" value={NumberFormat(annual.opex)} />
           <AssetRow label="Ganancia neta anual" value={NumberFormat(annual.net)} emphasis />
@@ -117,26 +118,33 @@ export default function AssetMetricsSections({ metrics, hasIncomeLink, incomesFa
               value={NumberFormat(annual.netAfterInterest)}
             />
           )}
-          <AssetRow label="Rentabilidad bruta" value={formatPercent(yields.gross)} />
-          <AssetRow label="Rentabilidad neta" value={formatPercent(yields.net)} />
-          {debt.hasLoan && (
+          {showReturns && (
             <>
+              <AssetRow label="Rentabilidad bruta" value={formatPercent(yields.gross)} />
+              <AssetRow label="Rentabilidad neta" value={formatPercent(yields.net)} />
+              {debt.hasLoan && (
+                <>
+                  <AssetRow
+                    label="Neta después de intereses"
+                    value={formatPercent(yields.netAfterInterest)}
+                  />
+                  <AssetRow label="Sobre tu capital" value={formatPercent(yields.onEquity)} />
+                </>
+              )}
               <AssetRow
-                label="Neta después de intereses"
-                value={formatPercent(yields.netAfterInterest)}
+                label="Recuperar el costo con arriendo"
+                value={formatYears(payback.years)}
+                emphasis
               />
-              <AssetRow label="Sobre tu capital" value={formatPercent(yields.onEquity)} />
+              {debt.hasLoan && (
+                <AssetRow label="Recuperar tu capital" value={formatYears(payback.equityYears)} />
+              )}
             </>
           )}
-          <AssetRow
-            label="Recuperar el costo con arriendo"
-            value={formatYears(payback.years)}
-            emphasis
-          />
-          {debt.hasLoan && (
-            <AssetRow label="Recuperar tu capital" value={formatYears(payback.equityYears)} />
-          )}
           <Text style={[styles.note, { color: colors.TEXT_SECONDARY }]}>
+            {showReturns
+              ? ''
+              : 'Sin costo de compra registrado: no se calcula rentabilidad ni recuperación. '}
             {window.provisional
               ? 'Cifras provisionales: solo hay el mes en curso con arriendo y todavía no ha terminado. Se proyecta a 12 meses.'
               : window.annualized

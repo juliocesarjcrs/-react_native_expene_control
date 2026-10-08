@@ -3,7 +3,10 @@
  * Ubicación: src/utils/commentaryParser/assetFormat.utils.ts
  * (Los montos en pesos se formatean con NumberFormat de Helpers.)
  */
-import { OpexBucket } from '~/shared/types/utils/commentaryParser/asset-metrics.types';
+import {
+  AssetMetrics,
+  OpexBucket
+} from '~/shared/types/utils/commentaryParser/asset-metrics.types';
 
 const MONTHS = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
 
@@ -37,4 +40,35 @@ export const OPEX_LABELS: Record<OpexBucket, string> = {
   commissions: 'Comisiones',
   utilities: 'Servicios',
   other: 'Otros'
+};
+
+/**
+ * Qué muestra la tarjeta de rentabilidad:
+ *  - full:    hay arriendo y costo → rentabilidad, recuperación y ganancia neta
+ *  - netOnly: hay arriendo pero NO costo registrado (p. ej. un bien comprado antes de usar la
+ *             app) → solo ganancia neta; sin rentabilidad ni recuperación
+ *  - empty:   no hay arriendo en el rango → mensaje con el motivo
+ */
+export type YieldCardState =
+  { mode: 'full' } | { mode: 'netOnly' } | { mode: 'empty'; message: string };
+
+export const getYieldCardState = (
+  metrics: AssetMetrics,
+  opts: { hasIncomeLink: boolean; incomesFailed: boolean }
+): YieldCardState => {
+  if (metrics.annual.rent > 0) {
+    return metrics.cost.total > 0 ? { mode: 'full' } : { mode: 'netOnly' };
+  }
+  if (opts.incomesFailed) {
+    return {
+      mode: 'empty',
+      message: 'No se pudieron cargar los ingresos, por eso no hay rentabilidad.'
+    };
+  }
+  return {
+    mode: 'empty',
+    message: opts.hasIncomeLink
+      ? 'Aún no hay arriendos registrados en el rango elegido.'
+      : 'Sin arriendo vinculado: solo se muestran costo, deuda y gastos.'
+  };
 };

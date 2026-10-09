@@ -70,3 +70,45 @@ export type GetAllExpensesByMonthResponse = {
   data: CategoryWithoutTypeAndSubcategories[];
   total: number;
 };
+
+// getExpensesAnalysis
+export type ExpenseNature = 'operational' | 'investment' | 'atypical';
+
+export type ExpenseAnalysisParams = {
+  startDate: string; // 'YYYY-MM-DD'
+  endDate: string; // 'YYYY-MM-DD'
+  natures?: ExpenseNature[];
+};
+
+export type ExpenseAnalysisSubcategory = {
+  id: number;
+  name: string;
+  total: number;
+  percentageOfTotal: number;
+  percentageOfCategory: number;
+  monthlyAverage: number;
+};
+
+export type ExpenseAnalysisCategory = {
+  id: number;
+  name: string;
+  icon: string | null;
+  total: number;
+  percentage: number;
+  monthlyAverage: number;
+  subcategories: ExpenseAnalysisSubcategory[];
+};
+
+export type ExpenseAnalysisResponse = {
+  period: {
+    startDate: string;
+    endDate: string;
+    months: number;
+  };
+  summary: {
+    total: number;
+    monthlyAverage: number;
+    byNature: Record<ExpenseNature, number>;
+  };
+  categories: ExpenseAnalysisCategory[];
+};

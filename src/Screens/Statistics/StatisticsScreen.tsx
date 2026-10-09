@@ -73,6 +73,7 @@ export default function StatisticsScreen({ navigation }: StatisticsScreenProps) 
           onPress={go('commentaryAnalysis')}
           color="#009688"
         />
+        <MenuCardButton title="Gastos por categoría" onPress={go('expenseAnalysis')} />
       </View>
 
       {/* --- ANÁLISIS DE COMENTARIOS (SOLO ADMIN MIENTRAS SE PRUEBA) --- */}

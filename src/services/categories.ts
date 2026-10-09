@@ -4,6 +4,8 @@ import {
   AllExpensesByRangeDatesResponse,
   CreateCategoryPayload,
   EditCategoryPayload,
+  ExpenseAnalysisParams,
+  ExpenseAnalysisResponse,
   GetAllExpensesByMonthResponse,
   GetAllSubcategoriesExpensesByMonthResponse,
   GetCategoriesParams,
@@ -73,6 +75,21 @@ export const getAllExpensesByRangeDates = async (
     params: {
       startDate,
       endDate
+    }
+  });
+};
+
+export const getExpensesAnalysis = async ({
+  startDate,
+  endDate,
+  natures
+}: ExpenseAnalysisParams): Promise<AxiosResponse<ExpenseAnalysisResponse>> => {
+  return axios.get(`${PREFIX}/expenses/analysis`, {
+    params: {
+      startDate,
+      endDate,
+      // Axios omite los params undefined: sin natures, el backend incluye todas
+      natures: natures && natures.length > 0 ? natures.join(',') : undefined
     }
   });
 };

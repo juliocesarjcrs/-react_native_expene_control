@@ -48,11 +48,7 @@ export default function ForgotPasswordScreen({ navigation }: ForgotPasswordScree
   const dispatch: AppDispatch = useDispatch();
   const screenConfig = screenConfigs.forgotPassword;
 
-  const {
-    handleSubmit,
-    control,
-    formState: { errors }
-  } = useForm<ForgotPasswordPayload>({
+  const { handleSubmit, control } = useForm<ForgotPasswordPayload>({
     mode: 'onTouched',
     defaultValues: { email: '' }
   });
@@ -63,30 +59,35 @@ export default function ForgotPasswordScreen({ navigation }: ForgotPasswordScree
     try {
       setLoading(true);
       const { data } = await forgotPassword(payload);
-      setLoading(false);
       dispatch(setUser(data.user));
       navigation.navigate('checkCodePassword');
     } catch (error) {
-      setLoading(false);
       showError(error);
+    } finally {
+      setLoading(false);
     }
   };
 
   return (
     <View style={[commonStyles.screenContainer, { backgroundColor: colors.BACKGROUND }]}>
       <ScreenHeader
-        title={screenConfig?.title || 'Restablecer contraseña'}
+        title={screenConfig?.title ?? 'Restablecer contraseña'}
         subtitle={screenConfig?.subtitle}
       />
 
       <ScrollView
-        style={{ flex: 1 }}
-        contentContainerStyle={{ paddingBottom: 20 }}
+        style={styles.scroll}
+        contentContainerStyle={styles.scrollContent}
         keyboardShouldPersistTaps="handled"
       >
         <View style={styles.content}>
           {/* Instrucciones */}
-          <View style={[styles.instructionsCard, { backgroundColor: colors.CARD_BACKGROUND }]}>
+          <View
+            style={[
+              styles.instructionsCard,
+              { backgroundColor: colors.CARD_BACKGROUND, shadowColor: colors.BLACK }
+            ]}
+          >
             <Text style={[styles.instructionsText, { color: colors.TEXT_PRIMARY }]}>
               Proporcione la dirección de correo electrónico de su cuenta para solicitar un código
               de restablecimiento de contraseña.
@@ -130,6 +131,12 @@ export default function ForgotPasswordScreen({ navigation }: ForgotPasswordScree
 }
 
 const styles = StyleSheet.create({
+  scroll: {
+    flex: 1
+  },
+  scrollContent: {
+    paddingBottom: 20
+  },
   content: {
     paddingHorizontal: 16,
     paddingTop: 10
@@ -138,7 +145,6 @@ const styles = StyleSheet.create({
     padding: 16,
     borderRadius: 12,
     marginBottom: 24,
-    shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 4,

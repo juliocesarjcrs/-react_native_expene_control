@@ -1,8 +1,9 @@
-import React, { useRef, useState } from 'react';
+import React, { useMemo, useRef, useState } from 'react';
 import { Keyboard, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSelector } from 'react-redux';
-import { useForm } from 'react-hook-form';
+import { useForm, useWatch } from 'react-hook-form';
 import * as Crypto from 'expo-crypto';
+
 // Services
 import { CreateExpense, getExpensesFromSubcategory } from '~/services/expenses';
 import { getExchangeCurrency } from '~/services/external';
@@ -19,19 +20,16 @@ import CommentaryInput from '~/components/CommentaryInput';
 import ExpenseNatureSelector from '~/components/inputs/ExpenseNatureSelector';
 
 // Types
-import { RootState } from '~/shared/types/reducers';
-import { ExpenseModel } from '~/shared/types';
-import { FormExpensesValues } from '~/shared/types/screens/expenses/create-expenses.type';
-import {
-  CreateExpensePayload,
-  GetExpensesFromSubcategoryResponse
-} from '~/shared/types/services/expense-service.type';
-import { SubcategorySelection } from '~/shared/types/components/dropDown/SelectJoinCategory.type';
-import { RecentExpenseForSuggestion } from '~/shared/types/screens/settings/commentary-templates.types';
+import type { RootState } from '~/shared/types/reducers';
+import type { ExpenseModel } from '~/shared/types';
+import type { FormExpensesValues } from '~/shared/types/screens/expenses/create-expenses.type';
+import type { CreateExpensePayload } from '~/shared/types/services/expense-service.type';
+import type { SubcategorySelection } from '~/shared/types/components/dropDown/SelectJoinCategory.type';
+import type { RecentExpenseForSuggestion } from '~/shared/types/screens/settings/commentary-templates.types';
 
 // Utils
 import { ShowToast } from '~/utils/toastUtils';
-import { NumberFormat, DateFormat } from '~/utils/Helpers';
+import { DateFormat, NumberFormat } from '~/utils/Helpers';
 import { showError } from '~/utils/showError';
 import { saveCommentaryToHistory } from '~/utils/commentary/commentaryHistory.utils';
 import { registerDefaultTemplateConfig } from '~/utils/commentary/templateStorage.utils';
@@ -51,20 +49,29 @@ import { screenConfigs } from '~/config/screenConfigs';
 import { useFeatureFlag } from '~/contexts/FeatureFlagsContext';
 import { createLogger } from '~/utils/logger';
 
+const BASE_CURRENCY = 'COP';
+const DATE_API_FORMAT = 'YYYY-MM-DD';
+const DEFAULT_NATURE = 'operational';
+const MIN_COST = 1;
+const MAX_COST = 999999999;
+const MAX_COMMENTARY_LENGTH = 200;
+const SHADOW_COLOR = '#000';
+
+const sumExpenses = (items: ExpenseModel[]): number =>
+  items.reduce((acc, item) => acc + item.cost, 0);
+
 export default function CreateExpenseScreen(): React.JSX.Element {
   const log = createLogger('screen', 'CreateExpense');
   const config = screenConfigs.createExpense;
   const colors = useThemeColors();
-  const selectJoinCategoryRef = useRef<any>(null);
 
   const month = useSelector((state: RootState) => state.date.month);
 
-  const { handleSubmit, control, reset, watch, setValue } = useForm({
+  const { handleSubmit, control, reset, setValue } = useForm<FormExpensesValues>({
     mode: 'onTouched'
   });
 
   const [subcategoryId, setSubcategoryId] = useState<number | null>(null);
-  const [sumCost, setSumCost] = useState<number>(0);
   const [expenses, setExpenses] = useState<ExpenseModel[]>([]);
   const [loading, setLoading] = useState<boolean>(false);
   const [subcategoryName, setSubcategoryName] = useState<string>('');
@@ -72,14 +79,31 @@ export default function CreateExpenseScreen(): React.JSX.Element {
 
   const { isEnabled: isCommentarySuggestionsEnabled } = useFeatureFlag('commentary_suggestions');
 
+  // El total se deriva de la lista de gastos
+  const sumCost = sumExpenses(expenses);
+
   // Valor actual del comentario para el autocompletado
-  const commentaryValue: string = watch('commentary') ?? '';
+  const commentaryValue = useWatch({ control, name: 'commentary' }) ?? '';
 
   // Date picker
   const [date, setDate] = useState<Date>(new Date());
   const [showDate, setShowDate] = useState<boolean>(false);
 
   const idempotencyKeyRef = useRef<string>(Crypto.randomUUID());
+
+  // Currency converter
+  const [currencySymbol] = useState<string>(BASE_CURRENCY);
+
+  const dynamicStyles = useMemo(
+    () =>
+      StyleSheet.create({
+        screen: { backgroundColor: colors.BACKGROUND },
+        totalContainer: { backgroundColor: colors.CARD_BACKGROUND },
+        totalLabel: { color: colors.TEXT_SECONDARY },
+        totalAmount: { color: colors.WARNING }
+      }),
+    [colors]
+  );
 
   const handleStartDateChange = (selectedDate?: Date): void => {
     setShowDate(false);
@@ -92,9 +116,6 @@ export default function CreateExpenseScreen(): React.JSX.Element {
     setShowDate(true);
   };
 
-  // Currency converter
-  const [currencySymbol] = useState<string>('COP');
-
   const fetchExpensesSubcategory = async (
     foundSubcategory: SubcategorySelection
   ): Promise<void> => {
@@ -104,35 +125,26 @@ export default function CreateExpenseScreen(): React.JSX.Element {
       setSubcategoryName(foundSubcategory.label ?? '');
       setCategoryName(foundSubcategory.categoryName ?? '');
       const { data } = await getExpensesFromSubcategory(foundSubcategory.value, month);
-      setLoading(false);
       setExpenses(data);
-      calculateTotal(data);
     } catch (error) {
-      setLoading(false);
       showError(error);
+    } finally {
+      setLoading(false);
     }
   };
 
-  const fetchExpensesOnlyCategory = async (): Promise<void> => {
-    // Implementation pending
-  };
-
-  const calculateTotal = (data: GetExpensesFromSubcategoryResponse): void => {
-    const total = data.reduce((acu: number, val: ExpenseModel) => {
-      return acu + val.cost;
-    }, 0);
-    setSumCost(total);
-  };
+  // Implementación pendiente
+  const fetchExpensesOnlyCategory = (): Promise<void> => Promise.resolve();
 
   const onSubmit = async (payload: FormExpensesValues): Promise<void> => {
     let newAmount: number | string = payload.cost;
 
-    if (currencySymbol !== 'COP') {
+    if (currencySymbol !== BASE_CURRENCY) {
       try {
         const values = {
-          amount: parseInt(String(payload.cost)),
+          amount: parseInt(String(payload.cost), 10),
           from: currencySymbol,
-          to: 'COP'
+          to: BASE_CURRENCY
         };
         const { data } = await getExchangeCurrency(values);
         newAmount = data.result;
@@ -141,58 +153,67 @@ export default function CreateExpenseScreen(): React.JSX.Element {
       }
     }
 
+    if (!subcategoryId) {
+      ShowToast('Debes seleccionar una subcategoría');
+      return;
+    }
+
     try {
-      if (!subcategoryId) {
-        ShowToast('Debes seleccionar una subcategoría');
-        return;
-      }
+      const finalCost = parseInt(String(newAmount), 10);
+      const dateString = DateFormat(date, DATE_API_FORMAT);
 
       const dataSend: CreateExpensePayload = {
         ...payload,
-        cost: parseInt(String(newAmount)),
+        cost: finalCost,
         subcategoryId,
-        date: DateFormat(date, 'YYYY-MM-DD'),
-        nature: payload.nature ?? 'operational',
+        date: dateString,
+        nature: payload.nature ?? DEFAULT_NATURE,
         idempotencyKey: idempotencyKeyRef.current
       };
 
       setLoading(true);
       const { data } = await CreateExpense(dataSend);
-      setLoading(false);
 
       // Guardar comentario en historial local para sugerencias futuras
-      if (payload.commentary?.trim() && subcategoryId) {
-        saveCommentaryToHistory(
-          subcategoryId,
-          payload.commentary,
-          parseInt(String(newAmount)),
-          DateFormat(date, 'YYYY-MM-DD')
-        );
+      if (payload.commentary?.trim()) {
+        saveCommentaryToHistory(subcategoryId, payload.commentary, finalCost, dateString);
       }
 
       // Registrar config de la subcategoría en AsyncStorage para que aparezca
       // en Settings > Plantillas. Usa registerDefaultTemplateConfig (no saveTemplateConfig)
       // para NO marcar isCustomized: true. Siempre sobreescribe para mantener
       // configVersion actualizada y evitar cache obsoleta de producción.
-      if (subcategoryId && subcategoryName && categoryName) {
+      if (subcategoryName && categoryName) {
         const defaultConfig = getDefaultTemplateConfig(
           subcategoryId,
           subcategoryName,
           categoryName
         );
-        registerDefaultTemplateConfig(defaultConfig).catch(() => {});
+        registerDefaultTemplateConfig(defaultConfig).catch(() => undefined);
       }
 
-      const newExpense = [data, ...expenses];
-      setExpenses(newExpense);
-      calculateTotal(newExpense);
+      setExpenses([data, ...expenses]);
       ShowToast('Gasto creado exitosamente');
       reset();
       idempotencyKeyRef.current = Crypto.randomUUID();
       Keyboard.dismiss();
     } catch (error) {
-      log.error('falid to save expense', error);
+      log.error('failed to save expense', error);
+      showError(error);
+    } finally {
       setLoading(false);
+    }
+  };
+
+  const submitForm = (): void => {
+    void handleSubmit(onSubmit)();
+  };
+
+  const fetchExpenses = async (idSubcategory: number): Promise<void> => {
+    try {
+      const { data } = await getExpensesFromSubcategory(idSubcategory, month);
+      setExpenses(data);
+    } catch (error) {
       showError(error);
     }
   };
@@ -201,21 +222,15 @@ export default function CreateExpenseScreen(): React.JSX.Element {
     if (!subcategoryId) {
       return;
     }
-    fetchExpenses(subcategoryId);
-  };
-
-  const fetchExpenses = async (idSubcategory: number): Promise<void> => {
-    const { data } = await getExpensesFromSubcategory(idSubcategory, month);
-    setExpenses(data);
-    calculateTotal(data);
+    void fetchExpenses(subcategoryId);
   };
 
   return (
-    <View style={[commonStyles.screenContainer, { backgroundColor: colors.BACKGROUND }]}>
+    <View style={[commonStyles.screenContainer, dynamicStyles.screen]}>
       <ScreenHeader title={config.title} subtitle={config.subtitle} />
 
       <ScrollView
-        style={{ flex: 1 }}
+        style={styles.scroll}
         contentContainerStyle={styles.scrollContent}
         keyboardShouldPersistTaps="handled"
       >
@@ -228,13 +243,13 @@ export default function CreateExpenseScreen(): React.JSX.Element {
             placeholder="0"
             rules={{
               required: 'El gasto es obligatorio',
-              min: { value: 1, message: 'El mínimo valor aceptado es 1' },
-              max: { value: 999999999, message: 'El gasto no puede superar 999.999.999' }
+              min: { value: MIN_COST, message: 'El mínimo valor aceptado es 1' },
+              max: { value: MAX_COST, message: 'El gasto no puede superar 999.999.999' }
             }}
             leftIcon="cash"
           />
 
-          <ExpenseNatureSelector control={control} />
+          <ExpenseNatureSelector control={control} name="nature" />
 
           {isCommentarySuggestionsEnabled ? (
             <CommentaryInput
@@ -254,11 +269,14 @@ export default function CreateExpenseScreen(): React.JSX.Element {
               label="Comentario"
               placeholder="Ej: Compra de una camisa"
               rules={{
-                maxLength: { value: 200, message: 'El comentario no puede superar 200 caracteres' }
+                maxLength: {
+                  value: MAX_COMMENTARY_LENGTH,
+                  message: 'El comentario no puede superar 200 caracteres'
+                }
               }}
               multiline
               numberOfLines={2}
-              maxLength={200}
+              maxLength={MAX_COMMENTARY_LENGTH}
               leftIcon="text"
             />
           )}
@@ -266,7 +284,6 @@ export default function CreateExpenseScreen(): React.JSX.Element {
           <SelectJoinCategory
             fetchExpensesSubcategory={fetchExpensesSubcategory}
             fetchExpensesOnlyCategory={fetchExpensesOnlyCategory}
-            ref={selectJoinCategoryRef}
           />
 
           <DateSelector
@@ -281,19 +298,13 @@ export default function CreateExpenseScreen(): React.JSX.Element {
           {loading ? (
             <MyLoading />
           ) : (
-            <MyButton
-              title="Guardar gasto"
-              onPress={handleSubmit(onSubmit as any)}
-              variant="primary"
-            />
+            <MyButton title="Guardar gasto" onPress={submitForm} variant="primary" />
           )}
 
           {/* Total */}
-          <View style={[styles.totalContainer, { backgroundColor: colors.CARD_BACKGROUND }]}>
-            <Text style={[styles.totalLabel, { color: colors.TEXT_SECONDARY }]}>
-              Total del mes:
-            </Text>
-            <Text style={[styles.totalAmount, { color: colors.WARNING }]}>
+          <View style={[styles.totalContainer, dynamicStyles.totalContainer]}>
+            <Text style={[styles.totalLabel, dynamicStyles.totalLabel]}>Total del mes:</Text>
+            <Text style={[styles.totalAmount, dynamicStyles.totalAmount]}>
               {NumberFormat(sumCost)}
             </Text>
           </View>
@@ -307,6 +318,9 @@ export default function CreateExpenseScreen(): React.JSX.Element {
 }
 
 const styles = StyleSheet.create({
+  scroll: {
+    flex: 1
+  },
   scrollContent: {
     flexGrow: 1,
     paddingBottom: 20
@@ -323,7 +337,7 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     borderRadius: 12,
     marginVertical: 16,
-    shadowColor: '#000',
+    shadowColor: SHADOW_COLOR,
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 4,

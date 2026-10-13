@@ -1,26 +1,20 @@
-import axios, { AxiosRequestConfig, InternalAxiosRequestConfig } from 'axios';
+import { create, InternalAxiosRequestConfig } from 'axios';
 import { URL_BASE } from '@env';
 import { getToken } from './auth';
 
-const axiosInstance = axios.create({
+const axiosInstance = create({
   baseURL: URL_BASE
 });
 
 axiosInstance.interceptors.request.use(
-  async (config: AxiosRequestConfig) => {
+  async (config: InternalAxiosRequestConfig) => {
     const token = await getToken();
     if (token) {
-      if (config.headers) {
-        config.headers['Authorization'] = `Bearer ${token}`;
-      } else {
-        config.headers = { Authorization: `Bearer ${token}` };
-      }
+      config.headers.Authorization = `Bearer ${token}`;
     }
-    return config as InternalAxiosRequestConfig;
+    return config;
   },
-  (error) => {
-    return Promise.reject(error);
-  }
+  (error: unknown) => Promise.reject(error)
 );
 
 export default axiosInstance;

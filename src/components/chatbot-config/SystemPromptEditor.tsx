@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { View, Text, TextInput, StyleSheet, ScrollView } from 'react-native';
 import { useThemeColors } from '~/customHooks/useThemeColors';
 import MyButton from '~/components/MyButton';
@@ -19,12 +19,9 @@ export const SystemPromptEditor: React.FC<SystemPromptEditorProps> = ({
 }) => {
   const colors = useThemeColors();
 
-  const [template, setTemplate] = useState(initialValue.template || '');
-  const [charCount, setCharCount] = useState(0);
+  const [template, setTemplate] = useState(initialValue.template ?? '');
 
-  useEffect(() => {
-    setCharCount(template.length);
-  }, [template]);
+  const charCount = template.length;
 
   const handleSave = () => {
     const updatedConfig: SystemPromptConfig = {

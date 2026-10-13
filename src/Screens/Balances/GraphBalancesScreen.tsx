@@ -1,5 +1,5 @@
 import React from 'react';
-import { StyleSheet, View, ScrollView } from 'react-native';
+import { View, ScrollView } from 'react-native';
 
 // Components
 import GraphIncomesByCategory from './components/GraphIncomesByCategory';

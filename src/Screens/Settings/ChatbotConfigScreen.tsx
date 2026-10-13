@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   View,
   Text,
@@ -9,6 +9,7 @@ import {
   ActivityIndicator,
   StyleSheet
 } from 'react-native';
+
 // Services
 import {
   getAllChatbotConfigs,
@@ -20,6 +21,7 @@ import {
 
 // Components
 import MyButton from '~/components/MyButton';
+import { ScreenHeader } from '~/components/ScreenHeader';
 import { ConfigEditor } from '~/components/chatbot-config/ConfigEditor';
 
 // Types
@@ -28,6 +30,7 @@ import { ChatbotConfig, ChatbotConfigHistory } from '~/shared/types/models/chatb
 // Utils
 import { DateFormat } from '~/utils/Helpers';
 import { showError } from '~/utils/showError';
+
 // Theme
 import { useThemeColors } from '~/customHooks/useThemeColors';
 
@@ -36,39 +39,48 @@ import { commonStyles } from '~/styles/common';
 
 // Configs
 import { screenConfigs } from '~/config/screenConfigs';
-import { ScreenHeader } from '~/components/ScreenHeader';
+
 export const ChatbotConfigScreen = () => {
-  const config = screenConfigs.chatbotConfig;
+  const screenConfig = screenConfigs.chatbotConfig;
   const colors = useThemeColors();
 
   const [configs, setConfigs] = useState<ChatbotConfig[]>([]);
-  const [selectedConfig, setSelectedConfig] = useState<ChatbotConfig | null>(null);
+  const [selectedId, setSelectedId] = useState<ChatbotConfig['id'] | null>(null);
   const [showEditor, setShowEditor] = useState(false);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [reloading, setReloading] = useState(false);
   const [history, setHistory] = useState<ChatbotConfigHistory[]>([]);
   const [showHistory, setShowHistory] = useState(false);
 
+  // Siempre se deriva de `configs`, así nunca queda desactualizado
+  const selectedConfig = configs.find((c) => c.id === selectedId) ?? null;
+
+  // Carga inicial
   useEffect(() => {
-    loadConfigs();
+    let isMounted = true;
+
+    const loadInitialConfigs = async () => {
+      try {
+        const data = await getAllChatbotConfigs(false);
+        if (isMounted) setConfigs(data);
+      } catch (error) {
+        if (isMounted) showError(error);
+      } finally {
+        if (isMounted) setLoading(false);
+      }
+    };
+
+    loadInitialConfigs();
+
+    return () => {
+      isMounted = false;
+    };
   }, []);
 
-  useEffect(() => {
-    if (selectedConfig && showHistory) {
-      loadHistory(selectedConfig.config_key);
-    }
-  }, [selectedConfig, showHistory]);
-
-  const loadConfigs = async () => {
-    try {
-      setLoading(true);
-      const data = await getAllChatbotConfigs(false);
-      setConfigs(data);
-    } catch (error) {
-      showError(error);
-    } finally {
-      setLoading(false);
-    }
+  // Recarga manual (después de guardar o activar/desactivar)
+  const fetchConfigs = async () => {
+    const data = await getAllChatbotConfigs(false);
+    setConfigs(data);
   };
 
   const loadHistory = async (configKey: string) => {
@@ -92,35 +104,51 @@ export const ChatbotConfigScreen = () => {
     }
   };
 
-  const handleSave = async (newValue: any) => {
-    if (!selectedConfig) return;
+  // Devuelve true si se guardó correctamente
+  const handleSave = async (newValue: ChatbotConfig['config_value']): Promise<boolean> => {
+    if (!selectedConfig) return false;
 
     try {
       setLoading(true);
       await updateChatbotConfig(selectedConfig.config_key, newValue, 'Ajuste desde admin panel');
       Alert.alert('Éxito', 'Configuración actualizada correctamente');
-      await loadConfigs();
+      await fetchConfigs();
       await invalidateConfigCache();
+      return true;
     } catch (error) {
       showError(error);
+      return false;
     } finally {
       setLoading(false);
     }
   };
 
-  const handleToggle = async (config: ChatbotConfig, value: boolean) => {
+  const handleEditorSave = async (newValue: ChatbotConfig['config_value']) => {
+    const saved = await handleSave(newValue);
+    if (saved) setShowEditor(false);
+  };
+
+  const handleToggle = async (item: ChatbotConfig, value: boolean) => {
     try {
-      await toggleChatbotConfig(config.config_key, value);
-      await loadConfigs();
+      await toggleChatbotConfig(item.config_key, value);
+      await fetchConfigs();
       Alert.alert('Éxito', `Configuración ${value ? 'activada' : 'desactivada'}`);
     } catch (error) {
       showError(error);
     }
   };
 
-  const handleSelectConfig = (config: ChatbotConfig) => {
-    setSelectedConfig(config);
+  const handleSelectConfig = (item: ChatbotConfig) => {
+    setSelectedId(item.id);
     setShowHistory(false);
+  };
+
+  const handleToggleHistory = () => {
+    const next = !showHistory;
+    setShowHistory(next);
+    if (next && selectedConfig) {
+      loadHistory(selectedConfig.config_key);
+    }
   };
 
   if (loading && configs.length === 0) {
@@ -138,7 +166,7 @@ export const ChatbotConfigScreen = () => {
     <ScrollView
       style={[commonStyles.screenContentWithPadding, { backgroundColor: colors.BACKGROUND }]}
     >
-      <ScreenHeader title={config.title} subtitle={config.subtitle} />
+      <ScreenHeader title={screenConfig.title} subtitle={screenConfig.subtitle} />
 
       {/* Botón de recarga global */}
       <View style={[styles.reloadSection, { backgroundColor: colors.CARD_BACKGROUND }]}>
@@ -158,36 +186,36 @@ export const ChatbotConfigScreen = () => {
         <Text style={[styles.sectionTitle, { color: colors.TEXT_PRIMARY }]}>
           Configuraciones disponibles
         </Text>
-        {configs.map((config) => (
+        {configs.map((item) => (
           <TouchableOpacity
-            key={config.id}
-            onPress={() => handleSelectConfig(config)}
+            key={item.id}
+            onPress={() => handleSelectConfig(item)}
             style={[
               styles.configCard,
               {
                 backgroundColor: colors.BACKGROUND,
-                borderColor: selectedConfig?.id === config.id ? colors.PRIMARY : 'transparent'
+                borderColor: selectedId === item.id ? colors.PRIMARY : 'transparent'
               }
             ]}
           >
             <View style={styles.configInfo}>
               <Text style={[styles.configKey, { color: colors.TEXT_PRIMARY }]}>
-                {config.config_key}
+                {item.config_key}
               </Text>
-              {config.description && (
+              {item.description && (
                 <Text style={[styles.configDescription, { color: colors.TEXT_SECONDARY }]}>
-                  {config.description}
+                  {item.description}
                 </Text>
               )}
               <Text style={[styles.configMeta, { color: colors.TEXT_SECONDARY }]}>
-                Versión: {config.version} | {DateFormat(config.updated_at, 'DD MMM YYYY hh:mm a')}
+                Versión: {item.version} | {DateFormat(item.updated_at, 'DD MMM YYYY hh:mm a')}
               </Text>
             </View>
             <Switch
-              value={config.is_active}
-              onValueChange={(value) => handleToggle(config, value)}
+              value={item.is_active}
+              onValueChange={(value) => handleToggle(item, value)}
               trackColor={{ false: colors.GRAY, true: colors.PRIMARY }}
-              thumbColor={config.is_active ? colors.PRIMARY : colors.LIGHT_GRAY}
+              thumbColor={item.is_active ? colors.PRIMARY : colors.LIGHT_GRAY}
             />
           </TouchableOpacity>
         ))}
@@ -201,7 +229,7 @@ export const ChatbotConfigScreen = () => {
               {selectedConfig.config_key}
             </Text>
             <TouchableOpacity
-              onPress={() => setShowHistory(!showHistory)}
+              onPress={handleToggleHistory}
               style={[styles.historyButton, { backgroundColor: colors.BACKGROUND }]}
             >
               <Text style={[styles.historyButtonText, { color: colors.TEXT_PRIMARY }]}>
@@ -266,10 +294,7 @@ export const ChatbotConfigScreen = () => {
           visible={showEditor}
           configKey={selectedConfig.config_key}
           configValue={selectedConfig.config_value}
-          onSave={async (newValue) => {
-            await handleSave(newValue);
-            setShowEditor(false);
-          }}
+          onSave={handleEditorSave}
           onCancel={() => setShowEditor(false)}
           loading={loading}
         />
@@ -279,9 +304,6 @@ export const ChatbotConfigScreen = () => {
 };
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1
-  },
   centerContainer: {
     flex: 1,
     justifyContent: 'center',

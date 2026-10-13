@@ -39,6 +39,7 @@ interface CustomizeThemeColorsScreenProps {
   navigation: CustomizeThemeColorsScreenNavigationProp;
 }
 
+type AppColors = ReturnType<typeof useThemeColors>;
 type ColorKey = keyof ThemeColors;
 
 interface ColorConfig {
@@ -112,6 +113,11 @@ const COLOR_CONFIGS: ColorConfig[] = [
   }
 ];
 
+const fetchThemeColors = async (): Promise<ThemeColors> => {
+  const theme = await getMyTheme();
+  return theme.colors;
+};
+
 export default function CustomizeThemeColorsScreen({
   navigation
 }: CustomizeThemeColorsScreenProps) {
@@ -119,27 +125,33 @@ export default function CustomizeThemeColorsScreen({
   const screenConfig = screenConfigs.customizeThemeColors;
 
   // Estados
-  const [loading, setLoading] = useState<boolean>(false);
+  const [loading, setLoading] = useState<boolean>(true);
   const [saving, setSaving] = useState<boolean>(false);
   const [colorValues, setColorValues] = useState<Partial<ThemeColors>>({});
   const [selectedColorKey, setSelectedColorKey] = useState<ColorKey | null>(null);
   const [showPicker, setShowPicker] = useState<boolean>(false);
 
+  // Carga inicial
   useEffect(() => {
-    fetchCurrentColors();
-  }, []);
+    let isMounted = true;
 
-  const fetchCurrentColors = async (): Promise<void> => {
-    try {
-      setLoading(true);
-      const theme = await getMyTheme();
-      setColorValues(theme.colors);
-    } catch (error) {
-      showError(error);
-    } finally {
-      setLoading(false);
-    }
-  };
+    const loadInitialColors = async (): Promise<void> => {
+      try {
+        const themeColors = await fetchThemeColors();
+        if (isMounted) setColorValues(themeColors);
+      } catch (error) {
+        if (isMounted) showError(error);
+      } finally {
+        if (isMounted) setLoading(false);
+      }
+    };
+
+    loadInitialColors();
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
 
   const handleColorSelect = (colorKey: ColorKey): void => {
     setSelectedColorKey(colorKey);
@@ -158,7 +170,6 @@ export default function CustomizeThemeColorsScreen({
   const handleSaveColors = async (): Promise<void> => {
     try {
       setSaving(true);
-      // await setColorValues({ customColors: colorValues });
       await setCustomColors({ customColors: colorValues });
       ShowToast('Colores personalizados guardados');
 
@@ -173,16 +184,25 @@ export default function CustomizeThemeColorsScreen({
     }
   };
 
+  const restoreColors = async (): Promise<void> => {
+    try {
+      setLoading(true);
+      setColorValues(await fetchThemeColors());
+      ShowToast('Colores restaurados');
+    } catch (error) {
+      showError(error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const handleResetColors = (): void => {
     Alert.alert('Resetear colores', '¿Deseas restaurar los colores originales?', [
       { text: 'Cancelar', style: 'cancel' },
       {
         text: 'Resetear',
         style: 'destructive',
-        onPress: () => {
-          fetchCurrentColors();
-          ShowToast('Colores restaurados');
-        }
+        onPress: restoreColors
       }
     ]);
   };
@@ -201,11 +221,11 @@ export default function CustomizeThemeColorsScreen({
       <ScreenHeader title={screenConfig.title} subtitle={screenConfig.subtitle} />
 
       <ScrollView
-        style={{ flex: 1 }}
-        contentContainerStyle={{ paddingBottom: 20 }}
+        style={styles.scroll}
+        contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
       >
-        <View style={{ paddingHorizontal: 16, paddingTop: 10 }}>
+        <View style={styles.content}>
           {/* Instrucciones */}
           <View
             style={[
@@ -221,7 +241,7 @@ export default function CustomizeThemeColorsScreen({
               name="information"
               size={20}
               color={colors.INFO}
-              containerStyle={{ marginRight: 12 }}
+              containerStyle={styles.infoIcon}
             />
             <Text style={[styles.infoText, { color: colors.TEXT_PRIMARY }]}>
               Toca cualquier color para personalizarlo. Los cambios se aplicarán inmediatamente al
@@ -275,9 +295,9 @@ export default function CustomizeThemeColorsScreen({
                   onColorChange={handleColorChange}
                   thumbSize={30}
                   sliderSize={30}
-                  noSnap={true}
+                  noSnap
                   row={false}
-                  swatches={true}
+                  swatches
                   discrete={false}
                 />
               </View>
@@ -287,7 +307,7 @@ export default function CustomizeThemeColorsScreen({
           {/* Botones de acción */}
           <View style={styles.buttonContainer}>
             <View style={styles.buttonRow}>
-              <View style={{ flex: 1, marginRight: 8 }}>
+              <View style={styles.buttonLeft}>
                 <MyButton
                   title="Resetear"
                   onPress={handleResetColors}
@@ -298,7 +318,7 @@ export default function CustomizeThemeColorsScreen({
                   disabled={saving}
                 />
               </View>
-              <View style={{ flex: 1, marginLeft: 8 }}>
+              <View style={styles.buttonRight}>
                 <MyButton
                   title="Guardar"
                   onPress={handleSaveColors}
@@ -326,51 +346,59 @@ interface ColorEditCardProps {
   config: ColorConfig;
   currentColor: string;
   onPress: () => void;
-  colors: ReturnType<typeof useThemeColors>;
+  colors: AppColors;
 }
 
-const ColorEditCard: React.FC<ColorEditCardProps> = ({ config, currentColor, onPress, colors }) => {
-  return (
-    <View
-      style={[
-        styles.colorCard,
-        {
-          backgroundColor: colors.CARD_BACKGROUND,
-          borderColor: colors.BORDER
-        }
-      ]}
-    >
-      <View style={styles.colorCardContent}>
-        <View style={[styles.colorIconContainer, { backgroundColor: currentColor + '15' }]}>
-          <Icon type="material-community" name={config.icon} size={24} color={currentColor} />
-        </View>
-        <View style={styles.colorInfo}>
-          <Text style={[styles.colorLabel, { color: colors.TEXT_PRIMARY }]}>{config.label}</Text>
-          <Text style={[styles.colorDescription, { color: colors.TEXT_SECONDARY }]}>
-            {config.description}
-          </Text>
-        </View>
-        <View style={styles.colorPreviewContainer}>
-          <View style={[styles.colorPreviewCircle, { backgroundColor: currentColor }]} />
-          <Text style={[styles.colorHex, { color: colors.TEXT_SECONDARY }]}>{currentColor}</Text>
-        </View>
+const ColorEditCard: React.FC<ColorEditCardProps> = ({ config, currentColor, onPress, colors }) => (
+  <View
+    style={[
+      styles.colorCard,
+      {
+        backgroundColor: colors.CARD_BACKGROUND,
+        borderColor: colors.BORDER
+      }
+    ]}
+  >
+    <View style={styles.colorCardContent}>
+      <View style={[styles.colorIconContainer, { backgroundColor: currentColor + '15' }]}>
+        <Icon type="material-community" name={config.icon} size={24} color={currentColor} />
       </View>
-      <MyButton
-        title="Editar"
-        onPress={onPress}
-        variant="secondary"
-        icon={<Icon type="material-community" name="pencil" size={18} color="#fff" />}
-        size="small"
-      />
+      <View style={styles.colorInfo}>
+        <Text style={[styles.colorLabel, { color: colors.TEXT_PRIMARY }]}>{config.label}</Text>
+        <Text style={[styles.colorDescription, { color: colors.TEXT_SECONDARY }]}>
+          {config.description}
+        </Text>
+      </View>
+      <View style={styles.colorPreviewContainer}>
+        <View style={[styles.colorPreviewCircle, { backgroundColor: currentColor }]} />
+        <Text style={[styles.colorHex, { color: colors.TEXT_SECONDARY }]}>{currentColor}</Text>
+      </View>
     </View>
-  );
-};
+    <MyButton
+      title="Editar"
+      onPress={onPress}
+      variant="secondary"
+      icon={<Icon type="material-community" name="pencil" size={18} color="#fff" />}
+      size="small"
+    />
+  </View>
+);
 
 // ============================================================================
 // Estilos
 // ============================================================================
 
 const styles = StyleSheet.create({
+  scroll: {
+    flex: 1
+  },
+  scrollContent: {
+    paddingBottom: 20
+  },
+  content: {
+    paddingHorizontal: 16,
+    paddingTop: 10
+  },
   infoCard: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -378,6 +406,9 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     marginBottom: 16,
     borderLeftWidth: 3
+  },
+  infoIcon: {
+    marginRight: 12
   },
   infoText: {
     flex: 1,
@@ -475,33 +506,6 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center'
   },
-  colorPicker: {
-    width: '100%'
-  },
-  preview: {
-    height: 60,
-    marginBottom: 20,
-    borderRadius: 8
-  },
-  panel: {
-    height: 200,
-    marginBottom: 20,
-    borderRadius: 8
-  },
-  slider: {
-    height: 40,
-    marginBottom: 20,
-    borderRadius: 8
-  },
-  swatches: {
-    marginTop: 10
-  },
-  swatch: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    margin: 4
-  },
   buttonContainer: {
     marginTop: 24,
     marginBottom: 16
@@ -509,5 +513,13 @@ const styles = StyleSheet.create({
   buttonRow: {
     flexDirection: 'row',
     alignItems: 'center'
+  },
+  buttonLeft: {
+    flex: 1,
+    marginRight: 8
+  },
+  buttonRight: {
+    flex: 1,
+    marginLeft: 8
   }
 });

@@ -1,3 +1,4 @@
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import {
   assetLinkKey,
   getAssetLink,
@@ -26,12 +27,21 @@ jest.mock(
   },
   { virtual: true }
 );
-// eslint-disable-next-line @typescript-eslint/no-var-requires
-const AsyncStorage = require('@react-native-async-storage/async-storage').default;
 
-beforeEach(() => {
-  for (const k of Object.keys(AsyncStorage.__store)) delete AsyncStorage.__store[k];
-});
+// El mock expone su almacén interno para poder inspeccionarlo y vaciarlo
+type MockedStorage = typeof AsyncStorage & { __store: Record<string, string> };
+const store = (AsyncStorage as MockedStorage).__store;
+
+const clearStore = () => {
+  for (const k of Object.keys(store)) delete store[k];
+};
+
+// Escribe directamente en el almacén (simula datos viejos o corruptos)
+const writeRaw = (ids: number[], value: string) => {
+  store[assetLinkKey(ids)] = value;
+};
+
+beforeEach(clearStore);
 
 describe('assetLinkKey', () => {
   it('ordena los ids: el mismo bien siempre da la misma clave', () => {
@@ -83,19 +93,22 @@ describe('getAssetLink / saveAssetLink / clearAssetLink', () => {
     expect(await getAssetLink([3007])).not.toBeNull();
   });
 
-  it('JSON corrupto o con forma inválida → null, sin lanzar', async () => {
-    AsyncStorage.__store[assetLinkKey([1])] = '{no es json';
+  it('JSON corrupto → null, sin lanzar', async () => {
+    writeRaw([1], '{no es json');
     expect(await getAssetLink([1])).toBeNull();
-    for (const bad of [
-      { kind: 'income' },
-      { kind: 'income', categoryId: '554', categoryName: 'x' },
-      { kind: 'otro' },
-      'texto',
-      null
-    ]) {
-      AsyncStorage.__store[assetLinkKey([2])] = JSON.stringify(bad);
-      expect(await getAssetLink([2])).toBeNull();
-    }
+  });
+
+  const invalidShapes: unknown[] = [
+    { kind: 'income' },
+    { kind: 'income', categoryId: '554', categoryName: 'x' },
+    { kind: 'otro' },
+    'texto',
+    null
+  ];
+
+  it.each(invalidShapes)('forma inválida %j → null, sin lanzar', async (bad) => {
+    writeRaw([2], JSON.stringify(bad));
+    expect(await getAssetLink([2])).toBeNull();
   });
 });
 
@@ -116,24 +129,30 @@ describe('vínculo con nombres del bien', () => {
   });
 
   it('un vínculo viejo sin nombres sigue siendo válido', async () => {
-    AsyncStorage.__store[assetLinkKey([5])] = JSON.stringify({
-      kind: 'income',
-      categoryId: 9,
-      categoryName: 'Arriendos'
-    });
+    writeRaw(
+      [5],
+      JSON.stringify({
+        kind: 'income',
+        categoryId: 9,
+        categoryName: 'Arriendos'
+      })
+    );
     expect((await getAssetLink([5]))?.kind).toBe('income');
   });
 
-  it('nombres con forma inválida → null', async () => {
-    for (const aliases of ['Apt 1102', [1, 2], [null]]) {
-      AsyncStorage.__store[assetLinkKey([6])] = JSON.stringify({
+  const invalidAliases: unknown[] = ['Apt 1102', [1, 2], [null]];
+
+  it.each(invalidAliases)('nombres con forma inválida %j → null', async (aliases) => {
+    writeRaw(
+      [6],
+      JSON.stringify({
         kind: 'income',
         categoryId: 9,
         categoryName: 'A',
         aliases
-      });
-      expect(await getAssetLink([6])).toBeNull();
-    }
+      })
+    );
+    expect(await getAssetLink([6])).toBeNull();
   });
 });
 

@@ -1,8 +1,9 @@
 // ~/components/investment-comparison/forms/ImmediateRentForm.tsx
 
-import React from 'react';
+import React, { useState } from 'react';
 import { View, Text, ScrollView, StyleSheet } from 'react-native';
-import { useForm } from 'react-hook-form';
+import { useForm, useWatch } from 'react-hook-form';
+import * as Crypto from 'expo-crypto';
 
 // Components
 import MyButton from '~/components/MyButton';
@@ -22,77 +23,81 @@ import {
 import { ShowToast } from '~/utils/toastUtils';
 import { NumberFormat } from '~/utils/Helpers';
 
-// Styles
+// Theme & Styles
+import { useThemeColors } from '~/customHooks/useThemeColors';
 import { MEDIUM, SMALL } from '~/styles/fonts';
 
 interface Props {
-  colors: any;
-  navigation: any;
+  navigation: { goBack: () => void };
   existingData?: ImmediateRentScenario;
 }
 
-export const ImmediateRentForm: React.FC<Props> = ({ colors, navigation, existingData }) => {
+const buildDefaults = (
+  existing: ImmediateRentScenario | undefined,
+  id: string
+): ImmediateRentScenario => ({
+  id: existing?.id ?? id,
+  name: existing?.name ?? 'Compra Inmediata para Renta',
+  availableCapital: existing?.availableCapital ?? DEFAULTS.DEFAULT_CAPITAL,
+  propertyPrice: existing?.propertyPrice ?? 276_000_000,
+  downPaymentPercent: existing?.downPaymentPercent ?? DEFAULTS.VIS_DOWN_PAYMENT,
+  mortgageTerm: existing?.mortgageTerm ?? 0, // 0 = cash completo
+  mortgageRate: existing?.mortgageRate ?? 12,
+  notaryFees: existing?.notaryFees ?? DEFAULTS.VIS_NOTARY_FEES,
+  registrationFees: existing?.registrationFees ?? DEFAULTS.VIS_REGISTRATION,
+  beneficiaryTax: existing?.beneficiaryTax ?? DEFAULTS.VIS_BENEFICIARY_TAX,
+  ivaPercent: existing?.ivaPercent ?? 0,
+  refurbishmentCost: existing?.refurbishmentCost ?? DEFAULTS.VIS_REFURBISHMENT,
+  refurbishmentMonths: existing?.refurbishmentMonths ?? DEFAULTS.VIS_REFURBISHMENT_MONTHS,
+  monthlyRent: existing?.monthlyRent ?? DEFAULTS.DEFAULT_RENT,
+  vacancyMonthsPerYear: existing?.vacancyMonthsPerYear ?? DEFAULTS.VACANCY_MONTHS,
+  monthlyAdministration: existing?.monthlyAdministration ?? DEFAULTS.DEFAULT_ADMINISTRATION,
+  administrationAnnualIncrease:
+    existing?.administrationAnnualIncrease ?? DEFAULTS.ADMINISTRATION_INCREASE,
+  maintenancePercent: existing?.maintenancePercent ?? DEFAULTS.MAINTENANCE_PERCENT,
+  propertyTaxPercent: existing?.propertyTaxPercent ?? DEFAULTS.PROPERTY_TAX,
+  rentalIncomeTax: existing?.rentalIncomeTax ?? DEFAULTS.RENTAL_INCOME_TAX,
+  propertyAppreciation: existing?.propertyAppreciation ?? DEFAULTS.PROPERTY_APPRECIATION,
+  horizonMonths: existing?.horizonMonths ?? 60
+});
+
+export const ImmediateRentForm: React.FC<Props> = ({ navigation, existingData }) => {
+  const colors = useThemeColors();
   const { saveScenario } = useInvestmentComparison();
 
-  const {
-    handleSubmit,
-    control,
-    watch,
-    formState: { errors }
-  } = useForm<ImmediateRentScenario>({
+  // El id por defecto se genera una sola vez (no en cada render)
+  const [defaultId] = useState(() => Crypto.randomUUID());
+
+  const { handleSubmit, control } = useForm<ImmediateRentScenario>({
     mode: 'onTouched',
-    defaultValues: {
-      id: existingData?.id || Date.now().toString(),
-      name: existingData?.name || 'Compra Inmediata para Renta',
-      availableCapital: existingData?.availableCapital || DEFAULTS.DEFAULT_CAPITAL,
-      propertyPrice: existingData?.propertyPrice || 276_000_000,
-      downPaymentPercent: existingData?.downPaymentPercent || DEFAULTS.VIS_DOWN_PAYMENT,
-      mortgageTerm: existingData?.mortgageTerm || 0, // 0 = cash completo
-      mortgageRate: existingData?.mortgageRate || 12,
-      notaryFees: existingData?.notaryFees || DEFAULTS.VIS_NOTARY_FEES,
-      registrationFees: existingData?.registrationFees || DEFAULTS.VIS_REGISTRATION,
-      beneficiaryTax: existingData?.beneficiaryTax || DEFAULTS.VIS_BENEFICIARY_TAX,
-      ivaPercent: existingData?.ivaPercent || 0,
-      refurbishmentCost: existingData?.refurbishmentCost || DEFAULTS.VIS_REFURBISHMENT,
-      refurbishmentMonths: existingData?.refurbishmentMonths || DEFAULTS.VIS_REFURBISHMENT_MONTHS,
-      monthlyRent: existingData?.monthlyRent || DEFAULTS.DEFAULT_RENT,
-      vacancyMonthsPerYear: existingData?.vacancyMonthsPerYear || DEFAULTS.VACANCY_MONTHS,
-      monthlyAdministration: existingData?.monthlyAdministration || DEFAULTS.DEFAULT_ADMINISTRATION,
-      administrationAnnualIncrease:
-        existingData?.administrationAnnualIncrease || DEFAULTS.ADMINISTRATION_INCREASE,
-      maintenancePercent: existingData?.maintenancePercent || DEFAULTS.MAINTENANCE_PERCENT,
-      propertyTaxPercent: existingData?.propertyTaxPercent || DEFAULTS.PROPERTY_TAX,
-      rentalIncomeTax: existingData?.rentalIncomeTax || DEFAULTS.RENTAL_INCOME_TAX,
-      propertyAppreciation: existingData?.propertyAppreciation || DEFAULTS.PROPERTY_APPRECIATION,
-      horizonMonths: existingData?.horizonMonths || 60
-    }
+    defaultValues: buildDefaults(existingData, defaultId)
   });
 
-  // Watch values for helper text
-  const availableCapital = watch('availableCapital');
-  const propertyPrice = watch('propertyPrice');
-  const mortgageTerm = watch('mortgageTerm');
-  const refurbishmentCost = watch('refurbishmentCost');
-  const monthlyRent = watch('monthlyRent');
-  const monthlyAdministration = watch('monthlyAdministration');
-  const horizonMonths = watch('horizonMonths');
+  // Valores observados para los textos de ayuda
+  const values = useWatch({ control });
 
   const onSubmit = (data: ImmediateRentScenario) => {
-    saveScenario(ScenarioType.IMMEDIATE_RENT, data);
+    saveScenario(ScenarioType.IMMEDIATE_RENT, { ...data, id: data.id || defaultId });
     ShowToast('Escenario de compra inmediata configurado');
     navigation.goBack();
   };
 
+  const sectionStyle = [
+    styles.section,
+    {
+      backgroundColor: colors.CARD_BACKGROUND,
+      borderColor: colors.BORDER,
+      shadowColor: colors.BLACK
+    }
+  ];
+
+  const mortgageTerm = values.mortgageTerm ?? 0;
+
   return (
-    <ScrollView style={{ flex: 1 }} contentContainerStyle={{ paddingBottom: 20 }}>
-      <View style={{ paddingHorizontal: 16, paddingTop: 10 }}>
+    <ScrollView style={styles.scroll} contentContainerStyle={styles.scrollContent}>
+      <View style={styles.content}>
         {/* INVERSIÓN INICIAL */}
-        <View
-          style={[
-            styles.section,
-            { backgroundColor: colors.CARD_BACKGROUND, borderColor: colors.BORDER }
-          ]}
-        >
+        <View style={sectionStyle}>
           <Text style={[styles.sectionTitle, { color: colors.TEXT_PRIMARY }]}>
             💵 Inversión Inicial
           </Text>
@@ -118,7 +123,7 @@ export const ImmediateRentForm: React.FC<Props> = ({ colors, navigation, existin
               min: { value: 1000000, message: 'Mínimo $1.000.000' }
             }}
             leftIcon="cash-multiple"
-            helperText={NumberFormat(availableCapital || 0)}
+            helperText={NumberFormat(values.availableCapital ?? 0)}
           />
 
           <MyInput
@@ -132,7 +137,7 @@ export const ImmediateRentForm: React.FC<Props> = ({ colors, navigation, existin
               min: { value: 10000000, message: 'Mínimo $10.000.000' }
             }}
             leftIcon="home"
-            helperText={NumberFormat(propertyPrice || 0)}
+            helperText={NumberFormat(values.propertyPrice ?? 0)}
           />
 
           <MyInput
@@ -156,11 +161,7 @@ export const ImmediateRentForm: React.FC<Props> = ({ colors, navigation, existin
             label="Plazo hipoteca (meses, 0 = cash completo)"
             placeholder="0"
             leftIcon="calendar-clock"
-            helperText={
-              mortgageTerm && mortgageTerm > 0
-                ? `${Math.floor(mortgageTerm / 12)} años`
-                : 'Sin crédito'
-            }
+            helperText={mortgageTerm > 0 ? `${Math.floor(mortgageTerm / 12)} años` : 'Sin crédito'}
           />
 
           <MyInput
@@ -179,21 +180,18 @@ export const ImmediateRentForm: React.FC<Props> = ({ colors, navigation, existin
             label="Costo de adecuación"
             placeholder="0"
             leftIcon="tools"
-            helperText={NumberFormat(refurbishmentCost || 0)}
+            helperText={NumberFormat(values.refurbishmentCost ?? 0)}
           />
 
-          <Text style={[styles.helperText, { color: colors.INFO }]}>
+          <Text
+            style={[styles.helperText, { color: colors.INFO, backgroundColor: colors.INFO + '15' }]}
+          >
             💡 Gastos de escrituración: ≈ 2.21% del valor (incluido automáticamente)
           </Text>
         </View>
 
         {/* GENERACIÓN DE RENTA */}
-        <View
-          style={[
-            styles.section,
-            { backgroundColor: colors.CARD_BACKGROUND, borderColor: colors.BORDER }
-          ]}
-        >
+        <View style={sectionStyle}>
           <Text style={[styles.sectionTitle, { color: colors.TEXT_PRIMARY }]}>
             💰 Generación de Renta
           </Text>
@@ -209,7 +207,7 @@ export const ImmediateRentForm: React.FC<Props> = ({ colors, navigation, existin
               min: { value: 100000, message: 'Mínimo $100.000' }
             }}
             leftIcon="cash"
-            helperText={NumberFormat(monthlyRent || 0)}
+            helperText={NumberFormat(values.monthlyRent ?? 0)}
           />
 
           <MyInput
@@ -219,7 +217,7 @@ export const ImmediateRentForm: React.FC<Props> = ({ colors, navigation, existin
             label="Administración mensual"
             placeholder="0"
             leftIcon="office-building"
-            helperText={NumberFormat(monthlyAdministration || 0)}
+            helperText={NumberFormat(values.monthlyAdministration ?? 0)}
           />
 
           <MyInput
@@ -282,11 +280,11 @@ export const ImmediateRentForm: React.FC<Props> = ({ colors, navigation, existin
               min: { value: 1, message: 'Mínimo 1 mes' }
             }}
             leftIcon="calendar-range"
-            helperText={`${Math.floor((horizonMonths || 0) / 12)} años`}
+            helperText={`${Math.floor((values.horizonMonths ?? 0) / 12)} años`}
           />
         </View>
 
-        <View style={{ marginTop: 16, gap: 8 }}>
+        <View style={styles.actions}>
           <MyButton
             title="Guardar Configuración"
             variant="primary"
@@ -300,12 +298,25 @@ export const ImmediateRentForm: React.FC<Props> = ({ colors, navigation, existin
 };
 
 const styles = StyleSheet.create({
+  scroll: {
+    flex: 1
+  },
+  scrollContent: {
+    paddingBottom: 20
+  },
+  content: {
+    paddingHorizontal: 16,
+    paddingTop: 10
+  },
+  actions: {
+    marginTop: 16,
+    gap: 8
+  },
   section: {
     marginBottom: 16,
     padding: 16,
     borderRadius: 12,
     borderWidth: 1,
-    shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 4,
@@ -321,7 +332,6 @@ const styles = StyleSheet.create({
     lineHeight: 16,
     marginTop: 4,
     padding: 8,
-    borderRadius: 8,
-    backgroundColor: 'rgba(0, 123, 255, 0.1)'
+    borderRadius: 8
   }
 });

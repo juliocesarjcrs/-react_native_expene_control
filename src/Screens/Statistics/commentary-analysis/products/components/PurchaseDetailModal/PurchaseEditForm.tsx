@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, Alert, ActivityIndicator } from 'react-native';
 import { Icon } from 'react-native-elements';
-import { useForm } from 'react-hook-form';
+import { useForm, useWatch } from 'react-hook-form';
 import { ProductPrice } from '~/shared/types/utils/commentaryParser/product-analysis.types';
 import MyInput from '~/components/inputs/MyInput';
 import { useThemeColors } from '~/customHooks/useThemeColors';
@@ -13,6 +13,18 @@ interface PurchaseEditFormProps {
   onCancel: () => void;
 }
 
+type Unit = 'kg' | 'un';
+
+type PurchaseFormData = {
+  product: string;
+  quantity: string;
+  unit: Unit;
+  pricePerKg: string;
+  store: string;
+};
+
+const UNITS: Unit[] = ['kg', 'un'];
+
 export const PurchaseEditForm: React.FC<PurchaseEditFormProps> = ({
   purchase,
   onSave,
@@ -21,7 +33,7 @@ export const PurchaseEditForm: React.FC<PurchaseEditFormProps> = ({
   const colors = useThemeColors();
   const [saving, setSaving] = useState(false);
 
-  const { control, handleSubmit, watch } = useForm({
+  const { control, handleSubmit, setValue } = useForm<PurchaseFormData>({
     defaultValues: {
       product: purchase.product.startsWith('(sin nombre)') ? '' : purchase.product,
       quantity: purchase.quantity.toString().replace('.', ','),
@@ -31,46 +43,41 @@ export const PurchaseEditForm: React.FC<PurchaseEditFormProps> = ({
     }
   });
 
-  const selectedUnit = watch('unit');
+  const selectedUnit = useWatch({ control, name: 'unit' });
 
-  const onSubmit = async (data: any) => {
+  const onSubmit = async (data: PurchaseFormData) => {
+    // Parsear cantidad (coma a punto) y precio (sin separadores)
+    const quantity = Number.parseFloat(data.quantity.replace(',', '.'));
+    const pricePerKg = Number.parseInt(data.pricePerKg.replace(/[.,]/g, ''), 10);
+
+    if (Number.isNaN(quantity) || quantity <= 0) {
+      Alert.alert('Error', 'La cantidad debe ser un número mayor a 0');
+      return;
+    }
+
+    if (Number.isNaN(pricePerKg) || pricePerKg <= 0) {
+      Alert.alert('Error', 'El precio debe ser un número mayor a 0');
+      return;
+    }
+
+    const updated: ProductPrice = {
+      ...purchase,
+      product: data.product.trim(),
+      quantity,
+      unit: data.unit,
+      pricePerKg,
+      store: data.store.trim() || undefined,
+      isIncomplete: false,
+      isWeighed: data.unit === 'kg'
+    };
+
     try {
       setSaving(true);
-
-      // Parsear cantidad (coma a punto)
-      const quantity = parseFloat(data.quantity.replace(',', '.'));
-
-      // Parsear precio (eliminar separadores)
-      const pricePerKg = parseInt(data.pricePerKg.replace(/[.,]/g, ''));
-
-      if (isNaN(quantity) || quantity <= 0) {
-        Alert.alert('Error', 'La cantidad debe ser un número mayor a 0');
-        setSaving(false);
-        return;
-      }
-
-      if (isNaN(pricePerKg) || pricePerKg <= 0) {
-        Alert.alert('Error', 'El precio debe ser un número mayor a 0');
-        setSaving(false);
-        return;
-      }
-
-      const updated: ProductPrice = {
-        ...purchase,
-        product: data.product.trim(),
-        quantity,
-        unit: data.unit as 'kg' | 'un',
-        pricePerKg,
-        store: data.store.trim() || undefined,
-        isIncomplete: false,
-        isWeighed: data.unit === 'kg'
-      };
-
       await onSave(updated);
-      setSaving(false);
-    } catch (error) {
-      setSaving(false);
+    } catch {
       Alert.alert('Error', 'No se pudo guardar. Intenta de nuevo.');
+    } finally {
+      setSaving(false);
     }
   };
 
@@ -109,40 +116,30 @@ export const PurchaseEditForm: React.FC<PurchaseEditFormProps> = ({
         <View style={styles.halfWidth}>
           <Text style={[styles.inputLabel, { color: colors.TEXT_PRIMARY }]}>Unidad</Text>
           <View style={styles.unitSelector}>
-            <TouchableOpacity
-              style={[
-                styles.unitButton,
-                selectedUnit === 'kg' && { backgroundColor: colors.PRIMARY },
-                { borderColor: colors.BORDER }
-              ]}
-              onPress={() => (control._formValues.unit = 'kg')}
-            >
-              <Text
-                style={[
-                  styles.unitButtonText,
-                  { color: selectedUnit === 'kg' ? '#fff' : colors.TEXT_PRIMARY }
-                ]}
-              >
-                kg
-              </Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={[
-                styles.unitButton,
-                selectedUnit === 'un' && { backgroundColor: colors.PRIMARY },
-                { borderColor: colors.BORDER }
-              ]}
-              onPress={() => (control._formValues.unit = 'un')}
-            >
-              <Text
-                style={[
-                  styles.unitButtonText,
-                  { color: selectedUnit === 'un' ? '#fff' : colors.TEXT_PRIMARY }
-                ]}
-              >
-                un
-              </Text>
-            </TouchableOpacity>
+            {UNITS.map((unit) => {
+              const selected = selectedUnit === unit;
+
+              return (
+                <TouchableOpacity
+                  key={unit}
+                  style={[
+                    styles.unitButton,
+                    { borderColor: colors.BORDER },
+                    selected && { backgroundColor: colors.PRIMARY }
+                  ]}
+                  onPress={() => setValue('unit', unit)}
+                >
+                  <Text
+                    style={[
+                      styles.unitButtonText,
+                      { color: selected ? colors.WHITE : colors.TEXT_PRIMARY }
+                    ]}
+                  >
+                    {unit}
+                  </Text>
+                </TouchableOpacity>
+              );
+            })}
           </View>
         </View>
       </View>
@@ -186,16 +183,16 @@ export const PurchaseEditForm: React.FC<PurchaseEditFormProps> = ({
         </TouchableOpacity>
 
         <TouchableOpacity
-          style={[styles.button, styles.saveButton, { backgroundColor: colors.PRIMARY }]}
+          style={[styles.button, { backgroundColor: colors.PRIMARY }]}
           onPress={handleSubmit(onSubmit)}
           disabled={saving}
         >
           {saving ? (
-            <ActivityIndicator color="#fff" />
+            <ActivityIndicator color={colors.WHITE} />
           ) : (
             <>
-              <Icon type="material-community" name="check" size={18} color="#fff" />
-              <Text style={[styles.buttonText, { color: '#fff' }]}>Guardar</Text>
+              <Icon type="material-community" name="check" size={18} color={colors.WHITE} />
+              <Text style={[styles.buttonText, { color: colors.WHITE }]}>Guardar</Text>
             </>
           )}
         </TouchableOpacity>
@@ -278,9 +275,6 @@ const styles = StyleSheet.create({
   },
   cancelButton: {
     borderWidth: 1
-  },
-  saveButton: {
-    // backgroundColor aplicado dinámicamente
   },
   buttonText: {
     fontSize: SMALL,

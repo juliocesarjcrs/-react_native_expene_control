@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { View, Text, ScrollView, StyleSheet, RefreshControl, Alert } from 'react-native';
 import { Icon } from 'react-native-elements';
 
@@ -28,31 +28,49 @@ export default function AIModelsScreen() {
   const colors = useThemeColors();
 
   const [models, setModels] = useState<AIModel[]>([]);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [showEditor, setShowEditor] = useState(false);
   const [selectedModel, setSelectedModel] = useState<AIModel | null>(null);
 
+  // Carga inicial (loading ya inicia en true)
   useEffect(() => {
-    loadModels();
+    let isMounted = true;
+
+    const loadInitialModels = async () => {
+      try {
+        const data = await getAllModels();
+        if (isMounted) setModels(data);
+      } catch (error) {
+        if (isMounted) showError(error);
+      } finally {
+        if (isMounted) setLoading(false);
+      }
+    };
+
+    loadInitialModels();
+
+    return () => {
+      isMounted = false;
+    };
   }, []);
 
-  const loadModels = async () => {
+  // Recarga silenciosa (sin spinner a pantalla completa)
+  const loadModels = useCallback(async () => {
     try {
-      setLoading(true);
-      const data = await getAllModels();
-      setModels(data);
+      setModels(await getAllModels());
     } catch (error) {
       showError(error);
-    } finally {
-      setLoading(false);
     }
-  };
+  }, []);
 
   const onRefresh = async () => {
     setRefreshing(true);
-    await loadModels();
-    setRefreshing(false);
+    try {
+      await loadModels();
+    } finally {
+      setRefreshing(false);
+    }
   };
 
   const handleReloadModels = async () => {
@@ -75,7 +93,7 @@ export default function AIModelsScreen() {
     setShowEditor(true);
   };
 
-  const handleCloseEditor = async (reloadList: boolean = false) => {
+  const handleCloseEditor = async (reloadList = false) => {
     setShowEditor(false);
     setSelectedModel(null);
     if (reloadList) {
@@ -83,7 +101,7 @@ export default function AIModelsScreen() {
     }
   };
 
-  if (loading && models.length === 0) {
+  if (loading) {
     return (
       <View style={[styles.centerContainer, { backgroundColor: colors.BACKGROUND }]}>
         <Text style={[styles.loadingText, { color: colors.TEXT_SECONDARY }]}>
@@ -103,7 +121,7 @@ export default function AIModelsScreen() {
         <MyButton
           title="Nuevo Modelo"
           onPress={handleCreateModel}
-          icon={<Icon name="plus" type="material-community" size={18} color="#fff" />}
+          icon={<Icon name="plus" type="material-community" size={18} color={colors.WHITE} />}
         />
         <MyButton
           title="Recargar"
@@ -137,14 +155,6 @@ const styles = StyleSheet.create({
     alignItems: 'center'
   },
   loadingText: {
-    fontSize: 14
-  },
-  title: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    marginBottom: 4
-  },
-  subtitle: {
     fontSize: 14
   },
   actionsBar: {

@@ -5,8 +5,7 @@ import {
   TouchableOpacity,
   Alert,
   useWindowDimensions,
-  Platform,
-  Text
+  Platform
 } from 'react-native';
 import Markdown from 'react-native-markdown-display';
 import * as Clipboard from 'expo-clipboard';

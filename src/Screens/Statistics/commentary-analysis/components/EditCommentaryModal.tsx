@@ -16,7 +16,7 @@
  *   />
  */
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import {
   Modal,
   View,
@@ -57,31 +57,31 @@ interface EditCommentaryModalProps {
   onSaved: () => void;
 }
 
+const OVERLAY_COLOR = 'rgba(0,0,0,0.5)';
+const MAX_LENGTH = 200;
+
 // ─────────────────────────────────────────────
-// COMPONENTE
+// CONTENIDO (solo existe mientras el modal está abierto)
 // ─────────────────────────────────────────────
 
-export default function EditCommentaryModal({
-  visible,
-  expense,
-  formatHint,
-  onClose,
-  onSaved
-}: EditCommentaryModalProps) {
+interface ContentProps extends Omit<EditCommentaryModalProps, 'visible' | 'expense'> {
+  expense: ExpenseToEdit;
+}
+
+function EditCommentaryModalContent({ expense, formatHint, onClose, onSaved }: ContentProps) {
   const colors = useThemeColors();
-  const [commentary, setCommentary] = useState('');
+  const [commentary, setCommentary] = useState(expense.commentary);
   const [saving, setSaving] = useState(false);
 
-  useEffect(() => {
-    if (expense) setCommentary(expense.commentary);
-  }, [expense]);
+  const trimmed = commentary.trim();
+  const canSave = trimmed.length > 0 && !saving;
 
   const handleSave = async () => {
-    if (!expense || !commentary.trim()) return;
+    if (!canSave) return;
 
     try {
       setSaving(true);
-      await editExpense(expense.id, { commentary: commentary.trim() });
+      await editExpense(expense.id, { commentary: trimmed });
       ShowToast('Comentario actualizado');
       onSaved();
       onClose();
@@ -92,10 +92,8 @@ export default function EditCommentaryModal({
     }
   };
 
-  if (!expense) return null;
-
   return (
-    <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
+    <Modal visible transparent animationType="slide" onRequestClose={onClose}>
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         style={styles.overlay}
@@ -145,7 +143,7 @@ export default function EditCommentaryModal({
             onChangeText={setCommentary}
             multiline
             numberOfLines={4}
-            maxLength={200}
+            maxLength={MAX_LENGTH}
             style={[
               styles.input,
               {
@@ -154,12 +152,13 @@ export default function EditCommentaryModal({
                 backgroundColor: colors.BACKGROUND
               }
             ]}
+            placeholder="Escribe el comentario..."
             placeholderTextColor={colors.TEXT_SECONDARY}
             autoFocus
           />
 
           <Text style={[styles.charCount, { color: colors.TEXT_SECONDARY }]}>
-            {commentary.length}/200
+            {commentary.length}/{MAX_LENGTH}
           </Text>
 
           {/* Botones */}
@@ -178,11 +177,11 @@ export default function EditCommentaryModal({
               style={[
                 styles.buttonSave,
                 { backgroundColor: colors.PRIMARY },
-                (!commentary.trim() || saving) && styles.buttonDisabled
+                !canSave && styles.buttonDisabled
               ]}
               onPress={handleSave}
               activeOpacity={0.7}
-              disabled={!commentary.trim() || saving}
+              disabled={!canSave}
             >
               {saving ? (
                 <ActivityIndicator size="small" color={colors.WHITE} />
@@ -197,10 +196,24 @@ export default function EditCommentaryModal({
   );
 }
 
+// ─────────────────────────────────────────────
+// COMPONENTE PÚBLICO
+// ─────────────────────────────────────────────
+
+export default function EditCommentaryModal({
+  visible,
+  expense,
+  ...rest
+}: EditCommentaryModalProps) {
+  // Mientras está cerrado no se monta nada; al abrirse, el estado arranca limpio
+  if (!visible || !expense) return null;
+  return <EditCommentaryModalContent expense={expense} {...rest} />;
+}
+
 const styles = StyleSheet.create({
   overlay: {
     flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.5)',
+    backgroundColor: OVERLAY_COLOR,
     justifyContent: 'flex-end'
   },
   container: {

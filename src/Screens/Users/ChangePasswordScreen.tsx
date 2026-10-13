@@ -1,5 +1,5 @@
 import React from 'react';
-import { ScrollView, View } from 'react-native';
+import { ScrollView, StyleSheet, View } from 'react-native';
 import { useForm } from 'react-hook-form';
 import { StackNavigationProp } from '@react-navigation/stack';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -40,11 +40,18 @@ interface ChangePasswordScreenProps {
 
 type ChangePasswordFormData = ChangePasswordPayload;
 
+const MIN_PASSWORD_LENGTH = 6;
+
+const minLengthRule = {
+  value: MIN_PASSWORD_LENGTH,
+  message: `La contraseña debe tener al menos ${MIN_PASSWORD_LENGTH} caracteres`
+};
+
 export default function ChangePasswordScreen({ navigation }: ChangePasswordScreenProps) {
   const colors = useThemeColors();
   const screenConfig = screenConfigs.changePassword;
 
-  const { handleSubmit, control, watch } = useForm<ChangePasswordFormData>({
+  const { handleSubmit, control, getValues } = useForm<ChangePasswordFormData>({
     mode: 'onTouched',
     defaultValues: {
       currentlyPassword: '',
@@ -53,12 +60,10 @@ export default function ChangePasswordScreen({ navigation }: ChangePasswordScree
     }
   });
 
-  const password = watch('password', '');
-
   const onSubmit = async (payload: ChangePasswordFormData): Promise<void> => {
     try {
       const jsonValue = await AsyncStorage.getItem('user');
-      const user: UserModel | null = jsonValue != null ? JSON.parse(jsonValue) : null;
+      const user: UserModel | null = jsonValue ? JSON.parse(jsonValue) : null;
 
       if (!user) {
         showError(new Error('No se encontró el usuario'));
@@ -78,11 +83,11 @@ export default function ChangePasswordScreen({ navigation }: ChangePasswordScree
       <ScreenHeader title={screenConfig.title} subtitle={screenConfig.subtitle} />
 
       <ScrollView
-        style={{ flex: 1 }}
-        contentContainerStyle={{ paddingBottom: 20 }}
+        style={styles.scroll}
+        contentContainerStyle={styles.scrollContent}
         keyboardShouldPersistTaps="handled"
       >
-        <View style={{ paddingHorizontal: 16, paddingTop: 10 }}>
+        <View style={styles.content}>
           {/* Contraseña actual */}
           <MyInput
             name="currentlyPassword"
@@ -92,10 +97,7 @@ export default function ChangePasswordScreen({ navigation }: ChangePasswordScree
             placeholder="••••••••"
             rules={{
               required: 'La contraseña actual es obligatoria',
-              minLength: {
-                value: 6,
-                message: 'La contraseña debe tener al menos 6 caracteres'
-              }
+              minLength: minLengthRule
             }}
             leftIcon="lock"
             autoFocus
@@ -110,13 +112,11 @@ export default function ChangePasswordScreen({ navigation }: ChangePasswordScree
             placeholder="••••••••"
             rules={{
               required: 'La nueva contraseña es obligatoria',
-              minLength: {
-                value: 6,
-                message: 'La contraseña debe tener al menos 6 caracteres'
-              }
+              minLength: minLengthRule,
+              deps: ['passwordComfirm']
             }}
             leftIcon="lock-reset"
-            helperText="Mínimo 6 caracteres"
+            helperText={`Mínimo ${MIN_PASSWORD_LENGTH} caracteres`}
           />
 
           {/* Confirmar contraseña */}
@@ -128,11 +128,9 @@ export default function ChangePasswordScreen({ navigation }: ChangePasswordScree
             placeholder="••••••••"
             rules={{
               required: 'Debe confirmar la contraseña',
-              minLength: {
-                value: 6,
-                message: 'La contraseña debe tener al menos 6 caracteres'
-              },
-              validate: (value: string) => value === password || 'Las contraseñas no coinciden'
+              minLength: minLengthRule,
+              validate: (value: string) =>
+                value === getValues('password') || 'Las contraseñas no coinciden'
             }}
             leftIcon="lock-check"
           />
@@ -144,3 +142,16 @@ export default function ChangePasswordScreen({ navigation }: ChangePasswordScree
     </View>
   );
 }
+
+const styles = StyleSheet.create({
+  scroll: {
+    flex: 1
+  },
+  scrollContent: {
+    paddingBottom: 20
+  },
+  content: {
+    paddingHorizontal: 16,
+    paddingTop: 10
+  }
+});

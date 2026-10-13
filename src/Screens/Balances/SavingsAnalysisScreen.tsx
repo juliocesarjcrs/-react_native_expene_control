@@ -8,7 +8,7 @@ import { getSavingsPeriodAnalysis } from '~/services/savings';
 
 // Components
 import { ScreenHeader } from '~/components/ScreenHeader';
-import MonthRangePicker from '~/components/pickers/MonthRangePicker';
+import { MonthRangePicker } from '~/components/pickers/MonthRangePicker';
 import MyLoading from '~/components/loading/MyLoading';
 
 // Types

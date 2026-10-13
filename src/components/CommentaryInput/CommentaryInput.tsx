@@ -1,6 +1,6 @@
 import React, { useCallback } from 'react';
-import { StyleSheet, View } from 'react-native';
-import { Control, Controller } from 'react-hook-form';
+import { View } from 'react-native';
+import { Control, FieldValues, Path, PathValue, UseFormSetValue } from 'react-hook-form';
 import { useThemeColors } from '~/customHooks/useThemeColors';
 import MyInput from '~/components/inputs/MyInput';
 import TemplateChips from './TemplateChips';
@@ -9,15 +9,18 @@ import { useCommentaryInput } from './useCommentaryInput.hook';
 import { RecentExpenseForSuggestion } from '~/shared/types/screens/settings/commentary-templates.types';
 
 // ============================================================
-// TIPOS
+// TIPOS Y CONSTANTES
 // ============================================================
 
-interface CommentaryInputProps {
+// Cualquier formulario que tenga un campo "commentary" de texto
+type CommentaryForm = FieldValues & { commentary: string };
+
+interface CommentaryInputProps<T extends CommentaryForm> {
   /** react-hook-form control */
-  control: Control<any>;
+  control: Control<T>;
   /** react-hook-form setValue para inyectar templates */
-  setValue: (name: string, value: string) => void;
-  /** Valor actual del campo (watch('commentary')) */
+  setValue: UseFormSetValue<T>;
+  /** Valor actual del campo (useWatch de 'commentary') */
   currentValue: string;
   /** ID de la subcategoría seleccionada */
   subcategoryId: number | null;
@@ -29,6 +32,13 @@ interface CommentaryInputProps {
   recentExpenses?: RecentExpenseForSuggestion[];
 }
 
+// Referencia estable: un [] en los parámetros se recrearía en cada render
+const NO_EXPENSES: RecentExpenseForSuggestion[] = [];
+
+const MAX_LENGTH = 200;
+
+const BORDER_STATES = ['valid', 'warning'] as const;
+
 // ============================================================
 // COMPONENTE
 // ============================================================
@@ -36,32 +46,23 @@ interface CommentaryInputProps {
 /**
  * CommentaryInput
  *
- * Reemplaza el MyInput de comentario en CreateExpenseScreen.
+ * Reemplaza el MyInput de comentario en las pantallas de crear gasto e ingreso.
  * Agrega:
  *  - Chips de plantilla rápida (según subcategoría)
  *  - Dropdown con historial filtrado mientras escribe
  *  - Borde de validación sutil (verde/amarillo)
  *
- * @example
- * <CommentaryInput
- *   control={control}
- *   setValue={setValue}
- *   currentValue={watch('commentary') ?? ''}
- *   subcategoryId={subcategoryId}
- *   subcategoryName="Proteinas"
- *   categoryName="Alimentación"
- *   recentExpenses={expenses}
- * />
+ * Es genérico: sirve con cualquier formulario que tenga `commentary: string`.
  */
-export default function CommentaryInput({
+export default function CommentaryInput<T extends CommentaryForm>({
   control,
   setValue,
   currentValue,
   subcategoryId,
   subcategoryName,
   categoryName,
-  recentExpenses = []
-}: CommentaryInputProps) {
+  recentExpenses = NO_EXPENSES
+}: CommentaryInputProps<T>) {
   const colors = useThemeColors();
 
   const {
@@ -79,94 +80,61 @@ export default function CommentaryInput({
     currentValue
   });
 
-  // ── Insertar template en el campo ──
-  const handleChipSelect = useCallback(
-    (template: string) => {
-      setValue('commentary', template);
+  // Inserta un texto en el campo y cierra las sugerencias
+  const handleSelect = useCallback(
+    (text: string) => {
+      setValue('commentary' as Path<T>, text as PathValue<T, Path<T>>);
       hideSuggestions();
     },
     [setValue, hideSuggestions]
   );
 
-  // ── Seleccionar sugerencia del historial ──
-  const handleSuggestionSelect = useCallback(
-    (commentary: string) => {
-      setValue('commentary', commentary);
-      hideSuggestions();
-    },
-    [setValue, hideSuggestions]
-  );
+  // Color del borde según validación (MyInput maneja el resto: focus, error)
+  const borderColors = { valid: colors.SUCCESS, warning: colors.WARNING };
+  const isBorderState = (state: string): state is (typeof BORDER_STATES)[number] =>
+    (BORDER_STATES as readonly string[]).includes(state);
 
-  // ── Color del borde según validación ──
-  const getBorderOverride = () => {
-    if (!templateConfig?.enableValidation) return undefined;
-    switch (validation.state) {
-      case 'valid':
-        return colors.SUCCESS;
-      case 'warning':
-        return colors.WARNING;
-      default:
-        return undefined; // MyInput maneja el resto (focus, error)
-    }
-  };
+  const borderColor =
+    templateConfig?.enableValidation && isBorderState(validation.state)
+      ? borderColors[validation.state]
+      : undefined;
+  const inputContainerStyle = borderColor ? { borderColor } : undefined;
 
-  const borderOverride = getBorderOverride();
-  const hasChips = (templateConfig?.chips?.length ?? 0) > 0;
+  const chips = templateConfig?.chips ?? [];
 
   return (
-    <View style={styles.wrapper}>
+    <View>
       {/* Chips de plantilla rápida — solo si la subcategoría los tiene */}
-      {hasChips && <TemplateChips chips={templateConfig!.chips} onSelect={handleChipSelect} />}
+      {chips.length > 0 && <TemplateChips chips={chips} onSelect={handleSelect} />}
 
-      {/* Controller para inyectar el override de borde */}
-      <Controller
-        name="commentary"
+      <MyInput
+        name={'commentary' as Path<T>}
+        type="textarea"
         control={control}
-        defaultValue=""
+        label="Comentario"
+        placeholder={templateConfig?.smartPlaceholder ?? 'Ej: Compra de una camisa'}
         rules={{
-          maxLength: { value: 200, message: 'El comentario no puede superar 200 caracteres' }
+          maxLength: {
+            value: MAX_LENGTH,
+            message: `El comentario no puede superar ${MAX_LENGTH} caracteres`
+          }
         }}
-        render={({ field: { onChange, onBlur, value }, fieldState: { error } }) => (
-          <MyInput
-            name="commentary"
-            type="textarea"
-            control={control}
-            label="Comentario"
-            placeholder={templateConfig?.smartPlaceholder ?? 'Ej: Compra de una camisa'}
-            rules={{
-              maxLength: { value: 200, message: 'El comentario no puede superar 200 caracteres' }
-            }}
-            multiline
-            numberOfLines={2}
-            maxLength={200}
-            leftIcon="text"
-            // Override sutil del borde para validación
-            containerStyle={borderOverride ? { borderColor: borderOverride } : undefined}
-            onFocus={() => {
-              openSuggestions();
-            }}
-          />
-        )}
+        multiline
+        numberOfLines={2}
+        maxLength={MAX_LENGTH}
+        leftIcon="text"
+        containerStyle={inputContainerStyle}
+        onFocus={openSuggestions}
       />
 
       {/* Dropdown de historial */}
       {showSuggestions && filteredSuggestions.length > 0 && (
         <HistorySuggestions
           suggestions={filteredSuggestions}
-          onSelect={handleSuggestionSelect}
+          onSelect={handleSelect}
           onClose={hideSuggestions}
         />
       )}
     </View>
   );
 }
-
-// ============================================================
-// ESTILOS
-// ============================================================
-
-const styles = StyleSheet.create({
-  wrapper: {
-    marginBottom: 0 // MyInput ya tiene marginBottom: 16
-  }
-});

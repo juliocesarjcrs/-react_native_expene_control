@@ -15,7 +15,7 @@ import MyLoading from '~/components/loading/MyLoading';
 // Types
 import { StackNavigationProp } from '@react-navigation/stack';
 import { AuthStackParamList } from '~/shared/types';
-import { PasswordRecoveryPayload } from '~/shared/types/services';
+import { RootState } from '~/shared/types/reducers';
 
 // Utils
 import { ShowToast } from '~/utils/toastUtils';
@@ -42,21 +42,15 @@ interface FormData {
   confirmPassword: string;
 }
 
-interface RootState {
-  auth: {
-    user: {
-      id: number;
-    };
-  };
-}
+const MIN_PASSWORD_LENGTH = 6;
+const MAX_PASSWORD_LENGTH = 50;
 
 export default function ResetPasswordScreen({ navigation }: ScreenProps) {
   const colors = useThemeColors();
   const screenConfig = screenConfigs.resetPassword;
   const user = useSelector((state: RootState) => state.auth.user);
 
-  // Form
-  const { handleSubmit, control, watch } = useForm<FormData>({
+  const { handleSubmit, control, getValues } = useForm<FormData>({
     mode: 'onTouched',
     defaultValues: {
       password: '',
@@ -64,30 +58,21 @@ export default function ResetPasswordScreen({ navigation }: ScreenProps) {
     }
   });
 
-  // Estados
   const [loading, setLoading] = useState<boolean>(false);
 
-  // Watch password para validar confirmación
-  const password = watch('password');
-
-  // Submit
   const onSubmit = async (formData: FormData): Promise<void> => {
     try {
-      const payload: PasswordRecoveryPayload = {
-        password: formData.password
-      };
-
       setLoading(true);
-      const { data } = await passwordRecovery(user.id, payload);
-      setLoading(false);
+      const { data } = await passwordRecovery(user.id, { password: formData.password });
 
       if (data.user) {
         ShowToast('Contraseña restablecida exitosamente');
         navigation.navigate('login');
       }
     } catch (error) {
-      setLoading(false);
       showError(error);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -96,11 +81,11 @@ export default function ResetPasswordScreen({ navigation }: ScreenProps) {
       <ScreenHeader title={screenConfig.title} subtitle={screenConfig.subtitle} />
 
       <ScrollView
-        style={{ flex: 1 }}
-        contentContainerStyle={{ paddingBottom: 20 }}
+        style={styles.scroll}
+        contentContainerStyle={styles.scrollContent}
         keyboardShouldPersistTaps="handled"
       >
-        <View style={{ paddingHorizontal: 16, paddingTop: 10 }}>
+        <View style={styles.content}>
           {/* Mensaje instructivo */}
           <View style={[styles.messageContainer, { backgroundColor: colors.SUCCESS + '15' }]}>
             <Text style={[styles.messageText, { color: colors.TEXT_PRIMARY }]}>
@@ -118,13 +103,14 @@ export default function ResetPasswordScreen({ navigation }: ScreenProps) {
             rules={{
               required: 'La contraseña es obligatoria',
               minLength: {
-                value: 3,
-                message: 'La contraseña debe tener mínimo 3 caracteres'
+                value: MIN_PASSWORD_LENGTH,
+                message: `La contraseña debe tener mínimo ${MIN_PASSWORD_LENGTH} caracteres`
               },
               maxLength: {
-                value: 50,
-                message: 'La contraseña no puede tener más de 50 caracteres'
-              }
+                value: MAX_PASSWORD_LENGTH,
+                message: `La contraseña no puede tener más de ${MAX_PASSWORD_LENGTH} caracteres`
+              },
+              deps: ['confirmPassword']
             }}
             leftIcon="lock"
             autoFocus
@@ -139,7 +125,8 @@ export default function ResetPasswordScreen({ navigation }: ScreenProps) {
             placeholder="••••••••"
             rules={{
               required: 'Debes confirmar la contraseña',
-              validate: (value: string) => value === password || 'Las contraseñas no coinciden'
+              validate: (value: string) =>
+                value === getValues('password') || 'Las contraseñas no coinciden'
             }}
             leftIcon="lock-check"
           />
@@ -150,10 +137,10 @@ export default function ResetPasswordScreen({ navigation }: ScreenProps) {
               Requisitos de la contraseña:
             </Text>
             <Text style={[styles.requirementItem, { color: colors.TEXT_SECONDARY }]}>
-              • Mínimo 6 caracteres
+              • Mínimo {MIN_PASSWORD_LENGTH} caracteres
             </Text>
             <Text style={[styles.requirementItem, { color: colors.TEXT_SECONDARY }]}>
-              • Máximo 50 caracteres
+              • Máximo {MAX_PASSWORD_LENGTH} caracteres
             </Text>
           </View>
 
@@ -174,6 +161,16 @@ export default function ResetPasswordScreen({ navigation }: ScreenProps) {
 }
 
 const styles = StyleSheet.create({
+  scroll: {
+    flex: 1
+  },
+  scrollContent: {
+    paddingBottom: 20
+  },
+  content: {
+    paddingHorizontal: 16,
+    paddingTop: 10
+  },
   messageContainer: {
     padding: 12,
     borderRadius: 8,

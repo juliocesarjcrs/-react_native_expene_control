@@ -1,8 +1,9 @@
-import React, { useState, useCallback } from 'react';
-import { FlatList, StyleSheet, Text, View, ListRenderItem } from 'react-native';
+import React, { useCallback, useMemo, useState } from 'react';
+import { FlatList, StyleSheet, Text, View } from 'react-native';
+import type { ListRenderItem } from 'react-native';
 import { Icon } from 'react-native-elements';
-import { StackNavigationProp } from '@react-navigation/stack';
-import { useForm } from 'react-hook-form';
+import type { StackNavigationProp } from '@react-navigation/stack';
+import { useForm, useWatch } from 'react-hook-form';
 import uuid from 'react-native-uuid';
 
 // Components
@@ -12,7 +13,7 @@ import MyInput from '~/components/inputs/MyInput';
 import RowInput from './components/RowInput';
 
 // Types
-import { SettingsStackParamList } from '~/shared/types';
+import type { SettingsStackParamList } from '~/shared/types';
 
 // Utils
 import { NumberFormat } from '~/utils/Helpers';
@@ -31,52 +32,69 @@ export type CalculeProductsScreenNavigationProp = StackNavigationProp<
   SettingsStackParamList,
   'calculeProducts'
 >;
-interface CalculeProductsScreenProps {
-  navigation: CalculeProductsScreenNavigationProp;
-}
 
-export type Product = {
+export interface Product {
   id: string;
   price: string;
   realVal: number;
   discount: string;
-};
+}
 
 interface DiscountFormData {
   generalDiscount: number;
 }
 
-export default function CalculeProductsScreen({ navigation }: CalculeProductsScreenProps) {
+const DEFAULT_DISCOUNT = 15;
+const MIN_DISCOUNT = 0;
+const MAX_DISCOUNT = 100;
+const FOOTER_BG_OPACITY_HEX = '15';
+const SHADOW_COLOR = '#000';
+
+const createId = (): string => uuid.v4() as string;
+
+const createEmptyProduct = (discount: number): Product => ({
+  id: createId(),
+  price: '',
+  realVal: 0,
+  discount: String(discount)
+});
+
+export default function CalculeProductsScreen(): React.JSX.Element {
   const colors = useThemeColors();
   const screenConfig = screenConfigs.calculeProducts;
 
-  const { control, watch } = useForm<DiscountFormData>({
+  const { control } = useForm<DiscountFormData>({
     defaultValues: {
-      generalDiscount: 15
+      generalDiscount: DEFAULT_DISCOUNT
     }
   });
 
-  const generalDiscount = watch('generalDiscount');
+  // useWatch (y no watch) para que sea compatible con React Compiler
+  const generalDiscount = useWatch({ control, name: 'generalDiscount' });
 
-  const [products, setProducts] = useState<Product[]>([
-    {
-      id: uuid.v4() as string,
-      price: '',
-      realVal: 0,
-      discount: '15'
-    }
-  ]);
+  const [products, setProducts] = useState<Product[]>(() => [createEmptyProduct(DEFAULT_DISCOUNT)]);
 
   const realTotal = products.reduce((acc, product) => acc + product.realVal, 0);
 
+  const dynamicStyles = useMemo(
+    () =>
+      StyleSheet.create({
+        discountCard: { backgroundColor: colors.CARD_BACKGROUND },
+        tableHeader: { borderBottomColor: colors.BORDER },
+        headerText: { color: colors.TEXT_PRIMARY },
+        footer: {
+          backgroundColor: `${colors.SUCCESS}${FOOTER_BG_OPACITY_HEX}`,
+          borderColor: colors.SUCCESS
+        },
+        totalLabel: { color: colors.TEXT_SECONDARY },
+        totalAmount: { color: colors.SUCCESS },
+        productsCount: { color: colors.TEXT_SECONDARY }
+      }),
+    [colors]
+  );
+
   const addRow = useCallback((): void => {
-    const newProduct: Product = {
-      id: uuid.v4() as string,
-      price: '',
-      realVal: 0,
-      discount: String(generalDiscount)
-    };
-    setProducts((prev) => [...prev, newProduct]);
+    setProducts((prev) => [...prev, createEmptyProduct(generalDiscount)]);
   }, [generalDiscount]);
 
   const removeRow = useCallback((id: string): void => {
@@ -102,88 +120,80 @@ export default function CalculeProductsScreen({ navigation }: CalculeProductsScr
     <RowInput prod={item} sendRemoveRow={removeRow} updateTotal={updateTotal} />
   );
 
-  const headerComponent = (): React.ReactElement => {
-    return (
-      <View style={styles.headerContainer}>
-        {/* Sección de descuento general */}
-        <View style={[styles.discountCard, { backgroundColor: colors.CARD_BACKGROUND }]}>
-          <View style={styles.discountRow}>
-            <View style={styles.discountInputContainer}>
-              <MyInput
-                name="generalDiscount"
-                type="number"
-                control={control}
-                label="Descuento general (%)"
-                placeholder="0"
-                rules={{
-                  min: { value: 0, message: 'El descuento no puede ser negativo' },
-                  max: { value: 100, message: 'El descuento no puede ser mayor a 100%' }
-                }}
-                leftIcon="percent"
-              />
-            </View>
-
-            <MyButton
-              title="Aplicar a todos"
-              onPress={applyGeneralDiscount}
-              variant="secondary"
-              size="medium"
-              icon={
-                <Icon type="material-community" name="check-all" size={18} color={colors.WHITE} />
-              }
-              style={styles.applyButton}
+  // Se pasan como elementos (no como componentes definidos dentro del render)
+  const header = (
+    <View style={styles.headerContainer}>
+      {/* Sección de descuento general */}
+      <View style={[styles.discountCard, dynamicStyles.discountCard]}>
+        <View style={styles.discountRow}>
+          <View style={styles.discountInputContainer}>
+            <MyInput
+              name="generalDiscount"
+              type="number"
+              control={control}
+              label="Descuento general (%)"
+              placeholder="0"
+              rules={{
+                min: { value: MIN_DISCOUNT, message: 'El descuento no puede ser negativo' },
+                max: { value: MAX_DISCOUNT, message: 'El descuento no puede ser mayor a 100%' }
+              }}
+              leftIcon="percent"
             />
           </View>
-        </View>
 
-        {/* Botón agregar producto */}
-        <MyButton
-          title="Agregar producto"
-          onPress={addRow}
-          variant="primary"
-          icon={<Icon type="material-community" name="plus" size={20} color={colors.WHITE} />}
-          fullWidth
-        />
-
-        {/* Headers de tabla */}
-        <View style={[styles.tableHeader, { borderBottomColor: colors.BORDER }]}>
-          <View style={styles.headerColumn}>
-            <Text style={[styles.headerText, { color: colors.TEXT_PRIMARY }]}>Precio</Text>
-          </View>
-          <View style={styles.headerColumnSmall}>
-            <Text style={[styles.headerText, { color: colors.TEXT_PRIMARY }]}>Desc %</Text>
-          </View>
-          <View style={styles.headerColumn}>
-            <Text style={[styles.headerText, { color: colors.TEXT_PRIMARY }]}>Total</Text>
-          </View>
-          <View style={styles.headerColumnAction}>
-            <Icon type="material-community" name="delete" size={18} color={colors.TEXT_SECONDARY} />
-          </View>
+          <MyButton
+            title="Aplicar a todos"
+            onPress={applyGeneralDiscount}
+            variant="secondary"
+            size="medium"
+            icon={
+              <Icon type="material-community" name="check-all" size={18} color={colors.WHITE} />
+            }
+            style={styles.applyButton}
+          />
         </View>
       </View>
-    );
-  };
 
-  const footerComponent = (): React.ReactElement => {
-    return (
-      <View
-        style={[
-          styles.footer,
-          { backgroundColor: colors.SUCCESS + '15', borderColor: colors.SUCCESS }
-        ]}
-      >
-        <View style={styles.totalRow}>
-          <Text style={[styles.totalLabel, { color: colors.TEXT_SECONDARY }]}>Total general</Text>
-          <Text style={[styles.totalAmount, { color: colors.SUCCESS }]}>
-            {NumberFormat(realTotal)}
-          </Text>
+      {/* Botón agregar producto */}
+      <MyButton
+        title="Agregar producto"
+        onPress={addRow}
+        variant="primary"
+        icon={<Icon type="material-community" name="plus" size={20} color={colors.WHITE} />}
+        fullWidth
+      />
+
+      {/* Headers de tabla */}
+      <View style={[styles.tableHeader, dynamicStyles.tableHeader]}>
+        <View style={styles.headerColumn}>
+          <Text style={[styles.headerText, dynamicStyles.headerText]}>Precio</Text>
         </View>
-        <Text style={[styles.productsCount, { color: colors.TEXT_SECONDARY }]}>
-          {products.length} {products.length === 1 ? 'producto' : 'productos'}
+        <View style={styles.headerColumnSmall}>
+          <Text style={[styles.headerText, dynamicStyles.headerText]}>Desc %</Text>
+        </View>
+        <View style={styles.headerColumn}>
+          <Text style={[styles.headerText, dynamicStyles.headerText]}>Total</Text>
+        </View>
+        <View style={styles.headerColumnAction}>
+          <Icon type="material-community" name="delete" size={18} color={colors.TEXT_SECONDARY} />
+        </View>
+      </View>
+    </View>
+  );
+
+  const footer = (
+    <View style={[styles.footer, dynamicStyles.footer]}>
+      <View style={styles.totalRow}>
+        <Text style={[styles.totalLabel, dynamicStyles.totalLabel]}>Total general</Text>
+        <Text style={[styles.totalAmount, dynamicStyles.totalAmount]}>
+          {NumberFormat(realTotal)}
         </Text>
       </View>
-    );
-  };
+      <Text style={[styles.productsCount, dynamicStyles.productsCount]}>
+        {products.length} {products.length === 1 ? 'producto' : 'productos'}
+      </Text>
+    </View>
+  );
 
   return (
     <View style={[commonStyles.screenContainer, { backgroundColor: colors.BACKGROUND }]}>
@@ -195,8 +205,8 @@ export default function CalculeProductsScreen({ navigation }: CalculeProductsScr
           renderItem={renderItem}
           keyExtractor={(item) => item.id}
           extraData={products}
-          ListHeaderComponent={headerComponent}
-          ListFooterComponent={footerComponent}
+          ListHeaderComponent={header}
+          ListFooterComponent={footer}
           removeClippedSubviews={false}
           contentContainerStyle={styles.listContent}
         />
@@ -217,7 +227,7 @@ const styles = StyleSheet.create({
     padding: 12,
     borderRadius: 12,
     marginBottom: 16,
-    shadowColor: '#000',
+    shadowColor: SHADOW_COLOR,
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 4,
@@ -265,7 +275,7 @@ const styles = StyleSheet.create({
     marginBottom: 12,
     borderRadius: 12,
     borderWidth: 2,
-    shadowColor: '#000',
+    shadowColor: SHADOW_COLOR,
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 4,

@@ -1,106 +1,90 @@
 // ~/utils/serializationHelper.ts
 
 /**
- * UTILIDAD PARA DEBUGGING DE SERIALIZACIÓN
- * Ayuda a encontrar objetos que no se pueden serializar a JSON
+ * UTILIDADES PARA DEBUGGING DE SERIALIZACIÓN
+ * Ayudan a encontrar objetos que no se pueden serializar a JSON
  */
 
+export interface StorageLike {
+  getItem: (key: string) => Promise<string | null>;
+  setItem: (key: string, value: string) => Promise<void>;
+}
+
+const MAX_DEPTH = 5;
+
+/** Bytes que ocupa un string en UTF-8 (no depende de Blob ni TextEncoder) */
+const utf8ByteLength = (text: string): number => {
+  let bytes = 0;
+  for (const char of text) {
+    const code = char.codePointAt(0) ?? 0;
+    if (code <= 0x7f) bytes += 1;
+    else if (code <= 0x7ff) bytes += 2;
+    else if (code <= 0xffff) bytes += 3;
+    else bytes += 4;
+  }
+  return bytes;
+};
+
 /**
- * Valida si un objeto es serializable a JSON
- * @param obj Objeto a validar
+ * Encuentra recursivamente las rutas cuyo valor no es serializable
+ * @param value Valor a inspeccionar
+ * @param path Ruta actual (para tracking)
+ */
+function findProblematicPaths(value: unknown, path = 'root', depth = 0): string[] {
+  if (depth > MAX_DEPTH || typeof value !== 'object' || value === null) {
+    return [];
+  }
+
+  const isArray = Array.isArray(value);
+  const paths: string[] = [];
+
+  Object.entries(value).forEach(([key, child]) => {
+    try {
+      JSON.stringify(child);
+    } catch {
+      const childPath = isArray ? `${path}[${key}]` : `${path}.${key}`;
+      paths.push(childPath, ...findProblematicPaths(child, childPath, depth + 1));
+    }
+  });
+
+  return paths;
+}
+
+/**
+ * Valida si un valor es serializable a JSON
+ * En desarrollo, muestra las rutas que causan el problema
+ * @param obj Valor a validar
  * @param name Nombre para logging (opcional)
  * @returns true si es serializable, false si no
  */
-export function validateSerializable(obj: any, name: string = 'object'): boolean {
+export function validateSerializable(obj: unknown, name = 'object'): boolean {
   try {
-    const serialized = JSON.stringify(obj);
-    const size = new Blob([serialized]).size;
-    const sizeKB = (size / 1024).toFixed(2);
-
+    JSON.stringify(obj);
     return true;
-  } catch (error) {
-    // Intentar encontrar el campo problemático
-    if (typeof obj === 'object' && obj !== null) {
-      findProblematicField(obj, name);
-    } else {
+  } catch {
+    if (__DEV__) {
+      const paths = findProblematicPaths(obj, name);
+      console.warn(`"${name}" no es serializable.`, paths.length > 0 ? paths : '');
     }
-
     return false;
   }
 }
 
 /**
- * Encuentra recursivamente qué campo no es serializable
- * @param obj Objeto a inspeccionar
- * @param path Ruta actual (para tracking)
- */
-function findProblematicField(obj: any, path: string = 'root', depth: number = 0): void {
-  if (depth > 5) {
-    return;
-  }
-
-  if (Array.isArray(obj)) {
-    obj.forEach((item, index) => {
-      try {
-        JSON.stringify(item);
-      } catch {
-        console.error(`  ${'  '.repeat(depth)}❌ ${path}[${index}]`);
-        if (typeof item === 'object' && item !== null) {
-          findProblematicField(item, `${path}[${index}]`, depth + 1);
-        }
-      }
-    });
-  } else if (typeof obj === 'object' && obj !== null) {
-    Object.keys(obj).forEach((key) => {
-      try {
-        JSON.stringify(obj[key]);
-      } catch {
-        const value = obj[key];
-        const type = typeof value;
-
-        if (type === 'function') {
-        } else if (type === 'undefined') {
-        } else if (value === null) {
-        } else if (type === 'object') {
-          // Detectar referencias circulares
-          try {
-            const seen = new WeakSet();
-            JSON.stringify(value, (key, val) => {
-              if (typeof val === 'object' && val !== null) {
-                if (seen.has(val)) {
-                  return '[Circular]';
-                }
-                seen.add(val);
-              }
-              return val;
-            });
-          } catch {}
-
-          findProblematicField(value, `${path}.${key}`, depth + 1);
-        } else {
-        }
-      }
-    });
-  }
-}
-
-/**
- * Limpia un objeto para hacerlo serializable
- * Remueve funciones, undefined, y referencias circulares
- * @param obj Objeto a limpiar
- * @returns Objeto limpio y serializable
+ * Limpia un valor para hacerlo serializable
+ * Remueve funciones y reemplaza referencias circulares
+ * @param obj Valor a limpiar
+ * @returns Valor limpio y serializable
  */
 export function cleanForSerialization<T>(obj: T): T {
-  const seen = new WeakSet();
+  const seen = new WeakSet<object>();
 
   return JSON.parse(
-    JSON.stringify(obj, (key, value) => {
-      // Remover funciones
+    JSON.stringify(obj, (_key, value: unknown) => {
       if (typeof value === 'function') {
         return undefined;
       }
 
-      // Detectar referencias circulares
       if (typeof value === 'object' && value !== null) {
         if (seen.has(value)) {
           return '[Circular]';
@@ -110,68 +94,60 @@ export function cleanForSerialization<T>(obj: T): T {
 
       return value;
     })
-  );
+  ) as T;
 }
 
 /**
- * Obtiene el tamaño en KB de un objeto serializado
- * @param obj Objeto a medir
+ * Obtiene el tamaño en KB de un valor serializado
+ * @param obj Valor a medir
  * @returns Tamaño en KB o null si no es serializable
  */
-export function getSerializedSize(obj: any): number | null {
+export function getSerializedSize(obj: unknown): number | null {
   try {
-    const serialized = JSON.stringify(obj);
-    const size = new Blob([serialized]).size;
-    return size / 1024;
+    return utf8ByteLength(JSON.stringify(obj)) / 1024;
   } catch {
     return null;
   }
 }
 
 /**
- * Valida y limpia un objeto antes de guardarlo
- * @param obj Objeto a procesar
+ * Valida y limpia un valor antes de guardarlo
+ * @param obj Valor a procesar
  * @param name Nombre para logging
- * @returns Objeto limpio o null si hay error crítico
+ * @returns Valor limpio o null si hay error crítico
  */
-export function prepareForStorage<T>(obj: T, name: string = 'object'): T | null {
-  // Paso 1: Validar si es serializable
+export function prepareForStorage<T>(obj: T, name = 'object'): T | null {
   if (validateSerializable(obj, name)) {
     return obj;
   }
 
-  // Paso 2: Intentar limpiar
   try {
     const cleaned = cleanForSerialization(obj);
-
-    if (validateSerializable(cleaned, `${name} (limpio)`)) {
-      return cleaned;
-    }
-  } catch {}
-
-  return null;
+    return validateSerializable(cleaned, `${name} (limpio)`) ? cleaned : null;
+  } catch {
+    return null;
+  }
 }
 
 /**
  * Wrapper seguro para AsyncStorage.setItem
+ * @param storage Storage (por ejemplo AsyncStorage)
  * @param key Clave
- * @param value Valor (será serializado automáticamente)
+ * @param value Valor (se serializa automáticamente)
+ * @returns true si se guardó, false si falló
  */
-export async function safeSetItem(storage: any, key: string, value: any): Promise<boolean> {
+export async function safeSetItem(
+  storage: StorageLike,
+  key: string,
+  value: unknown
+): Promise<boolean> {
+  const prepared = prepareForStorage(value, key);
+  if (prepared === null) {
+    return false;
+  }
+
   try {
-    // Validar y limpiar
-    const prepared = prepareForStorage(value, key);
-    if (!prepared) {
-      throw new Error(`No se pudo preparar "${key}" para guardar`);
-    }
-
-    // Serializar
-    const serialized = JSON.stringify(prepared);
-    const sizeKB = (new Blob([serialized]).size / 1024).toFixed(2);
-
-    // Guardar
-    await storage.setItem(key, serialized);
-
+    await storage.setItem(key, JSON.stringify(prepared));
     return true;
   } catch {
     return false;
@@ -180,20 +156,14 @@ export async function safeSetItem(storage: any, key: string, value: any): Promis
 
 /**
  * Wrapper seguro para AsyncStorage.getItem
+ * @param storage Storage (por ejemplo AsyncStorage)
  * @param key Clave
  * @returns Valor parseado o null
  */
-export async function safeGetItem<T>(storage: any, key: string): Promise<T | null> {
+export async function safeGetItem<T>(storage: StorageLike, key: string): Promise<T | null> {
   try {
     const value = await storage.getItem(key);
-
-    if (value === null) {
-      return null;
-    }
-
-    const parsed = JSON.parse(value);
-
-    return parsed as T;
+    return value === null ? null : (JSON.parse(value) as T);
   } catch {
     return null;
   }

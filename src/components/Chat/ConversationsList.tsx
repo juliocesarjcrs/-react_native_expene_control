@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useCallback, useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, FlatList, Alert, Modal } from 'react-native';
 import { Icon } from 'react-native-elements';
 
@@ -15,38 +15,117 @@ type ConversationsListProps = {
   onSelect: (id: number) => void;
 };
 
+type Conversation = ReturnType<typeof useChat>['conversations'][number];
+
+const OVERLAY_COLOR = 'rgba(0, 0, 0, 0.5)';
+
+const keyExtractor = (item: Conversation): string => item.id.toString();
+
+// ─────────────────────────────────────────────
+// Item de la lista
+// ─────────────────────────────────────────────
+
+interface ConversationItemProps {
+  item: Conversation;
+  isSelected: boolean;
+  onSelect: (id: number) => void;
+  onMenuPress: (id: number) => void;
+}
+
+function ConversationItem({ item, isSelected, onSelect, onMenuPress }: ConversationItemProps) {
+  const colors = useThemeColors();
+
+  return (
+    <View style={[styles.conversationContainer, { borderBottomColor: colors.BORDER }]}>
+      <TouchableOpacity
+        style={[
+          styles.conversationItem,
+          isSelected && {
+            backgroundColor: colors.PRIMARY + '15',
+            borderLeftColor: colors.PRIMARY
+          }
+        ]}
+        onPress={() => onSelect(item.id)}
+        activeOpacity={0.7}
+      >
+        <View style={styles.conversationHeader}>
+          <View
+            style={[
+              styles.iconContainer,
+              { backgroundColor: isSelected ? colors.PRIMARY : colors.TEXT_SECONDARY }
+            ]}
+          >
+            <Icon type="material-community" name="message-text" size={16} color={colors.WHITE} />
+          </View>
+
+          <Text style={[styles.conversationText, { color: colors.TEXT_PRIMARY }]} numberOfLines={1}>
+            {item.lastMessage || 'Nueva conversación'}
+          </Text>
+        </View>
+
+        <View style={styles.conversationFooter}>
+          <View style={[styles.messageBadge, { backgroundColor: colors.INFO + '20' }]}>
+            <Icon
+              type="material-community"
+              name="chat"
+              size={12}
+              color={colors.INFO}
+              containerStyle={styles.badgeIcon}
+            />
+            <Text style={[styles.messageCount, { color: colors.INFO }]}>
+              {item.messageCount} {item.messageCount === 1 ? 'mensaje' : 'mensajes'}
+            </Text>
+          </View>
+        </View>
+      </TouchableOpacity>
+
+      <TouchableOpacity style={styles.menuButton} onPress={() => onMenuPress(item.id)}>
+        <Icon
+          type="material-community"
+          name="dots-vertical"
+          size={24}
+          color={colors.TEXT_SECONDARY}
+        />
+      </TouchableOpacity>
+    </View>
+  );
+}
+
+// ─────────────────────────────────────────────
+// Lista
+// ─────────────────────────────────────────────
+
 export function ConversationsList({ onSelect }: ConversationsListProps) {
   const colors = useThemeColors();
   const { conversations, currentConversationId, deleteConversation } = useChat();
-  const [selectedConversation, setSelectedConversation] = useState<number | null>(null);
-  const [showMenu, setShowMenu] = useState(false);
 
-  const handleMenuPress = (id: number) => {
-    setSelectedConversation(id);
-    setShowMenu(true);
-  };
+  // Conversación cuyo menú está abierto (null = menú cerrado)
+  const [menuConversationId, setMenuConversationId] = useState<number | null>(null);
 
-  const handleDelete = async () => {
-    if (!selectedConversation) return;
+  const closeMenu = () => setMenuConversationId(null);
+
+  const handleMenuPress = useCallback((id: number) => {
+    setMenuConversationId(id);
+  }, []);
+
+  const handleDelete = () => {
+    if (menuConversationId === null) return;
+
+    const idToDelete = menuConversationId;
+    closeMenu();
 
     Alert.alert(
       'Eliminar conversación',
       '¿Estás seguro de que deseas eliminar esta conversación?',
       [
-        {
-          text: 'Cancelar',
-          style: 'cancel',
-          onPress: () => setShowMenu(false)
-        },
+        { text: 'Cancelar', style: 'cancel' },
         {
           text: 'Eliminar',
           style: 'destructive',
           onPress: async () => {
             try {
-              await deleteConversation(selectedConversation);
-              setShowMenu(false);
-              setSelectedConversation(null);
-            } catch (error) {
+              await deleteConversation(idToDelete);
+            } catch {
               Alert.alert('Error', 'No se pudo eliminar la conversación');
             }
           }
@@ -54,6 +133,18 @@ export function ConversationsList({ onSelect }: ConversationsListProps) {
       ]
     );
   };
+
+  const renderItem = useCallback(
+    ({ item }: { item: Conversation }) => (
+      <ConversationItem
+        item={item}
+        isSelected={currentConversationId === item.id}
+        onSelect={onSelect}
+        onMenuPress={handleMenuPress}
+      />
+    ),
+    [currentConversationId, onSelect, handleMenuPress]
+  );
 
   if (conversations.length === 0) {
     return (
@@ -78,88 +169,24 @@ export function ConversationsList({ onSelect }: ConversationsListProps) {
     <>
       <FlatList
         data={conversations}
-        keyExtractor={(item) => item.id.toString()}
-        renderItem={({ item }) => {
-          const isSelected = currentConversationId === item.id;
-
-          return (
-            <View style={[styles.conversationContainer, { borderBottomColor: colors.BORDER }]}>
-              <TouchableOpacity
-                style={[
-                  styles.conversationItem,
-                  isSelected && {
-                    backgroundColor: colors.PRIMARY + '15',
-                    borderLeftColor: colors.PRIMARY
-                  }
-                ]}
-                onPress={() => onSelect(item.id)}
-                activeOpacity={0.7}
-              >
-                <View style={styles.conversationHeader}>
-                  <View
-                    style={[
-                      styles.iconContainer,
-                      { backgroundColor: isSelected ? colors.PRIMARY : colors.TEXT_SECONDARY }
-                    ]}
-                  >
-                    <Icon
-                      type="material-community"
-                      name="message-text"
-                      size={16}
-                      color={colors.WHITE}
-                    />
-                  </View>
-
-                  <Text
-                    style={[styles.conversationText, { color: colors.TEXT_PRIMARY }]}
-                    numberOfLines={1}
-                  >
-                    {item.lastMessage || 'Nueva conversación'}
-                  </Text>
-                </View>
-
-                <View style={styles.conversationFooter}>
-                  <View style={[styles.messageBadge, { backgroundColor: colors.INFO + '20' }]}>
-                    <Icon
-                      type="material-community"
-                      name="chat"
-                      size={12}
-                      color={colors.INFO}
-                      containerStyle={{ marginRight: 4 }}
-                    />
-                    <Text style={[styles.messageCount, { color: colors.INFO }]}>
-                      {item.messageCount} {item.messageCount === 1 ? 'mensaje' : 'mensajes'}
-                    </Text>
-                  </View>
-                </View>
-              </TouchableOpacity>
-
-              <TouchableOpacity style={styles.menuButton} onPress={() => handleMenuPress(item.id)}>
-                <Icon
-                  type="material-community"
-                  name="dots-vertical"
-                  size={24}
-                  color={colors.TEXT_SECONDARY}
-                />
-              </TouchableOpacity>
-            </View>
-          );
-        }}
+        keyExtractor={keyExtractor}
+        renderItem={renderItem}
         contentContainerStyle={styles.listContainer}
       />
 
       <Modal
-        visible={showMenu}
-        transparent={true}
+        visible={menuConversationId !== null}
+        transparent
         animationType="fade"
-        onRequestClose={() => setShowMenu(false)}
+        onRequestClose={closeMenu}
       >
-        <TouchableOpacity
-          style={styles.modalOverlay}
-          activeOpacity={1}
-          onPress={() => setShowMenu(false)}
-        >
-          <View style={[styles.menuContainer, { backgroundColor: colors.CARD_BACKGROUND }]}>
+        <TouchableOpacity style={styles.modalOverlay} activeOpacity={1} onPress={closeMenu}>
+          <View
+            style={[
+              styles.menuContainer,
+              { backgroundColor: colors.CARD_BACKGROUND, shadowColor: colors.BLACK }
+            ]}
+          >
             <TouchableOpacity
               style={[styles.menuItem, { backgroundColor: colors.ERROR + '10' }]}
               onPress={handleDelete}
@@ -169,7 +196,7 @@ export function ConversationsList({ onSelect }: ConversationsListProps) {
                 name="delete-outline"
                 size={20}
                 color={colors.ERROR}
-                containerStyle={{ marginRight: 8 }}
+                containerStyle={styles.menuItemIcon}
               />
               <Text style={[styles.menuItemText, { color: colors.ERROR }]}>
                 Eliminar conversación
@@ -241,6 +268,9 @@ const styles = StyleSheet.create({
     paddingVertical: 4,
     borderRadius: 12
   },
+  badgeIcon: {
+    marginRight: 4
+  },
   messageCount: {
     fontSize: SMALL - 1,
     fontWeight: '600'
@@ -252,7 +282,7 @@ const styles = StyleSheet.create({
   },
   modalOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    backgroundColor: OVERLAY_COLOR,
     justifyContent: 'center',
     alignItems: 'center'
   },
@@ -260,7 +290,6 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     padding: 8,
     minWidth: 240,
-    shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.25,
     shadowRadius: 4,
@@ -271,6 +300,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     padding: 14,
     borderRadius: 8
+  },
+  menuItemIcon: {
+    marginRight: 8
   },
   menuItemText: {
     fontSize: SMALL + 1,

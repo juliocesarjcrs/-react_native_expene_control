@@ -1,10 +1,11 @@
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useState } from 'react';
 import { ScrollView, StyleSheet, Text, View, Image } from 'react-native';
 import { Icon } from 'react-native-elements';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useDispatch, useSelector } from 'react-redux';
 import Constants from 'expo-constants';
 import { StackNavigationProp } from '@react-navigation/stack';
+import { useFocusEffect } from '@react-navigation/native';
 
 // Redux
 import { setIsAuth } from '~/features/auth/authSlice';
@@ -41,7 +42,7 @@ import { useThemeColors } from '~/customHooks/useThemeColors';
 
 // Styles
 import { commonStyles } from '~/styles/common';
-import { MEDIUM, SMALL } from '~/styles/fonts';
+import { SMALL } from '~/styles/fonts';
 
 // Configs
 import { screenConfigs } from '~/config/screenConfigs';
@@ -57,8 +58,27 @@ type CategoryDataFormat = {
   name: string;
   population: number;
   color: string;
-  legendFontColor: string;
-  legendFontSize: number;
+};
+
+type RawExpenses = Awaited<ReturnType<typeof getAllExpensesByMonth>>['data']['data'];
+
+// Datos de gastos junto con el mes para el que se cargaron
+type ExpenseData = {
+  month: string;
+  total: number;
+  categories: CategoryDataFormat[];
+};
+
+const cutName = (name: string): string => (name.length < 12 ? name : `${name.slice(0, 10)}...`);
+
+const buildCategories = (rows: RawExpenses): CategoryDataFormat[] => {
+  const formatted = rows.map((e, idx) => ({
+    name: cutName(e.name),
+    population: e.total,
+    color: AsignColor(idx)
+  }));
+  formatted.sort(compareValues('population', 'desc'));
+  return formatted;
 };
 
 export default function MainScreen({ navigation }: MainScreenProps) {
@@ -67,97 +87,78 @@ export default function MainScreen({ navigation }: MainScreenProps) {
   const month = useSelector((state: RootState) => state.date.month);
   const dispatch: AppDispatch = useDispatch();
 
-  const [categories, setCategories] = useState<CategoryDataFormat[]>([]);
-  const [total, setTotal] = useState<number>(0);
-  const [loading, setLoading] = useState<boolean>(false);
+  const [expenseData, setExpenseData] = useState<ExpenseData | null>(null);
   const [userLoggued, setUserLoggued] = useState<UserModel | null>(null);
   const [userImgSigned, setUserImgSigned] = useState<string | null>(null);
 
   const { isEnabled } = useFeatureFlag('chatbot');
-  const version = Constants.expoConfig?.version || 'Desconocida';
+  const version = Constants.expoConfig?.version ?? 'Desconocida';
 
-  useEffect(() => {
-    fetchData();
-    fetchDataUserLogued();
+  // Hay carga mientras los datos no correspondan al mes seleccionado
+  const loading = expenseData?.month !== month;
+  const total = expenseData?.total ?? 0;
+  const categories = expenseData?.categories ?? [];
 
-    const unsubscribe = navigation.addListener('focus', () => {
-      fetchData();
-      fetchDataUserLogued();
-    });
+  // Gastos: al enfocar la pantalla y cuando cambia el mes
+  useFocusEffect(
+    useCallback(() => {
+      let active = true;
 
-    return unsubscribe;
-  }, [navigation, month]);
-
-  const fetchData = async (): Promise<void> => {
-    try {
-      setLoading(true);
-      const { data } = await getAllExpensesByMonth(month);
-      setTotal(data.total);
-
-      const dataFormat = data.data.map((e, idx) => ({
-        name: cutName(e.name),
-        population: e.total,
-        color: AsignColor(idx),
-        legendFontColor: colors.TEXT_SECONDARY,
-        legendFontSize: 15
-      }));
-
-      dataFormat.sort(compareValues('population', 'desc'));
-      setCategories(dataFormat);
-      setLoading(false);
-    } catch (error) {
-      setLoading(false);
-      showError(error);
-    }
-  };
-
-  const cutName = (name: string): string => {
-    return name.length < 12 ? name : name.slice(0, 10) + '...';
-  };
-
-  const fetchDataUserLogued = async (): Promise<void> => {
-    try {
-      const jsonValue = await AsyncStorage.getItem('user');
-      const user = jsonValue != null ? JSON.parse(jsonValue) : null;
-
-      if (user?.id) {
-        const { data } = await getUser(user.id);
-        setUserLoggued(data);
-
-        if (data.image) {
-          await getUrlAws(data.image);
+      const loadExpenses = async (): Promise<void> => {
+        try {
+          const { data } = await getAllExpensesByMonth(month);
+          if (active) {
+            setExpenseData({ month, total: data.total, categories: buildCategories(data.data) });
+          }
+        } catch (error) {
+          if (active) {
+            showError(error);
+            setExpenseData({ month, total: 0, categories: [] });
+          }
         }
-      }
-    } catch (error) {
-      showError(error);
-    }
-  };
+      };
 
-  const getUrlAws = async (keyImg: string): Promise<void> => {
-    try {
-      if (keyImg) {
-        const query = { file: keyImg };
-        const { data } = await getUrlSignedAws(query);
-        setUserImgSigned(data);
-      }
-    } catch (error) {
-      showError(error);
-    }
-  };
+      loadExpenses();
 
-  const sendcreateExpenseScreen = (): void => {
-    navigation.navigate('createExpense');
-  };
+      return () => {
+        active = false;
+      };
+    }, [month])
+  );
 
-  const sendScanInvoiceExpenseScreen = (): void => {
-    navigation.navigate('scanInvoiceExpense');
-  };
+  // Usuario y foto: al enfocar la pantalla
+  useFocusEffect(
+    useCallback(() => {
+      let active = true;
 
-  const sendDetailsExpenseScreen = (): void => {
-    navigation.navigate('sumary');
-  };
+      const loadUser = async (): Promise<void> => {
+        try {
+          const jsonValue = await AsyncStorage.getItem('user');
+          const storedUser: UserModel | null = jsonValue ? JSON.parse(jsonValue) : null;
+          if (!storedUser?.id) return;
 
-  const LogOut = async (): Promise<void> => {
+          const { data } = await getUser(storedUser.id);
+          if (!active) return;
+          setUserLoggued(data);
+
+          if (data.image) {
+            const { data: signedUrl } = await getUrlSignedAws({ file: data.image });
+            if (active) setUserImgSigned(signedUrl);
+          }
+        } catch (error) {
+          if (active) showError(error);
+        }
+      };
+
+      loadUser();
+
+      return () => {
+        active = false;
+      };
+    }, [])
+  );
+
+  const logOut = async (): Promise<void> => {
     try {
       await AsyncStorage.removeItem('access_token');
       await AsyncStorage.removeItem('user');
@@ -166,6 +167,21 @@ export default function MainScreen({ navigation }: MainScreenProps) {
     } catch (error) {
       showError(error);
     }
+  };
+
+  const renderChart = () => {
+    if (loading) return <MyLoading />;
+
+    if (total > 0) return <MyDonutChart data={categories} total={total} />;
+
+    return (
+      <View style={styles.emptyState}>
+        <Icon type="material-community" name="chart-pie" size={48} color={colors.TEXT_SECONDARY} />
+        <Text style={[styles.emptyText, { color: colors.TEXT_SECONDARY }]}>
+          No se registran gastos en este mes
+        </Text>
+      </View>
+    );
   };
 
   return (
@@ -204,13 +220,18 @@ export default function MainScreen({ navigation }: MainScreenProps) {
 
         {/* QUICK ACTIONS */}
         <View style={styles.section}>
-          <View style={[styles.actionCard, { backgroundColor: colors.CARD_BACKGROUND }]}>
+          <View
+            style={[
+              styles.actionCard,
+              { backgroundColor: colors.CARD_BACKGROUND, shadowColor: colors.BLACK }
+            ]}
+          >
             <OptionsGrid
               actions={[
-                { title: 'Ingresar gasto', onPress: sendcreateExpenseScreen },
+                { title: 'Ingresar gasto', onPress: () => navigation.navigate('createExpense') },
                 {
                   title: 'Escanear',
-                  onPress: sendScanInvoiceExpenseScreen,
+                  onPress: () => navigation.navigate('scanInvoiceExpense'),
                   featureKey: 'invoice_scanner'
                 }
               ]}
@@ -219,28 +240,14 @@ export default function MainScreen({ navigation }: MainScreenProps) {
         </View>
 
         {/* CHART SECTION */}
-        <View style={styles.section}>
-          {loading ? (
-            <MyLoading />
-          ) : total > 0 ? (
-            <MyDonutChart data={categories} total={total} />
-          ) : (
-            <View style={styles.emptyState}>
-              <Icon
-                type="material-community"
-                name="chart-pie"
-                size={48}
-                color={colors.TEXT_SECONDARY}
-              />
-              <Text style={[styles.emptyText, { color: colors.TEXT_SECONDARY }]}>
-                No se registran gastos en este mes
-              </Text>
-            </View>
-          )}
-        </View>
+        <View style={styles.section}>{renderChart()}</View>
 
         {/* DETAIL BUTTON */}
-        <MyButton onPress={sendDetailsExpenseScreen} title="Detallar gastos" variant="primary" />
+        <MyButton
+          onPress={() => navigation.navigate('sumary')}
+          title="Detallar gastos"
+          variant="primary"
+        />
 
         {/* LAST EXPENSES */}
         <View style={styles.section}>
@@ -248,7 +255,7 @@ export default function MainScreen({ navigation }: MainScreenProps) {
         </View>
 
         {/* LOGOUT BUTTON */}
-        <MyButton onPress={LogOut} title="Cerrar sesión" variant="cancel" />
+        <MyButton onPress={logOut} title="Cerrar sesión" variant="cancel" />
 
         {/* VERSION */}
         <Text style={[styles.versionText, { color: colors.TEXT_SECONDARY }]}>
@@ -266,78 +273,16 @@ const styles = StyleSheet.create({
     padding: 16,
     paddingBottom: 30
   },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    padding: 16,
-    borderRadius: 12,
-    marginBottom: 16,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 2
-  },
-  avatarContainer: {
-    borderWidth: 2,
-    borderRadius: 36,
-    marginRight: 12
-  },
-  avatar: {
-    width: 64,
-    height: 64,
-    borderRadius: 32
-  },
-  avatarPlaceholder: {
-    width: 64,
-    height: 64,
-    borderRadius: 32,
-    justifyContent: 'center',
-    alignItems: 'center'
-  },
-  userInfo: {
-    flex: 1
-  },
-  name: {
-    fontSize: MEDIUM + 2,
-    fontWeight: '600',
-    marginBottom: 4
-  },
   section: {
     marginBottom: 16
   },
   actionCard: {
     padding: 12,
     borderRadius: 12,
-    shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 4,
     elevation: 2
-  },
-  totalCard: {
-    padding: 20,
-    borderRadius: 12,
-    marginBottom: 16,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3
-  },
-  totalHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 8
-  },
-  totalLabel: {
-    fontSize: SMALL + 1,
-    fontWeight: '500'
-  },
-  total: {
-    fontSize: 32,
-    fontWeight: '700',
-    marginTop: 4
   },
   emptyState: {
     alignItems: 'center',
@@ -356,7 +301,7 @@ const styles = StyleSheet.create({
   },
   userHeaderCompact: {
     alignItems: 'flex-end',
-    maxWidth: 160 // Limita el ancho
+    maxWidth: 160
   },
   avatarSmall: {
     width: 40,

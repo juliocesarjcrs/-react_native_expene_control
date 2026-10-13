@@ -9,7 +9,6 @@ import {
   Alert
 } from 'react-native';
 import { StackNavigationProp } from '@react-navigation/stack';
-import { RouteProp } from '@react-navigation/native';
 
 import { getAllThemes, activateTheme } from '../../services/themeConfigService';
 import { useTheme } from '../../contexts/ThemeContext';
@@ -33,12 +32,12 @@ import { commonStyles } from '~/styles/common';
 import { screenConfigs } from '~/config/screenConfigs';
 
 type ManageThemesScreenNavigationProp = StackNavigationProp<SettingsStackParamList>;
-type ManageThemesScreenRouteProp = RouteProp<SettingsStackParamList>;
 
 type ManageThemesScreenProps = {
   navigation: ManageThemesScreenNavigationProp;
-  route: ManageThemesScreenRouteProp;
 };
+
+const PREVIEW_COLOR_KEYS = ['PRIMARY', 'SECONDARY', 'SUCCESS', 'WARNING', 'INFO'] as const;
 
 export default function ManageThemesScreen({ navigation }: ManageThemesScreenProps) {
   const config = screenConfigs.manageThemes;
@@ -49,23 +48,27 @@ export default function ManageThemesScreen({ navigation }: ManageThemesScreenPro
   const { refreshTheme } = useTheme();
 
   useEffect(() => {
-    fetchThemes();
-    return navigation.addListener('focus', () => {
-      fetchThemes();
-    });
-  }, []);
+    let isMounted = true;
 
-  const fetchThemes = async () => {
-    try {
-      setLoading(true);
-      const data = await getAllThemes();
-      setThemes(data);
-    } catch (error) {
-      showError(error);
-    } finally {
-      setLoading(false);
-    }
-  };
+    const fetchThemes = async () => {
+      try {
+        const data = await getAllThemes();
+        if (isMounted) setThemes(data);
+      } catch (error) {
+        if (isMounted) showError(error);
+      } finally {
+        if (isMounted) setLoading(false);
+      }
+    };
+
+    // 'focus' también se dispara en el primer enfoque de la pantalla.
+    const unsubscribe = navigation.addListener('focus', fetchThemes);
+
+    return () => {
+      isMounted = false;
+      unsubscribe();
+    };
+  }, [navigation]);
 
   const handleActivateTheme = async (themeName: string) => {
     try {
@@ -111,47 +114,52 @@ export default function ManageThemesScreen({ navigation }: ManageThemesScreenPro
     >
       <ScreenHeader title={config.title} subtitle={config.subtitle} />
 
-      {themes.map((theme) => (
-        <View key={theme.id} style={styles.themeCard}>
-          <View style={styles.themeHeader}>
-            <View style={styles.themeTitleContainer}>
-              <Text style={styles.themeName}>{theme.themeName}</Text>
-              {theme.isActive === 1 && (
-                <View style={styles.activeBadge}>
-                  <Text style={styles.activeBadgeText}>✓ ACTIVO</Text>
-                </View>
+      {themes.map((theme) => {
+        const isActivating = activating === theme.themeName;
+
+        return (
+          <View key={theme.id} style={styles.themeCard}>
+            <View style={styles.themeHeader}>
+              <View style={styles.themeTitleContainer}>
+                <Text style={styles.themeName}>{theme.themeName}</Text>
+                {theme.isActive === 1 && (
+                  <View style={styles.activeBadge}>
+                    <Text style={styles.activeBadgeText}>✓ ACTIVO</Text>
+                  </View>
+                )}
+              </View>
+            </View>
+
+            {/* Preview de colores principales */}
+            <View style={styles.colorPreview}>
+              {PREVIEW_COLOR_KEYS.map((key) => (
+                <View key={key} style={[styles.colorBox, { backgroundColor: theme.colors[key] }]} />
+              ))}
+            </View>
+
+            {/* Botones */}
+            <View style={styles.buttonContainer}>
+              {theme.isActive === 0 && (
+                <TouchableOpacity
+                  style={styles.activateButton}
+                  onPress={() => handleActivateTheme(theme.themeName)}
+                  disabled={isActivating}
+                >
+                  {isActivating ? (
+                    <ActivityIndicator size="small" color="white" />
+                  ) : (
+                    <Text style={styles.activateButtonText}>Activar</Text>
+                  )}
+                </TouchableOpacity>
               )}
+              <MyButton
+                onPress={() => navigateToEditTheme(theme.themeName)}
+                title="Editar Colores"
+              />
             </View>
           </View>
-
-          {/* Preview de colores principales */}
-          <View style={styles.colorPreview}>
-            <View style={[styles.colorBox, { backgroundColor: theme.colors.PRIMARY }]} />
-            <View style={[styles.colorBox, { backgroundColor: theme.colors.SECONDARY }]} />
-            <View style={[styles.colorBox, { backgroundColor: theme.colors.SUCCESS }]} />
-            <View style={[styles.colorBox, { backgroundColor: theme.colors.WARNING }]} />
-            <View style={[styles.colorBox, { backgroundColor: theme.colors.INFO }]} />
-          </View>
-
-          {/* Botones */}
-          <View style={styles.buttonContainer}>
-            {theme.isActive === 0 && (
-              <TouchableOpacity
-                style={styles.activateButton}
-                onPress={() => handleActivateTheme(theme.themeName)}
-                disabled={activating === theme.themeName}
-              >
-                {activating === theme.themeName ? (
-                  <ActivityIndicator size="small" color="white" />
-                ) : (
-                  <Text style={styles.activateButtonText}>Activar</Text>
-                )}
-              </TouchableOpacity>
-            )}
-            <MyButton onPress={() => navigateToEditTheme(theme.themeName)} title="Editar Colores" />
-          </View>
-        </View>
-      ))}
+        );
+      })}
 
       {themes.length === 0 && (
         <View style={styles.emptyState}>
@@ -163,10 +171,6 @@ export default function ManageThemesScreen({ navigation }: ManageThemesScreenPro
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#f5f5f5'
-  },
   centerContainer: {
     flex: 1,
     justifyContent: 'center',
@@ -177,22 +181,6 @@ const styles = StyleSheet.create({
     marginTop: 10,
     fontSize: 16,
     color: '#666'
-  },
-  header: {
-    backgroundColor: '#9c27b0',
-    padding: 20,
-    marginBottom: 10
-  },
-  headerTitle: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: 'white',
-    marginBottom: 5
-  },
-  headerSubtitle: {
-    fontSize: 14,
-    color: 'white',
-    opacity: 0.9
   },
   themeCard: {
     backgroundColor: 'white',
@@ -256,18 +244,6 @@ const styles = StyleSheet.create({
     justifyContent: 'center'
   },
   activateButtonText: {
-    color: 'white',
-    fontSize: 16,
-    fontWeight: 'bold'
-  },
-  editButton: {
-    flex: 1,
-    backgroundColor: '#2196f3',
-    paddingVertical: 12,
-    borderRadius: 8,
-    alignItems: 'center'
-  },
-  editButtonText: {
     color: 'white',
     fontSize: 16,
     fontWeight: 'bold'

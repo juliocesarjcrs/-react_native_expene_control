@@ -1,15 +1,22 @@
-import React, { useEffect, useState, forwardRef, useImperativeHandle } from 'react';
+import React, {
+  forwardRef,
+  useEffect,
+  useImperativeHandle,
+  useMemo,
+  useRef,
+  useState,
+  SetStateAction
+} from 'react';
 import { View, Text, StyleSheet, StyleProp, ViewStyle } from 'react-native';
 import DropDownPicker from 'react-native-dropdown-picker';
 import { useSelector } from 'react-redux';
+import { Icon } from 'react-native-elements';
 
 // Services
 import { getAllSubcategoriesExpensesByMonth } from '~/services/categories';
 
-// Utils
-import ErrorText from '../ErrorText';
-
 // Components
+import ErrorText from '../ErrorText';
 import MyLoading from '../loading/MyLoading';
 
 // Types
@@ -17,15 +24,17 @@ import { RootState } from '~/shared/types/reducers';
 import {
   CategoryFormat,
   CategorySelection,
-  SubcategoryFormat,
   SubcategorySelection
 } from '~/shared/types/components/dropDown/SelectJoinCategory.type';
 
+// Utils
+import { showError } from '~/utils/showError';
+
+// Theme
+import { useThemeColors } from '~/customHooks/useThemeColors';
+
 // Styles
 import { MEGA_BIG } from '~/styles/fonts';
-import { Icon } from 'react-native-elements';
-import { showError } from '~/utils/showError';
-import { useThemeColors } from '~/customHooks/useThemeColors';
 
 interface SelectJoinCategoryProps {
   fetchExpensesSubcategory: (data: SubcategorySelection) => void;
@@ -33,30 +42,45 @@ interface SelectJoinCategoryProps {
   containerStyle?: StyleProp<ViewStyle>;
 }
 
+export type SelectJoinCategoryHandle = {
+  resetSubcategory: () => void;
+};
+
 type SubcategoryFormatInt = {
   label: string;
   value: number;
 };
 
-const SelectJoinCategory = forwardRef(
-  (
-    {
-      fetchExpensesSubcategory,
-      fetchExpensesOnlyCategory,
-      containerStyle
-    }: SelectJoinCategoryProps,
-    ref
-  ) => {
+type RawCategory = Awaited<
+  ReturnType<typeof getAllSubcategoriesExpensesByMonth>
+>['data']['data'][number];
+
+const ITEM_HEIGHT = 42;
+
+// DropDownPicker llama a setValue con un valor o con una función (prev) => valor
+const resolve = <T,>(next: SetStateAction<T>, prev: T): T =>
+  typeof next === 'function' ? (next as (prevState: T) => T)(prev) : next;
+
+// Definido fuera del componente para que sea una referencia estable
+const LoadingIndicator = () => <MyLoading />;
+
+const SelectJoinCategory = forwardRef<SelectJoinCategoryHandle, SelectJoinCategoryProps>(
+  ({ fetchExpensesSubcategory, fetchExpensesOnlyCategory, containerStyle }, ref) => {
     const colors = useThemeColors();
     const month = useSelector((state: RootState) => state.date.month);
-    const [categories, setCategories] = useState<CategoryFormat[]>([]);
-    const [subcategories, setSubcategories] = useState<SubcategoryFormatInt[]>([]);
+
+    const [rawCategories, setRawCategories] = useState<RawCategory[]>([]);
+    const [idCategory, setIdCategory] = useState<null | number>(null);
     const [subcategoryId, setSubcategoryId] = useState<null | number>(null);
-    const [loading, setLoading] = useState(false);
-    const ITEM_HEIGHT = 42;
+    const [loading, setLoading] = useState(true);
     const [open, setOpen] = useState(false);
     const [open2, setOpen2] = useState(false);
-    const [idCategory, setIdCategory] = useState<null | number>(null);
+
+    // Siempre apunta al callback más reciente del padre, sin re-disparar la carga
+    const onCategoryRef = useRef(fetchExpensesOnlyCategory);
+    useEffect(() => {
+      onCategoryRef.current = fetchExpensesOnlyCategory;
+    }, [fetchExpensesOnlyCategory]);
 
     useImperativeHandle(ref, () => ({
       resetSubcategory() {
@@ -64,200 +88,156 @@ const SelectJoinCategory = forwardRef(
       }
     }));
 
+    // Carga de categorías (al montar y cuando cambia el mes)
     useEffect(() => {
-      fetchCategories();
-    }, []);
+      let isMounted = true;
 
-    const fetchCategories = async () => {
-      try {
-        setLoading(true);
-        const { data } = await getAllSubcategoriesExpensesByMonth(month);
-        setLoading(false);
-        const filter = data.data.filter((f) => f.subcategories.length > 0);
-        const dataFormat = filter.map((e) => {
-          return {
-            label: e.name,
-            value: e.id,
-            subcategories: e.subcategories,
-            icon: () => (
-              <Icon
-                name={e.icon ? e.icon : 'question'}
-                type="font-awesome"
-                size={35}
-                color={colors.PRIMARY}
-              />
-            )
-          };
-        });
-        setCategories(dataFormat);
-        defaultIdCategory(dataFormat);
-      } catch (error) {
-        setLoading(false);
-        showError(error);
-      }
-    };
+      const fetchCategories = async () => {
+        try {
+          const { data } = await getAllSubcategoriesExpensesByMonth(month);
+          if (!isMounted) return;
 
-    const defaultIdCategory = (categoriesFormat: CategoryFormat[]) => {
-      if (categoriesFormat.length > 0) {
-        setIdCategory(categoriesFormat[0].value);
-      }
-    };
+          const withSubcategories = data.data.filter((f) => f.subcategories.length > 0);
+          setRawCategories(withSubcategories);
+          setSubcategoryId(null);
 
-    const sendDataSubcategory = (index: null | number) => {
-      if (index && idCategory) {
-        const foundSubcategory = subcategories.find((e) => e.value === index);
-        const foundCategory = categories.find((c) => c.value === idCategory);
-
-        if (foundSubcategory && foundCategory) {
-          // ✅ CORREGIDO: Enviar objeto completo con categoryId y categoryName
-          const dataToSend: SubcategorySelection = {
-            label: foundSubcategory.label,
-            value: foundSubcategory.value,
-            categoryId: idCategory,
-            categoryName: foundCategory.label
-          };
-          fetchExpensesSubcategory(dataToSend);
+          // Selecciona la primera categoría por defecto y avisa al padre
+          const first = withSubcategories[0];
+          setIdCategory(first ? first.id : null);
+          if (first) onCategoryRef.current({ id: first.id, label: first.name });
+        } catch (error) {
+          if (isMounted) showError(error);
+        } finally {
+          if (isMounted) setLoading(false);
         }
-      }
-    };
+      };
 
-    useEffect(() => {
-      sendFromDropDownPickerCategory(idCategory);
-    }, [idCategory]);
+      fetchCategories();
 
-    useEffect(() => {
-      sendDataSubcategory(subcategoryId);
-    }, [subcategoryId]);
+      return () => {
+        isMounted = false;
+      };
+    }, [month]);
 
-    const sendFromDropDownPickerCategory = (index: number | null) => {
+    // Items del picker de categorías (dependen del tema por el color del ícono)
+    const categories = useMemo<CategoryFormat[]>(
+      () =>
+        rawCategories.map((e) => ({
+          label: e.name,
+          value: e.id,
+          subcategories: e.subcategories,
+          icon: () => (
+            <Icon
+              name={e.icon ? e.icon : 'question'}
+              type="font-awesome"
+              size={35}
+              color={colors.PRIMARY}
+            />
+          )
+        })),
+      [rawCategories, colors.PRIMARY]
+    );
+
+    // Subcategorías derivadas de la categoría seleccionada
+    const subcategories = useMemo<SubcategoryFormatInt[]>(() => {
+      const selected = rawCategories.find((c) => c.id === idCategory);
+      return selected ? selected.subcategories.map((e) => ({ label: e.name, value: e.id })) : [];
+    }, [rawCategories, idCategory]);
+
+    const handleCategoryChange = (next: number | null) => {
+      setIdCategory(next);
       setSubcategoryId(null);
-      const indexArray = categories.findIndex((e) => {
-        return e.value === index;
-      });
-      if (indexArray >= 0) {
-        const dataFormat = formatOptionsSubcategories(categories[indexArray].subcategories);
-        setSubcategories(dataFormat);
-        const newData: CategorySelection = {
-          id: index,
-          label: categories[indexArray].label
-        };
-        fetchExpensesOnlyCategory(newData);
+
+      const found = rawCategories.find((c) => c.id === next);
+      if (found) {
+        fetchExpensesOnlyCategory({ id: next, label: found.name });
       }
     };
 
-    const formatOptionsSubcategories = (data: SubcategoryFormat[]): SubcategoryFormatInt[] => {
-      return data.map((e) => {
-        return { label: e.name, value: e.id };
-      });
+    const handleSubcategoryChange = (next: number | null) => {
+      setSubcategoryId(next);
+
+      if (next === null || idCategory === null) return;
+
+      const foundSubcategory = subcategories.find((e) => e.value === next);
+      const foundCategory = rawCategories.find((c) => c.id === idCategory);
+
+      if (foundSubcategory && foundCategory) {
+        fetchExpensesSubcategory({
+          label: foundSubcategory.label,
+          value: foundSubcategory.value,
+          categoryId: idCategory,
+          categoryName: foundCategory.name
+        });
+      }
+    };
+
+    // Props de estilo compartidas por ambos pickers
+    const sharedPickerProps = {
+      placeholderStyle: [styles.placeholder, { color: colors.GRAY }],
+      loading,
+      style: [
+        styles.dropdown,
+        { backgroundColor: colors.CARD_BACKGROUND, borderColor: colors.BORDER }
+      ],
+      dropDownContainerStyle: [
+        styles.dropdownContainer,
+        { backgroundColor: colors.CARD_BACKGROUND, borderColor: colors.BORDER }
+      ],
+      listMode: 'MODAL' as const,
+      modalProps: { animationType: 'fade' as const },
+      modalContentContainerStyle: [
+        styles.modalContainer,
+        { backgroundColor: colors.CARD_BACKGROUND }
+      ],
+      itemSeparator: true,
+      itemSeparatorStyle: [styles.separator, { backgroundColor: colors.BORDER }],
+      selectedItemContainerStyle: [
+        styles.selectedItemContainer,
+        { backgroundColor: colors.PRIMARY }
+      ],
+      selectedItemLabelStyle: [styles.selectedItemLabel, { color: colors.WHITE }],
+      textStyle: [styles.dropdownText, { color: colors.TEXT_PRIMARY }],
+      labelStyle: [styles.label, { color: colors.TEXT_PRIMARY }]
     };
 
     return (
       <View style={[styles.container, containerStyle]}>
         <Text style={[styles.subtitle, { color: colors.TEXT_PRIMARY }]}>Categoría</Text>
         <DropDownPicker
+          {...sharedPickerProps}
           open={open}
           value={idCategory}
           items={categories}
           setOpen={setOpen}
-          setValue={setIdCategory}
-          setItems={setCategories}
+          setValue={(next) => handleCategoryChange(resolve(next, idCategory))}
           maxHeight={ITEM_HEIGHT * categories.length}
           placeholder="Selecione una categoría"
-          placeholderStyle={[styles.placeholder, { color: colors.GRAY }]}
           zIndex={3000}
           zIndexInverse={1000}
-          loading={loading}
-          ActivityIndicatorComponent={() => <MyLoading />}
+          ActivityIndicatorComponent={LoadingIndicator}
           activityIndicatorColor="red"
           activityIndicatorSize={30}
-          style={[
-            styles.dropdown,
-            {
-              backgroundColor: colors.CARD_BACKGROUND,
-              borderColor: colors.BORDER
-            }
-          ]}
-          dropDownContainerStyle={[
-            styles.dropdownContainer,
-            {
-              backgroundColor: colors.CARD_BACKGROUND,
-              borderColor: colors.BORDER
-            }
-          ]}
-          listMode="MODAL"
-          modalProps={{
-            animationType: 'fade'
-          }}
-          modalContentContainerStyle={[
-            styles.modalContainer,
-            {
-              backgroundColor: colors.CARD_BACKGROUND
-            }
-          ]}
-          itemSeparator={true}
-          itemSeparatorStyle={[styles.separator, { backgroundColor: colors.BORDER }]}
-          selectedItemContainerStyle={[
-            styles.selectedItemContainer,
-            {
-              backgroundColor: colors.PRIMARY
-            }
-          ]}
-          selectedItemLabelStyle={[styles.selectedItemLabel, { color: colors.WHITE }]}
-          textStyle={[styles.dropdownText, { color: colors.TEXT_PRIMARY }]}
-          labelStyle={[styles.label, { color: colors.TEXT_PRIMARY }]}
         />
         {!idCategory && <ErrorText msg="Necesita seleccionar una Categoria" />}
 
         <Text style={[styles.subtitle, { color: colors.TEXT_PRIMARY }]}>Subcategoría</Text>
         <DropDownPicker
+          {...sharedPickerProps}
+          style={[
+            styles.dropdown,
+            styles.dropdownNoMargin,
+            { backgroundColor: colors.CARD_BACKGROUND, borderColor: colors.BORDER }
+          ]}
           open={open2}
           value={subcategoryId}
           items={subcategories}
           setOpen={setOpen2}
-          setValue={setSubcategoryId}
-          setItems={setSubcategories}
+          setValue={(next) => handleSubcategoryChange(resolve(next, subcategoryId))}
           maxHeight={ITEM_HEIGHT * subcategories.length}
           placeholder="Selecione una subcategoría"
-          placeholderStyle={[styles.placeholder, { color: colors.GRAY }]}
           zIndex={2000}
           zIndexInverse={2000}
-          loading={loading}
-          style={[
-            styles.dropdown,
-            {
-              marginBottom: 0,
-              backgroundColor: colors.CARD_BACKGROUND,
-              borderColor: colors.BORDER
-            }
-          ]}
-          dropDownContainerStyle={[
-            styles.dropdownContainer,
-            {
-              backgroundColor: colors.CARD_BACKGROUND,
-              borderColor: colors.BORDER
-            }
-          ]}
-          listMode="MODAL"
-          modalProps={{
-            animationType: 'fade'
-          }}
-          modalContentContainerStyle={[
-            styles.modalContainer,
-            {
-              backgroundColor: colors.CARD_BACKGROUND
-            }
-          ]}
-          itemSeparator={true}
-          itemSeparatorStyle={[styles.separator, { backgroundColor: colors.BORDER }]}
-          selectedItemContainerStyle={[
-            styles.selectedItemContainer,
-            {
-              backgroundColor: colors.PRIMARY
-            }
-          ]}
-          selectedItemLabelStyle={[styles.selectedItemLabel, { color: colors.WHITE }]}
-          textStyle={[styles.dropdownText, { color: colors.TEXT_PRIMARY }]}
-          labelStyle={[styles.label, { color: colors.TEXT_PRIMARY }]}
         />
         <View style={styles.errorContainer}>
           {!subcategoryId && <ErrorText msg="Necesita seleccionar una subcategoria" />}
@@ -292,6 +272,9 @@ const styles = StyleSheet.create({
     minHeight: 50,
     margin: 0,
     padding: 0
+  },
+  dropdownNoMargin: {
+    marginBottom: 0
   },
   dropdownContainer: {
     borderWidth: 1,

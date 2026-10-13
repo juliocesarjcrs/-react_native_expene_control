@@ -4,8 +4,6 @@ import { Provider } from 'react-redux';
 import createMockStore from 'redux-mock-store';
 import LastIncomesScreen, { LastIncomesScreenNavigationProp } from '../LastIncomesScreen';
 import * as incomesService from '../../../services/incomes';
-import { RouteProp } from '@react-navigation/native';
-import { IncomeStackParamList } from '../../../shared/types';
 import { setQuery } from '~/features/search/searchSlice';
 const mockStore = createMockStore([]);
 
@@ -30,28 +28,21 @@ const mockNavigation = {
   getState: jest.fn()
 } as unknown as LastIncomesScreenNavigationProp;
 
-// Mock route
-const mockRoute: RouteProp<IncomeStackParamList, 'lastIncomes'> = {
-  key: 'mock-key',
-  name: 'lastIncomes',
-  params: undefined
-};
-
 // Mock components
 jest.mock('~/components/ScreenHeader', () => ({
   ScreenHeader: () => null
 }));
 
-let capturedUpdateList: (() => void) | undefined;
+// let capturedUpdateList: (() => void) | undefined;
 
-jest.mock('../components/RenderItemIncome', () => {
-  const MockRenderItemIncome = ({ updateList }: { updateList: () => void }) => {
-    capturedUpdateList = updateList;
-    return null;
-  };
+// jest.mock('../components/RenderItemIncome', () => {
+//   const MockRenderItemIncome = ({ updateList }: { updateList: () => void }) => {
+//     capturedUpdateList = updateList;
+//     return null;
+//   };
 
-  return MockRenderItemIncome;
-});
+//   return MockRenderItemIncome;
+// });
 
 jest.mock('~/components/search/BarSearch', () => {
   return jest.fn(() => null);
@@ -154,7 +145,7 @@ describe('LastIncomesScreen flows', () => {
 
     render(
       <Provider store={store}>
-        <LastIncomesScreen navigation={mockNavigation} route={mockRoute} />
+        <LastIncomesScreen navigation={mockNavigation} />
       </Provider>
     );
 
@@ -168,7 +159,7 @@ describe('LastIncomesScreen flows', () => {
 
     render(
       <Provider store={store}>
-        <LastIncomesScreen navigation={mockNavigation} route={mockRoute} />
+        <LastIncomesScreen navigation={mockNavigation} />
       </Provider>
     );
 
@@ -188,7 +179,7 @@ describe('LastIncomesScreen flows', () => {
 
     const { rerender } = render(
       <Provider store={store}>
-        <LastIncomesScreen navigation={mockNavigation} route={mockRoute} />
+        <LastIncomesScreen navigation={mockNavigation} />
       </Provider>
     );
 
@@ -203,7 +194,7 @@ describe('LastIncomesScreen flows', () => {
     store = mockStore({ search: { query: 'new-query' } });
     rerender(
       <Provider store={store}>
-        <LastIncomesScreen navigation={mockNavigation} route={mockRoute} />
+        <LastIncomesScreen navigation={mockNavigation} />
       </Provider>
     );
 
@@ -219,7 +210,7 @@ describe('LastIncomesScreen flows', () => {
 
     const { getByTestId } = render(
       <Provider store={store}>
-        <LastIncomesScreen navigation={mockNavigation} route={mockRoute} />
+        <LastIncomesScreen navigation={mockNavigation} />
       </Provider>
     );
 
@@ -247,7 +238,7 @@ describe('LastIncomesScreen flows', () => {
 
     const { getByTestId } = render(
       <Provider store={store}>
-        <LastIncomesScreen navigation={mockNavigation} route={mockRoute} />
+        <LastIncomesScreen navigation={mockNavigation} />
       </Provider>
     );
 
@@ -279,14 +270,14 @@ describe('LastIncomesScreen flows', () => {
 
     const { rerender } = render(
       <Provider store={store}>
-        <LastIncomesScreen navigation={mockNavigation} route={mockRoute} />
+        <LastIncomesScreen navigation={mockNavigation} />
       </Provider>
     );
 
     store = mockStore({ search: { query: null } });
     rerender(
       <Provider store={store}>
-        <LastIncomesScreen navigation={mockNavigation} route={mockRoute} />
+        <LastIncomesScreen navigation={mockNavigation} />
       </Provider>
     );
 
@@ -317,7 +308,7 @@ describe('LastIncomesScreen flows', () => {
 
     const { getByTestId } = render(
       <Provider store={store}>
-        <LastIncomesScreen navigation={mockNavigation} route={mockRoute} />
+        <LastIncomesScreen navigation={mockNavigation} />
       </Provider>
     );
 

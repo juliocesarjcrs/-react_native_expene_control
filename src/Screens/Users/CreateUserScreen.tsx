@@ -48,7 +48,17 @@ interface CreateUserFormData {
   password: string;
 }
 
-type UserRole = 0 | 1; // 0 = Normal, 1 = Admin
+const ROLE_NORMAL = 0;
+const ROLE_ADMIN = 1;
+
+type UserRole = typeof ROLE_NORMAL | typeof ROLE_ADMIN;
+
+const fetchUsers = async (): Promise<UserModel[]> => {
+  const { data } = await getUsersList();
+  return data;
+};
+
+const keyExtractor = (item: UserModel): string => item.id.toString();
 
 export default function CreateUserScreen({ navigation }: CreateUserScreenProps) {
   const screenConfig = screenConfigs.createUser;
@@ -59,28 +69,29 @@ export default function CreateUserScreen({ navigation }: CreateUserScreenProps) 
     defaultValues: { email: '', name: '', password: '' }
   });
 
-  const [image, setImage] = useState<string | null>(null);
-  const [type, setType] = useState<string | null>(null);
-  const [fileName, setFileName] = useState<string | null>(null);
   const [listUsers, setListUsers] = useState<UserModel[]>([]);
-  const [role, setRole] = useState<UserRole>(0);
+  const [role, setRole] = useState<UserRole>(ROLE_NORMAL);
 
   useEffect(() => {
-    fetchData();
-    const unsubscribe = navigation.addListener('focus', () => {
-      fetchData();
-    });
-    return unsubscribe;
-  }, [navigation]);
+    let isMounted = true;
 
-  const fetchData = async (): Promise<void> => {
-    try {
-      const { data } = await getUsersList();
-      setListUsers(data);
-    } catch (error) {
-      showError(error);
-    }
-  };
+    const loadUsers = async (): Promise<void> => {
+      try {
+        const users = await fetchUsers();
+        if (isMounted) setListUsers(users);
+      } catch (error) {
+        if (isMounted) showError(error);
+      }
+    };
+
+    // 'focus' también se dispara en el primer enfoque de la pantalla.
+    const unsubscribe = navigation.addListener('focus', loadUsers);
+
+    return () => {
+      isMounted = false;
+      unsubscribe();
+    };
+  }, [navigation]);
 
   const onSubmit = async (payload: CreateUserFormData): Promise<void> => {
     try {
@@ -90,26 +101,18 @@ export default function CreateUserScreen({ navigation }: CreateUserScreenProps) 
       formData.append('password', payload.password);
       formData.append('role', role.toString());
 
-      if (image && type && fileName) {
-        formData.append('image', {
-          type: type,
-          uri: image,
-          name: fileName
-        } as any);
-      }
-
-      await createUser(formData as any);
+      await createUser(formData as unknown as Parameters<typeof createUser>[0]);
       ShowToast('Usuario creado exitosamente');
       reset();
-      setRole(0);
-      fetchData();
+      setRole(ROLE_NORMAL);
+      setListUsers(await fetchUsers());
     } catch (error) {
       showError(error);
     }
   };
 
   const handleRoleChange = (newValue: string): void => {
-    setRole(parseInt(newValue) as UserRole);
+    setRole(Number(newValue) as UserRole);
   };
 
   const renderItem: ListRenderItem<UserModel> = ({ item }) => (
@@ -122,8 +125,9 @@ export default function CreateUserScreen({ navigation }: CreateUserScreenProps) 
 
       <FlatList
         data={listUsers}
-        keyExtractor={(item) => item.id.toString()}
+        keyExtractor={keyExtractor}
         contentContainerStyle={styles.scrollContent}
+        keyboardShouldPersistTaps="handled"
         ListHeaderComponent={
           <View style={styles.formContainer}>
             {/* Input de Email */}
@@ -185,7 +189,7 @@ export default function CreateUserScreen({ navigation }: CreateUserScreenProps) 
                 <View style={styles.radioContainer}>
                   <View style={styles.radioOption}>
                     <RadioButton.Android
-                      value="0"
+                      value={ROLE_NORMAL.toString()}
                       color={colors.PRIMARY}
                       uncheckedColor={colors.TEXT_SECONDARY}
                     />
@@ -193,7 +197,7 @@ export default function CreateUserScreen({ navigation }: CreateUserScreenProps) 
                   </View>
                   <View style={styles.radioOption}>
                     <RadioButton.Android
-                      value="1"
+                      value={ROLE_ADMIN.toString()}
                       color={colors.INFO}
                       uncheckedColor={colors.TEXT_SECONDARY}
                     />

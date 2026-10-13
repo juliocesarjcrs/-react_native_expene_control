@@ -23,7 +23,6 @@ import { SMALL } from '~/styles/fonts';
 type CheckboxOption = {
   id: number;
   title: string;
-  checked: boolean;
   numMonths: number;
 };
 
@@ -32,118 +31,86 @@ interface CheckBoxOptionsProps<T extends StackNavigationProp<ParamListBase>> {
   updateNum: (numMonths: number) => void;
 }
 
+const SINCE_REGISTRATION_ID = 4;
+const CUSTOM_OPTION_ID = 5;
+const DEFAULT_OPTION_ID = 1;
+
 export default function CheckBoxOptions<T extends StackNavigationProp<ParamListBase>>({
   navigation,
   updateNum
 }: CheckBoxOptionsProps<T>) {
   const colors = useThemeColors();
-  const [, setInitialMonth] = useState<number>(0);
-  const [, setInitialDateMonth] = useState<string>('');
-  const [showDatePicker, setShowDatePicker] = useState<boolean>(false);
+
+  // Datos reales (todo lo demás se deriva)
+  const [registeredMonths, setRegisteredMonths] = useState<number | null>(null);
   const [customDate, setCustomDate] = useState<Date | null>(null);
+  const [selectedId, setSelectedId] = useState<number>(DEFAULT_OPTION_ID);
+  const [showDatePicker, setShowDatePicker] = useState<boolean>(false);
 
-  const [checkboxes, setCheckboxes] = useState<CheckboxOption[]>([
-    {
-      id: 1,
-      title: 'Últimos 3 meses',
-      checked: true,
-      numMonths: 3
-    },
-    {
-      id: 2,
-      title: 'Últimos 6 meses',
-      checked: false,
-      numMonths: 6
-    },
-    {
-      id: 3,
-      title: 'Últimos 12 meses',
-      checked: false,
-      numMonths: 12
-    },
-    {
-      id: 4,
-      title: `Desde registro`,
-      checked: false,
-      numMonths: 0
-    },
-    {
-      id: 5,
-      title: 'Personalizada',
-      checked: false,
-      numMonths: 0
-    }
-  ]);
-  const fetchUserLogued = async (): Promise<void> => {
-    try {
-      const jsonValue = await AsyncStorage.getItem('user');
-      if (!jsonValue) return;
-
-      const user: UserModel = JSON.parse(jsonValue) as UserModel;
-      const tempInitialMonth = GetInitialMonth(user.createdAt, 1);
-      setInitialMonth(tempInitialMonth);
-      setInitialDateMonth(user.createdAt);
-
-      setCheckboxes((prev) =>
-        prev.map((cb) =>
-          cb.id === 4
-            ? {
-                ...cb,
-                title: `Desde registro (${tempInitialMonth} meses)`,
-                numMonths: tempInitialMonth
-              }
-            : cb
-        )
-      );
-    } catch (error) {
-      showError(error);
-    }
-  };
   useEffect(() => {
-    fetchUserLogued();
-    const unsubscribe = navigation.addListener('focus', () => {
-      fetchUserLogued();
-    });
-    return unsubscribe;
+    let isMounted = true;
+
+    const loadRegistration = async (): Promise<void> => {
+      try {
+        const jsonValue = await AsyncStorage.getItem('user');
+        if (!jsonValue || !isMounted) return;
+
+        const user = JSON.parse(jsonValue) as UserModel;
+        setRegisteredMonths(GetInitialMonth(user.createdAt, 1));
+      } catch (error) {
+        if (isMounted) showError(error);
+      }
+    };
+
+    // 'focus' también se dispara en el primer enfoque de la pantalla.
+    const unsubscribe = navigation.addListener('focus', loadRegistration);
+
+    return () => {
+      isMounted = false;
+      unsubscribe();
+    };
   }, [navigation]);
+
+  // Opciones derivadas
+  const options: CheckboxOption[] = [
+    { id: 1, title: 'Últimos 3 meses', numMonths: 3 },
+    { id: 2, title: 'Últimos 6 meses', numMonths: 6 },
+    { id: 3, title: 'Últimos 12 meses', numMonths: 12 },
+    registeredMonths === null
+      ? { id: SINCE_REGISTRATION_ID, title: 'Desde registro', numMonths: 0 }
+      : {
+          id: SINCE_REGISTRATION_ID,
+          title: `Desde registro (${registeredMonths} meses)`,
+          numMonths: registeredMonths
+        },
+    customDate
+      ? {
+          id: CUSTOM_OPTION_ID,
+          title: `Personalizada (${DateFormat(customDate, 'DD MMM YYYY')})`,
+          numMonths: GetInitialMonth(customDate, 1)
+        }
+      : { id: CUSTOM_OPTION_ID, title: 'Personalizada', numMonths: 0 }
+  ];
 
   const handleDateChange = (_event: unknown, selectedDate?: Date): void => {
     setShowDatePicker(false);
     if (selectedDate) {
       setCustomDate(selectedDate);
-      const customMonths = GetInitialMonth(selectedDate, 1);
-
-      setCheckboxes((prev) =>
-        prev.map((cb) =>
-          cb.id === 5
-            ? {
-                ...cb,
-                title: `Personalizada (${DateFormat(selectedDate, 'DD MMM YYYY')})`,
-                numMonths: customMonths
-              }
-            : cb
-        )
-      );
-
-      updateNum(customMonths);
+      updateNum(GetInitialMonth(selectedDate, 1));
     }
   };
 
-  const toggleCheckbox = (index: number): void => {
-    const updatedCheckboxes = checkboxes.map((cb, idx) => ({
-      ...cb,
-      checked: idx === index
-    }));
+  const handleSelect = (option: CheckboxOption): void => {
+    setSelectedId(option.id);
 
-    setCheckboxes(updatedCheckboxes);
-
-    if (index === 4) {
-      // Opción personalizada
+    if (option.id === CUSTOM_OPTION_ID) {
       setShowDatePicker(true);
     } else {
-      updateNum(updatedCheckboxes[index].numMonths);
+      updateNum(option.numMonths);
     }
   };
+
+  const popoverStyle = { backgroundColor: colors.CARD_BACKGROUND };
 
   return (
     <View>
@@ -158,50 +125,54 @@ export default function CheckBoxOptions<T extends StackNavigationProp<ParamListB
             />
           </TouchableOpacity>
         }
-        popoverStyle={{ backgroundColor: colors.CARD_BACKGROUND }}
+        popoverStyle={popoverStyle}
       >
         <View style={[styles.popoverContainer, { backgroundColor: colors.CARD_BACKGROUND }]}>
-          {checkboxes.map((cb, index) => (
-            <TouchableOpacity
-              key={cb.id}
-              style={[styles.checkboxItem, { borderBottomColor: colors.BORDER }]}
-              onPress={() => toggleCheckbox(index)}
-              activeOpacity={0.7}
-            >
-              <View style={styles.checkboxContent}>
-                <Icon
-                  type="material-community"
-                  name={cb.checked ? 'checkbox-marked' : 'checkbox-blank-outline'}
-                  size={24}
-                  color={cb.checked ? colors.PRIMARY : colors.TEXT_SECONDARY}
-                  containerStyle={styles.checkboxIcon}
-                />
-                <View style={styles.textContainer}>
-                  <Text
-                    style={[
-                      styles.checkboxTitle,
-                      {
-                        color: cb.checked ? colors.PRIMARY : colors.TEXT_PRIMARY,
-                        fontWeight: cb.checked ? '600' : 'normal'
-                      }
-                    ]}
-                    numberOfLines={2}
-                  >
-                    {cb.title}
-                  </Text>
-                  {cb.checked && cb.numMonths > 0 && (
-                    <Text style={[styles.monthsLabel, { color: colors.TEXT_SECONDARY }]}>
-                      {cb.numMonths} {cb.numMonths === 1 ? 'mes' : 'meses'}
+          {options.map((option) => {
+            const checked = option.id === selectedId;
+
+            return (
+              <TouchableOpacity
+                key={option.id}
+                style={[styles.checkboxItem, { borderBottomColor: colors.BORDER }]}
+                onPress={() => handleSelect(option)}
+                activeOpacity={0.7}
+              >
+                <View style={styles.checkboxContent}>
+                  <Icon
+                    type="material-community"
+                    name={checked ? 'checkbox-marked' : 'checkbox-blank-outline'}
+                    size={24}
+                    color={checked ? colors.PRIMARY : colors.TEXT_SECONDARY}
+                    containerStyle={styles.checkboxIcon}
+                  />
+                  <View style={styles.textContainer}>
+                    <Text
+                      style={[
+                        styles.checkboxTitle,
+                        {
+                          color: checked ? colors.PRIMARY : colors.TEXT_PRIMARY,
+                          fontWeight: checked ? '600' : 'normal'
+                        }
+                      ]}
+                      numberOfLines={2}
+                    >
+                      {option.title}
                     </Text>
-                  )}
+                    {checked && option.numMonths > 0 && (
+                      <Text style={[styles.monthsLabel, { color: colors.TEXT_SECONDARY }]}>
+                        {option.numMonths} {option.numMonths === 1 ? 'mes' : 'meses'}
+                      </Text>
+                    )}
+                  </View>
                 </View>
-              </View>
-            </TouchableOpacity>
-          ))}
+              </TouchableOpacity>
+            );
+          })}
 
           {showDatePicker && (
             <DateTimePicker
-              value={customDate || new Date()}
+              value={customDate ?? new Date()}
               mode="date"
               display="default"
               onChange={handleDateChange}

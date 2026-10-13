@@ -3,13 +3,20 @@ import { View, Modal, TouchableOpacity, Text, StyleSheet } from 'react-native';
 import { Button, Icon } from 'react-native-elements';
 import { useDispatch, useSelector } from 'react-redux';
 import { setMonth } from '../../features/date/dateSlice';
+
+// Components
+import MyButton from '../MyButton';
+
+// Utils
 import { DateFormat } from '../../utils/Helpers';
 
+// Hooks
+import { useThemeColors } from '~/customHooks/useThemeColors';
+
+// Types
 import { RootState } from '../../shared/types/reducers';
 import { AppDispatch } from '../../shared/types/reducers/root-state.type';
-import { useThemeColors } from '~/customHooks/useThemeColors';
 import { ThemeColors } from '~/shared/types/services/theme-config-service.type';
-import MyButton from '../MyButton';
 
 const MONTHS = [
   'Enero',
@@ -33,9 +40,10 @@ const MyMonthPicker = () => {
 
   const [visible, setVisible] = useState(false);
 
-  const currentDate = new Date(month);
-  const currentYear = currentDate.getFullYear();
-  const currentMonth = currentDate.getMonth();
+  // Parseo directo del string para evitar problemas de zona horaria
+  const [yearStr, monthStr] = month.split('-');
+  const currentYear = parseInt(yearStr, 10);
+  const currentMonth = parseInt(monthStr, 10) - 1;
 
   const [year, setYear] = useState(currentYear);
 

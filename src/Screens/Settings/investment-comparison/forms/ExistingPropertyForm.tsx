@@ -1,7 +1,8 @@
-import React, { useMemo } from 'react';
+import React, { useState } from 'react';
 import { View, Text, ScrollView, StyleSheet } from 'react-native';
 import { useForm, useWatch } from 'react-hook-form';
 import { CheckBox } from 'react-native-elements';
+import * as Crypto from 'expo-crypto';
 
 // Components
 import MyButton from '~/components/MyButton';
@@ -21,122 +22,137 @@ import { ShowToast } from '~/utils/toastUtils';
 import { NumberFormat } from '~/utils/Helpers';
 import { calculateExistingProperty } from '~/utils/existingPropertyCalculations';
 
-// Styles
+// Theme & Styles
+import { useThemeColors } from '~/customHooks/useThemeColors';
 import { MEDIUM, SMALL } from '~/styles/fonts';
 
+type CalculationInput = Parameters<typeof calculateExistingProperty>[0];
+type ExistingPropertyFormData = CalculationInput & { id: string; name: string };
+type Preview = ReturnType<typeof calculateExistingProperty>;
+
+type RowTone = 'default' | 'highlight' | 'error' | 'success';
+
 interface Props {
-  colors: any;
-  navigation: any;
-  existingData?: any;
+  navigation: { goBack: () => void };
+  existingData?: Partial<ExistingPropertyFormData>;
 }
 
-export const ExistingPropertyForm: React.FC<Props> = ({ colors, navigation, existingData }) => {
+const buildDefaults = (
+  existing: Partial<ExistingPropertyFormData> | undefined,
+  id: string
+): ExistingPropertyFormData => ({
+  id: existing?.id ?? id,
+  name: existing?.name ?? 'Mi Propiedad Actual',
+
+  // Datos de la inversión
+  initialInvestment: existing?.initialInvestment ?? 5000000,
+  yearsOwned: existing?.yearsOwned ?? 4,
+  currentValue: existing?.currentValue ?? 10000000,
+  ownershipPercent: existing?.ownershipPercent ?? EXISTING_PROPERTY_DEFAULTS.OWNERSHIP_PERCENT,
+
+  // Ingresos
+  monthlyRent: existing?.monthlyRent ?? 150000,
+  monthsRentedPerYear:
+    existing?.monthsRentedPerYear ?? EXISTING_PROPERTY_DEFAULTS.MONTHS_RENTED_PER_YEAR,
+
+  // Gastos anuales
+  annualAdministration: existing?.annualAdministration ?? 562000,
+  administrationAnnualIncrease:
+    existing?.administrationAnnualIncrease ?? EXISTING_PROPERTY_DEFAULTS.ADMINISTRATION_INCREASE,
+  annualPropertyTax: existing?.annualPropertyTax ?? 63750,
+  annualMaintenance: existing?.annualMaintenance ?? 145620,
+  annualExtraExpenses: existing?.annualExtraExpenses ?? 103652,
+
+  // Proyección
+  propertyAppreciation:
+    existing?.propertyAppreciation ?? EXISTING_PROPERTY_DEFAULTS.PROPERTY_APPRECIATION,
+  horizonYears: existing?.horizonYears ?? EXISTING_PROPERTY_DEFAULTS.HORIZON_YEARS,
+  inflation: existing?.inflation ?? 5.5,
+
+  // Comparación con venta
+  compareWithSale: existing?.compareWithSale ?? true,
+  cdtTermDays: existing?.cdtTermDays ?? EXISTING_PROPERTY_DEFAULTS.CDT_TERM_DAYS,
+  cdtRate: existing?.cdtRate ?? EXISTING_PROPERTY_DEFAULTS.CDT_RATE,
+  apply4x1000: existing?.apply4x1000 ?? false
+});
+
+// Calcula la vista previa en tiempo real (null si faltan datos o el cálculo falla)
+const buildPreview = (values: Partial<ExistingPropertyFormData>): Preview | null => {
+  if (!values.currentValue || !values.monthlyRent || !values.horizonYears) return null;
+
+  try {
+    return calculateExistingProperty({
+      initialInvestment: values.initialInvestment ?? 0,
+      yearsOwned: values.yearsOwned ?? 0,
+      currentValue: values.currentValue,
+      ownershipPercent: values.ownershipPercent ?? 50,
+      monthlyRent: values.monthlyRent,
+      monthsRentedPerYear: values.monthsRentedPerYear ?? 10,
+      annualAdministration: values.annualAdministration ?? 0,
+      administrationAnnualIncrease: values.administrationAnnualIncrease ?? 5,
+      annualPropertyTax: values.annualPropertyTax ?? 0,
+      annualMaintenance: values.annualMaintenance ?? 0,
+      annualExtraExpenses: values.annualExtraExpenses ?? 0,
+      propertyAppreciation: values.propertyAppreciation ?? 5,
+      horizonYears: values.horizonYears,
+      inflation: values.inflation ?? 5.5,
+      compareWithSale: values.compareWithSale ?? false,
+      cdtTermDays: values.cdtTermDays ?? 270,
+      cdtRate: values.cdtRate ?? 9.4,
+      apply4x1000: values.apply4x1000 ?? false
+    });
+  } catch {
+    return null;
+  }
+};
+
+export const ExistingPropertyForm: React.FC<Props> = ({ navigation, existingData }) => {
+  const colors = useThemeColors();
   const { saveScenario } = useInvestmentComparison();
 
-  const { handleSubmit, control, watch } = useForm<any>({
+  // El id por defecto se genera una sola vez (no en cada render)
+  const [defaultId] = useState(() => Crypto.randomUUID());
+
+  const { handleSubmit, control, setValue } = useForm<ExistingPropertyFormData>({
     mode: 'onTouched',
-    defaultValues: {
-      id: existingData?.id || Date.now().toString(),
-      name: existingData?.name || 'Mi Propiedad Actual',
-
-      // Datos de la inversión
-      initialInvestment: existingData?.initialInvestment || 5000000,
-      yearsOwned: existingData?.yearsOwned || 4,
-      currentValue: existingData?.currentValue || 10000000,
-      ownershipPercent:
-        existingData?.ownershipPercent || EXISTING_PROPERTY_DEFAULTS.OWNERSHIP_PERCENT,
-
-      // Ingresos
-      monthlyRent: existingData?.monthlyRent || 150000,
-      monthsRentedPerYear:
-        existingData?.monthsRentedPerYear || EXISTING_PROPERTY_DEFAULTS.MONTHS_RENTED_PER_YEAR,
-
-      // Gastos anuales
-      annualAdministration: existingData?.annualAdministration || 562000,
-      administrationAnnualIncrease:
-        existingData?.administrationAnnualIncrease ||
-        EXISTING_PROPERTY_DEFAULTS.ADMINISTRATION_INCREASE,
-      annualPropertyTax: existingData?.annualPropertyTax || 63750,
-      annualMaintenance: existingData?.annualMaintenance || 145620,
-      annualExtraExpenses: existingData?.annualExtraExpenses || 103652,
-
-      // Proyección
-      propertyAppreciation:
-        existingData?.propertyAppreciation || EXISTING_PROPERTY_DEFAULTS.PROPERTY_APPRECIATION,
-      horizonYears: existingData?.horizonYears || EXISTING_PROPERTY_DEFAULTS.HORIZON_YEARS,
-      inflation: existingData?.inflation || 5.5,
-
-      // Comparación con venta
-      compareWithSale:
-        existingData?.compareWithSale !== undefined ? existingData.compareWithSale : true,
-      cdtTermDays: existingData?.cdtTermDays || EXISTING_PROPERTY_DEFAULTS.CDT_TERM_DAYS,
-      cdtRate: existingData?.cdtRate || EXISTING_PROPERTY_DEFAULTS.CDT_RATE,
-      apply4x1000: existingData?.apply4x1000 !== undefined ? existingData.apply4x1000 : false
-    }
+    defaultValues: buildDefaults(existingData, defaultId)
   });
 
-  const watchedValues = useWatch({ control });
+  const values = useWatch({ control });
+  const preview = buildPreview(values);
 
-  // Watch specific values for helper text
-  const initialInvestment = watch('initialInvestment');
-  const currentValue = watch('currentValue');
-  const monthlyRent = watch('monthlyRent');
-  const monthsRentedPerYear = watch('monthsRentedPerYear');
-  const annualAdministration = watch('annualAdministration');
-  const annualPropertyTax = watch('annualPropertyTax');
-  const annualMaintenance = watch('annualMaintenance');
-  const annualExtraExpenses = watch('annualExtraExpenses');
+  const monthsRented = values.monthsRentedPerYear ?? 0;
+  const totalExpenses =
+    (values.annualAdministration ?? 0) +
+    (values.annualPropertyTax ?? 0) +
+    (values.annualMaintenance ?? 0) +
+    (values.annualExtraExpenses ?? 0);
 
-  // Calcular preview en tiempo real
-  const calculationPreview = useMemo(() => {
-    const values = watchedValues;
-
-    if (!values.currentValue || !values.monthlyRent || !values.horizonYears) {
-      return null;
-    }
-
-    try {
-      return calculateExistingProperty({
-        initialInvestment: values.initialInvestment || 0,
-        yearsOwned: values.yearsOwned || 0,
-        currentValue: values.currentValue || 0,
-        ownershipPercent: values.ownershipPercent || 50,
-        monthlyRent: values.monthlyRent || 0,
-        monthsRentedPerYear: values.monthsRentedPerYear || 10,
-        annualAdministration: values.annualAdministration || 0,
-        administrationAnnualIncrease: values.administrationAnnualIncrease || 5,
-        annualPropertyTax: values.annualPropertyTax || 0,
-        annualMaintenance: values.annualMaintenance || 0,
-        annualExtraExpenses: values.annualExtraExpenses || 0,
-        propertyAppreciation: values.propertyAppreciation || 5,
-        horizonYears: values.horizonYears || 5,
-        inflation: values.inflation || 5.5,
-        compareWithSale: values.compareWithSale || false,
-        cdtTermDays: values.cdtTermDays || 270,
-        cdtRate: values.cdtRate || 9.4,
-        apply4x1000: values.apply4x1000 || false
-      });
-    } catch {
-      return null;
-    }
-  }, [watchedValues]);
-
-  const onSubmit = (data: any) => {
-    saveScenario(ScenarioType.EXISTING_PROPERTY, data);
+  const onSubmit = (data: ExistingPropertyFormData) => {
+    saveScenario(ScenarioType.EXISTING_PROPERTY, { ...data, id: data.id || defaultId });
     ShowToast('Propiedad existente configurada');
     navigation.goBack();
   };
 
+  const sectionStyle = [
+    styles.section,
+    {
+      backgroundColor: colors.CARD_BACKGROUND,
+      borderColor: colors.BORDER,
+      shadowColor: colors.BLACK
+    }
+  ];
+
+  const helperStyle = (color: string) => [
+    styles.helperText,
+    { color, backgroundColor: color + '15' }
+  ];
+
   return (
-    <ScrollView style={{ flex: 1 }} contentContainerStyle={{ paddingBottom: 20 }}>
-      <View style={{ paddingHorizontal: 16, paddingTop: 10 }}>
+    <ScrollView style={styles.scroll} contentContainerStyle={styles.scrollContent}>
+      <View style={styles.content}>
         {/* DATOS BÁSICOS */}
-        <View
-          style={[
-            styles.section,
-            { backgroundColor: colors.CARD_BACKGROUND, borderColor: colors.BORDER }
-          ]}
-        >
+        <View style={sectionStyle}>
           <Text style={[styles.sectionTitle, { color: colors.TEXT_PRIMARY }]}>
             📊 Datos de tu Propiedad
           </Text>
@@ -162,7 +178,7 @@ export const ExistingPropertyForm: React.FC<Props> = ({ colors, navigation, exis
               min: { value: 1, message: 'Debe ser mayor a 0' }
             }}
             leftIcon="cash-check"
-            helperText={NumberFormat(initialInvestment || 0)}
+            helperText={NumberFormat(values.initialInvestment ?? 0)}
           />
 
           <MyInput
@@ -189,7 +205,7 @@ export const ExistingPropertyForm: React.FC<Props> = ({ colors, navigation, exis
               min: { value: 1, message: 'Debe ser mayor a 0' }
             }}
             leftIcon="cash-multiple"
-            helperText={NumberFormat(currentValue || 0)}
+            helperText={NumberFormat(values.currentValue ?? 0)}
           />
 
           <MyInput
@@ -208,12 +224,7 @@ export const ExistingPropertyForm: React.FC<Props> = ({ colors, navigation, exis
         </View>
 
         {/* INGRESOS */}
-        <View
-          style={[
-            styles.section,
-            { backgroundColor: colors.CARD_BACKGROUND, borderColor: colors.BORDER }
-          ]}
-        >
+        <View style={sectionStyle}>
           <Text style={[styles.sectionTitle, { color: colors.TEXT_PRIMARY }]}>
             💰 Ingresos por Renta
           </Text>
@@ -229,7 +240,7 @@ export const ExistingPropertyForm: React.FC<Props> = ({ colors, navigation, exis
               min: { value: 1, message: 'Debe ser mayor a 0' }
             }}
             leftIcon="cash"
-            helperText={`${NumberFormat(monthlyRent || 0)}/mes`}
+            helperText={`${NumberFormat(values.monthlyRent ?? 0)}/mes`}
           />
 
           <MyInput
@@ -244,21 +255,16 @@ export const ExistingPropertyForm: React.FC<Props> = ({ colors, navigation, exis
               max: { value: 12, message: 'Máximo 12 meses' }
             }}
             leftIcon="calendar-month"
-            helperText={`${12 - (monthsRentedPerYear || 0)} meses vacío`}
+            helperText={`${12 - monthsRented} meses vacío`}
           />
 
-          <Text style={[styles.helperText, { color: colors.INFO }]}>
-            💡 En 2025 tuviste {12 - (monthsRentedPerYear || 10)} meses de vacancia
+          <Text style={helperStyle(colors.INFO)}>
+            💡 En 2025 tuviste {12 - monthsRented} meses de vacancia
           </Text>
         </View>
 
         {/* GASTOS */}
-        <View
-          style={[
-            styles.section,
-            { backgroundColor: colors.CARD_BACKGROUND, borderColor: colors.BORDER }
-          ]}
-        >
+        <View style={sectionStyle}>
           <Text style={[styles.sectionTitle, { color: colors.TEXT_PRIMARY }]}>
             📉 Gastos Anuales
           </Text>
@@ -270,7 +276,7 @@ export const ExistingPropertyForm: React.FC<Props> = ({ colors, navigation, exis
             label="Administración anual"
             placeholder="0"
             leftIcon="office-building"
-            helperText={`${NumberFormat(annualAdministration || 0)}/año`}
+            helperText={`${NumberFormat(values.annualAdministration ?? 0)}/año`}
           />
 
           <MyInput
@@ -289,7 +295,7 @@ export const ExistingPropertyForm: React.FC<Props> = ({ colors, navigation, exis
             label="Impuesto predial anual"
             placeholder="0"
             leftIcon="file-document"
-            helperText={`${NumberFormat(annualPropertyTax || 0)}/año`}
+            helperText={`${NumberFormat(values.annualPropertyTax ?? 0)}/año`}
           />
 
           <MyInput
@@ -299,7 +305,7 @@ export const ExistingPropertyForm: React.FC<Props> = ({ colors, navigation, exis
             label="Mantenimiento anual (promedio)"
             placeholder="0"
             leftIcon="wrench"
-            helperText={`${NumberFormat(annualMaintenance || 0)}/año`}
+            helperText={`${NumberFormat(values.annualMaintenance ?? 0)}/año`}
           />
 
           <MyInput
@@ -309,27 +315,16 @@ export const ExistingPropertyForm: React.FC<Props> = ({ colors, navigation, exis
             label="Otros gastos anuales (comisiones, etc.)"
             placeholder="0"
             leftIcon="cash-minus"
-            helperText={`${NumberFormat(annualExtraExpenses || 0)}/año`}
+            helperText={`${NumberFormat(values.annualExtraExpenses ?? 0)}/año`}
           />
 
-          <Text style={[styles.helperText, { color: colors.WARNING }]}>
-            ⚠️ Total gastos 2025: $
-            {(
-              (annualAdministration || 0) +
-              (annualPropertyTax || 0) +
-              (annualMaintenance || 0) +
-              (annualExtraExpenses || 0)
-            ).toLocaleString()}
+          <Text style={helperStyle(colors.WARNING)}>
+            {`⚠️ Total gastos 2025: $${totalExpenses.toLocaleString()}`}
           </Text>
         </View>
 
         {/* PROYECCIÓN */}
-        <View
-          style={[
-            styles.section,
-            { backgroundColor: colors.CARD_BACKGROUND, borderColor: colors.BORDER }
-          ]}
-        >
+        <View style={sectionStyle}>
           <Text style={[styles.sectionTitle, { color: colors.TEXT_PRIMARY }]}>
             🔮 Proyección a Futuro
           </Text>
@@ -372,34 +367,21 @@ export const ExistingPropertyForm: React.FC<Props> = ({ colors, navigation, exis
         </View>
 
         {/* COMPARACIÓN CON VENTA */}
-        <View
-          style={[
-            styles.section,
-            { backgroundColor: colors.CARD_BACKGROUND, borderColor: colors.BORDER }
-          ]}
-        >
+        <View style={sectionStyle}>
           <Text style={[styles.sectionTitle, { color: colors.TEXT_PRIMARY }]}>
             🔄 Comparar con Vender y CDT
           </Text>
 
           <CheckBox
             title="Comparar con vender y poner en CDT"
-            checked={watchedValues.compareWithSale}
-            onPress={() => {
-              const currentValue = watchedValues.compareWithSale;
-              // Necesitas implementar setValue o usar un Controller
-            }}
-            containerStyle={{
-              backgroundColor: 'transparent',
-              borderWidth: 0,
-              padding: 0,
-              marginBottom: 12
-            }}
-            textStyle={{ color: colors.TEXT_PRIMARY, fontWeight: 'normal' }}
+            checked={Boolean(values.compareWithSale)}
+            onPress={() => setValue('compareWithSale', !values.compareWithSale)}
+            containerStyle={[styles.checkboxContainer, styles.checkboxCompare]}
+            textStyle={[styles.checkboxText, { color: colors.TEXT_PRIMARY }]}
             checkedColor={colors.PRIMARY}
           />
 
-          {watchedValues.compareWithSale && (
+          {values.compareWithSale && (
             <>
               <MyInput
                 name="cdtTermDays"
@@ -421,17 +403,10 @@ export const ExistingPropertyForm: React.FC<Props> = ({ colors, navigation, exis
 
               <CheckBox
                 title="Aplicar 4x1000 al vender"
-                checked={watchedValues.apply4x1000}
-                onPress={() => {
-                  // Implementar toggle
-                }}
-                containerStyle={{
-                  backgroundColor: 'transparent',
-                  borderWidth: 0,
-                  padding: 0,
-                  marginTop: 10
-                }}
-                textStyle={{ color: colors.TEXT_PRIMARY, fontWeight: 'normal' }}
+                checked={Boolean(values.apply4x1000)}
+                onPress={() => setValue('apply4x1000', !values.apply4x1000)}
+                containerStyle={[styles.checkboxContainer, styles.checkbox4x1000]}
+                textStyle={[styles.checkboxText, { color: colors.TEXT_PRIMARY }]}
                 checkedColor={colors.PRIMARY}
               />
             </>
@@ -439,15 +414,9 @@ export const ExistingPropertyForm: React.FC<Props> = ({ colors, navigation, exis
         </View>
 
         {/* PREVIEW */}
-        {calculationPreview && (
-          <PreviewSection
-            preview={calculationPreview}
-            colors={colors}
-            horizonYears={watchedValues.horizonYears}
-          />
-        )}
+        {preview && <PreviewSection preview={preview} horizonYears={values.horizonYears} />}
 
-        <View style={{ marginTop: 16, gap: 8 }}>
+        <View style={styles.actions}>
           <MyButton
             title="Guardar Configuración"
             variant="primary"
@@ -460,11 +429,18 @@ export const ExistingPropertyForm: React.FC<Props> = ({ colors, navigation, exis
   );
 };
 
-// Componente de Preview (sin cambios)
-const PreviewSection = ({ preview, colors, horizonYears }: any) => {
-  const maintain = preview.maintain;
-  const sell = preview.sell;
-  const comparison = preview.comparison;
+// ─────────────────────────────────────────────
+// Preview
+// ─────────────────────────────────────────────
+
+interface PreviewSectionProps {
+  preview: Preview;
+  horizonYears?: number;
+}
+
+const PreviewSection: React.FC<PreviewSectionProps> = ({ preview, horizonYears }) => {
+  const colors = useThemeColors();
+  const { maintain, sell, comparison } = preview;
 
   return (
     <View
@@ -482,35 +458,17 @@ const PreviewSection = ({ preview, colors, horizonYears }: any) => {
         <Text style={[styles.optionTitle, { color: colors.TEXT_PRIMARY }]}>
           🏠 MANTENER Propiedad:
         </Text>
-        <PreviewRow label="Renta total:" value={maintain.totalGrossRent} colors={colors} />
+        <PreviewRow label="Renta total:" value={maintain.totalGrossRent} />
         <PreviewRow
           label="Gastos totales:"
           value={maintain.totalExpenses}
-          colors={colors}
-          error
+          tone="error"
           prefix="-"
         />
-        <PreviewRow
-          label="Flujo neto:"
-          value={maintain.totalNetCashFlow}
-          colors={colors}
-          highlight
-        />
-        <PreviewRow
-          label="Valorización:"
-          value={maintain.capitalGain}
-          colors={colors}
-          success
-          prefix="+"
-        />
+        <PreviewRow label="Flujo neto:" value={maintain.totalNetCashFlow} tone="highlight" />
+        <PreviewRow label="Valorización:" value={maintain.capitalGain} tone="success" prefix="+" />
         <View style={[styles.divider, { backgroundColor: colors.BORDER }]} />
-        <PreviewRow
-          label="GANANCIA TOTAL:"
-          value={maintain.totalReturn}
-          colors={colors}
-          highlight
-          bold
-        />
+        <PreviewRow label="GANANCIA TOTAL:" value={maintain.totalReturn} tone="highlight" bold />
         <Text style={[styles.metricText, { color: colors.TEXT_SECONDARY }]}>
           ROI: {maintain.roi.toFixed(1)}% | Retorno anualizado:{' '}
           {maintain.annualizedReturn.toFixed(1)}%
@@ -520,27 +478,15 @@ const PreviewSection = ({ preview, colors, horizonYears }: any) => {
       {/* VENDER */}
       {sell && (
         <>
-          <View style={[styles.optionBox, { marginTop: 12 }]}>
+          <View style={[styles.optionBox, styles.sellBox]}>
             <Text style={[styles.optionTitle, { color: colors.TEXT_PRIMARY }]}>
               💰 VENDER y CDT:
             </Text>
-            <PreviewRow label="Monto venta:" value={sell.saleAmount} colors={colors} />
-            <PreviewRow
-              label="Intereses CDT:"
-              value={sell.cdtInterest}
-              colors={colors}
-              success
-              prefix="+"
-            />
-            <PreviewRow label="Impuestos:" value={sell.cdtTaxes} colors={colors} error prefix="-" />
+            <PreviewRow label="Monto venta:" value={sell.saleAmount} />
+            <PreviewRow label="Intereses CDT:" value={sell.cdtInterest} tone="success" prefix="+" />
+            <PreviewRow label="Impuestos:" value={sell.cdtTaxes} tone="error" prefix="-" />
             <View style={[styles.divider, { backgroundColor: colors.BORDER }]} />
-            <PreviewRow
-              label="GANANCIA TOTAL:"
-              value={sell.totalReturn}
-              colors={colors}
-              highlight
-              bold
-            />
+            <PreviewRow label="GANANCIA TOTAL:" value={sell.totalReturn} tone="highlight" bold />
             <Text style={[styles.metricText, { color: colors.TEXT_SECONDARY }]}>
               ROI: {sell.roi.toFixed(1)}% | Retorno anualizado: {sell.annualizedReturn.toFixed(1)}%
             </Text>
@@ -552,9 +498,8 @@ const PreviewSection = ({ preview, colors, horizonYears }: any) => {
               style={[
                 styles.recommendationBox,
                 {
-                  backgroundColor: comparison.maintainBetter
-                    ? colors.SUCCESS + '20'
-                    : colors.INFO + '20',
+                  backgroundColor:
+                    (comparison.maintainBetter ? colors.SUCCESS : colors.INFO) + '20',
                   borderColor: comparison.maintainBetter ? colors.SUCCESS : colors.INFO
                 }
               ]}
@@ -562,9 +507,7 @@ const PreviewSection = ({ preview, colors, horizonYears }: any) => {
               <Text
                 style={[
                   styles.recommendationText,
-                  {
-                    color: comparison.maintainBetter ? colors.SUCCESS : colors.INFO
-                  }
+                  { color: comparison.maintainBetter ? colors.SUCCESS : colors.INFO }
                 ]}
               >
                 {comparison.recommendation}
@@ -577,53 +520,80 @@ const PreviewSection = ({ preview, colors, horizonYears }: any) => {
   );
 };
 
-// Componente auxiliar para filas (sin cambios)
-const PreviewRow = ({
+// ─────────────────────────────────────────────
+// Fila de preview
+// ─────────────────────────────────────────────
+
+interface PreviewRowProps {
+  label: string;
+  value: number;
+  tone?: RowTone;
+  bold?: boolean;
+  prefix?: string;
+}
+
+const PreviewRow: React.FC<PreviewRowProps> = ({
   label,
   value,
-  colors,
-  highlight,
-  error,
-  success,
-  bold,
+  tone = 'default',
+  bold = false,
   prefix = ''
-}: any) => (
-  <View style={styles.previewRow}>
-    <Text style={[styles.previewLabel, { color: colors.TEXT_SECONDARY }]}>{label}</Text>
-    <Text
-      style={[
-        styles.previewValue,
-        {
-          color: highlight
-            ? colors.SUCCESS
-            : error
-              ? colors.ERROR
-              : success
-                ? colors.SUCCESS
-                : colors.TEXT_PRIMARY,
-          fontWeight: bold ? 'bold' : '600'
-        }
-      ]}
-    >
-      {prefix}
-      {NumberFormat(value)}
-    </Text>
-  </View>
-);
+}) => {
+  const colors = useThemeColors();
+
+  const valueColor: Record<RowTone, string> = {
+    default: colors.TEXT_PRIMARY,
+    highlight: colors.SUCCESS,
+    error: colors.ERROR,
+    success: colors.SUCCESS
+  };
+
+  return (
+    <View style={styles.previewRow}>
+      <Text style={[styles.previewLabel, { color: colors.TEXT_SECONDARY }]}>{label}</Text>
+      <Text
+        style={[
+          styles.previewValue,
+          { color: valueColor[tone], fontWeight: bold ? 'bold' : '600' }
+        ]}
+      >
+        {prefix}
+        {NumberFormat(value)}
+      </Text>
+    </View>
+  );
+};
 
 const styles = StyleSheet.create({
+  scroll: {
+    flex: 1
+  },
+  scrollContent: {
+    paddingBottom: 20
+  },
+  content: {
+    paddingHorizontal: 16,
+    paddingTop: 10
+  },
+  actions: {
+    marginTop: 16,
+    gap: 8
+  },
   section: {
     marginBottom: 16,
     padding: 16,
     borderRadius: 12,
     borderWidth: 1,
-    shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 4,
     elevation: 2
   },
-  sectionTitle: { fontSize: MEDIUM, fontWeight: 'bold', marginBottom: 12 },
+  sectionTitle: {
+    fontSize: MEDIUM,
+    fontWeight: 'bold',
+    marginBottom: 12
+  },
   helperText: {
     fontSize: SMALL - 1,
     lineHeight: 16,
@@ -632,15 +602,64 @@ const styles = StyleSheet.create({
     padding: 8,
     borderRadius: 8
   },
-  previewSection: { marginBottom: 16, padding: 16, borderRadius: 12, borderWidth: 2 },
-  previewTitle: { fontSize: MEDIUM, fontWeight: 'bold', marginBottom: 12 },
-  optionBox: { marginBottom: 8 },
-  optionTitle: { fontSize: SMALL + 1, fontWeight: 'bold', marginBottom: 8 },
-  previewRow: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 4 },
-  previewLabel: { fontSize: SMALL, flex: 1 },
-  previewValue: { fontSize: SMALL + 1, textAlign: 'right' },
-  metricText: { fontSize: SMALL - 1, marginTop: 4, fontStyle: 'italic' },
-  divider: { height: 1, marginVertical: 8 },
+  checkboxContainer: {
+    backgroundColor: 'transparent',
+    borderWidth: 0,
+    padding: 0
+  },
+  checkboxCompare: {
+    marginBottom: 12
+  },
+  checkbox4x1000: {
+    marginTop: 10
+  },
+  checkboxText: {
+    fontWeight: 'normal'
+  },
+  previewSection: {
+    marginBottom: 16,
+    padding: 16,
+    borderRadius: 12,
+    borderWidth: 2
+  },
+  previewTitle: {
+    fontSize: MEDIUM,
+    fontWeight: 'bold',
+    marginBottom: 12
+  },
+  optionBox: {
+    marginBottom: 8
+  },
+  sellBox: {
+    marginTop: 12
+  },
+  optionTitle: {
+    fontSize: SMALL + 1,
+    fontWeight: 'bold',
+    marginBottom: 8
+  },
+  previewRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: 4
+  },
+  previewLabel: {
+    fontSize: SMALL,
+    flex: 1
+  },
+  previewValue: {
+    fontSize: SMALL + 1,
+    textAlign: 'right'
+  },
+  metricText: {
+    fontSize: SMALL - 1,
+    marginTop: 4,
+    fontStyle: 'italic'
+  },
+  divider: {
+    height: 1,
+    marginVertical: 8
+  },
   recommendationBox: {
     marginTop: 12,
     padding: 12,

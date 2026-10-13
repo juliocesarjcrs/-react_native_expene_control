@@ -1,9 +1,10 @@
 // ~/Screens/settings/investment-comparison/InvestmentComparisonHomeScreen.tsx
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { View, Text, ScrollView, StyleSheet, Alert } from 'react-native';
 import { StackNavigationProp } from '@react-navigation/stack';
 import { Icon } from 'react-native-elements';
+import * as Crypto from 'expo-crypto';
 
 // Components
 import { ScreenHeader } from '~/components/ScreenHeader';
@@ -38,39 +39,72 @@ interface Props {
   navigation: NavigationProp;
 }
 
+type InvestmentState = ReturnType<typeof useInvestmentComparison>['state'];
+type ProfileUpdate = Parameters<ReturnType<typeof useInvestmentComparison>['updateUserProfile']>[0];
+
+const MIN_SCENARIOS = 2;
+const MAX_SCENARIOS = 3;
+const MAX_PRIORITIES = 4;
+
+// Relación entre el tipo de escenario y su clave dentro del estado
+const SCENARIO_KEYS = {
+  [ScenarioType.SAVINGS]: 'savings',
+  [ScenarioType.FUTURE_PROPERTY]: 'futureProperty',
+  [ScenarioType.IMMEDIATE_RENT]: 'immediateRent',
+  [ScenarioType.EXISTING_PROPERTY]: 'existingProperty'
+} as const;
+
+// Agrega o quita un elemento de la lista respetando un máximo
+const toggleWithLimit = <T,>(list: T[], item: T, max: number, limitMessage: string): T[] | null => {
+  if (list.includes(item)) return list.filter((x) => x !== item);
+  if (list.length >= max) {
+    ShowToast(limitMessage);
+    return null;
+  }
+  return [...list, item];
+};
+
+// Arma el objeto de comparación con los escenarios seleccionados y configurados
+const buildComparison = (selected: ScenarioType[], state: InvestmentState): ComparisonData => {
+  const comparison: ComparisonData = {
+    id: Crypto.randomUUID(),
+    createdAt: new Date(),
+    userProfile: state.userProfile,
+    scenarios: {},
+    results: {}
+  };
+
+  selected.forEach((type) => {
+    const key = SCENARIO_KEYS[type];
+    const scenario = state.scenarios[key];
+    if (scenario) {
+      (comparison.scenarios as Record<string, unknown>)[key] = scenario;
+    }
+  });
+
+  return comparison;
+};
+
 export default function InvestmentComparisonHomeScreen({ navigation }: Props) {
   const colors = useThemeColors();
   const screenConfig = screenConfigs.investmentComparisonHome;
 
-  // Context - NOMBRES CORRECTOS
-  const { state, updateUserProfile, isScenarioConfigured, clearAllScenarios } =
-    useInvestmentComparison();
+  const { state, updateUserProfile, isScenarioConfigured } = useInvestmentComparison();
 
-  // Estados locales
   const [selectedScenarios, setSelectedScenarios] = useState<ScenarioType[]>([]);
-
-  // Refrescar cuando vuelve de configuración
-  useEffect(() => {
-    const unsubscribe = navigation.addListener('focus', () => {
-      // El estado se actualiza automáticamente por el Context
-    });
-    return unsubscribe;
-  }, [navigation]);
 
   // ============================================
   // HANDLERS
   // ============================================
 
   const handleSelectScenario = (type: ScenarioType): void => {
-    if (selectedScenarios.includes(type)) {
-      setSelectedScenarios(selectedScenarios.filter((s) => s !== type));
-    } else {
-      if (selectedScenarios.length >= 3) {
-        ShowToast('Máximo 3 escenarios para comparar');
-        return;
-      }
-      setSelectedScenarios([...selectedScenarios, type]);
-    }
+    const next = toggleWithLimit(
+      selectedScenarios,
+      type,
+      MAX_SCENARIOS,
+      `Máximo ${MAX_SCENARIOS} escenarios para comparar`
+    );
+    if (next) setSelectedScenarios(next);
   };
 
   const handleConfigureScenario = (type: ScenarioType): void => {
@@ -78,13 +112,14 @@ export default function InvestmentComparisonHomeScreen({ navigation }: Props) {
   };
 
   const handleCompare = async (): Promise<void> => {
-    // Validar mínimo 2 escenarios
-    if (selectedScenarios.length < 2) {
-      Alert.alert('Atención', 'Debes seleccionar al menos 2 escenarios para comparar.');
+    if (selectedScenarios.length < MIN_SCENARIOS) {
+      Alert.alert(
+        'Atención',
+        `Debes seleccionar al menos ${MIN_SCENARIOS} escenarios para comparar.`
+      );
       return;
     }
 
-    // Validar que todos estén configurados
     const unconfigured = selectedScenarios.filter((type) => !isScenarioConfigured(type));
     if (unconfigured.length > 0) {
       Alert.alert(
@@ -95,43 +130,10 @@ export default function InvestmentComparisonHomeScreen({ navigation }: Props) {
     }
 
     try {
-      // Crear objeto de comparación
-      const comparison: ComparisonData = {
-        id: Date.now().toString(),
-        createdAt: new Date(),
-        userProfile: state.userProfile,
-        scenarios: {},
-        results: {}
-      };
-
-      // Agregar escenarios configurados
-      if (selectedScenarios.includes(ScenarioType.SAVINGS) && state.scenarios.savings) {
-        comparison.scenarios.savings = state.scenarios.savings;
-      }
-      if (
-        selectedScenarios.includes(ScenarioType.FUTURE_PROPERTY) &&
-        state.scenarios.futureProperty
-      ) {
-        comparison.scenarios.futureProperty = state.scenarios.futureProperty;
-      }
-      if (
-        selectedScenarios.includes(ScenarioType.IMMEDIATE_RENT) &&
-        state.scenarios.immediateRent
-      ) {
-        comparison.scenarios.immediateRent = state.scenarios.immediateRent;
-      }
-
-      if (
-        selectedScenarios.includes(ScenarioType.EXISTING_PROPERTY) &&
-        state.scenarios.existingProperty
-      ) {
-        comparison.scenarios.existingProperty = state.scenarios.existingProperty;
-      }
+      const comparison = buildComparison(selectedScenarios, state);
 
       // Guardar en AsyncStorage
       await InvestmentComparisonService.saveComparison(comparison);
-
-      // Navegar a resultados
 
       navigation.navigate('comparisonResults', { comparisonId: comparison.id });
       ShowToast('Comparación generada');
@@ -140,25 +142,18 @@ export default function InvestmentComparisonHomeScreen({ navigation }: Props) {
     }
   };
 
-  const handleUpdateProfile = (field: string, value: any): void => {
-    updateUserProfile({ [field]: value });
+  const handleUpdateProfile = (field: string, value: ProfileUpdate[keyof ProfileUpdate]): void => {
+    updateUserProfile({ [field]: value } as ProfileUpdate);
   };
 
   const togglePriority = (priority: UserPriority): void => {
-    const priorities = [...state.userProfile.priorities];
-    const index = priorities.indexOf(priority);
-
-    if (index > -1) {
-      priorities.splice(index, 1);
-    } else {
-      if (priorities.length >= 4) {
-        ShowToast('Máximo 4 prioridades');
-        return;
-      }
-      priorities.push(priority);
-    }
-
-    updateUserProfile({ priorities });
+    const next = toggleWithLimit(
+      state.userProfile.priorities,
+      priority,
+      MAX_PRIORITIES,
+      `Máximo ${MAX_PRIORITIES} prioridades`
+    );
+    if (next) updateUserProfile({ priorities: next });
   };
 
   // ============================================
@@ -204,8 +199,8 @@ export default function InvestmentComparisonHomeScreen({ navigation }: Props) {
     <View style={[commonStyles.screenContainer, { backgroundColor: colors.BACKGROUND }]}>
       <ScreenHeader title={screenConfig.title} subtitle={screenConfig.subtitle} />
 
-      <ScrollView style={{ flex: 1 }} contentContainerStyle={{ paddingBottom: 20 }}>
-        <View style={{ paddingHorizontal: 16, paddingTop: 10 }}>
+      <ScrollView style={styles.scroll} contentContainerStyle={styles.scrollContent}>
+        <View style={styles.content}>
           {/* Perfil del Usuario */}
           <ProfileSelector
             userProfile={state.userProfile}
@@ -218,7 +213,11 @@ export default function InvestmentComparisonHomeScreen({ navigation }: Props) {
           <View
             style={[
               styles.section,
-              { backgroundColor: colors.CARD_BACKGROUND, borderColor: colors.BORDER }
+              {
+                backgroundColor: colors.CARD_BACKGROUND,
+                borderColor: colors.BORDER,
+                shadowColor: colors.BLACK
+              }
             ]}
           >
             <Text style={[styles.sectionTitle, { color: colors.TEXT_PRIMARY }]}>
@@ -242,12 +241,12 @@ export default function InvestmentComparisonHomeScreen({ navigation }: Props) {
           </View>
 
           {/* Botón Comparar */}
-          <View style={{ marginTop: 16 }}>
+          <View style={styles.compareButton}>
             <MyButton
               title={`Comparar ${selectedScenarios.length} Escenarios`}
               variant="primary"
               onPress={handleCompare}
-              disabled={selectedScenarios.length < 2}
+              disabled={selectedScenarios.length < MIN_SCENARIOS}
             />
           </View>
 
@@ -271,12 +270,24 @@ export default function InvestmentComparisonHomeScreen({ navigation }: Props) {
 }
 
 const styles = StyleSheet.create({
+  scroll: {
+    flex: 1
+  },
+  scrollContent: {
+    paddingBottom: 20
+  },
+  content: {
+    paddingHorizontal: 16,
+    paddingTop: 10
+  },
+  compareButton: {
+    marginTop: 16
+  },
   section: {
     marginBottom: 16,
     padding: 16,
     borderRadius: 12,
     borderWidth: 1,
-    shadowColor: '#000',
     shadowOpacity: 0.1,
     shadowRadius: 4,
     shadowOffset: { width: 0, height: 2 },

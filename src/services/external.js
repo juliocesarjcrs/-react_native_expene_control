@@ -1,17 +1,11 @@
-import axios from 'axios';
-const axiosInstance = axios.create({});
-axiosInstance.interceptors.request.use(
-  async function (config) {
-    config.headers.common.apikey = `Mk6NFKacar7Ie3aOzPALpNW9jgF1c9zk`;
-    return config;
-  },
-  function (error) {
-    return Promise.reject(error);
-  }
-);
+import { create } from 'axios';
+import { FIXER_API_KEY } from '@env';
 
-export const getExchangeCurrency = async (values) => {
-  return axiosInstance.get(
-    `https://api.apilayer.com/fixer/convert?to=${values.to}&from=${values.from}&amount=${values.amount}`
-  );
+const axiosInstance = create({
+  baseURL: 'https://api.apilayer.com/fixer',
+  headers: { apikey: FIXER_API_KEY }
+});
+
+export const getExchangeCurrency = async ({ to, from, amount }) => {
+  return axiosInstance.get('/convert', { params: { to, from, amount } });
 };

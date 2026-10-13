@@ -3,7 +3,6 @@ import { View, Text, StyleSheet } from 'react-native';
 import { ProductSummary } from '../../types';
 import { ProductPrice } from '~/shared/types/utils/commentaryParser/product-analysis.types';
 import { formatPrice } from '../../utils/formatters';
-import { NumberFormat } from '~/utils/Helpers';
 import { useThemeColors } from '~/customHooks/useThemeColors';
 import { SMALL } from '~/styles/fonts';
 

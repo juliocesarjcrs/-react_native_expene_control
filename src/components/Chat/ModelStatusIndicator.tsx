@@ -1,40 +1,56 @@
 import React, { useEffect, useState } from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { getCurrentModel } from '~/services/aiConfigService';
+import { useThemeColors } from '~/customHooks/useThemeColors';
+
+type CurrentModel = Awaited<ReturnType<typeof getCurrentModel>>;
 
 export const ModelStatusIndicator = () => {
-  const [model, setModel] = useState<any>(null);
+  const colors = useThemeColors();
+  const [model, setModel] = useState<CurrentModel | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    let isMounted = true;
+
     const loadModel = async () => {
       try {
         const data = await getCurrentModel();
-        setModel(data);
-      } catch (error) {
+        if (isMounted) setModel(data);
+      } catch {
+        // Si falla, model queda en null y se muestra "Modelo no disponible"
       } finally {
-        setLoading(false);
+        if (isMounted) setLoading(false);
       }
     };
 
     loadModel();
-    // Recargar cada 5 minutos
-    // const interval = setInterval(loadModel, 5 * 60 * 1000);
-    // return () => clearInterval(interval);
+
+    return () => {
+      isMounted = false;
+    };
   }, []);
 
-  if (loading) return <Text>Cargando...</Text>;
+  if (loading) {
+    return <Text style={{ color: colors.TEXT_SECONDARY }}>Cargando...</Text>;
+  }
 
-  const isHealthy = model?.health?.isHealthy;
-  const healthColor = isHealthy ? '#10b981' : '#ef4444';
+  if (!model) {
+    return <Text style={{ color: colors.TEXT_SECONDARY }}>Modelo no disponible</Text>;
+  }
+
+  const healthColor = model.health?.isHealthy ? colors.SUCCESS : colors.ERROR;
+  const healthPercent = Math.round((model.health?.healthScore ?? 0) * 100);
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { backgroundColor: colors.CARD_BACKGROUND }]}>
       <View style={[styles.indicator, { backgroundColor: healthColor }]} />
-      <Text style={styles.label}>
-        {model?.model?.name} - {model?.health?.healthScore.toFixed(2)}%
+      <Text style={[styles.label, { color: colors.TEXT_PRIMARY }]}>
+        {model.model?.name} - {healthPercent}%
       </Text>
-      <Text style={styles.responseTime}>Latencia: {model?.health?.responseTime}ms</Text>
+      <Text style={[styles.responseTime, { color: colors.TEXT_SECONDARY }]}>
+        Latencia: {model.health?.responseTime ?? 0}ms
+      </Text>
     </View>
   );
 };
@@ -44,7 +60,6 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     padding: 10,
-    backgroundColor: '#f3f4f6',
     borderRadius: 8
   },
   indicator: {
@@ -59,7 +74,6 @@ const styles = StyleSheet.create({
   },
   responseTime: {
     fontSize: 12,
-    color: '#6b7280',
     marginLeft: 'auto'
   }
 });

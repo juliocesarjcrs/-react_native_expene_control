@@ -1,4 +1,12 @@
-import React, { useEffect, useState, useRef, forwardRef, useImperativeHandle } from 'react';
+import React, {
+  forwardRef,
+  useEffect,
+  useImperativeHandle,
+  useMemo,
+  useRef,
+  useState,
+  SetStateAction
+} from 'react';
 import {
   View,
   Text,
@@ -21,10 +29,7 @@ import ErrorText from '../ErrorText';
 
 // Types
 import { RootState } from '~/shared/types/reducers';
-import {
-  CategoryFormat,
-  SubcategoryFormat
-} from '~/shared/types/components/dropDown/SelectJoinCategory.type';
+import { CategoryFormat } from '~/shared/types/components/dropDown/SelectJoinCategory.type';
 
 // Theme & Styles
 import { useThemeColors } from '~/customHooks/useThemeColors';
@@ -53,12 +58,17 @@ export interface SelectMultiSubcategoryHandle {
   reset: () => void;
 }
 
-// ─── Tipo interno (igual al de SelectJoinCategory) ────────────────────────────
+// ─── Tipos internos y constantes ──────────────────────────────────────────────
 
-type SubcategoryFormatInt = {
-  label: string;
-  value: number;
-};
+type RawCategory = Awaited<
+  ReturnType<typeof getAllSubcategoriesExpensesByMonth>
+>['data']['data'][number];
+
+const ITEM_HEIGHT = 42;
+
+// DropDownPicker llama a setValue con un valor o con una función (prev) => valor
+const resolve = <T,>(next: SetStateAction<T>, prev: T): T =>
+  typeof next === 'function' ? (next as (prevState: T) => T)(prev) : next;
 
 // ─── Componente ───────────────────────────────────────────────────────────────
 
@@ -69,134 +79,112 @@ const SelectMultiSubcategory = forwardRef<
   const colors = useThemeColors();
   const month = useSelector((state: RootState) => state.date.month);
 
-  const ITEM_HEIGHT = 42;
-
-  // Estado del dropdown de categoría
   const [openCategory, setOpenCategory] = useState(false);
-  const [categories, setCategories] = useState<CategoryFormat[]>([]);
+  const [rawCategories, setRawCategories] = useState<RawCategory[]>([]);
   const [selectedCategoryId, setSelectedCategoryId] = useState<number | null>(null);
-
-  // Subcategorías de la categoría activa
-  const [availableSubcategories, setAvailableSubcategories] = useState<SubcategoryFormatInt[]>([]);
-
-  // Selección múltiple: Set de IDs marcados
   const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set());
+  const [loading, setLoading] = useState(true);
 
-  const [loading, setLoading] = useState(false);
-
-  // ── Refs para evitar stale closures en callbacks asincrónicos ───────────────
-  // Mantienen siempre el valor más reciente sin causar re-renders extra
-  const categoryIdRef = useRef<number | null>(null);
-  const categoryNameRef = useRef<string>('');
-  const availableSubcategoriesRef = useRef<SubcategoryFormatInt[]>([]);
-
-  // Sincronizar refs con el estado en cada render
-  categoryIdRef.current = selectedCategoryId;
-  availableSubcategoriesRef.current = availableSubcategories;
-
-  // ── Imperativo ──────────────────────────────────────────────────────────────
-  useImperativeHandle(ref, () => ({
-    reset() {
-      setSelectedCategoryId(null);
-      categoryNameRef.current = '';
-      setAvailableSubcategories([]);
-      setSelectedIds(new Set());
-      onSelectionChange(null);
-    }
-  }));
-
-  // ── Carga inicial ───────────────────────────────────────────────────────────
+  // Siempre apunta al callback más reciente del padre, sin re-disparar la carga
+  const onSelectionChangeRef = useRef(onSelectionChange);
   useEffect(() => {
-    void fetchCategories();
-  }, []);
+    onSelectionChangeRef.current = onSelectionChange;
+  }, [onSelectionChange]);
 
-  const fetchCategories = async () => {
-    try {
-      setLoading(true);
-      const { data } = await getAllSubcategoriesExpensesByMonth(month);
-      const filtered = data.data.filter((f) => f.subcategories.length > 0);
-      const formatted: CategoryFormat[] = filtered.map((e) => ({
+  useImperativeHandle(
+    ref,
+    () => ({
+      reset() {
+        setSelectedCategoryId(null);
+        setSelectedIds(new Set());
+        onSelectionChange(null);
+      }
+    }),
+    [onSelectionChange]
+  );
+
+  // Carga de categorías (al montar y cuando cambia el mes)
+  useEffect(() => {
+    let isMounted = true;
+
+    const fetchCategories = async () => {
+      try {
+        const { data } = await getAllSubcategoriesExpensesByMonth(month);
+        if (!isMounted) return;
+
+        const withSubcategories = data.data.filter((f) => f.subcategories.length > 0);
+        setRawCategories(withSubcategories);
+
+        // Primera categoría por defecto, con la selección reiniciada
+        setSelectedCategoryId(withSubcategories[0]?.id ?? null);
+        setSelectedIds(new Set());
+        onSelectionChangeRef.current(null);
+      } catch (error) {
+        if (isMounted) showError(error);
+      } finally {
+        if (isMounted) setLoading(false);
+      }
+    };
+
+    fetchCategories();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [month]);
+
+  // Items del picker (dependen del tema por el color del ícono)
+  const categories = useMemo<CategoryFormat[]>(
+    () =>
+      rawCategories.map((e) => ({
         label: e.name,
         value: e.id,
         subcategories: e.subcategories,
         icon: () => (
           <Icon name={e.icon ?? 'question'} type="font-awesome" size={35} color={colors.PRIMARY} />
         )
-      }));
-      setCategories(formatted);
+      })),
+    [rawCategories, colors.PRIMARY]
+  );
 
-      // Seleccionar primera categoría por defecto directamente,
-      // sin pasar por el useEffect para evitar la doble ejecución
-      if (formatted.length > 0) {
-        const first = formatted[0];
-        const subs = formatSubcategories(first.subcategories);
-        categoryNameRef.current = first.label;
-        setSelectedCategoryId(first.value);
-        setAvailableSubcategories(subs);
-        setSelectedIds(new Set());
-        onSelectionChange(null);
-      }
-    } catch (error) {
-      showError(error);
-    } finally {
-      setLoading(false);
-    }
-  };
+  // Todo lo siguiente se deriva de la categoría seleccionada
+  const selectedCategory = rawCategories.find((c) => c.id === selectedCategoryId) ?? null;
 
-  const formatSubcategories = (data: SubcategoryFormat[]): SubcategoryFormatInt[] =>
-    data.map((e) => ({ label: e.name, value: e.id }));
+  const availableSubcategories = useMemo<MultiSubcategoryItem[]>(
+    () =>
+      selectedCategory
+        ? selectedCategory.subcategories.map((e) => ({ label: e.name, value: e.id }))
+        : [],
+    [selectedCategory]
+  );
 
-  // ── Cambio de categoría desde el DropDownPicker ──────────────────────────────
-  // Solo se dispara cuando el usuario cambia manualmente la categoría,
-  // NO en la carga inicial (categories está vacío en ese momento)
-  useEffect(() => {
-    if (selectedCategoryId === null || categories.length === 0) return;
-
-    const found = categories.find((c) => c.value === selectedCategoryId);
-    if (!found) return;
-
-    const subs = formatSubcategories(found.subcategories);
-    categoryNameRef.current = found.label;
-    setAvailableSubcategories(subs);
+  const handleCategoryChange = (next: number | null) => {
+    setSelectedCategoryId(next);
     setSelectedIds(new Set());
     onSelectionChange(null);
-  }, [selectedCategoryId]);
+  };
 
-  // ── Lógica de selección múltiple ────────────────────────────────────────────
   const toggleSubcategory = (id: number) => {
-    // Capturar los refs ANTES de entrar al updater para evitar stale closures.
-    // Los refs siempre tienen el valor del render actual.
-    const currentCategoryId = categoryIdRef.current;
-    const currentCategoryName = categoryNameRef.current;
-    const currentSubs = availableSubcategoriesRef.current;
+    const next = new Set(selectedIds);
+    if (next.has(id)) {
+      next.delete(id);
+    } else {
+      next.add(id);
+    }
+    setSelectedIds(next);
 
-    setSelectedIds((prev) => {
-      const next = new Set(prev);
-      if (next.has(id)) {
-        next.delete(id);
-      } else {
-        next.add(id);
-      }
+    if (next.size === 0 || !selectedCategory) {
+      onSelectionChange(null);
+      return;
+    }
 
-      if (next.size === 0 || currentCategoryId === null) {
-        onSelectionChange(null);
-      } else {
-        const selectedSubs = currentSubs
-          .filter((s) => next.has(s.value))
-          .map((s) => ({ value: s.value, label: s.label }));
-
-        onSelectionChange({
-          categoryId: currentCategoryId,
-          categoryName: currentCategoryName,
-          subcategories: selectedSubs
-        });
-      }
-
-      return next;
+    onSelectionChange({
+      categoryId: selectedCategory.id,
+      categoryName: selectedCategory.name,
+      subcategories: availableSubcategories.filter((s) => next.has(s.value))
     });
   };
 
-  // ── Render ──────────────────────────────────────────────────────────────────
   return (
     <View style={[styles.container, containerStyle]}>
       {/* ── Categoría ─────────────────────────────────────────────── */}
@@ -209,8 +197,7 @@ const SelectMultiSubcategory = forwardRef<
           value={selectedCategoryId}
           items={categories}
           setOpen={setOpenCategory}
-          setValue={setSelectedCategoryId}
-          setItems={setCategories}
+          setValue={(next) => handleCategoryChange(resolve(next, selectedCategoryId))}
           maxHeight={ITEM_HEIGHT * categories.length}
           placeholder="Seleccione una categoría"
           placeholderStyle={[styles.placeholder, { color: colors.GRAY }]}
@@ -269,9 +256,7 @@ const SelectMultiSubcategory = forwardRef<
               style={[
                 styles.checkRow,
                 {
-                  backgroundColor: checked
-                    ? colors.PRIMARY + '18' // 10 % opacidad
-                    : colors.CARD_BACKGROUND,
+                  backgroundColor: checked ? colors.PRIMARY + '18' : colors.CARD_BACKGROUND,
                   borderColor: checked ? colors.PRIMARY : colors.BORDER
                 }
               ]}
@@ -390,7 +375,7 @@ const styles = StyleSheet.create({
   },
   // Lista de checkboxes
   checkList: {
-    maxHeight: 260 // ~6 items visibles
+    maxHeight: 260
   },
   checkRow: {
     flexDirection: 'row',

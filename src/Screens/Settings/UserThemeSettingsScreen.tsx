@@ -45,6 +45,8 @@ interface UserThemeSettingsScreenProps {
   navigation: UserThemeSettingsScreenNavigationProp;
 }
 
+type ThemeColors = ReturnType<typeof useThemeColors>;
+
 export default function UserThemeSettingsScreen({ navigation }: UserThemeSettingsScreenProps) {
   const colors = useThemeColors();
   const screenConfig = screenConfigs.userThemeSettings;
@@ -57,39 +59,45 @@ export default function UserThemeSettingsScreen({ navigation }: UserThemeSetting
   const [refreshing, setRefreshing] = useState<boolean>(false);
 
   useEffect(() => {
-    fetchData();
-    const unsubscribe = navigation.addListener('focus', fetchData);
-    return unsubscribe;
-  }, [navigation]);
+    let isMounted = true;
 
-  const fetchData = async (): Promise<void> => {
-    try {
-      setLoading(true);
-      const [myTheme, themes] = await Promise.all([getMyTheme(), getAvailableThemes()]);
-      setCurrentTheme(myTheme);
-      setAvailableThemes(themes);
-    } catch (error) {
-      showError(error);
-    } finally {
-      setLoading(false);
-    }
-  };
+    const fetchData = async (): Promise<void> => {
+      try {
+        setLoading(true);
+        const [myTheme, themes] = await Promise.all([getMyTheme(), getAvailableThemes()]);
+        if (!isMounted) return;
+        setCurrentTheme(myTheme);
+        setAvailableThemes(themes);
+      } catch (error) {
+        if (isMounted) showError(error);
+      } finally {
+        if (isMounted) setLoading(false);
+      }
+    };
+
+    // 'focus' también se dispara en el primer enfoque de la pantalla.
+    const unsubscribe = navigation.addListener('focus', fetchData);
+
+    return () => {
+      isMounted = false;
+      unsubscribe();
+    };
+  }, [navigation]);
 
   const handleSelectTheme = async (themeId: number): Promise<void> => {
     try {
       setRefreshing(true);
       const response = await selectTheme({ themeId });
       setCurrentTheme(response.theme);
-      ShowToast('Tema aplicado exitosamente');
 
       // Recargar el tema en toda la app
       await refreshTheme();
 
       ShowToast('Tema aplicado exitosamente');
-      setRefreshing(false);
     } catch (error) {
-      setRefreshing(false);
       showError(error);
+    } finally {
+      setRefreshing(false);
     }
   };
 
@@ -108,12 +116,10 @@ export default function UserThemeSettingsScreen({ navigation }: UserThemeSetting
               const response = await resetThemeToGlobal();
               setCurrentTheme(response.theme);
               ShowToast('Tema reseteado al global');
-              setTimeout(() => {
-                setRefreshing(false);
-              }, 500);
             } catch (error) {
-              setRefreshing(false);
               showError(error);
+            } finally {
+              setRefreshing(false);
             }
           }
         }
@@ -139,11 +145,11 @@ export default function UserThemeSettingsScreen({ navigation }: UserThemeSetting
       <ScreenHeader title={screenConfig.title} subtitle={screenConfig.subtitle} />
 
       <ScrollView
-        style={{ flex: 1 }}
-        contentContainerStyle={{ paddingBottom: 20 }}
+        style={styles.scroll}
+        contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
       >
-        <View style={{ paddingHorizontal: 16, paddingTop: 10 }}>
+        <View style={styles.content}>
           {/* Tema Actual */}
           <View style={styles.sectionContainer}>
             <Text style={[styles.sectionTitle, { color: colors.TEXT_PRIMARY }]}>Tema Actual</Text>
@@ -222,71 +228,69 @@ export default function UserThemeSettingsScreen({ navigation }: UserThemeSetting
 }
 
 // ============================================================================
+// Componente: Preview de los 4 colores principales
+// ============================================================================
+
+interface ThemeColorsPreviewProps {
+  themeColors: ThemeConfig['colors'];
+  textColor: string;
+}
+
+const ThemeColorsPreview: React.FC<ThemeColorsPreviewProps> = ({ themeColors, textColor }) => (
+  <View style={styles.colorPreviewContainer}>
+    <ColorPreview label="Primary" color={themeColors.PRIMARY} textColor={textColor} />
+    <ColorPreview label="Secondary" color={themeColors.SECONDARY} textColor={textColor} />
+    <ColorPreview label="Success" color={themeColors.SUCCESS} textColor={textColor} />
+    <ColorPreview label="Error" color={themeColors.ERROR} textColor={textColor} />
+  </View>
+);
+
+// ============================================================================
 // Componente: Card del Tema Actual
 // ============================================================================
 
 interface CurrentThemeCardProps {
   theme: UserThemeConfig;
-  colors: ReturnType<typeof useThemeColors>;
+  colors: ThemeColors;
 }
 
-const CurrentThemeCard: React.FC<CurrentThemeCardProps> = ({ theme, colors }) => {
-  return (
-    <View
-      style={[
-        styles.currentThemeCard,
-        {
-          backgroundColor: colors.CARD_BACKGROUND,
-          borderColor: colors.BORDER
-        }
-      ]}
-    >
-      <View style={styles.currentThemeHeader}>
-        <View style={[styles.iconContainer, { backgroundColor: colors.PRIMARY + '15' }]}>
-          <Icon
-            type="material-community"
-            name={theme.isCustom ? 'palette' : 'palette-outline'}
-            size={24}
-            color={colors.PRIMARY}
-          />
-        </View>
-        <View style={styles.currentThemeInfo}>
-          <Text style={[styles.currentThemeName, { color: colors.TEXT_PRIMARY }]}>
-            {theme.isCustom ? 'Tema Personalizado' : theme.themeName}
-          </Text>
-          <Text style={[styles.currentThemeType, { color: colors.TEXT_SECONDARY }]}>
-            {theme.isCustom ? 'Colores personalizados' : 'Tema predefinido'}
-          </Text>
-        </View>
-        {theme.isCustom && (
-          <View style={[styles.badge, { backgroundColor: colors.PRIMARY + '20' }]}>
-            <Text style={[styles.badgeText, { color: colors.PRIMARY }]}>Custom</Text>
-          </View>
-        )}
+const CurrentThemeCard: React.FC<CurrentThemeCardProps> = ({ theme, colors }) => (
+  <View
+    style={[
+      styles.currentThemeCard,
+      {
+        backgroundColor: colors.CARD_BACKGROUND,
+        borderColor: colors.BORDER
+      }
+    ]}
+  >
+    <View style={styles.currentThemeHeader}>
+      <View style={[styles.iconContainer, { backgroundColor: colors.PRIMARY + '15' }]}>
+        <Icon
+          type="material-community"
+          name={theme.isCustom ? 'palette' : 'palette-outline'}
+          size={24}
+          color={colors.PRIMARY}
+        />
       </View>
-
-      {/* Preview de colores */}
-      <View style={styles.colorPreviewContainer}>
-        <ColorPreview
-          label="Primary"
-          color={theme.colors.PRIMARY}
-          textColor={colors.TEXT_SECONDARY}
-        />
-        <ColorPreview
-          label="Secondary"
-          color={theme.colors.SECONDARY}
-          textColor={colors.TEXT_SECONDARY}
-        />
-        <ColorPreview
-          label="Success"
-          color={theme.colors.SUCCESS}
-          textColor={colors.TEXT_SECONDARY}
-        />
-        <ColorPreview label="Error" color={theme.colors.ERROR} textColor={colors.TEXT_SECONDARY} />
+      <View style={styles.currentThemeInfo}>
+        <Text style={[styles.currentThemeName, { color: colors.TEXT_PRIMARY }]}>
+          {theme.isCustom ? 'Tema Personalizado' : theme.themeName}
+        </Text>
+        <Text style={[styles.currentThemeType, { color: colors.TEXT_SECONDARY }]}>
+          {theme.isCustom ? 'Colores personalizados' : 'Tema predefinido'}
+        </Text>
       </View>
+      {theme.isCustom && (
+        <View style={[styles.badge, { backgroundColor: colors.PRIMARY + '20' }]}>
+          <Text style={[styles.badgeText, { color: colors.PRIMARY }]}>Custom</Text>
+        </View>
+      )}
     </View>
-  );
-};
+
+    <ThemeColorsPreview themeColors={theme.colors} textColor={colors.TEXT_SECONDARY} />
+  </View>
+);
 
 // ============================================================================
 // Componente: Card de Tema Disponible
@@ -294,61 +298,40 @@ const CurrentThemeCard: React.FC<CurrentThemeCardProps> = ({ theme, colors }) =>
 
 interface ThemeCardProps {
   theme: ThemeConfig;
-  colors: ReturnType<typeof useThemeColors>;
+  colors: ThemeColors;
   isActive: boolean;
   onPress: () => void;
   disabled: boolean;
 }
 
-const ThemeCard: React.FC<ThemeCardProps> = ({ theme, colors, isActive, onPress, disabled }) => {
-  return (
-    <TouchableOpacity
-      style={[
-        styles.themeCard,
-        {
-          backgroundColor: colors.CARD_BACKGROUND,
-          borderColor: isActive ? colors.PRIMARY : colors.BORDER,
-          borderWidth: isActive ? 2 : 1
-        }
-      ]}
-      onPress={onPress}
-      activeOpacity={0.7}
-      disabled={disabled}
-    >
-      <View style={styles.themeCardHeader}>
-        <View style={styles.themeCardInfo}>
-          <Text style={[styles.themeCardName, { color: colors.TEXT_PRIMARY }]}>
-            {theme.themeName}
-          </Text>
-          {/* Descripción opcional - puedes eliminar esta línea si no la necesitas */}
-        </View>
-        {isActive && (
-          <Icon type="material-community" name="check-circle" size={24} color={colors.PRIMARY} />
-        )}
+const ThemeCard: React.FC<ThemeCardProps> = ({ theme, colors, isActive, onPress, disabled }) => (
+  <TouchableOpacity
+    style={[
+      styles.themeCard,
+      {
+        backgroundColor: colors.CARD_BACKGROUND,
+        borderColor: isActive ? colors.PRIMARY : colors.BORDER,
+        borderWidth: isActive ? 2 : 1
+      }
+    ]}
+    onPress={onPress}
+    activeOpacity={0.7}
+    disabled={disabled}
+  >
+    <View style={styles.themeCardHeader}>
+      <View style={styles.themeCardInfo}>
+        <Text style={[styles.themeCardName, { color: colors.TEXT_PRIMARY }]}>
+          {theme.themeName}
+        </Text>
       </View>
+      {isActive && (
+        <Icon type="material-community" name="check-circle" size={24} color={colors.PRIMARY} />
+      )}
+    </View>
 
-      {/* Preview de colores del tema */}
-      <View style={styles.colorPreviewContainer}>
-        <ColorPreview
-          label="Primary"
-          color={theme.colors.PRIMARY}
-          textColor={colors.TEXT_SECONDARY}
-        />
-        <ColorPreview
-          label="Secondary"
-          color={theme.colors.SECONDARY}
-          textColor={colors.TEXT_SECONDARY}
-        />
-        <ColorPreview
-          label="Success"
-          color={theme.colors.SUCCESS}
-          textColor={colors.TEXT_SECONDARY}
-        />
-        <ColorPreview label="Error" color={theme.colors.ERROR} textColor={colors.TEXT_SECONDARY} />
-      </View>
-    </TouchableOpacity>
-  );
-};
+    <ThemeColorsPreview themeColors={theme.colors} textColor={colors.TEXT_SECONDARY} />
+  </TouchableOpacity>
+);
 
 // ============================================================================
 // Componente: Preview de Color
@@ -360,20 +343,28 @@ interface ColorPreviewProps {
   textColor: string;
 }
 
-const ColorPreview: React.FC<ColorPreviewProps> = ({ label, color, textColor }) => {
-  return (
-    <View style={styles.colorPreview}>
-      <View style={[styles.colorCircle, { backgroundColor: color }]} />
-      <Text style={[styles.colorLabel, { color: textColor }]}>{label}</Text>
-    </View>
-  );
-};
+const ColorPreview: React.FC<ColorPreviewProps> = ({ label, color, textColor }) => (
+  <View style={styles.colorPreview}>
+    <View style={[styles.colorCircle, { backgroundColor: color }]} />
+    <Text style={[styles.colorLabel, { color: textColor }]}>{label}</Text>
+  </View>
+);
 
 // ============================================================================
 // Estilos
 // ============================================================================
 
 const styles = StyleSheet.create({
+  scroll: {
+    flex: 1
+  },
+  scrollContent: {
+    paddingBottom: 20
+  },
+  content: {
+    paddingHorizontal: 16,
+    paddingTop: 10
+  },
   sectionContainer: {
     marginBottom: 24
   },
@@ -453,9 +444,6 @@ const styles = StyleSheet.create({
     fontSize: MEDIUM,
     fontWeight: '600',
     marginBottom: 4
-  },
-  themeCardDescription: {
-    fontSize: SMALL
   },
   colorPreviewContainer: {
     flexDirection: 'row',

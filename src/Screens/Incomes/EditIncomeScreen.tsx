@@ -56,12 +56,7 @@ export default function EditIncomeScreen({ navigation, route }: EditIncomeScreen
   const [loading, setLoading] = useState(false);
 
   // Default form values
-  const {
-    control,
-    handleSubmit,
-    reset,
-    formState: { errors }
-  } = useForm({
+  const { control, handleSubmit, reset } = useForm({
     defaultValues: {
       amount: objectIncome.cost,
       commentary: objectIncome.commentary

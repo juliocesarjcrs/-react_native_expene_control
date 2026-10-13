@@ -35,28 +35,41 @@ interface SettingsScreenProps {
   route: SettingsScreenRouteProp;
 }
 
+const ADMIN_ROLE = 1;
+const ADMIN_COLOR = '#009688';
+
 export default function SettingsScreen({ navigation }: SettingsScreenProps) {
   const config = screenConfigs.settings;
   const colors = useThemeColors();
-  const [userLoggued, setUserLoggued] = useState<UserModel>();
+  const [loggedUser, setLoggedUser] = useState<UserModel>();
 
   useEffect(() => {
-    fetchDataUserLogued();
-    return navigation.addListener('focus', fetchDataUserLogued);
-  }, []);
+    let isMounted = true;
 
-  const fetchDataUserLogued = async () => {
-    try {
-      const jsonValue = await AsyncStorage.getItem('user');
-      const user = jsonValue ? JSON.parse(jsonValue) : null;
-      const { data } = await getUser(user.id);
-      setUserLoggued(data);
-    } catch (error) {
-      showError(error);
-    }
-  };
+    const fetchLoggedUser = async () => {
+      try {
+        const jsonValue = await AsyncStorage.getItem('user');
+        const storedUser = jsonValue ? JSON.parse(jsonValue) : null;
+        if (!storedUser?.id) return;
 
-  const go = (route: any) => () => navigation.navigate(route);
+        const { data } = await getUser(storedUser.id);
+        if (isMounted) setLoggedUser(data);
+      } catch (error) {
+        showError(error);
+      }
+    };
+
+    // 'focus' se dispara también en el primer enfoque de la pantalla,
+    // por lo que no hace falta llamar a la función directamente aquí.
+    const unsubscribe = navigation.addListener('focus', fetchLoggedUser);
+
+    return () => {
+      isMounted = false;
+      unsubscribe();
+    };
+  }, [navigation]);
+
+  const go = (route: keyof SettingsStackParamList) => () => navigation.navigate(route as never);
 
   return (
     <ScrollView
@@ -82,32 +95,40 @@ export default function SettingsScreen({ navigation }: SettingsScreenProps) {
       </View>
 
       {/* --- SOLO ADMIN --- */}
-      {userLoggued?.role === 1 && (
+      {loggedUser?.role === ADMIN_ROLE && (
         <View style={styles.section}>
           <MenuCardButton
             title="Gestionar permisos usuario"
             onPress={go('manageUserPermissions')}
-            color="#009688"
+            color={ADMIN_COLOR}
           />
-          <MenuCardButton title="Editar Perfil" onPress={go('editUser')} color="#009688" />
-          <MenuCardButton title="Crear Usuario" onPress={go('createUser')} color="#009688" />
-          <MenuCardButton title="Gestionar CSV" onPress={go('manageCSV')} color="#009688" />
+          <MenuCardButton title="Editar Perfil" onPress={go('editUser')} color={ADMIN_COLOR} />
+          <MenuCardButton title="Crear Usuario" onPress={go('createUser')} color={ADMIN_COLOR} />
+          <MenuCardButton title="Gestionar CSV" onPress={go('manageCSV')} color={ADMIN_COLOR} />
           <MenuCardButton
             title="Gestionar Funcionalidades"
             onPress={go('manageFeatureFlags')}
-            color="#009688"
+            color={ADMIN_COLOR}
           />
           <MenuCardButton
             title="Configurar Chatbot"
             onPress={go('chatbotConfig')}
-            color="#009688"
+            color={ADMIN_COLOR}
           />
-          <MenuCardButton title="Gestionar Modelos IA" onPress={go('aiModels')} color="#009688" />
-          <MenuCardButton title="Gestionar Temas" onPress={go('manageThemes')} color="#009688" />
+          <MenuCardButton
+            title="Gestionar Modelos IA"
+            onPress={go('aiModels')}
+            color={ADMIN_COLOR}
+          />
+          <MenuCardButton
+            title="Gestionar Temas"
+            onPress={go('manageThemes')}
+            color={ADMIN_COLOR}
+          />
           <MenuCardButton
             title="Panel de Administración"
             onPress={go('adminDashboard')}
-            color="#009688"
+            color={ADMIN_COLOR}
           />
         </View>
       )}
@@ -116,11 +137,6 @@ export default function SettingsScreen({ navigation }: SettingsScreenProps) {
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    padding: 12,
-    backgroundColor: 'white'
-  },
   section: {
     marginVertical: 10
   }

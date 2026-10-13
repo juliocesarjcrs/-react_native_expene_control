@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import {
   View,
   Text,
@@ -36,114 +36,126 @@ import { commonStyles } from '~/styles/common';
 // Configs
 import { screenConfigs } from '~/config/screenConfigs';
 
+// ============================================
+// Tipos y constantes
+// ============================================
+type AppColors = ReturnType<typeof useThemeColors>;
 type TabType = 'health' | 'tools' | 'errors';
+type Interaction = Awaited<ReturnType<typeof getInteractionLogs>>[number];
 
+const TABS: { key: TabType; label: string; icon: string }[] = [
+  { key: 'health', label: 'Estado', icon: 'heart-pulse' },
+  { key: 'tools', label: 'Tool Calls', icon: 'tools' },
+  { key: 'errors', label: 'Errores', icon: 'alert-circle' }
+];
+
+const HEALTH_GOOD = 0.7;
+const HEALTH_WARNING = 0.4;
+
+const getHealthColor = (score: number, colors: AppColors): string => {
+  if (score > HEALTH_GOOD) return colors.SUCCESS;
+  if (score > HEALTH_WARNING) return colors.WARNING;
+  return colors.ERROR;
+};
+
+const groupByConversation = (logs: Interaction[]): Record<number, Interaction[]> => {
+  const groups: Record<number, Interaction[]> = {};
+  logs.forEach((log) => {
+    if (!groups[log.conversationId]) {
+      groups[log.conversationId] = [];
+    }
+    groups[log.conversationId].push(log);
+  });
+  return groups;
+};
+
+// Funciones de fetch a nivel de módulo (referencias estables para el hook)
+const fetchHealthData = async () => {
+  const [current, models] = await Promise.all([getCurrentModel(), getModelsHealth()]);
+  return { current, models };
+};
+const fetchInteractions = () => getInteractionLogs(50);
+const fetchErrors = () => getModelErrors(20);
+
+// ============================================
+// Hook de carga remota
+// ============================================
+function useRemoteData<T>(fetcher: () => Promise<T>, refreshToken: number, onLoaded: () => void) {
+  const [data, setData] = useState<T | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [reloadCount, setReloadCount] = useState(0);
+
+  useEffect(() => {
+    let isMounted = true;
+
+    const load = async () => {
+      try {
+        const result = await fetcher();
+        if (isMounted) setData(result);
+      } catch (error) {
+        if (isMounted) showError(error);
+      } finally {
+        if (isMounted) {
+          setLoading(false);
+          onLoaded();
+        }
+      }
+    };
+
+    load();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [fetcher, refreshToken, reloadCount, onLoaded]);
+
+  // Recarga manual con spinner
+  const reload = () => {
+    setLoading(true);
+    setReloadCount((count) => count + 1);
+  };
+
+  return { data, loading, reload };
+}
+
+// ============================================
+// Pantalla principal
+// ============================================
 export default function AdminDashboardScreen() {
   const config = screenConfigs.adminDashboard;
   const colors = useThemeColors();
   const [activeTab, setActiveTab] = useState<TabType>('health');
   const [refreshing, setRefreshing] = useState(false);
+  const [refreshToken, setRefreshToken] = useState(0);
 
-  const onRefresh = async () => {
+  const handleLoaded = useCallback(() => setRefreshing(false), []);
+
+  const onRefresh = () => {
     setRefreshing(true);
-    try {
-      // Recargar según el tab activo
-      await new Promise((resolve) => setTimeout(resolve, 500));
-    } catch (error) {
-      showError(error);
-    } finally {
-      setRefreshing(false);
-    }
+    setRefreshToken((token) => token + 1);
   };
 
   return (
     <View style={[commonStyles.screenContentWithPadding, { backgroundColor: colors.BACKGROUND }]}>
       <ScreenHeader title={config.title} subtitle={config.subtitle} />
+
       {/* Tabs */}
-      <View style={[styles.tabs, { backgroundColor: colors.CARD_BACKGROUND }]}>
-        <TouchableOpacity
-          style={[
-            styles.tab,
-            activeTab === 'health' && {
-              borderBottomColor: colors.PRIMARY,
-              borderBottomWidth: 2
-            }
-          ]}
-          onPress={() => setActiveTab('health')}
-        >
-          <Icon
-            name="heart-pulse"
-            type="material-community"
-            color={activeTab === 'health' ? colors.PRIMARY : colors.TEXT_SECONDARY}
-            size={20}
+      <View
+        style={[
+          styles.tabs,
+          { backgroundColor: colors.CARD_BACKGROUND, shadowColor: colors.BLACK }
+        ]}
+      >
+        {TABS.map((tab) => (
+          <TabButton
+            key={tab.key}
+            label={tab.label}
+            icon={tab.icon}
+            active={activeTab === tab.key}
+            onPress={() => setActiveTab(tab.key)}
+            colors={colors}
           />
-          <Text
-            style={[
-              styles.tabText,
-              {
-                color: activeTab === 'health' ? colors.PRIMARY : colors.TEXT_SECONDARY
-              }
-            ]}
-          >
-            Estado
-          </Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity
-          style={[
-            styles.tab,
-            activeTab === 'tools' && {
-              borderBottomColor: colors.PRIMARY,
-              borderBottomWidth: 2
-            }
-          ]}
-          onPress={() => setActiveTab('tools')}
-        >
-          <Icon
-            name="tools"
-            type="material-community"
-            color={activeTab === 'tools' ? colors.PRIMARY : colors.TEXT_SECONDARY}
-            size={20}
-          />
-          <Text
-            style={[
-              styles.tabText,
-              {
-                color: activeTab === 'tools' ? colors.PRIMARY : colors.TEXT_SECONDARY
-              }
-            ]}
-          >
-            Tool Calls
-          </Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity
-          style={[
-            styles.tab,
-            activeTab === 'errors' && {
-              borderBottomColor: colors.PRIMARY,
-              borderBottomWidth: 2
-            }
-          ]}
-          onPress={() => setActiveTab('errors')}
-        >
-          <Icon
-            name="alert-circle"
-            type="material-community"
-            color={activeTab === 'errors' ? colors.PRIMARY : colors.TEXT_SECONDARY}
-            size={20}
-          />
-          <Text
-            style={[
-              styles.tabText,
-              {
-                color: activeTab === 'errors' ? colors.PRIMARY : colors.TEXT_SECONDARY
-              }
-            ]}
-          >
-            Errores
-          </Text>
-        </TouchableOpacity>
+        ))}
       </View>
 
       {/* Content */}
@@ -151,45 +163,72 @@ export default function AdminDashboardScreen() {
         style={styles.content}
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
       >
-        {activeTab === 'health' && <ModelsHealthView />}
-        {activeTab === 'tools' && <ToolCallsView />}
-        {activeTab === 'errors' && <ErrorsView />}
+        {activeTab === 'health' && (
+          <ModelsHealthView refreshToken={refreshToken} onLoaded={handleLoaded} />
+        )}
+        {activeTab === 'tools' && (
+          <ToolCallsView refreshToken={refreshToken} onLoaded={handleLoaded} />
+        )}
+        {activeTab === 'errors' && (
+          <ErrorsView refreshToken={refreshToken} onLoaded={handleLoaded} />
+        )}
       </ScrollView>
     </View>
   );
 }
 
 // ============================================
+// Botón de tab
+// ============================================
+interface TabButtonProps {
+  label: string;
+  icon: string;
+  active: boolean;
+  onPress: () => void;
+  colors: AppColors;
+}
+
+const TabButton: React.FC<TabButtonProps> = ({ label, icon, active, onPress, colors }) => {
+  const tint = active ? colors.PRIMARY : colors.TEXT_SECONDARY;
+
+  return (
+    <TouchableOpacity
+      style={[
+        styles.tab,
+        active && { borderBottomColor: colors.PRIMARY },
+        active && styles.tabActive
+      ]}
+      onPress={onPress}
+    >
+      <Icon name={icon} type="material-community" color={tint} size={20} />
+      <Text style={[styles.tabText, { color: tint }]}>{label}</Text>
+    </TouchableOpacity>
+  );
+};
+
+// ============================================
+// Props comunes de las vistas
+// ============================================
+interface ViewProps {
+  refreshToken: number;
+  onLoaded: () => void;
+}
+
+// ============================================
 // Vista de Estado de Modelos
 // ============================================
-function ModelsHealthView() {
+function ModelsHealthView({ refreshToken, onLoaded }: ViewProps) {
   const colors = useThemeColors();
-  const [currentModel, setCurrentModel] = useState<any>(null);
-  const [allModels, setAllModels] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { data, loading, reload } = useRemoteData(fetchHealthData, refreshToken, onLoaded);
 
-  useEffect(() => {
-    loadData();
-  }, []);
-
-  const loadData = async () => {
-    try {
-      setLoading(true);
-      const [current, models] = await Promise.all([getCurrentModel(), getModelsHealth()]);
-      setCurrentModel(current);
-      setAllModels(models);
-    } catch (error) {
-      showError(error);
-    } finally {
-      setLoading(false);
-    }
-  };
+  const currentModel = data?.current;
+  const allModels = data?.models ?? [];
 
   const handleReloadModels = async () => {
     try {
       await reloadModels();
       Alert.alert('Éxito', 'Modelos recargados correctamente');
-      loadData();
+      reload();
     } catch (error) {
       showError(error);
     }
@@ -203,17 +242,18 @@ function ModelsHealthView() {
     );
   }
 
-  const healthColor =
-    currentModel?.health?.healthScore > 0.7
-      ? colors.SUCCESS
-      : currentModel?.health?.healthScore > 0.4
-        ? colors.WARNING
-        : colors.ERROR;
+  const healthScore = currentModel?.health?.healthScore ?? 0;
+  const healthColor = getHealthColor(healthScore, colors);
 
   return (
     <View style={styles.section}>
       {/* Modelo Actual */}
-      <View style={[styles.card, { backgroundColor: colors.CARD_BACKGROUND }]}>
+      <View
+        style={[
+          styles.card,
+          { backgroundColor: colors.CARD_BACKGROUND, shadowColor: colors.BLACK }
+        ]}
+      >
         <View style={styles.cardHeader}>
           <Icon name="robot" type="material-community" color={colors.PRIMARY} size={24} />
           <Text style={[styles.cardTitle, { color: colors.TEXT_PRIMARY }]}>Modelo Activo</Text>
@@ -230,21 +270,21 @@ function ModelsHealthView() {
           <View style={styles.statItem}>
             <Text style={[styles.statLabel, { color: colors.TEXT_SECONDARY }]}>Health Score</Text>
             <Text style={[styles.statValue, { color: healthColor }]}>
-              {(currentModel?.health?.healthScore * 100 || 0).toFixed(0)}%
+              {(healthScore * 100).toFixed(0)}%
             </Text>
           </View>
 
           <View style={styles.statItem}>
             <Text style={[styles.statLabel, { color: colors.TEXT_SECONDARY }]}>Latencia</Text>
             <Text style={[styles.statValue, { color: colors.TEXT_PRIMARY }]}>
-              {currentModel?.health?.responseTime || 0}ms
+              {currentModel?.health?.responseTime ?? 0}ms
             </Text>
           </View>
 
           <View style={styles.statItem}>
             <Text style={[styles.statLabel, { color: colors.TEXT_SECONDARY }]}>Errores</Text>
             <Text style={[styles.statValue, { color: colors.ERROR }]}>
-              {currentModel?.health?.errorCount || 0}
+              {currentModel?.health?.errorCount ?? 0}
             </Text>
           </View>
         </View>
@@ -302,7 +342,7 @@ function ModelsHealthView() {
         onPress={handleReloadModels}
         variant="outline"
         fullWidth
-        icon={<Icon name="refresh" type="material-community" size={18} />}
+        icon={<Icon name="refresh" type="material-community" size={18} color={colors.PRIMARY} />}
       />
     </View>
   );
@@ -311,26 +351,11 @@ function ModelsHealthView() {
 // ============================================
 // Vista de Tool Calls
 // ============================================
-function ToolCallsView() {
+function ToolCallsView({ refreshToken, onLoaded }: ViewProps) {
   const colors = useThemeColors();
-  const [interactions, setInteractions] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { data, loading, reload } = useRemoteData(fetchInteractions, refreshToken, onLoaded);
 
-  useEffect(() => {
-    loadData();
-  }, []);
-
-  const loadData = async () => {
-    try {
-      setLoading(true);
-      const data = await getInteractionLogs(50);
-      setInteractions(data);
-    } catch (error) {
-      showError(error);
-    } finally {
-      setLoading(false);
-    }
-  };
+  const interactions = data ?? [];
 
   if (loading) {
     return (
@@ -356,17 +381,7 @@ function ToolCallsView() {
     );
   }
 
-  // Agrupar por conversación
-  const groupedByConversation = interactions.reduce(
-    (acc, log) => {
-      if (!acc[log.conversationId]) {
-        acc[log.conversationId] = [];
-      }
-      acc[log.conversationId].push(log);
-      return acc;
-    },
-    {} as Record<number, any[]>
-  );
+  const groupedByConversation = groupByConversation(interactions);
 
   const conversationIds = Object.keys(groupedByConversation)
     .map(Number)
@@ -395,7 +410,7 @@ function ToolCallsView() {
       </View>
 
       {/* Grouped Conversations */}
-      <ScrollView>
+      <View>
         {conversationIds.map((convId) => (
           <ConversationGroup
             key={convId}
@@ -403,11 +418,11 @@ function ToolCallsView() {
             logs={groupedByConversation[convId]}
           />
         ))}
-      </ScrollView>
+      </View>
 
       <MyButton
         title="Actualizar"
-        onPress={loadData}
+        onPress={reload}
         variant="outline"
         fullWidth
         icon={<Icon name="refresh" type="material-community" size={18} color={colors.PRIMARY} />}
@@ -419,26 +434,11 @@ function ToolCallsView() {
 // ============================================
 // Vista de Errores
 // ============================================
-function ErrorsView() {
+function ErrorsView({ refreshToken, onLoaded }: ViewProps) {
   const colors = useThemeColors();
-  const [errors, setErrors] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { data, loading, reload } = useRemoteData(fetchErrors, refreshToken, onLoaded);
 
-  useEffect(() => {
-    loadData();
-  }, []);
-
-  const loadData = async () => {
-    try {
-      setLoading(true);
-      const data = await getModelErrors(20);
-      setErrors(data);
-    } catch (error) {
-      showError(error);
-    } finally {
-      setLoading(false);
-    }
-  };
+  const errors = data ?? [];
 
   if (loading) {
     return (
@@ -463,15 +463,14 @@ function ErrorsView() {
     <View style={styles.section}>
       <Text style={[styles.sectionTitle, { color: colors.TEXT_PRIMARY }]}>Últimos 20 Errores</Text>
 
-      {errors.map((error, index) => (
+      {errors.map((error) => (
         <View
-          key={index}
+          key={`${error.timestamp}-${error.modelName}-${error.iteration}`}
           style={[
             styles.errorCard,
             {
               backgroundColor: colors.ERROR + '10',
-              borderColor: colors.ERROR,
-              borderLeftWidth: 4
+              borderColor: colors.ERROR
             }
           ]}
         >
@@ -487,7 +486,7 @@ function ErrorsView() {
 
           <Text style={[styles.errorMessage, { color: colors.TEXT_PRIMARY }]}>{error.error}</Text>
 
-          {/* ✅ AGREGAR: Información adicional */}
+          {/* Información adicional */}
           <View style={styles.errorDetails}>
             <Text style={[styles.errorDetail, { color: colors.TEXT_SECONDARY }]}>
               🔧 Tools: {error.supportsTools ? 'Sí' : 'No'}
@@ -517,10 +516,10 @@ function ErrorsView() {
 
       <MyButton
         title="Actualizar"
-        onPress={loadData}
+        onPress={reload}
         variant="outline"
         fullWidth
-        icon={<Icon name="refresh" type="material-community" size={18} />}
+        icon={<Icon name="refresh" type="material-community" size={18} color={colors.PRIMARY} />}
       />
     </View>
   );
@@ -530,7 +529,6 @@ const styles = StyleSheet.create({
   tabs: {
     flexDirection: 'row',
     elevation: 2,
-    shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 4
@@ -542,6 +540,9 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     paddingVertical: 12,
     gap: 6
+  },
+  tabActive: {
+    borderBottomWidth: 2
   },
   tabText: {
     fontSize: 14,
@@ -558,7 +559,6 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     marginBottom: 16,
     elevation: 2,
-    shadowColor: '#000',
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.1,
     shadowRadius: 2
@@ -595,14 +595,6 @@ const styles = StyleSheet.create({
   statItem: {
     alignItems: 'center'
   },
-  // statLabel: {
-  //   fontSize: 12,
-  //   marginBottom: 4,
-  // },
-  // statValue: {
-  //   fontSize: 18,
-  //   fontWeight: '600',
-  // },
   sectionTitle: {
     fontSize: 16,
     fontWeight: '600',
@@ -643,48 +635,6 @@ const styles = StyleSheet.create({
   modelStat: {
     fontSize: 12
   },
-  toolCard: {
-    padding: 12,
-    borderRadius: 8,
-    marginBottom: 12,
-    borderWidth: 1
-  },
-  toolHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginBottom: 8
-  },
-  toolModel: {
-    fontSize: 12,
-    fontWeight: '600'
-  },
-  toolTime: {
-    fontSize: 11
-  },
-  userQuery: {
-    fontSize: 14,
-    fontStyle: 'italic',
-    marginBottom: 12
-  },
-  toolCallItem: {
-    marginBottom: 8
-  },
-  toolCallHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-    marginBottom: 4
-  },
-  toolName: {
-    fontSize: 13,
-    fontWeight: '600'
-  },
-  toolParams: {
-    fontSize: 11,
-    fontFamily: 'monospace',
-    padding: 8,
-    borderRadius: 4
-  },
   timestamp: {
     fontSize: 11,
     marginTop: 4
@@ -692,7 +642,8 @@ const styles = StyleSheet.create({
   errorCard: {
     padding: 12,
     borderRadius: 8,
-    marginBottom: 12
+    marginBottom: 12,
+    borderLeftWidth: 4
   },
   errorHeader: {
     flexDirection: 'row',

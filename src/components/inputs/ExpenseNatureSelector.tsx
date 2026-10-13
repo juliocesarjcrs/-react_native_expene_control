@@ -1,41 +1,45 @@
-// ~/components/inputs/ExpenseNatureSelector.tsx
 import React from 'react';
-import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
-import { Controller, Control } from 'react-hook-form';
+import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { Controller } from 'react-hook-form';
+import type { Control, FieldValues, Path, PathValue } from 'react-hook-form';
 import { Icon } from 'react-native-elements';
 
 // Types
-import { ExpenseNature } from '~/shared/types/models/expense.type';
+import type { ExpenseNature } from '~/shared/types/models/expense.type';
 import { EXPENSE_NATURE_META } from '~/constants/expenseNature';
 
 // Theme
 import { useThemeColors } from '~/customHooks/useThemeColors';
 
 // Styles
-import { SMALL, MEDIUM } from '~/styles/fonts';
+import { MEDIUM, SMALL } from '~/styles/fonts';
 
 const NATURE_VALUES: ExpenseNature[] = ['operational', 'investment', 'atypical'];
+const DEFAULT_NATURE_FIELD = 'nature';
+const SELECTED_BG_OPACITY_HEX = '20';
 
-interface ExpenseNatureSelectorProps {
-  control: Control<any>;
-  name?: string;
+// Genérico: acepta el Control de cualquier formulario que tenga un campo de naturaleza
+interface ExpenseNatureSelectorProps<TFieldValues extends FieldValues> {
+  control: Control<TFieldValues>;
+  name?: Path<TFieldValues>;
   defaultValue?: ExpenseNature;
 }
 
-export default function ExpenseNatureSelector({
+export default function ExpenseNatureSelector<TFieldValues extends FieldValues>({
   control,
-  name = 'nature',
+  name = DEFAULT_NATURE_FIELD as unknown as Path<TFieldValues>,
   defaultValue = 'operational'
-}: ExpenseNatureSelectorProps): React.JSX.Element {
+}: ExpenseNatureSelectorProps<TFieldValues>): React.JSX.Element {
   const colors = useThemeColors();
 
   return (
     <Controller
       name={name}
       control={control}
-      defaultValue={defaultValue}
+      defaultValue={defaultValue as PathValue<TFieldValues, Path<TFieldValues>>}
       render={({ field: { value, onChange } }) => {
-        const selectedMeta = EXPENSE_NATURE_META[value as ExpenseNature];
+        const currentNature = value as unknown as ExpenseNature;
+        const selectedMeta = EXPENSE_NATURE_META[currentNature];
 
         return (
           <View style={styles.container}>
@@ -44,7 +48,7 @@ export default function ExpenseNatureSelector({
             <View style={styles.optionsRow}>
               {NATURE_VALUES.map((natureValue) => {
                 const meta = EXPENSE_NATURE_META[natureValue];
-                const isSelected = value === natureValue;
+                const isSelected = currentNature === natureValue;
                 const optionColor = colors[meta.colorKey];
 
                 return (
@@ -55,7 +59,9 @@ export default function ExpenseNatureSelector({
                     style={[
                       styles.option,
                       {
-                        backgroundColor: isSelected ? optionColor + '20' : colors.CARD_BACKGROUND,
+                        backgroundColor: isSelected
+                          ? `${optionColor}${SELECTED_BG_OPACITY_HEX}`
+                          : colors.CARD_BACKGROUND,
                         borderColor: isSelected ? optionColor : colors.BORDER
                       }
                     ]}

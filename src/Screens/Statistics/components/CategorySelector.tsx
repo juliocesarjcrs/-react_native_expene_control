@@ -7,37 +7,51 @@ import { getCategoryWithSubcategories } from '~/services/categories';
 import { CategoryExpense } from '~/shared/types/services';
 import { showError } from '~/utils/showError';
 
+type Subcategory = CategoryExpense['subcategories'][number];
+type SelectedMap = Record<number, number[]>;
+type SelectionValue = { categoryId: number; subcategoriesId: number[] }[];
+
 interface CategorySelectorProps {
-  onChange: (value: { categoryId: number; subcategoriesId: number[] }[]) => void;
+  onChange: (value: SelectionValue) => void;
 }
+
+const formatSelection = (selected: SelectedMap): SelectionValue =>
+  Object.entries(selected).map(([catId, subIds]) => ({
+    categoryId: Number(catId),
+    subcategoriesId: subIds
+  }));
 
 export default function CategorySelector({ onChange }: CategorySelectorProps) {
   const colors = useThemeColors();
   const [categories, setCategories] = useState<CategoryExpense[]>([]);
-  const [selected, setSelected] = useState<{ [key: number]: number[] }>({});
-  const [expandedCategories, setExpandedCategories] = useState<{ [key: number]: boolean }>({});
+  const [selected, setSelected] = useState<SelectedMap>({});
+  const [expandedCategories, setExpandedCategories] = useState<Record<number, boolean>>({});
   const [searchQuery, setSearchQuery] = useState('');
 
   useEffect(() => {
+    let isMounted = true;
+
     const fetchCategories = async () => {
       try {
         const response = await getCategoryWithSubcategories();
-        setCategories(response.data.data);
+        if (isMounted) setCategories(response.data.data);
       } catch (error) {
-        showError(error);
+        if (isMounted) showError(error);
       }
     };
 
     fetchCategories();
+
+    return () => {
+      isMounted = false;
+    };
   }, []);
 
-  useEffect(() => {
-    const formatted = Object.entries(selected).map(([catId, subIds]) => ({
-      categoryId: Number(catId),
-      subcategoriesId: subIds
-    }));
-    onChange(formatted);
-  }, [selected]);
+  // Actualiza la selección y avisa al padre en el mismo evento
+  const applySelection = (next: SelectedMap) => {
+    setSelected(next);
+    onChange(formatSelection(next));
+  };
 
   const toggleCategory = (catId: number) => {
     setExpandedCategories((prev) => ({
@@ -46,37 +60,28 @@ export default function CategorySelector({ onChange }: CategorySelectorProps) {
     }));
   };
 
-  const selectAllInCategory = (catId: number, subcategories: any[]) => {
+  const selectAllInCategory = (catId: number, subcategories: Subcategory[]) => {
     const allIds = subcategories.map((s) => s.id);
-    const currentSelected = selected[catId] || [];
+    const currentSelected = selected[catId] ?? [];
     const allSelected = allIds.every((id) => currentSelected.includes(id));
 
-    if (allSelected) {
-      setSelected((prev) => ({ ...prev, [catId]: [] }));
-    } else {
-      setSelected((prev) => ({ ...prev, [catId]: allIds }));
-    }
+    applySelection({ ...selected, [catId]: allSelected ? [] : allIds });
   };
 
   const toggleSubcategory = (catId: number, subId: number) => {
-    setSelected((prev) => {
-      const subs = prev[catId] || [];
-      const newSubs = subs.includes(subId) ? subs.filter((id) => id !== subId) : [...subs, subId];
-      return { ...prev, [catId]: newSubs };
-    });
+    const subs = selected[catId] ?? [];
+    const newSubs = subs.includes(subId) ? subs.filter((id) => id !== subId) : [...subs, subId];
+    applySelection({ ...selected, [catId]: newSubs });
   };
 
+  const query = searchQuery.toLowerCase();
   const filteredCategories = categories.filter(
     (cat) =>
-      cat.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      cat.subcategories.some((sub: any) =>
-        sub.name.toLowerCase().includes(searchQuery.toLowerCase())
-      )
+      cat.name.toLowerCase().includes(query) ||
+      cat.subcategories.some((sub) => sub.name.toLowerCase().includes(query))
   );
 
-  const getSelectedCount = () => {
-    return Object.values(selected).reduce((acc, subs) => acc + subs.length, 0);
-  };
+  const selectedCount = Object.values(selected).reduce((acc, subs) => acc + subs.length, 0);
 
   return (
     <View style={styles.container}>
@@ -85,7 +90,7 @@ export default function CategorySelector({ onChange }: CategorySelectorProps) {
           Categorías y subcategorías
         </Text>
         <Text style={[styles.subtitle, { color: colors.TEXT_SECONDARY }]}>
-          {getSelectedCount()} subcategorías seleccionadas
+          {selectedCount} subcategorías seleccionadas
         </Text>
       </View>
 
@@ -94,16 +99,14 @@ export default function CategorySelector({ onChange }: CategorySelectorProps) {
         onChangeText={setSearchQuery}
         value={searchQuery}
         style={[styles.searchBar, { backgroundColor: colors.CARD_BACKGROUND }]}
+        iconColor={colors.TEXT_SECONDARY}
+        placeholderTextColor={colors.TEXT_SECONDARY}
       />
 
-      <ScrollView
-        style={styles.scrollView}
-        nestedScrollEnabled={true}
-        showsVerticalScrollIndicator={true}
-      >
+      <ScrollView style={styles.scrollView} nestedScrollEnabled>
         {filteredCategories.map((cat) => {
           const isExpanded = expandedCategories[cat.id];
-          const selectedSubs = selected[cat.id] || [];
+          const selectedSubs = selected[cat.id] ?? [];
           const allSelected =
             selectedSubs.length === cat.subcategories.length && cat.subcategories.length > 0;
 
@@ -137,7 +140,7 @@ export default function CategorySelector({ onChange }: CategorySelectorProps) {
                     onPress={() => selectAllInCategory(cat.id, cat.subcategories)}
                     mode="outlined"
                     compact
-                    style={{ marginRight: 4 }}
+                    style={styles.selectAllChip}
                   >
                     {allSelected ? 'Quitar' : 'Todas'}
                   </Chip>
@@ -150,8 +153,8 @@ export default function CategorySelector({ onChange }: CategorySelectorProps) {
               </View>
 
               {isExpanded && (
-                <View style={styles.subcategoriesContainer}>
-                  {cat.subcategories.map((sub: any) => (
+                <View style={[styles.subcategoriesContainer, { borderTopColor: colors.BORDER }]}>
+                  {cat.subcategories.map((sub) => (
                     <Chip
                       key={sub.id}
                       selected={selectedSubs.includes(sub.id)}
@@ -192,7 +195,7 @@ const styles = StyleSheet.create({
     elevation: 1
   },
   scrollView: {
-    maxHeight: 500 // Aumentado para mostrar más categorías
+    maxHeight: 500
   },
   categoryCard: {
     borderRadius: 12,
@@ -228,14 +231,16 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center'
   },
+  selectAllChip: {
+    marginRight: 4
+  },
   subcategoriesContainer: {
     flexDirection: 'row',
     flexWrap: 'wrap',
     gap: 6,
     marginTop: 12,
     paddingTop: 12,
-    borderTopWidth: 1,
-    borderTopColor: '#f0f0f0'
+    borderTopWidth: 1
   },
   subcategoryChip: {
     margin: 2

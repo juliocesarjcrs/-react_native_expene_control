@@ -1,27 +1,31 @@
-import React, { useEffect, useState, useCallback } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { FlatList, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useDispatch, useSelector } from 'react-redux';
+import { StackNavigationProp } from '@react-navigation/stack';
+import { useFocusEffect } from '@react-navigation/native';
+
+// Services
 import { getLastIncomesWithPaginate } from '../../services/incomes';
 
-import { useDispatch, useSelector } from 'react-redux';
-import usePrevious from '~/customHooks/usePrevious';
-import { IncomeStackParamList } from '../../shared/types';
-import { StackNavigationProp } from '@react-navigation/stack';
+// Redux
 import { setQuery } from '~/features/search/searchSlice';
+
+// Types
+import { IncomeStackParamList } from '../../shared/types';
 import { LastIncomes } from '../../shared/types/services/income-service.type';
+import { RootState } from '../../shared/types/reducers';
+import { AppDispatch } from '../../shared/types/reducers/root-state.type';
 
 // Components
 import MyLoading from '../../components/loading/MyLoading';
-import { RootState } from '../../shared/types/reducers';
-import { RouteProp, useFocusEffect } from '@react-navigation/native';
-import { AppDispatch } from '../../shared/types/reducers/root-state.type';
 import { ScreenHeader } from '~/components/ScreenHeader';
 import RenderItemIncome from './components/RenderItemIncome';
 import BarSearch from '~/components/search/BarSearch';
 
 // Utils
 import { showError } from '~/utils/showError';
-import { handlerDataSearch } from '../../utils/Helpers';
+
 // Theme
 import { useThemeColors } from '~/customHooks/useThemeColors';
 
@@ -30,128 +34,150 @@ import { commonStyles } from '~/styles/common';
 
 // Configs
 import { screenConfigs } from '~/config/screenConfigs';
+
 export type LastIncomesScreenNavigationProp = StackNavigationProp<
   IncomeStackParamList,
   'lastIncomes'
 >;
-type LastIncomesScreenRouteProp = RouteProp<IncomeStackParamList, 'lastIncomes'>;
 
 interface LastIncomesScreenProps {
   navigation: LastIncomesScreenNavigationProp;
-  route: LastIncomesScreenRouteProp;
 }
+
+// Lista junto con la petición para la que se cargó
+type FetchedIncomes = {
+  key: string;
+  items: LastIncomes[];
+  page: number;
+  hasMore: boolean;
+};
+
+const PAGE_SIZE = 25;
+
+const keyExtractor = (item: LastIncomes): string => item.id.toString();
+
+// Agrega la página nueva sin repetir ids
+const mergePages = (current: LastIncomes[], next: LastIncomes[]): LastIncomes[] => {
+  const seen = new Set(current.map((item) => item.id));
+  return [...current, ...next.filter((item) => !seen.has(item.id))];
+};
 
 export default function LastIncomesScreen({ navigation }: LastIncomesScreenProps) {
   const config = screenConfigs.lastIncomes;
   const colors = useThemeColors();
-  const [lastIncomes, setLastIncomes] = useState<LastIncomes[]>([]);
-  const [loadingFooter, setLoadingFotter] = useState(false);
-  const [page, setPage] = useState(1);
-  const [stopeFetch, setStopeFetch] = useState(false);
   const dispatch: AppDispatch = useDispatch();
   const query = useSelector((state: RootState) => state.search.query);
-  const prevQuery = usePrevious(query);
-  const isFirstRender = React.useRef(true);
 
-  // fetchData recibe page y reset flag
-  const fetchData = useCallback(
-    async (pageToFetch: number, reset: boolean) => {
-      try {
-        setLoadingFotter(true);
-        const params = {
-          take: 25,
-          page: pageToFetch,
-          query
-        };
-        const { data } = await getLastIncomesWithPaginate(params);
-        setLoadingFotter(false);
-        if (data.data.length <= 0) {
-          setStopeFetch(true);
-        }
-        let newList = [];
-        if (reset) {
-          newList = handlerDataSearch(data.data, [], params.query, prevQuery, params.page);
-        } else {
-          newList = handlerDataSearch(data.data, lastIncomes, params.query, prevQuery, params.page);
-        }
-        setLastIncomes(newList);
-      } catch (e) {
-        setLoadingFotter(false);
-        showError(e);
-      }
-    },
-    [query, lastIncomes, prevQuery, stopeFetch]
-  );
-  useFocusEffect(
-    React.useCallback(() => {
-      // Refresca la lista cada vez que el screen gana foco
-      fetchData(1, true);
-    }, [query])
-  );
+  const [reloadToken, setReloadToken] = useState(0);
+  const [fetched, setFetched] = useState<FetchedIncomes | null>(null);
+  const [loadingMore, setLoadingMore] = useState(false);
+
+  // Identifica la petición actual (búsqueda + recargas manuales)
+  const requestKey = `${query ?? ''}|${reloadToken}`;
+
+  // Hay carga inicial mientras los datos no correspondan a la petición actual
+  const initialLoading = fetched?.key !== requestKey;
+  const items = fetched?.items ?? [];
+
   // Resetear query solo al montar
   useEffect(() => {
     dispatch(setQuery(null));
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [dispatch]);
 
-  // Manejar cambios de búsqueda (query)
-  useEffect(() => {
-    if (isFirstRender.current) {
-      isFirstRender.current = false;
-      // Si el query es distinto de null, espera a que el reset lo limpie
-      if (query !== null) {
-        return;
-      }
-    }
-    // Reinicia todos los flags de paginación y datos
-    setLastIncomes([]);
-    setPage(1);
-    setStopeFetch(false);
-    setLoadingFotter(false);
-    fetchData(1, true);
-  }, [query]);
+  // Página 1: al enfocar la pantalla y cuando cambia la búsqueda o se pide recargar
+  useFocusEffect(
+    useCallback(() => {
+      let active = true;
 
-  // Manejar paginación (solo si no es búsqueda nueva)
-  useEffect(() => {
-    if (page > 1 && query !== null) {
-      fetchData(page, false); // false: no reset
-    } else if (page > 1 && query === null) {
-      fetchData(page, false);
-    }
-  }, [page]);
+      const loadFirstPage = async (): Promise<void> => {
+        try {
+          const { data } = await getLastIncomesWithPaginate({ take: PAGE_SIZE, page: 1, query });
+          if (active) {
+            setFetched({
+              key: requestKey,
+              items: data.data,
+              page: 1,
+              hasMore: data.data.length > 0
+            });
+          }
+        } catch (e) {
+          if (!active) return;
+          showError(e);
+          setFetched({ key: requestKey, items: [], page: 1, hasMore: false });
+        }
+      };
+
+      loadFirstPage();
+
+      return () => {
+        active = false;
+      };
+    }, [query, requestKey])
+  );
 
   // Paginador
-  const loadMoreData = () => {
-    if (!stopeFetch && !loadingFooter) {
-      setPage((prev) => prev + 1);
+  const loadMoreData = async (): Promise<void> => {
+    if (!fetched || fetched.key !== requestKey || !fetched.hasMore || loadingMore) return;
+
+    const nextPage = fetched.page + 1;
+
+    try {
+      setLoadingMore(true);
+      const { data } = await getLastIncomesWithPaginate({ take: PAGE_SIZE, page: nextPage, query });
+
+      // Si mientras tanto cambió la petición, se descarta esta respuesta
+      setFetched((prev) =>
+        prev && prev.key === requestKey
+          ? {
+              ...prev,
+              items: mergePages(prev.items, data.data),
+              page: nextPage,
+              hasMore: data.data.length > 0
+            }
+          : prev
+      );
+    } catch (e) {
+      showError(e);
+    } finally {
+      setLoadingMore(false);
     }
   };
-  const updateList = () => {
-    fetchData(1, true);
-  };
-  const renderFooter = () => {
-    return <View>{loadingFooter ? <MyLoading testID="loading-footer" /> : null}</View>;
-  };
+
+  const updateList = useCallback(() => {
+    setReloadToken((token) => token + 1);
+  }, []);
+
+  const renderItem = useCallback(
+    ({ item }: { item: LastIncomes }) => (
+      <RenderItemIncome item={item} navigation={navigation} updateList={updateList} />
+    ),
+    [navigation, updateList]
+  );
+
+  const showFooterLoading = initialLoading || loadingMore;
 
   return (
     <SafeAreaView style={[commonStyles.screenContent, { backgroundColor: colors.BACKGROUND }]}>
       <ScreenHeader title={config.title} subtitle={config.subtitle} />
       <FlatList
         testID="flatlist-incomes"
-        data={lastIncomes}
-        renderItem={({ item }) => (
-          <RenderItemIncome item={item} navigation={navigation} updateList={updateList} />
-        )}
-        keyExtractor={(item) => item.id.toString()}
-        ListEmptyComponent={() => (
-          <Text style={[styles.textMuted, { color: colors.DARK_GRAY }]}>
-            No se registran últimos ingresos
-          </Text>
-        )}
+        data={items}
+        renderItem={renderItem}
+        keyExtractor={keyExtractor}
+        ListEmptyComponent={
+          initialLoading ? null : (
+            <Text style={[styles.textMuted, { color: colors.DARK_GRAY }]}>
+              No se registran últimos ingresos
+            </Text>
+          )
+        }
         initialNumToRender={10}
         onEndReached={loadMoreData}
         onEndReachedThreshold={0.1}
-        ListHeaderComponent={() => <BarSearch />}
-        ListFooterComponent={renderFooter}
+        ListHeaderComponent={<BarSearch />}
+        ListFooterComponent={
+          <View>{showFooterLoading ? <MyLoading testID="loading-footer" /> : null}</View>
+        }
       />
     </SafeAreaView>
   );

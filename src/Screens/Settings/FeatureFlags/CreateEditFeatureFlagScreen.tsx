@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   StyleSheet,
   View,
@@ -22,7 +22,6 @@ import { ScreenHeader } from '~/components/ScreenHeader';
 import { createFeature, updateFeature, getFeatureByKey } from '~/services/featureFlagsService';
 
 // Types
-import { FeatureFlag } from '~/shared/types/models/feature-flags.type';
 import { SettingsStackParamList } from '~/shared/types';
 
 // Utils
@@ -48,6 +47,8 @@ interface CreateEditFeatureFlagScreenProps {
   route: CreateEditFeatureFlagScreenRouteProp;
 }
 
+type AppColors = ReturnType<typeof useThemeColors>;
+
 interface FormData {
   featureKey: string;
   featureName: string;
@@ -59,6 +60,12 @@ interface FormData {
   category: string;
 }
 
+type FormErrors = Partial<Record<keyof FormData, string>>;
+
+const DEFAULT_ICON = '⚙️';
+const DEFAULT_CATEGORY = 'general';
+const ADMIN_ROLE = 1;
+
 const INITIAL_FORM: FormData = {
   featureKey: '',
   featureName: '',
@@ -66,8 +73,8 @@ const INITIAL_FORM: FormData = {
   isEnabled: true,
   defaultForUsers: true,
   requiresRole: null,
-  icon: '⚙️',
-  category: 'general'
+  icon: DEFAULT_ICON,
+  category: DEFAULT_CATEGORY
 };
 
 const ICON_OPTIONS = [
@@ -104,56 +111,60 @@ export default function CreateEditFeatureFlagScreen({
   route
 }: CreateEditFeatureFlagScreenProps) {
   const colors = useThemeColors();
-  const [formData, setFormData] = useState<FormData>(INITIAL_FORM);
-  const [errors, setErrors] = useState<Partial<FormData>>({});
-  const [loading, setLoading] = useState<boolean>(false);
-  const [isEditMode, setIsEditMode] = useState<boolean>(false);
-  const [originalKey, setOriginalKey] = useState<string>('');
 
-  // Parámetros de navegación
+  // Parámetros de navegación (derivan el modo, no hace falta estado)
   const featureKey = route.params?.featureKey;
+  const isEditMode = Boolean(featureKey);
+  const originalKey = featureKey ?? '';
+
+  const [formData, setFormData] = useState<FormData>(INITIAL_FORM);
+  const [errors, setErrors] = useState<FormErrors>({});
+  const [loading, setLoading] = useState<boolean>(isEditMode); // carga inicial
+  const [saving, setSaving] = useState<boolean>(false); // envío del formulario
 
   useEffect(() => {
-    if (featureKey) {
-      setIsEditMode(true);
-      setOriginalKey(featureKey);
-      loadFeature(featureKey);
-    }
-  }, [featureKey]);
+    let isMounted = true;
 
-  const loadFeature = async (key: string) => {
-    try {
-      setLoading(true);
-      const feature = await getFeatureByKey(key);
+    const loadFeature = async (key: string) => {
+      try {
+        const feature = await getFeatureByKey(key);
+        if (!isMounted) return;
 
-      setFormData({
-        featureKey: feature.featureKey,
-        featureName: feature.featureName,
-        description: feature.description || '',
-        isEnabled: feature.isEnabled === 1,
-        defaultForUsers: feature.defaultForUsers === 1,
-        requiresRole: feature.requiresRole,
-        icon: feature.metadata?.icon || '⚙️',
-        category: feature.metadata?.category || 'general'
-      });
-    } catch (error) {
-      showError(error);
-      navigation.goBack();
-    } finally {
-      setLoading(false);
-    }
-  };
+        setFormData({
+          featureKey: feature.featureKey,
+          featureName: feature.featureName,
+          description: feature.description || '',
+          isEnabled: feature.isEnabled === 1,
+          defaultForUsers: feature.defaultForUsers === 1,
+          requiresRole: feature.requiresRole,
+          icon: feature.metadata?.icon || DEFAULT_ICON,
+          category: feature.metadata?.category || DEFAULT_CATEGORY
+        });
+      } catch (error) {
+        if (isMounted) {
+          showError(error);
+          navigation.goBack();
+        }
+      } finally {
+        if (isMounted) setLoading(false);
+      }
+    };
 
-  const updateField = (field: keyof FormData, value: any) => {
+    if (featureKey) loadFeature(featureKey);
+
+    return () => {
+      isMounted = false;
+    };
+  }, [featureKey, navigation]);
+
+  const updateField = <K extends keyof FormData>(field: K, value: FormData[K]) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
     // Limpiar error del campo al editar
-    if (errors[field]) {
-      setErrors((prev) => ({ ...prev, [field]: undefined }));
-    }
+    setErrors((prev) => (prev[field] ? { ...prev, [field]: undefined } : prev));
   };
 
   const validateForm = (): boolean => {
-    const newErrors: Partial<FormData> = {};
+    const newErrors: FormErrors = {};
 
     // Feature Key (solo requerido en modo creación)
     if (!isEditMode && !formData.featureKey.trim()) {
@@ -183,7 +194,7 @@ export default function CreateEditFeatureFlagScreen({
     }
 
     try {
-      setLoading(true);
+      setSaving(true);
 
       const payload = {
         featureKey: formData.featureKey,
@@ -200,37 +211,47 @@ export default function CreateEditFeatureFlagScreen({
 
       if (isEditMode) {
         await updateFeature(originalKey, payload);
-        Alert.alert('Éxito', 'Funcionalidad actualizada correctamente', [
-          { text: 'OK', onPress: () => navigation.goBack() }
-        ]);
       } else {
         await createFeature(payload);
-        Alert.alert('Éxito', 'Funcionalidad creada correctamente', [
-          { text: 'OK', onPress: () => navigation.goBack() }
-        ]);
       }
+
+      Alert.alert('Éxito', `Funcionalidad ${isEditMode ? 'actualizada' : 'creada'} correctamente`, [
+        { text: 'OK', onPress: () => navigation.goBack() }
+      ]);
     } catch (error) {
       showError(error);
     } finally {
-      setLoading(false);
+      setSaving(false);
     }
   };
 
-  if (loading && isEditMode) {
+  if (loading) {
     return (
       <View style={[commonStyles.screenContentWithPadding, { backgroundColor: colors.BACKGROUND }]}>
-        <ActivityIndicator size="large" color="#9c27b0" />
-        <Text style={styles.loadingText}>Cargando funcionalidad...</Text>
+        <ActivityIndicator size="large" color={colors.PRIMARY} />
+        <Text style={[styles.loadingText, { color: colors.TEXT_SECONDARY }]}>
+          Cargando funcionalidad...
+        </Text>
       </View>
     );
   }
 
+  const inputTheme = {
+    color: colors.TEXT_PRIMARY,
+    backgroundColor: colors.CARD_BACKGROUND,
+    borderColor: colors.BORDER
+  };
+  const inputErrorTheme = { borderColor: colors.ERROR };
+
   return (
     <KeyboardAvoidingView
-      style={{ flex: 1 }}
+      style={styles.keyboardAvoiding}
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
     >
-      <ScrollView style={[styles.container, { backgroundColor: colors.BACKGROUND }]}>
+      <ScrollView
+        style={[commonStyles.screenContentWithPadding, { backgroundColor: colors.BACKGROUND }]}
+        showsVerticalScrollIndicator={false}
+      >
         <ScreenHeader
           title={isEditMode ? 'Editar Funcionalidad' : 'Nueva Funcionalidad'}
           subtitle={
@@ -242,163 +263,174 @@ export default function CreateEditFeatureFlagScreen({
           {/* Feature Key (solo en modo creación) */}
           {!isEditMode && (
             <View style={styles.formGroup}>
-              <Text style={styles.label}>
-                Feature Key <Text style={styles.required}>*</Text>
+              <Text style={[styles.label, { color: colors.TEXT_PRIMARY }]}>
+                Feature Key <Text style={{ color: colors.ERROR }}>*</Text>
               </Text>
-              <Text style={styles.hint}>Identificador único (solo minúsculas y guiones bajos)</Text>
+              <Text style={[styles.hint, { color: colors.TEXT_SECONDARY }]}>
+                Identificador único (solo minúsculas y guiones bajos)
+              </Text>
               <TextInput
-                style={[styles.input, errors.featureKey && styles.inputError]}
+                style={[styles.input, inputTheme, !!errors.featureKey && inputErrorTheme]}
                 value={formData.featureKey}
                 onChangeText={(text) => updateField('featureKey', text.toLowerCase())}
                 placeholder="ej: chatbot, invoice_scanner"
-                placeholderTextColor="#999"
+                placeholderTextColor={colors.TEXT_SECONDARY}
                 autoCapitalize="none"
                 autoCorrect={false}
               />
-              {errors.featureKey && <Text style={styles.errorText}>{errors.featureKey}</Text>}
+              {!!errors.featureKey && (
+                <Text style={[styles.errorText, { color: colors.ERROR }]}>{errors.featureKey}</Text>
+              )}
             </View>
           )}
 
           {/* Feature Name */}
           <View style={styles.formGroup}>
-            <Text style={styles.label}>
-              Nombre <Text style={styles.required}>*</Text>
+            <Text style={[styles.label, { color: colors.TEXT_PRIMARY }]}>
+              Nombre <Text style={{ color: colors.ERROR }}>*</Text>
             </Text>
             <TextInput
-              style={[styles.input, errors.featureName && styles.inputError]}
+              style={[styles.input, inputTheme, !!errors.featureName && inputErrorTheme]}
               value={formData.featureName}
               onChangeText={(text) => updateField('featureName', text)}
               placeholder="ej: Chatbot AI, Escanear Facturas"
-              placeholderTextColor="#999"
+              placeholderTextColor={colors.TEXT_SECONDARY}
             />
-            {errors.featureName && <Text style={styles.errorText}>{errors.featureName}</Text>}
+            {!!errors.featureName && (
+              <Text style={[styles.errorText, { color: colors.ERROR }]}>{errors.featureName}</Text>
+            )}
           </View>
 
           {/* Description */}
           <View style={styles.formGroup}>
-            <Text style={styles.label}>
-              Descripción <Text style={styles.required}>*</Text>
+            <Text style={[styles.label, { color: colors.TEXT_PRIMARY }]}>
+              Descripción <Text style={{ color: colors.ERROR }}>*</Text>
             </Text>
             <TextInput
-              style={[styles.textArea, errors.description && styles.inputError]}
+              style={[styles.textArea, inputTheme, !!errors.description && inputErrorTheme]}
               value={formData.description}
               onChangeText={(text) => updateField('description', text)}
               placeholder="Describe qué hace esta funcionalidad..."
-              placeholderTextColor="#999"
+              placeholderTextColor={colors.TEXT_SECONDARY}
               multiline
               numberOfLines={4}
             />
-            {errors.description && <Text style={styles.errorText}>{errors.description}</Text>}
+            {!!errors.description && (
+              <Text style={[styles.errorText, { color: colors.ERROR }]}>{errors.description}</Text>
+            )}
           </View>
 
           {/* Icon Selector */}
           <View style={styles.formGroup}>
-            <Text style={styles.label}>Icono</Text>
+            <Text style={[styles.label, { color: colors.TEXT_PRIMARY }]}>Icono</Text>
             <ScrollView
               horizontal
               showsHorizontalScrollIndicator={false}
               style={styles.iconSelector}
             >
-              {ICON_OPTIONS.map((icon) => (
-                <TouchableOpacity
-                  key={icon}
-                  style={[styles.iconOption, formData.icon === icon && styles.iconOptionSelected]}
-                  onPress={() => updateField('icon', icon)}
-                >
-                  <Text style={styles.iconText}>{icon}</Text>
-                </TouchableOpacity>
-              ))}
+              {ICON_OPTIONS.map((icon) => {
+                const selected = formData.icon === icon;
+                return (
+                  <TouchableOpacity
+                    key={icon}
+                    style={[
+                      styles.iconOption,
+                      {
+                        backgroundColor: selected ? colors.PRIMARY + '15' : colors.CARD_BACKGROUND,
+                        borderColor: selected ? colors.PRIMARY : colors.BORDER
+                      }
+                    ]}
+                    onPress={() => updateField('icon', icon)}
+                  >
+                    <Text style={styles.iconText}>{icon}</Text>
+                  </TouchableOpacity>
+                );
+              })}
             </ScrollView>
           </View>
 
           {/* Category */}
           <View style={styles.formGroup}>
-            <Text style={styles.label}>Categoría</Text>
+            <Text style={[styles.label, { color: colors.TEXT_PRIMARY }]}>Categoría</Text>
             <View style={styles.categoryContainer}>
-              {CATEGORY_OPTIONS.map((category) => (
-                <TouchableOpacity
-                  key={category.value}
-                  style={[
-                    styles.categoryChip,
-                    formData.category === category.value && styles.categoryChipSelected
-                  ]}
-                  onPress={() => updateField('category', category.value)}
-                >
-                  <Text
+              {CATEGORY_OPTIONS.map((category) => {
+                const selected = formData.category === category.value;
+                return (
+                  <TouchableOpacity
+                    key={category.value}
                     style={[
-                      styles.categoryChipText,
-                      formData.category === category.value && styles.categoryChipTextSelected
+                      styles.categoryChip,
+                      {
+                        backgroundColor: selected ? colors.PRIMARY : colors.CARD_BACKGROUND,
+                        borderColor: selected ? colors.PRIMARY : colors.BORDER
+                      }
                     ]}
+                    onPress={() => updateField('category', category.value)}
                   >
-                    {category.label}
-                  </Text>
-                </TouchableOpacity>
-              ))}
+                    <Text
+                      style={[
+                        styles.categoryChipText,
+                        { color: selected ? colors.WHITE : colors.TEXT_SECONDARY },
+                        selected && styles.categoryChipTextSelected
+                      ]}
+                    >
+                      {category.label}
+                    </Text>
+                  </TouchableOpacity>
+                );
+              })}
             </View>
           </View>
 
           {/* Divider */}
-          <View style={styles.divider} />
+          <View style={[styles.divider, { backgroundColor: colors.BORDER }]} />
 
           {/* Switches Section */}
           <View style={styles.formGroup}>
-            <Text style={styles.sectionTitle}>Configuración de Acceso</Text>
+            <Text style={[styles.sectionTitle, { color: colors.TEXT_PRIMARY }]}>
+              Configuración de Acceso
+            </Text>
 
-            {/* Is Enabled */}
-            <View style={styles.switchRow}>
-              <View style={styles.switchInfo}>
-                <Text style={styles.switchLabel}>Funcionalidad Habilitada</Text>
-                <Text style={styles.switchHint}>Si está deshabilitada, nadie podrá usarla</Text>
-              </View>
-              <Switch
-                value={formData.isEnabled}
-                onValueChange={(value) => updateField('isEnabled', value)}
-                trackColor={{ false: '#d3d3d3', true: '#9c27b0' }}
-                thumbColor={formData.isEnabled ? '#6d1b7b' : '#f4f3f4'}
-              />
-            </View>
+            <SwitchRow
+              label="Funcionalidad Habilitada"
+              hint="Si está deshabilitada, nadie podrá usarla"
+              value={formData.isEnabled}
+              onValueChange={(value) => updateField('isEnabled', value)}
+              colors={colors}
+            />
 
-            {/* Default For Users */}
-            <View style={styles.switchRow}>
-              <View style={styles.switchInfo}>
-                <Text style={styles.switchLabel}>Habilitada por Defecto</Text>
-                <Text style={styles.switchHint}>
-                  {formData.defaultForUsers
-                    ? 'Todos los usuarios pueden usarla (se puede denegar individualmente)'
-                    : 'Solo usuarios con permiso explícito pueden usarla'}
-                </Text>
-              </View>
-              <Switch
-                value={formData.defaultForUsers}
-                onValueChange={(value) => updateField('defaultForUsers', value)}
-                trackColor={{ false: '#d3d3d3', true: '#9c27b0' }}
-                thumbColor={formData.defaultForUsers ? '#6d1b7b' : '#f4f3f4'}
-              />
-            </View>
+            <SwitchRow
+              label="Habilitada por Defecto"
+              hint={
+                formData.defaultForUsers
+                  ? 'Todos los usuarios pueden usarla (se puede denegar individualmente)'
+                  : 'Solo usuarios con permiso explícito pueden usarla'
+              }
+              value={formData.defaultForUsers}
+              onValueChange={(value) => updateField('defaultForUsers', value)}
+              colors={colors}
+            />
 
-            {/* Requires Role */}
-            <View style={styles.switchRow}>
-              <View style={styles.switchInfo}>
-                <Text style={styles.switchLabel}>Solo Administradores</Text>
-                <Text style={styles.switchHint}>
-                  Restringir acceso solo a usuarios con rol de administrador
-                </Text>
-              </View>
-              <Switch
-                value={formData.requiresRole === 1}
-                onValueChange={(value) => updateField('requiresRole', value ? 1 : null)}
-                trackColor={{ false: '#d3d3d3', true: '#9c27b0' }}
-                thumbColor={formData.requiresRole === 1 ? '#6d1b7b' : '#f4f3f4'}
-              />
-            </View>
+            <SwitchRow
+              label="Solo Administradores"
+              hint="Restringir acceso solo a usuarios con rol de administrador"
+              value={formData.requiresRole === ADMIN_ROLE}
+              onValueChange={(value) => updateField('requiresRole', value ? ADMIN_ROLE : null)}
+              colors={colors}
+            />
           </View>
 
           {/* Info Box */}
-          <View style={styles.infoBox}>
+          <View
+            style={[
+              styles.infoBox,
+              { backgroundColor: colors.INFO + '15', borderLeftColor: colors.INFO }
+            ]}
+          >
             <Text style={styles.infoIcon}>💡</Text>
             <View style={styles.infoContent}>
-              <Text style={styles.infoTitle}>Flujo de Permisos:</Text>
-              <Text style={styles.infoText}>
+              <Text style={[styles.infoTitle, { color: colors.INFO }]}>Flujo de Permisos:</Text>
+              <Text style={[styles.infoText, { color: colors.TEXT_PRIMARY }]}>
                 1. ¿Está habilitada? → Si NO, nadie puede acceder{'\n'}
                 2. ¿Requiere admin? → Solo admins{'\n'}
                 3. ¿Usuario tiene permiso específico? → Usar ese permiso{'\n'}
@@ -410,22 +442,33 @@ export default function CreateEditFeatureFlagScreen({
           {/* Action Buttons */}
           <View style={styles.buttonContainer}>
             <TouchableOpacity
-              style={styles.cancelButton}
+              style={[
+                styles.cancelButton,
+                { backgroundColor: colors.BACKGROUND, borderColor: colors.BORDER }
+              ]}
               onPress={() => navigation.goBack()}
-              disabled={loading}
+              disabled={saving}
             >
-              <Text style={styles.cancelButtonText}>Cancelar</Text>
+              <Text style={[styles.cancelButtonText, { color: colors.TEXT_SECONDARY }]}>
+                Cancelar
+              </Text>
             </TouchableOpacity>
 
             <TouchableOpacity
-              style={[styles.submitButton, loading && styles.submitButtonDisabled]}
+              style={[
+                styles.submitButton,
+                { backgroundColor: colors.PRIMARY },
+                saving && styles.submitButtonDisabled
+              ]}
               onPress={handleSubmit}
-              disabled={loading}
+              disabled={saving}
             >
-              {loading ? (
-                <ActivityIndicator color="white" />
+              {saving ? (
+                <ActivityIndicator color={colors.WHITE} />
               ) : (
-                <Text style={styles.submitButtonText}>{isEditMode ? 'Actualizar' : 'Crear'}</Text>
+                <Text style={[styles.submitButtonText, { color: colors.WHITE }]}>
+                  {isEditMode ? 'Actualizar' : 'Crear'}
+                </Text>
               )}
             </TouchableOpacity>
           </View>
@@ -435,19 +478,44 @@ export default function CreateEditFeatureFlagScreen({
   );
 }
 
+// ============================================================================
+// Componente: Fila con Switch
+// ============================================================================
+
+interface SwitchRowProps {
+  label: string;
+  hint: string;
+  value: boolean;
+  onValueChange: (value: boolean) => void;
+  colors: AppColors;
+}
+
+const SwitchRow: React.FC<SwitchRowProps> = ({ label, hint, value, onValueChange, colors }) => (
+  <View style={[styles.switchRow, { backgroundColor: colors.CARD_BACKGROUND }]}>
+    <View style={styles.switchInfo}>
+      <Text style={[styles.switchLabel, { color: colors.TEXT_PRIMARY }]}>{label}</Text>
+      <Text style={[styles.switchHint, { color: colors.TEXT_SECONDARY }]}>{hint}</Text>
+    </View>
+    <Switch
+      value={value}
+      onValueChange={onValueChange}
+      trackColor={{ false: colors.GRAY, true: colors.PRIMARY }}
+      thumbColor={value ? colors.PRIMARY : colors.LIGHT_GRAY}
+    />
+  </View>
+);
+
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#f5f5f5'
+  keyboardAvoiding: {
+    flex: 1
   },
   loadingText: {
     marginTop: 10,
     fontSize: 16,
-    color: '#666',
     textAlign: 'center'
   },
   formContainer: {
-    padding: 15
+    marginTop: 4
   },
   formGroup: {
     marginBottom: 20
@@ -455,40 +523,27 @@ const styles = StyleSheet.create({
   label: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#333',
     marginBottom: 5
-  },
-  required: {
-    color: '#e53935'
   },
   hint: {
     fontSize: 12,
-    color: '#666',
     marginBottom: 8
   },
   input: {
-    backgroundColor: 'white',
     borderRadius: 8,
     padding: 12,
     fontSize: 16,
-    borderWidth: 1,
-    borderColor: '#ddd'
-  },
-  inputError: {
-    borderColor: '#e53935'
+    borderWidth: 1
   },
   textArea: {
-    backgroundColor: 'white',
     borderRadius: 8,
     padding: 12,
     fontSize: 16,
     borderWidth: 1,
-    borderColor: '#ddd',
     minHeight: 100,
     textAlignVertical: 'top'
   },
   errorText: {
-    color: '#e53935',
     fontSize: 12,
     marginTop: 5
   },
@@ -499,16 +554,10 @@ const styles = StyleSheet.create({
     width: 50,
     height: 50,
     borderRadius: 25,
-    backgroundColor: 'white',
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: 10,
-    borderWidth: 2,
-    borderColor: '#ddd'
-  },
-  iconOptionSelected: {
-    borderColor: '#9c27b0',
-    backgroundColor: '#f3e5f5'
+    borderWidth: 2
   },
   iconText: {
     fontSize: 28
@@ -523,38 +572,27 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 8,
     borderRadius: 20,
-    backgroundColor: 'white',
-    borderWidth: 1,
-    borderColor: '#ddd'
-  },
-  categoryChipSelected: {
-    backgroundColor: '#9c27b0',
-    borderColor: '#9c27b0'
+    borderWidth: 1
   },
   categoryChipText: {
-    fontSize: 14,
-    color: '#666'
+    fontSize: 14
   },
   categoryChipTextSelected: {
-    color: 'white',
     fontWeight: '600'
   },
   divider: {
     height: 1,
-    backgroundColor: '#ddd',
     marginVertical: 20
   },
   sectionTitle: {
     fontSize: 18,
     fontWeight: 'bold',
-    color: '#333',
     marginBottom: 15
   },
   switchRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    backgroundColor: 'white',
     padding: 15,
     borderRadius: 8,
     marginBottom: 10
@@ -566,22 +604,18 @@ const styles = StyleSheet.create({
   switchLabel: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#333',
     marginBottom: 4
   },
   switchHint: {
     fontSize: 13,
-    color: '#666',
     lineHeight: 18
   },
   infoBox: {
-    backgroundColor: '#e3f2fd',
     borderRadius: 8,
     padding: 15,
     flexDirection: 'row',
     marginVertical: 20,
-    borderLeftWidth: 4,
-    borderLeftColor: '#2196f3'
+    borderLeftWidth: 4
   },
   infoIcon: {
     fontSize: 24,
@@ -593,12 +627,10 @@ const styles = StyleSheet.create({
   infoTitle: {
     fontSize: 14,
     fontWeight: 'bold',
-    color: '#1976d2',
     marginBottom: 5
   },
   infoText: {
     fontSize: 13,
-    color: '#1565c0',
     lineHeight: 20
   },
   buttonContainer: {
@@ -609,30 +641,25 @@ const styles = StyleSheet.create({
   },
   cancelButton: {
     flex: 1,
-    backgroundColor: '#f5f5f5',
     padding: 15,
     borderRadius: 8,
     alignItems: 'center',
-    borderWidth: 1,
-    borderColor: '#ddd'
+    borderWidth: 1
   },
   cancelButtonText: {
-    color: '#666',
     fontSize: 16,
     fontWeight: '600'
   },
   submitButton: {
     flex: 1,
-    backgroundColor: '#9c27b0',
     padding: 15,
     borderRadius: 8,
     alignItems: 'center'
   },
   submitButtonDisabled: {
-    backgroundColor: '#ce93d8'
+    opacity: 0.6
   },
   submitButtonText: {
-    color: 'white',
     fontSize: 16,
     fontWeight: 'bold'
   }

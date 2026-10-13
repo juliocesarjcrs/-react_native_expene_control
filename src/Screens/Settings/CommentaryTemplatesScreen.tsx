@@ -10,7 +10,6 @@ import {
 } from 'react-native';
 import { Icon } from 'react-native-elements';
 import { StackNavigationProp } from '@react-navigation/stack';
-import { RouteProp } from '@react-navigation/native';
 
 // Components
 import { ScreenHeader } from '~/components/ScreenHeader';
@@ -29,7 +28,6 @@ import {
   resetTemplateConfig,
   saveTemplateConfig
 } from '~/utils/commentary/templateStorage.utils';
-import { getDefaultTemplateConfig } from '~/utils/commentary/commentaryTemplates.utils';
 import { showError } from '~/utils/showError';
 
 // Theme
@@ -43,16 +41,16 @@ import { MEDIUM, SMALL } from '~/styles/fonts';
 import { screenConfigs } from '~/config/screenConfigs';
 
 // ============================================================
-// TIPOS DE NAVEGACIÓN
+// TIPOS
 // ============================================================
 
 type CommentaryTemplatesNavigationProp = StackNavigationProp<SettingsStackParamList>;
-type CommentaryTemplatesRouteProp = RouteProp<SettingsStackParamList>;
 
 interface CommentaryTemplatesScreenProps {
   navigation: CommentaryTemplatesNavigationProp;
-  route: CommentaryTemplatesRouteProp;
 }
+
+type AppColors = ReturnType<typeof useThemeColors>;
 
 // ============================================================
 // PANTALLA PRINCIPAL
@@ -66,22 +64,38 @@ export default function CommentaryTemplatesScreen({ navigation }: CommentaryTemp
   const [expandedId, setExpandedId] = useState<number | null>(null);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    loadTemplates();
-    return navigation.addListener('focus', loadTemplates);
-  }, []);
-
-  const loadTemplates = async () => {
+  // Recarga silenciosa (sin spinner a pantalla completa)
+  const reloadTemplates = async () => {
     try {
-      setLoading(true);
       const customized = await getAllCustomizedTemplates();
       setTemplates(customized);
     } catch (error) {
       showError(error);
-    } finally {
-      setLoading(false);
     }
   };
+
+  useEffect(() => {
+    let isMounted = true;
+
+    const loadTemplates = async () => {
+      try {
+        const customized = await getAllCustomizedTemplates();
+        if (isMounted) setTemplates(customized);
+      } catch (error) {
+        if (isMounted) showError(error);
+      } finally {
+        if (isMounted) setLoading(false);
+      }
+    };
+
+    // 'focus' también se dispara en el primer enfoque de la pantalla.
+    const unsubscribe = navigation.addListener('focus', loadTemplates);
+
+    return () => {
+      isMounted = false;
+      unsubscribe();
+    };
+  }, [navigation]);
 
   const handleReset = (template: SubcategoryTemplateConfig) => {
     Alert.alert(
@@ -95,7 +109,7 @@ export default function CommentaryTemplatesScreen({ navigation }: CommentaryTemp
           onPress: async () => {
             try {
               await resetTemplateConfig(template.subcategoryId);
-              await loadTemplates();
+              await reloadTemplates();
             } catch (error) {
               showError(error);
             }
@@ -103,6 +117,18 @@ export default function CommentaryTemplatesScreen({ navigation }: CommentaryTemp
         }
       ]
     );
+  };
+
+  // Devuelve true si se guardó correctamente
+  const handleSaveTemplate = async (updated: SubcategoryTemplateConfig): Promise<boolean> => {
+    try {
+      await saveTemplateConfig(updated);
+      await reloadTemplates();
+      return true;
+    } catch (error) {
+      showError(error);
+      return false;
+    }
   };
 
   const toggleExpand = (id: number) => {
@@ -137,7 +163,7 @@ export default function CommentaryTemplatesScreen({ navigation }: CommentaryTemp
           name="information"
           size={16}
           color={colors.INFO}
-          containerStyle={{ marginRight: 8 }}
+          containerStyle={styles.infoIcon}
         />
         <Text style={[styles.infoText, { color: colors.INFO }]}>
           Las plantillas se crean automáticamente al usar por primera vez una subcategoría. Aquí
@@ -157,14 +183,7 @@ export default function CommentaryTemplatesScreen({ navigation }: CommentaryTemp
               expanded={expandedId === template.subcategoryId}
               onToggle={() => toggleExpand(template.subcategoryId)}
               onReset={() => handleReset(template)}
-              onSave={async (updated) => {
-                try {
-                  await saveTemplateConfig(updated);
-                  await loadTemplates();
-                } catch (error) {
-                  showError(error);
-                }
-              }}
+              onSave={handleSaveTemplate}
               colors={colors}
             />
           ))}
@@ -185,8 +204,8 @@ interface TemplateCardProps {
   expanded: boolean;
   onToggle: () => void;
   onReset: () => void;
-  onSave: (updated: SubcategoryTemplateConfig) => Promise<void>;
-  colors: ReturnType<typeof useThemeColors>;
+  onSave: (updated: SubcategoryTemplateConfig) => Promise<boolean>;
+  colors: AppColors;
 }
 
 function TemplateCard({
@@ -218,23 +237,22 @@ function TemplateCard({
     setChipDraft({ ...template.chips[index] });
   };
 
+  const handleCancelEdit = () => {
+    setEditingChipIndex(null);
+    setChipDraft(null);
+  };
+
   const handleSaveChip = async () => {
     if (editingChipIndex === null || !chipDraft) return;
     setSaving(true);
     try {
       const updatedChips = [...template.chips];
       updatedChips[editingChipIndex] = chipDraft;
-      await onSave({ ...template, chips: updatedChips });
-      setEditingChipIndex(null);
-      setChipDraft(null);
+      const saved = await onSave({ ...template, chips: updatedChips });
+      if (saved) handleCancelEdit();
     } finally {
       setSaving(false);
     }
-  };
-
-  const handleCancelEdit = () => {
-    setEditingChipIndex(null);
-    setChipDraft(null);
   };
 
   return (
@@ -276,10 +294,11 @@ function TemplateCard({
           ) : (
             template.chips.map((chip, index) => (
               <ChipEditor
-                key={index}
+                // Los chips no tienen id estable; el orden en la lista es su identidad
+                key={`${template.subcategoryId}-${index}`}
                 chip={chip}
                 isEditing={editingChipIndex === index}
-                draft={editingChipIndex === index ? chipDraft! : chip}
+                draft={editingChipIndex === index ? (chipDraft ?? chip) : chip}
                 onEdit={() => handleEditChip(index)}
                 onSave={handleSaveChip}
                 onCancel={handleCancelEdit}
@@ -312,6 +331,8 @@ function TemplateCard({
 // SUB-COMPONENTE: Editor de chip individual
 // ============================================================
 
+const HIT_SLOP = { top: 8, bottom: 8, left: 8, right: 8 };
+
 interface ChipEditorProps {
   chip: TemplateChip;
   isEditing: boolean;
@@ -321,7 +342,7 @@ interface ChipEditorProps {
   onCancel: () => void;
   onDraftChange: (chip: TemplateChip) => void;
   saving: boolean;
-  colors: ReturnType<typeof useThemeColors>;
+  colors: AppColors;
 }
 
 function ChipEditor({
@@ -344,11 +365,7 @@ function ChipEditor({
             {chip.template}
           </Text>
         </View>
-        <TouchableOpacity
-          onPress={onEdit}
-          style={styles.editBtn}
-          hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-        >
+        <TouchableOpacity onPress={onEdit} style={styles.editBtn} hitSlop={HIT_SLOP}>
           <Icon type="material-community" name="pencil-outline" size={18} color={colors.PRIMARY} />
         </TouchableOpacity>
       </View>
@@ -431,7 +448,7 @@ function ChipEditor({
           onPress={onSave}
           disabled={saving}
         >
-          <Text style={[styles.editActionText, { color: '#fff' }]}>
+          <Text style={[styles.editActionText, styles.saveText]}>
             {saving ? 'Guardando...' : 'Guardar'}
           </Text>
         </TouchableOpacity>
@@ -444,7 +461,7 @@ function ChipEditor({
 // SUB-COMPONENTE: Estado vacío
 // ============================================================
 
-function EmptyState({ colors }: { colors: ReturnType<typeof useThemeColors> }) {
+function EmptyState({ colors }: { colors: AppColors }) {
   return (
     <View style={styles.emptyContainer}>
       <Icon
@@ -476,6 +493,9 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     borderWidth: 1,
     marginBottom: 16
+  },
+  infoIcon: {
+    marginRight: 8
   },
   infoText: {
     flex: 1,
@@ -591,6 +611,9 @@ const styles = StyleSheet.create({
   editActionText: {
     fontSize: SMALL,
     fontWeight: '600'
+  },
+  saveText: {
+    color: '#fff'
   },
   cardActions: {
     marginTop: 4

@@ -17,7 +17,7 @@ import { parseAra } from './image/ara';
 import { parseCruzVerde } from './image/cruzVerde';
 import { isSuperCarnesJH, parseSuperCarnesJH } from './image/superCarnesJH';
 import { isFruverLaGranja, parseFruverLaGranja } from './image/fruverLaGranja';
-import { parsePdfText, detectPdfStore } from './pdf/pdfNormalizer';
+import { parsePdfText } from './pdf/pdfNormalizer';
 
 export type SourceType = 'image' | 'pdf';
 

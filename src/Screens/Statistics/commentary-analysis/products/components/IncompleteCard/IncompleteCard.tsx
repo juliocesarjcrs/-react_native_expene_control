@@ -1,13 +1,5 @@
 import React from 'react';
-import {
-  View,
-  Text,
-  TouchableOpacity,
-  StyleSheet,
-  LayoutAnimation,
-  Platform,
-  UIManager
-} from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, LayoutAnimation } from 'react-native';
 import { Icon } from 'react-native-elements';
 import { ProductPrice } from '~/shared/types/utils/commentaryParser/product-analysis.types';
 import { ProductSummary } from '../../types';

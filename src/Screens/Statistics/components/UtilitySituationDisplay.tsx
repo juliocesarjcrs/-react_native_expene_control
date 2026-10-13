@@ -29,12 +29,12 @@ export const UtilitySituationDisplay: React.FC<Props> = ({ item }) => {
   // ========================================================================
   // BADGES
   // ========================================================================
-  const badges: Array<{
+  const badges: {
     text: string;
     icon: string;
     color: string;
     type: 'extraPerson' | 'visits' | 'uninhabited';
-  }> = [];
+  }[] = [];
 
   // 1. Badge de persona adicional: "👤 Margot"
   if (item.hasExtraPerson && item.extraPersonName) {

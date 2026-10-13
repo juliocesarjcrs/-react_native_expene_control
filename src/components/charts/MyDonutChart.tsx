@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView } from 'react-native';
-import Svg, { Circle, G } from 'react-native-svg';
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView, DimensionValue } from 'react-native';
+import Svg, { Circle } from 'react-native-svg';
 import { Icon } from 'react-native-elements';
 
 // Theme
@@ -23,6 +23,12 @@ interface MyDonutChartProps {
   total: number;
 }
 
+const TOP_COUNT = 5;
+const RADIUS = 100;
+const STROKE_WIDTH = 40;
+const CENTER = 130;
+const CIRCUMFERENCE = 2 * Math.PI * RADIUS;
+
 export default function MyDonutChart({ data, total }: MyDonutChartProps) {
   const colors = useThemeColors();
   const [isExpanded, setIsExpanded] = useState(false);
@@ -44,37 +50,29 @@ export default function MyDonutChart({ data, total }: MyDonutChartProps) {
     );
   }
 
+  // Evita NaN si el total es 0
+  const safeTotal = total > 0 ? total : 1;
+
   const sorted = [...data].sort((a, b) => b.population - a.population);
-  const top5 = sorted.slice(0, 5);
-  const rest = sorted.slice(5);
+  const top = sorted.slice(0, TOP_COUNT);
+  const rest = sorted.slice(TOP_COUNT);
   const othersTotal = rest.reduce((acc, x) => acc + x.population, 0);
 
   const donutData =
     rest.length > 0
-      ? [...top5, { name: 'Otros', population: othersTotal, color: colors.GRAY }]
-      : top5;
+      ? [...top, { name: 'Otros', population: othersTotal, color: colors.GRAY }]
+      : top;
 
-  // Calcular segmentos del donut
-  const radius = 100;
-  const strokeWidth = 40;
-  const center = 130;
-  const circumference = 2 * Math.PI * radius;
+  // Segmentos del donut: cada uno empieza donde termina el anterior
+  const percentages = donutData.map((item) => (item.population / safeTotal) * 100);
 
-  let currentAngle = -90;
+  const segments = donutData.map((item, index) => ({
+    ...item,
+    percentage: percentages[index],
+    startPercentage: percentages.slice(0, index).reduce((sum, value) => sum + value, 0)
+  }));
 
-  const segments = donutData.map((item) => {
-    const percentage = (item.population / total) * 100;
-    const angle = (percentage / 100) * 360;
-    const startAngle = currentAngle;
-    currentAngle += angle;
-
-    return {
-      ...item,
-      percentage,
-      startAngle,
-      angle
-    };
-  });
+  const avgAmount = total / sorted.length;
 
   return (
     <ScrollView style={styles.wrapper} showsVerticalScrollIndicator={false}>
@@ -85,23 +83,21 @@ export default function MyDonutChart({ data, total }: MyDonutChartProps) {
         activeOpacity={0.8}
       >
         <Svg width={260} height={260} viewBox="0 0 260 260">
-          <G>
-            {segments.map((segment, index) => (
-              <Circle
-                key={index}
-                cx={center}
-                cy={center}
-                r={radius}
-                stroke={segment.color}
-                strokeWidth={strokeWidth}
-                fill="none"
-                strokeDasharray={`${(segment.percentage / 100) * circumference} ${circumference}`}
-                strokeDashoffset={-((segment.startAngle + 90) / 360) * circumference}
-                rotation={0}
-                origin={`${center}, ${center}`}
-              />
-            ))}
-          </G>
+          {segments.map((segment) => (
+            <Circle
+              key={segment.name}
+              cx={CENTER}
+              cy={CENTER}
+              r={RADIUS}
+              stroke={segment.color}
+              strokeWidth={STROKE_WIDTH}
+              fill="none"
+              strokeDasharray={`${(segment.percentage / 100) * CIRCUMFERENCE} ${CIRCUMFERENCE}`}
+              strokeDashoffset={-(segment.startPercentage / 100) * CIRCUMFERENCE}
+              rotation={-90}
+              origin={`${CENTER}, ${CENTER}`}
+            />
+          ))}
         </Svg>
 
         <View style={styles.centerLabel}>
@@ -114,7 +110,7 @@ export default function MyDonutChart({ data, total }: MyDonutChartProps) {
             name={isExpanded ? 'chevron-up' : 'chevron-down'}
             size={20}
             color={colors.TEXT_SECONDARY}
-            containerStyle={{ marginTop: 4 }}
+            containerStyle={styles.chevronIcon}
           />
         </View>
       </TouchableOpacity>
@@ -125,7 +121,12 @@ export default function MyDonutChart({ data, total }: MyDonutChartProps) {
 
       {/* INSIGHTS COMPACTOS */}
       {!isExpanded && (
-        <View style={[styles.insightsBox, { backgroundColor: colors.CARD_BACKGROUND }]}>
+        <View
+          style={[
+            styles.insightsBox,
+            { backgroundColor: colors.CARD_BACKGROUND, shadowColor: colors.BLACK }
+          ]}
+        >
           <View style={styles.insightRow}>
             <View style={styles.insightLeft}>
               <Icon
@@ -133,7 +134,7 @@ export default function MyDonutChart({ data, total }: MyDonutChartProps) {
                 name="fire"
                 size={16}
                 color={colors.ERROR}
-                containerStyle={{ marginRight: 6 }}
+                containerStyle={styles.insightIcon}
               />
               <Text style={[styles.insightLabel, { color: colors.TEXT_SECONDARY }]}>
                 Mayor gasto:
@@ -151,7 +152,7 @@ export default function MyDonutChart({ data, total }: MyDonutChartProps) {
                 name="currency-usd"
                 size={16}
                 color={colors.SUCCESS}
-                containerStyle={{ marginRight: 6 }}
+                containerStyle={styles.insightIcon}
               />
               <Text style={[styles.insightLabel, { color: colors.TEXT_SECONDARY }]}>Monto:</Text>
             </View>
@@ -167,7 +168,7 @@ export default function MyDonutChart({ data, total }: MyDonutChartProps) {
                 name="chart-bar"
                 size={16}
                 color={colors.INFO}
-                containerStyle={{ marginRight: 6 }}
+                containerStyle={styles.insightIcon}
               />
               <Text style={[styles.insightLabel, { color: colors.TEXT_SECONDARY }]}>
                 Categorías:
@@ -188,21 +189,22 @@ export default function MyDonutChart({ data, total }: MyDonutChartProps) {
           </Text>
 
           {sorted.map((cat, idx) => {
-            const percent = ((cat.population / total) * 100).toFixed(1);
+            const percentValue = (cat.population / safeTotal) * 100;
+            const percent = percentValue.toFixed(1);
             const isSelected = selectedCategory === cat.name;
-            const avgAmount = total / sorted.length;
             const diffAmount = cat.population - avgAmount;
             const isAboveAvg = diffAmount > 0;
 
             return (
               <TouchableOpacity
-                key={idx}
+                key={cat.name}
                 style={[
                   styles.rankRow,
                   {
                     backgroundColor: colors.CARD_BACKGROUND,
                     borderColor: isSelected ? colors.PRIMARY : colors.BORDER,
-                    borderWidth: isSelected ? 2 : 1
+                    borderWidth: isSelected ? 2 : 1,
+                    shadowColor: colors.BLACK
                   }
                 ]}
                 onPress={() => setSelectedCategory(isSelected ? null : cat.name)}
@@ -221,7 +223,7 @@ export default function MyDonutChart({ data, total }: MyDonutChartProps) {
                     style={[
                       styles.barFill,
                       {
-                        width: `${percent}%` as any,
+                        width: `${Math.min(percentValue, 100)}%` as DimensionValue,
                         backgroundColor: cat.color
                       }
                     ]}
@@ -258,7 +260,7 @@ export default function MyDonutChart({ data, total }: MyDonutChartProps) {
                           name={isAboveAvg ? 'arrow-up' : 'arrow-down'}
                           size={14}
                           color={isAboveAvg ? colors.ERROR : colors.SUCCESS}
-                          containerStyle={{ marginRight: 4 }}
+                          containerStyle={styles.detailIcon}
                         />
                         <Text
                           style={[
@@ -304,6 +306,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center'
   },
+  chevronIcon: {
+    marginTop: 4
+  },
   totalLabel: {
     fontSize: SMALL,
     marginBottom: 2
@@ -324,7 +329,6 @@ const styles = StyleSheet.create({
     marginBottom: 16,
     padding: 16,
     borderRadius: 12,
-    shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 4,
@@ -339,6 +343,9 @@ const styles = StyleSheet.create({
   insightLeft: {
     flexDirection: 'row',
     alignItems: 'center'
+  },
+  insightIcon: {
+    marginRight: 6
   },
   insightLabel: {
     fontSize: SMALL + 1
@@ -360,7 +367,6 @@ const styles = StyleSheet.create({
     marginBottom: 12,
     padding: 12,
     borderRadius: 12,
-    shadowColor: '#000',
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.08,
     shadowRadius: 2,
@@ -432,6 +438,9 @@ const styles = StyleSheet.create({
   detailRight: {
     flexDirection: 'row',
     alignItems: 'center'
+  },
+  detailIcon: {
+    marginRight: 4
   },
   detailValue: {
     fontSize: SMALL,

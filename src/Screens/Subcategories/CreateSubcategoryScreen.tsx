@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { View, Keyboard } from 'react-native';
 import { useForm } from 'react-hook-form';
 import { StackNavigationProp } from '@react-navigation/stack';
@@ -46,6 +46,11 @@ type FormData = {
   name: string;
 };
 
+const fetchSubcategories = async (idCategory: number): Promise<SubcategoriesWithExpenses[]> => {
+  const { data } = await getSubategoriesByCategory(idCategory);
+  return data as SubcategoriesWithExpenses[];
+};
+
 export default function CreateSubcategoryScreen({
   route,
   navigation
@@ -61,24 +66,28 @@ export default function CreateSubcategoryScreen({
     defaultValues: { name: '' }
   });
 
-  const fetchData = async (): Promise<void> => {
-    try {
-      if (!idCategory) {
-        return;
-      }
-      const { data } = await getSubategoriesByCategory(idCategory);
-      setSubcategories(data as SubcategoriesWithExpenses[]);
-    } catch (error) {
-      showError(error);
-    }
-  };
   useEffect(() => {
-    fetchData();
-    const unsubscribe = navigation.addListener('focus', () => {
-      fetchData();
-    });
-    return unsubscribe;
-  }, [navigation]);
+    if (!idCategory) return;
+
+    let isMounted = true;
+
+    const loadSubcategories = async (): Promise<void> => {
+      try {
+        const data = await fetchSubcategories(idCategory);
+        if (isMounted) setSubcategories(data);
+      } catch (error) {
+        if (isMounted) showError(error);
+      }
+    };
+
+    // 'focus' también se dispara en el primer enfoque de la pantalla.
+    const unsubscribe = navigation.addListener('focus', loadSubcategories);
+
+    return () => {
+      isMounted = false;
+      unsubscribe();
+    };
+  }, [navigation, idCategory]);
 
   const create = async (payload: FormData): Promise<void> => {
     try {
@@ -87,22 +96,27 @@ export default function CreateSubcategoryScreen({
         ...payload,
         categoryId: idCategory
       });
-      setLoading(false);
 
-      const newSubcategories = [...subcategories, data];
-      setSubcategories(newSubcategories);
+      setSubcategories((prev) => [...prev, data]);
       ShowToast('Subcategoría creada exitosamente');
       Keyboard.dismiss();
       reset();
     } catch (error) {
-      setLoading(false);
       showError(error);
+    } finally {
+      setLoading(false);
     }
   };
 
-  const updateList = (): void => {
-    fetchData();
-  };
+  // Lo usa SubcategoryList para refrescar después de editar o eliminar
+  const updateList = useCallback(async (): Promise<void> => {
+    if (!idCategory) return;
+    try {
+      setSubcategories(await fetchSubcategories(idCategory));
+    } catch (error) {
+      showError(error);
+    }
+  }, [idCategory]);
 
   return (
     <View style={[commonStyles.screenContainer, { backgroundColor: colors.BACKGROUND }]}>

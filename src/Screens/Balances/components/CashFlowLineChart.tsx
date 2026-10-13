@@ -18,6 +18,8 @@ interface CashFlowLineChartProps {
   dataSavings: number[];
 }
 
+type SeriesKey = 'incomes' | 'expenses' | 'savings';
+
 interface ChartPoint {
   x: number;
   label: string;
@@ -26,6 +28,26 @@ interface ChartPoint {
   savings: number;
 }
 
+type ActivePoint = { point: ChartPoint; series: SeriesKey };
+
+// Datos que Victory entrega al handler de eventos de un punto
+type ScatterEventProps = { datum: { x: number } };
+
+const CHART_HEIGHT = 340;
+const TOOLTIP_TIMEOUT_MS = 3000;
+
+const NO_DATA: ChartPoint[] = [{ x: 0, label: 'Sin datos', expenses: 0, incomes: 0, savings: 0 }];
+
+const formatYAxis = (val: number): string => {
+  if (Math.abs(val) >= 1000000) {
+    return `${(val / 1000000).toFixed(1).replace(/\.0$/, '')}M`;
+  }
+  if (Math.abs(val) >= 1000) {
+    return `${(val / 1000).toFixed(0)}K`;
+  }
+  return val.toFixed(0);
+};
+
 export default function CashFlowLineChart({
   labels,
   dataExpenses,
@@ -33,32 +55,49 @@ export default function CashFlowLineChart({
   dataSavings
 }: CashFlowLineChartProps) {
   const colors = useThemeColors();
-  const [activePoint, setActivePoint] = useState<ChartPoint | null>(null);
-  const [activeSeries, setActiveSeries] = useState<'expenses' | 'incomes' | 'savings' | null>(null);
-
-  // Preparar datos para Victory Native
-  const chartData: ChartPoint[] = useMemo(() => {
-    return labels.map((label, index) => ({
-      x: index,
-      label: label || '',
-      expenses: dataExpenses[index] || 0,
-      incomes: dataIncomes[index] || 0,
-      savings: dataSavings[index] || 0
-    }));
-  }, [labels, dataExpenses, dataIncomes, dataSavings]);
-
-  const hasValidData = chartData.length > 0 && chartData.some((d) => d.label !== '');
-  const safeChartData = hasValidData
-    ? chartData
-    : [{ x: 0, label: 'Sin datos', expenses: 0, incomes: 0, savings: 0 }];
-
-  const expensesSeries = safeChartData.map((d) => ({ x: d.x, y: d.expenses }));
-  const incomesSeries = safeChartData.map((d) => ({ x: d.x, y: d.incomes }));
-  const savingsSeries = safeChartData.map((d) => ({ x: d.x, y: d.savings }));
-
+  const [active, setActive] = useState<ActivePoint | null>(null);
   const { width: windowWidth } = useWindowDimensions();
   const chartWidth = windowWidth - 32;
-  const chartHeight = 340;
+
+  // Configuración de cada serie (color, ícono del tooltip y estilo de línea)
+  const SERIES: {
+    key: SeriesKey;
+    color: string;
+    icon: string;
+    strokeWidth: number;
+    dashed?: boolean;
+  }[] = [
+    { key: 'incomes', color: colors.SUCCESS, icon: '↑', strokeWidth: 3.5 },
+    { key: 'expenses', color: colors.ERROR, icon: '↓', strokeWidth: 3.5 },
+    { key: 'savings', color: colors.INFO, icon: '●', strokeWidth: 3, dashed: true }
+  ];
+
+  // Preparar datos para Victory Native
+  const chartData: ChartPoint[] = useMemo(
+    () =>
+      labels.map((label, index) => ({
+        x: index,
+        label: label || '',
+        expenses: dataExpenses[index] ?? 0,
+        incomes: dataIncomes[index] ?? 0,
+        savings: dataSavings[index] ?? 0
+      })),
+    [labels, dataExpenses, dataIncomes, dataSavings]
+  );
+
+  const safeChartData = useMemo(
+    () => (chartData.some((d) => d.label !== '') ? chartData : NO_DATA),
+    [chartData]
+  );
+
+  const seriesData = useMemo(
+    () => ({
+      incomes: safeChartData.map((d) => ({ x: d.x, y: d.incomes })),
+      expenses: safeChartData.map((d) => ({ x: d.x, y: d.expenses })),
+      savings: safeChartData.map((d) => ({ x: d.x, y: d.savings }))
+    }),
+    [safeChartData]
+  );
 
   // Calcular dominio Y con padding
   const { yMin, yMax } = useMemo(() => {
@@ -70,100 +109,50 @@ export default function CashFlowLineChart({
     return { yMin: minY - padding, yMax: maxY + padding };
   }, [safeChartData]);
 
-  // Formateo del eje Y
-  const formatYAxis = (val: number) => {
-    if (Math.abs(val) >= 1000000) {
-      const m = val / 1000000;
-      return `${m.toFixed(1).replace(/\.0$/, '')}M`;
-    }
-    if (Math.abs(val) >= 1000) {
-      const k = val / 1000;
-      return `${k.toFixed(0)}K`;
-    }
-    return val.toFixed(0);
-  };
-
-  const isActive = activePoint !== null;
-
-  // Determinar el color del punto según la serie activa
-  const getSeriesColor = () => {
-    switch (activeSeries) {
-      case 'incomes':
-        return colors.SUCCESS;
-      case 'expenses':
-        return colors.ERROR;
-      case 'savings':
-        return colors.INFO;
-      default:
-        return colors.PRIMARY;
-    }
-  };
-
-  // Determinar el ícono según la serie
-  const getSeriesIcon = () => {
-    switch (activeSeries) {
-      case 'incomes':
-        return '↑';
-      case 'expenses':
-        return '↓';
-      case 'savings':
-        return '●';
-      default:
-        return '';
-    }
-  };
-
+  // El tooltip se oculta solo a los 3 segundos
   useEffect(() => {
-    if (activePoint) {
-      const t = setTimeout(() => {
-        setActivePoint(null);
-        setActiveSeries(null);
-      }, 3000);
-      return () => clearTimeout(t);
-    }
-  }, [activePoint]);
+    if (!active) return;
+
+    const timer = setTimeout(() => setActive(null), TOOLTIP_TIMEOUT_MS);
+    return () => clearTimeout(timer);
+  }, [active]);
+
+  const isHighlighted = (series: SeriesKey, x: number): boolean =>
+    active?.series === series && active.point.x === x;
+
+  const activeConfig = active ? SERIES.find((s) => s.key === active.series) : undefined;
 
   return (
     <View style={styles.container}>
       {/* Tooltip flotante minimalista */}
-      {isActive && activePoint && activeSeries && (
+      {active && activeConfig && (
         <View
           style={[
             styles.floatingTooltip,
-            {
-              backgroundColor: getSeriesColor(),
-              shadowColor: getSeriesColor()
-            }
+            { backgroundColor: activeConfig.color, shadowColor: activeConfig.color }
           ]}
         >
-          <Text style={styles.tooltipMonth}>{activePoint.label}</Text>
+          <Text style={[styles.tooltipMonth, { color: colors.WHITE }]}>{active.point.label}</Text>
           <View style={styles.tooltipValueContainer}>
-            <Text style={styles.tooltipIcon}>{getSeriesIcon()}</Text>
-            <Text style={styles.tooltipAmount}>
-              {NumberFormat(
-                activeSeries === 'incomes'
-                  ? activePoint.incomes
-                  : activeSeries === 'expenses'
-                    ? activePoint.expenses
-                    : activePoint.savings
-              )}
+            <Text style={[styles.tooltipIcon, { color: colors.WHITE }]}>{activeConfig.icon}</Text>
+            <Text style={[styles.tooltipAmount, { color: colors.WHITE }]}>
+              {NumberFormat(active.point[active.series])}
             </Text>
           </View>
         </View>
       )}
 
       {/* Gráfico principal */}
-      <View style={[styles.chartContainer, { backgroundColor: colors.CARD_BACKGROUND }]}>
-        <Pressable
-          onPress={() => {
-            setActivePoint(null);
-            setActiveSeries(null);
-          }}
-          style={StyleSheet.absoluteFill}
-        />
+      <View
+        style={[
+          styles.chartContainer,
+          { backgroundColor: colors.CARD_BACKGROUND, shadowColor: colors.BLACK }
+        ]}
+      >
+        <Pressable onPress={() => setActive(null)} style={StyleSheet.absoluteFill} />
         <VictoryChart
           width={chartWidth}
-          height={chartHeight}
+          height={CHART_HEIGHT}
           domain={{ y: [yMin, yMax] }}
           domainPadding={{ x: 20 }}
           padding={{ top: 20, bottom: 5, left: 45, right: 15 }}
@@ -171,11 +160,9 @@ export default function CashFlowLineChart({
           {/* Eje X */}
           <VictoryAxis
             tickValues={safeChartData.map((d) => d.x)}
-            tickFormat={(val: any) => {
-              const idx = Math.round(val);
-              const item = safeChartData[idx];
-              if (!item) return '';
-              return item.label.substring(0, 3);
+            tickFormat={(val: number) => {
+              const item = safeChartData[Math.round(val)];
+              return item ? item.label.substring(0, 3) : '';
             }}
             style={{
               axis: { stroke: colors.BORDER, strokeWidth: 1.5 },
@@ -211,6 +198,7 @@ export default function CashFlowLineChart({
               }
             }}
           />
+
           {/* Gradientes para las áreas */}
           <Defs>
             <LinearGradient id="incomeGradient" x1="0" y1="0" x2="0" y2="1">
@@ -226,166 +214,62 @@ export default function CashFlowLineChart({
 
           {/* Áreas de relleno sutiles */}
           <VictoryArea
-            data={incomesSeries}
+            data={seriesData.incomes}
             interpolation="monotoneX"
             style={{
-              data: {
-                fill: `url(#incomeGradient)`,
-                fillOpacity: 0.15,
-                stroke: 'transparent'
-              }
+              data: { fill: 'url(#incomeGradient)', fillOpacity: 0.15, stroke: 'transparent' }
             }}
           />
-
           <VictoryArea
-            data={expensesSeries}
+            data={seriesData.expenses}
             interpolation="monotoneX"
             style={{
-              data: {
-                fill: `url(#expenseGradient)`,
-                fillOpacity: 0.15,
-                stroke: 'transparent'
-              }
+              data: { fill: 'url(#expenseGradient)', fillOpacity: 0.15, stroke: 'transparent' }
             }}
           />
 
-          {/* Línea de Ingresos (verde) - más gruesa */}
-          <VictoryLine
-            data={incomesSeries}
-            interpolation="monotoneX"
-            style={{
-              data: {
-                stroke: colors.SUCCESS,
-                strokeWidth: 3.5,
-                strokeLinecap: 'round',
-                strokeLinejoin: 'round'
-              }
-            }}
-          />
-          <VictoryScatter
-            data={incomesSeries}
-            size={({ datum }) =>
-              isActive && activePoint?.x === datum.x && activeSeries === 'incomes' ? 11 : 6
-            }
-            style={{
-              data: {
-                fill: colors.SUCCESS,
-                stroke: ({ datum }) =>
-                  isActive && activePoint?.x === datum.x && activeSeries === 'incomes'
-                    ? colors.CARD_BACKGROUND
-                    : colors.SUCCESS,
-                strokeWidth: ({ datum }) =>
-                  isActive && activePoint?.x === datum.x && activeSeries === 'incomes' ? 3.5 : 0
-              }
-            }}
-            events={[
-              {
-                target: 'data',
-                eventHandlers: {
-                  onPressIn: (_evt: any, props: any) => {
-                    const point = safeChartData.find((d) => d.x === props.datum.x);
-                    if (point) {
-                      setActivePoint(point);
-                      setActiveSeries('incomes');
+          {/* Líneas y puntos de cada serie */}
+          {SERIES.flatMap((serie) => [
+            <VictoryLine
+              key={`${serie.key}-line`}
+              data={seriesData[serie.key]}
+              interpolation="monotoneX"
+              style={{
+                data: {
+                  stroke: serie.color,
+                  strokeWidth: serie.strokeWidth,
+                  strokeDasharray: serie.dashed ? '7,5' : undefined,
+                  strokeLinecap: 'round',
+                  strokeLinejoin: 'round'
+                }
+              }}
+            />,
+            <VictoryScatter
+              key={`${serie.key}-points`}
+              data={seriesData[serie.key]}
+              size={({ datum }) => (isHighlighted(serie.key, datum.x) ? 11 : 6)}
+              style={{
+                data: {
+                  fill: serie.color,
+                  stroke: ({ datum }) =>
+                    isHighlighted(serie.key, datum.x) ? colors.CARD_BACKGROUND : serie.color,
+                  strokeWidth: ({ datum }) => (isHighlighted(serie.key, datum.x) ? 3.5 : 0)
+                }
+              }}
+              events={[
+                {
+                  target: 'data',
+                  eventHandlers: {
+                    onPressIn: (_evt: unknown, props: ScatterEventProps) => {
+                      const point = safeChartData.find((d) => d.x === props.datum.x);
+                      if (point) setActive({ point, series: serie.key });
+                      return [];
                     }
-                    return [];
                   }
                 }
-              }
-            ]}
-          />
-
-          {/* Línea de Gastos (rojo) */}
-          <VictoryLine
-            data={expensesSeries}
-            interpolation="monotoneX"
-            style={{
-              data: {
-                stroke: colors.ERROR,
-                strokeWidth: 3.5,
-                strokeLinecap: 'round',
-                strokeLinejoin: 'round'
-              }
-            }}
-          />
-          <VictoryScatter
-            data={expensesSeries}
-            size={({ datum }) =>
-              isActive && activePoint?.x === datum.x && activeSeries === 'expenses' ? 11 : 6
-            }
-            style={{
-              data: {
-                fill: colors.ERROR,
-                stroke: ({ datum }) =>
-                  isActive && activePoint?.x === datum.x && activeSeries === 'expenses'
-                    ? colors.CARD_BACKGROUND
-                    : colors.ERROR,
-                strokeWidth: ({ datum }) =>
-                  isActive && activePoint?.x === datum.x && activeSeries === 'expenses' ? 3.5 : 0
-              }
-            }}
-            events={[
-              {
-                target: 'data',
-                eventHandlers: {
-                  onPressIn: (_evt: any, props: any) => {
-                    const point = safeChartData.find((d) => d.x === props.datum.x);
-                    if (point) {
-                      setActivePoint(point);
-                      setActiveSeries('expenses');
-                    }
-                    return [];
-                  }
-                }
-              }
-            ]}
-          />
-
-          {/* Línea de Ahorros (azul punteada) */}
-          <VictoryLine
-            data={savingsSeries}
-            interpolation="monotoneX"
-            style={{
-              data: {
-                stroke: colors.INFO,
-                strokeWidth: 3,
-                strokeDasharray: '7,5',
-                strokeLinecap: 'round'
-              }
-            }}
-          />
-          <VictoryScatter
-            data={savingsSeries}
-            size={({ datum }) =>
-              isActive && activePoint?.x === datum.x && activeSeries === 'savings' ? 11 : 6
-            }
-            style={{
-              data: {
-                fill: colors.INFO,
-                stroke: ({ datum }) =>
-                  isActive && activePoint?.x === datum.x && activeSeries === 'savings'
-                    ? colors.CARD_BACKGROUND
-                    : colors.INFO,
-                strokeWidth: ({ datum }) =>
-                  isActive && activePoint?.x === datum.x && activeSeries === 'savings' ? 3.5 : 0
-              }
-            }}
-            events={[
-              {
-                target: 'data',
-                eventHandlers: {
-                  onPressIn: (_evt: any, props: any) => {
-                    const point = safeChartData.find((d) => d.x === props.datum.x);
-                    if (point) {
-                      setActivePoint(point);
-                      setActiveSeries('savings');
-                    }
-                    return [];
-                  }
-                }
-              }
-            ]}
-          />
+              ]}
+            />
+          ])}
         </VictoryChart>
 
         {/* Leyenda horizontal compacta */}
@@ -430,7 +314,6 @@ const styles = StyleSheet.create({
     elevation: 8
   },
   tooltipMonth: {
-    color: '#FFFFFF',
     fontSize: 11,
     fontWeight: '700',
     textAlign: 'center',
@@ -445,12 +328,10 @@ const styles = StyleSheet.create({
     gap: 6
   },
   tooltipIcon: {
-    color: '#FFFFFF',
     fontSize: 16,
     fontWeight: '700'
   },
   tooltipAmount: {
-    color: '#FFFFFF',
     fontSize: 16,
     fontWeight: '800',
     letterSpacing: 0.3
@@ -460,7 +341,6 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     paddingHorizontal: 8,
     borderRadius: 20,
-    shadowColor: '#000',
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.05,
     shadowRadius: 4,

@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Keyboard, View } from 'react-native';
-import { useForm } from 'react-hook-form';
+import { useForm, useWatch } from 'react-hook-form';
 import { StackNavigationProp } from '@react-navigation/stack';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
@@ -61,7 +61,7 @@ export default function CreateIncomeScreen({ navigation }: CreateIncomeScreenPro
   const colors = useThemeColors();
   const { isEnabled: isCommentarySuggestionsEnabled } = useFeatureFlag('commentary_suggestions');
 
-  const { handleSubmit, control, reset, watch, setValue } = useForm({
+  const { handleSubmit, control, reset, setValue } = useForm<IncomesPayloadOnSubmit>({
     defaultValues: { amount: 0, commentary: '' }
   });
 
@@ -76,7 +76,7 @@ export default function CreateIncomeScreen({ navigation }: CreateIncomeScreenPro
   // ID con offset para evitar colisión con subcategorías de gastos
   const incomeCommentaryId = categoryId ? categoryId + INCOME_CATEGORY_OFFSET : null;
 
-  const commentaryValue: string = watch('commentary') ?? '';
+  const commentaryValue = useWatch({ control, name: 'commentary' }) ?? '';
 
   const handleStartDateChange = (selectedDate?: Date) => {
     setShowDate(false);
@@ -163,7 +163,7 @@ export default function CreateIncomeScreen({ navigation }: CreateIncomeScreenPro
       {isCommentarySuggestionsEnabled ? (
         <CommentaryInput
           control={control}
-          setValue={setValue as (name: string, value: string) => void}
+          setValue={setValue}
           currentValue={commentaryValue}
           subcategoryId={incomeCommentaryId}
           subcategoryName={categoryName}

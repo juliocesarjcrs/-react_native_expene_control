@@ -3,6 +3,15 @@ import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { Icon } from 'react-native-elements';
 import { useThemeColors } from '~/customHooks/useThemeColors';
 
+type ToolResult = {
+  success?: boolean;
+  data?: {
+    count?: number;
+    total?: number;
+  };
+  [key: string]: unknown;
+};
+
 type InteractionLog = {
   id: number;
   conversationId: number;
@@ -11,8 +20,8 @@ type InteractionLog = {
   model_name: string;
   user_query: string;
   detected_intent: string;
-  extracted_parameters: any;
-  tool_result: any;
+  extracted_parameters: Record<string, unknown> | null;
+  tool_result: ToolResult | null;
   response_time: number;
   iteration: number;
   createdAt: string;
@@ -22,12 +31,71 @@ type Props = {
   log: InteractionLog;
 };
 
+type AppColors = ReturnType<typeof useThemeColors>;
+
+const getShortModelName = (modelName: string): string => modelName.split('/')[1] || modelName;
+
+const formatTime = (date: string): string =>
+  new Date(date).toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' });
+
+const getStatusColor = (isSuccess: boolean, hasData: boolean, colors: AppColors): string => {
+  if (!isSuccess) return colors.ERROR;
+  return hasData ? colors.SUCCESS : colors.WARNING;
+};
+
+// ─────────────────────────────────────────────
+// Resumen del resultado
+// ─────────────────────────────────────────────
+
+interface ResultSummaryProps {
+  isSuccess: boolean;
+  hasData: boolean;
+  toolResult: ToolResult | null;
+  colors: AppColors;
+}
+
+function ResultSummary({ isSuccess, hasData, toolResult, colors }: ResultSummaryProps) {
+  if (!isSuccess) {
+    return (
+      <View style={styles.resultRow}>
+        <Icon name="alert-circle" type="material-community" color={colors.ERROR} size={16} />
+        <Text style={[styles.resultText, { color: colors.ERROR }]}>Error en ejecución</Text>
+      </View>
+    );
+  }
+
+  if (!hasData) {
+    return (
+      <View style={styles.resultRow}>
+        <Icon name="alert" type="material-community" color={colors.WARNING} size={16} />
+        <Text style={[styles.resultText, { color: colors.WARNING }]}>Sin resultados</Text>
+      </View>
+    );
+  }
+
+  const count = toolResult?.data?.count ?? 0;
+  const total = toolResult?.data?.total?.toLocaleString() ?? '';
+
+  return (
+    <View style={styles.resultRow}>
+      <Icon name="check-circle" type="material-community" color={colors.SUCCESS} size={16} />
+      <Text style={[styles.resultText, { color: colors.SUCCESS }]}>
+        {`${count} registros encontrados • Total: $${total}`}
+      </Text>
+    </View>
+  );
+}
+
+// ─────────────────────────────────────────────
+// Tarjeta
+// ─────────────────────────────────────────────
+
 export default function InteractionCard({ log }: Props) {
   const colors = useThemeColors();
   const [expanded, setExpanded] = useState(false);
 
-  const isSuccess = log.tool_result?.success;
-  const hasData = log.tool_result?.data?.count > 0;
+  const isSuccess = Boolean(log.tool_result?.success);
+  const hasData = (log.tool_result?.data?.count ?? 0) > 0;
 
   return (
     <TouchableOpacity
@@ -36,7 +104,7 @@ export default function InteractionCard({ log }: Props) {
         {
           backgroundColor: colors.CARD_BACKGROUND,
           borderColor: colors.BORDER,
-          borderLeftColor: isSuccess ? (hasData ? colors.SUCCESS : colors.WARNING) : colors.ERROR
+          borderLeftColor: getStatusColor(isSuccess, hasData, colors)
         }
       ]}
       onPress={() => setExpanded(!expanded)}
@@ -45,25 +113,15 @@ export default function InteractionCard({ log }: Props) {
       {/* Header */}
       <View style={styles.header}>
         <View style={styles.headerLeft}>
-          <View
-            style={[
-              styles.iterationBadge,
-              {
-                backgroundColor: colors.PRIMARY + '20'
-              }
-            ]}
-          >
+          <View style={[styles.iterationBadge, { backgroundColor: colors.PRIMARY + '20' }]}>
             <Text style={[styles.iterationText, { color: colors.PRIMARY }]}>#{log.iteration}</Text>
           </View>
           <View>
             <Text style={[styles.modelName, { color: colors.INFO }]}>
-              {log.model_name.split('/')[1] || log.model_name}
+              {getShortModelName(log.model_name)}
             </Text>
             <Text style={[styles.timestamp, { color: colors.TEXT_SECONDARY }]}>
-              {new Date(log.createdAt).toLocaleTimeString('es-ES', {
-                hour: '2-digit',
-                minute: '2-digit'
-              })}
+              {formatTime(log.createdAt)}
             </Text>
           </View>
         </View>
@@ -90,56 +148,29 @@ export default function InteractionCard({ log }: Props) {
       </View>
 
       {/* User Query */}
-      <Text style={[styles.userQuery, { color: colors.TEXT_PRIMARY }]}>"{log.user_query}"</Text>
+      <Text style={[styles.userQuery, { color: colors.TEXT_PRIMARY }]}>
+        {`"${log.user_query}"`}
+      </Text>
 
       {/* Tool Badge */}
-      <View
-        style={[
-          styles.toolBadge,
-          {
-            backgroundColor: colors.PRIMARY + '15'
-          }
-        ]}
-      >
+      <View style={[styles.toolBadge, { backgroundColor: colors.PRIMARY + '15' }]}>
         <Icon name="wrench" type="material-community" color={colors.PRIMARY} size={14} />
         <Text style={[styles.toolName, { color: colors.PRIMARY }]}>{log.detected_intent}</Text>
       </View>
 
       {/* Result Summary */}
       <View style={styles.resultSummary}>
-        {isSuccess ? (
-          <>
-            {hasData ? (
-              <View style={styles.successRow}>
-                <Icon
-                  name="check-circle"
-                  type="material-community"
-                  color={colors.SUCCESS}
-                  size={16}
-                />
-                <Text style={[styles.resultText, { color: colors.SUCCESS }]}>
-                  {log.tool_result.data.count} registros encontrados • Total: $
-                  {log.tool_result.data.total?.toLocaleString()}
-                </Text>
-              </View>
-            ) : (
-              <View style={styles.warningRow}>
-                <Icon name="alert" type="material-community" color={colors.WARNING} size={16} />
-                <Text style={[styles.resultText, { color: colors.WARNING }]}>Sin resultados</Text>
-              </View>
-            )}
-          </>
-        ) : (
-          <View style={styles.errorRow}>
-            <Icon name="alert-circle" type="material-community" color={colors.ERROR} size={16} />
-            <Text style={[styles.resultText, { color: colors.ERROR }]}>Error en ejecución</Text>
-          </View>
-        )}
+        <ResultSummary
+          isSuccess={isSuccess}
+          hasData={hasData}
+          toolResult={log.tool_result}
+          colors={colors}
+        />
       </View>
 
       {/* Expanded Details */}
       {expanded && (
-        <View style={styles.expandedContent}>
+        <View style={[styles.expandedContent, { borderTopColor: colors.BORDER }]}>
           {/* Parameters */}
           <View style={styles.section}>
             <Text style={[styles.sectionTitle, { color: colors.TEXT_SECONDARY }]}>
@@ -176,7 +207,7 @@ export default function InteractionCard({ log }: Props) {
           </View>
 
           {/* Metadata */}
-          <View style={styles.metadata}>
+          <View style={[styles.metadata, { borderTopColor: colors.BORDER }]}>
             <Text style={[styles.metadataText, { color: colors.TEXT_SECONDARY }]}>
               ID: {log.id} • Conv: {log.conversationId} • User: {log.userId}
             </Text>
@@ -261,17 +292,7 @@ const styles = StyleSheet.create({
   resultSummary: {
     marginBottom: 8
   },
-  successRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6
-  },
-  warningRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6
-  },
-  errorRow: {
+  resultRow: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6
@@ -284,8 +305,7 @@ const styles = StyleSheet.create({
   expandedContent: {
     marginTop: 12,
     paddingTop: 12,
-    borderTopWidth: 1,
-    borderTopColor: '#e0e0e0'
+    borderTopWidth: 1
   },
   section: {
     marginBottom: 12
@@ -309,8 +329,7 @@ const styles = StyleSheet.create({
   },
   metadata: {
     paddingTop: 8,
-    borderTopWidth: 1,
-    borderTopColor: '#e0e0e0'
+    borderTopWidth: 1
   },
   metadataText: {
     fontSize: 10

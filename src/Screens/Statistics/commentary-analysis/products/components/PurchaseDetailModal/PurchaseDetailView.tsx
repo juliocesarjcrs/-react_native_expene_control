@@ -10,15 +10,29 @@ interface PurchaseDetailViewProps {
   purchase: ProductPrice;
 }
 
-export const PurchaseDetailView: React.FC<PurchaseDetailViewProps> = ({ purchase }) => {
+interface InfoRowProps {
+  label: string;
+  value: string;
+}
+
+const InfoRow: React.FC<InfoRowProps> = ({ label, value }) => {
   const colors = useThemeColors();
 
-  const InfoRow = ({ label, value }: { label: string; value: string }) => (
-    <View style={styles.infoRow}>
+  return (
+    <View style={[styles.infoRow, { borderBottomColor: colors.BORDER }]}>
       <Text style={[styles.infoLabel, { color: colors.TEXT_SECONDARY }]}>{label}</Text>
       <Text style={[styles.infoValue, { color: colors.TEXT_PRIMARY }]}>{value}</Text>
     </View>
   );
+};
+
+export const PurchaseDetailView: React.FC<PurchaseDetailViewProps> = ({ purchase }) => {
+  const colors = useThemeColors();
+
+  const hasDiscount = Boolean(purchase.discountPercent && purchase.originalPricePerKg);
+  const savings = purchase.originalPricePerKg
+    ? Math.round((purchase.originalPricePerKg - purchase.pricePerKg) * purchase.quantity)
+    : 0;
 
   return (
     <View style={styles.container}>
@@ -39,7 +53,7 @@ export const PurchaseDetailView: React.FC<PurchaseDetailViewProps> = ({ purchase
       </View>
 
       {/* Descuento si aplica */}
-      {purchase.discountPercent && purchase.originalPricePerKg && (
+      {hasDiscount && purchase.originalPricePerKg && (
         <View
           style={[
             styles.section,
@@ -55,11 +69,8 @@ export const PurchaseDetailView: React.FC<PurchaseDetailViewProps> = ({ purchase
           <InfoRow label="Descuento" value={`-${purchase.discountPercent}%`} />
           <InfoRow label="Precio final" value={formatPrice(purchase.pricePerKg, purchase)} />
           <View style={[styles.savingsBadge, { backgroundColor: colors.SUCCESS }]}>
-            <Text style={styles.savingsText}>
-              Ahorraste{' '}
-              {NumberFormat(
-                Math.round((purchase.originalPricePerKg - purchase.pricePerKg) * purchase.quantity)
-              )}
+            <Text style={[styles.savingsText, { color: colors.WHITE }]}>
+              Ahorraste {NumberFormat(savings)}
             </Text>
           </View>
         </View>
@@ -90,8 +101,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     paddingVertical: 8,
-    borderBottomWidth: 1,
-    borderBottomColor: '#f0f0f0'
+    borderBottomWidth: 1
   },
   infoLabel: {
     fontSize: SMALL,
@@ -113,7 +123,6 @@ const styles = StyleSheet.create({
   },
   savingsText: {
     fontSize: SMALL,
-    fontWeight: '700',
-    color: '#fff'
+    fontWeight: '700'
   }
 });

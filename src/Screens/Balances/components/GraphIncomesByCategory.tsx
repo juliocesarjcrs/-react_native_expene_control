@@ -1,28 +1,28 @@
-import React, { useEffect, useState, useRef } from 'react';
-import { View, Text, StyleSheet, useWindowDimensions } from 'react-native';
+import React, { useEffect, useMemo, useState } from 'react';
+import { StyleSheet, Text, useWindowDimensions, View } from 'react-native';
 import {
+  VictoryArea,
+  VictoryAxis,
   VictoryChart,
   VictoryLine,
-  VictoryAxis,
-  VictoryScatter,
-  VictoryArea
+  VictoryScatter
 } from 'victory-native';
-import { StackNavigationProp } from '@react-navigation/stack';
+import type { StackNavigationProp } from '@react-navigation/stack';
 
 // Services
-import { findLastIncomesMonthsFromOnlyCategory } from '../../../services/incomes';
+import { findLastIncomesMonthsFromOnlyCategory } from '~/services/incomes';
 
 // Components
-import SelectOnlyCategory from '../../../components/dropDown/SelectOnlyCategory';
-import CheckBoxOptions from '../../../components/checbox/CheckBoxOptions';
-import MyLoading from '../../../components/loading/MyLoading';
+import SelectOnlyCategory from '~/components/dropDown/SelectOnlyCategory';
+import CheckBoxOptions from '~/components/checbox/CheckBoxOptions';
+import MyLoading from '~/components/loading/MyLoading';
 
 // Types
-import { DropDownSelectFormat } from '../../../shared/types/components';
-import { BalanceStackParamList } from '../../../shared/types';
+import type { DropDownSelectFormat } from '~/shared/types/components';
+import type { BalanceStackParamList } from '~/shared/types';
 
 // Utils
-import { NumberFormat } from '../../../utils/Helpers';
+import { NumberFormat } from '~/utils/Helpers';
 import { showError } from '~/utils/showError';
 
 // Theme
@@ -40,112 +40,239 @@ interface ChartDataPoint {
   label: string;
 }
 
+interface CategoryResult {
+  key: string;
+  categoryLabel: string;
+  labels: string[];
+  dataIncomes: number[];
+  average: number;
+  previousAverage: number;
+  sum: number;
+}
+
+interface ActivePointState {
+  resultKey: string;
+  point: ChartDataPoint;
+}
+
+const DEFAULT_MONTHS = 3;
+const TOOLTIP_TIMEOUT_MS = 3000;
+const LANDSCAPE_CHART_HEIGHT = 280;
+const PORTRAIT_CHART_HEIGHT = 300;
+const CHART_HORIZONTAL_MARGIN = 32;
+const Y_PADDING_RATIO = 0.15;
+const MILLION = 1000000;
+const THOUSAND = 1000;
+const SHADOW_COLOR = '#000';
+const TOOLTIP_TEXT_COLOR = '#FFFFFF';
+
+const EMPTY_RESULT: CategoryResult = {
+  key: '',
+  categoryLabel: '',
+  labels: [''],
+  dataIncomes: [0],
+  average: 0,
+  previousAverage: 0,
+  sum: 0
+};
+
+const formatYAxis = (val: number): string => {
+  if (Math.abs(val) >= MILLION) {
+    return `${(val / MILLION).toFixed(1).replace(/\.0$/, '')}M`;
+  }
+  if (Math.abs(val) >= THOUSAND) {
+    return `${(val / THOUSAND).toFixed(0)}K`;
+  }
+  return val.toFixed(0);
+};
+
 export default function GraphIncomesByCategory({ navigation }: GraphIncomesByCategoryProps) {
   const colors = useThemeColors();
   const { width: windowWidth, height: windowHeight } = useWindowDimensions();
-  const selectOnlyCategoryRef = useRef<any>(null);
-  const [dataIncomes, setDataIncomes] = useState<number[]>([0]);
-  const [labels, setLabels] = useState<string[]>(['']);
-  const [categoryLabel, setCategoryLabel] = useState<string>('');
-  const [average, setAverage] = useState<number>(0);
-  const [previousAverage, setPreviousAverage] = useState<number>(0);
-  const [sum, setSum] = useState<number>(0);
-  const [loading, setLoading] = useState(false);
-  const [activePoint, setActivePoint] = useState<ChartDataPoint | null>(null);
+
   const [dataCategory, setDataCategory] = useState<DropDownSelectFormat>();
-  const [numMonths, setNumMonths] = useState(3);
+  const [numMonths, setNumMonths] = useState<number>(DEFAULT_MONTHS);
+  const [result, setResult] = useState<CategoryResult | null>(null);
+  const [activePointState, setActivePointState] = useState<ActivePointState | null>(null);
+
+  // `loading` se deriva: hay carga mientras el resultado guardado no corresponda
+  // a la categoría y meses actuales (sin setState síncrono en el efecto).
+  const requestKey = dataCategory ? `${dataCategory.id}|${numMonths}` : null;
+  const loading = requestKey !== null && result?.key !== requestKey;
+
+  const { categoryLabel, labels, dataIncomes, average, previousAverage, sum } =
+    result ?? EMPTY_RESULT;
+
+  // El punto activo solo es válido para el resultado con el que se tocó
+  const activePoint = activePointState?.resultKey === result?.key ? activePointState?.point : null;
 
   // Responsive: ajustar según orientación
   const isLandscape = windowWidth > windowHeight;
-  const chartWidth = windowWidth - 32;
-  const chartHeight = isLandscape ? 280 : 300;
+  const chartWidth = windowWidth - CHART_HORIZONTAL_MARGIN;
+  const chartHeight = isLandscape ? LANDSCAPE_CHART_HEIGHT : PORTRAIT_CHART_HEIGHT;
 
   // Preparar datos para Victory
   const chartData: ChartDataPoint[] = labels.map((label, index) => ({
     x: index,
-    y: dataIncomes[index] || 0,
+    y: dataIncomes[index] ?? 0,
     label
   }));
 
   const hasValidData = chartData.length > 0 && chartData.some((d) => d.y > 0);
-  const safeChartData = hasValidData ? chartData : [{ x: 0, y: 0, label: 'Sin datos' }];
+  const safeChartData: ChartDataPoint[] = hasValidData
+    ? chartData
+    : [{ x: 0, y: 0, label: 'Sin datos' }];
 
   // Calcular dominio Y
   const yValues = safeChartData.map((d) => d.y);
   const minY = Math.min(...yValues, 0);
   const maxY = Math.max(...yValues, 1);
-  const yPadding = (maxY - minY) * 0.15;
+  const yPadding = (maxY - minY) * Y_PADDING_RATIO;
 
-  const formatYAxis = (val: number) => {
-    if (Math.abs(val) >= 1000000) {
-      return `${(val / 1000000).toFixed(1).replace(/\.0$/, '')}M`;
-    }
-    if (Math.abs(val) >= 1000) {
-      return `${(val / 1000).toFixed(0)}K`;
-    }
-    return val.toFixed(0);
-  };
+  const dynamicStyles = useMemo(
+    () =>
+      StyleSheet.create({
+        container: { backgroundColor: colors.BACKGROUND },
+        headerTitle: { color: colors.TEXT_PRIMARY },
+        headerSubtitle: { color: colors.TEXT_SECONDARY },
+        card: { backgroundColor: colors.CARD_BACKGROUND },
+        categoryName: { color: colors.SUCCESS },
+        statLabel: { color: colors.TEXT_SECONDARY },
+        statValue: { color: colors.TEXT_PRIMARY },
+        tooltip: { backgroundColor: colors.SUCCESS },
+        legendDot: { backgroundColor: colors.SUCCESS },
+        legendText: { color: colors.TEXT_PRIMARY },
+        hint: { color: colors.TEXT_SECONDARY }
+      }),
+    [colors]
+  );
 
+  const chartStyles = useMemo(
+    () => ({
+      xAxis: {
+        axis: { stroke: colors.BORDER, strokeWidth: 1.5 },
+        tickLabels: {
+          fill: colors.TEXT_SECONDARY,
+          fontSize: 10,
+          fontWeight: '600' as const,
+          angle: -45,
+          textAnchor: 'end' as const,
+          padding: 3
+        },
+        grid: { stroke: 'transparent' }
+      },
+      yAxis: {
+        axis: { stroke: colors.BORDER, strokeWidth: 1.5 },
+        tickLabels: {
+          fill: colors.TEXT_SECONDARY,
+          fontSize: 10,
+          fontWeight: '600' as const,
+          padding: 8
+        },
+        grid: {
+          stroke: colors.BORDER,
+          strokeWidth: 0.8,
+          strokeDasharray: '3,5',
+          opacity: 0.25
+        }
+      },
+      area: {
+        data: {
+          fill: colors.SUCCESS,
+          fillOpacity: 0.15,
+          stroke: 'transparent'
+        }
+      },
+      line: {
+        data: {
+          stroke: colors.SUCCESS,
+          strokeWidth: 3,
+          strokeLinecap: 'round' as const,
+          strokeLinejoin: 'round' as const
+        }
+      }
+    }),
+    [colors]
+  );
+
+  // Cargar datos al cambiar categoría o número de meses
   useEffect(() => {
-    if (dataCategory) {
-      fetchCategory();
+    if (!dataCategory) {
+      return undefined;
     }
+
+    let cancelled = false;
+    const key = `${dataCategory.id}|${numMonths}`;
+
+    const loadCategory = async (): Promise<void> => {
+      try {
+        const { data } = await findLastIncomesMonthsFromOnlyCategory(dataCategory.id, {
+          numMonths
+        });
+
+        if (!cancelled) {
+          setResult({
+            key,
+            categoryLabel: dataCategory.label,
+            labels: data.labels,
+            dataIncomes: data.graph.length > 0 ? data.graph : [0],
+            average: data.average,
+            previousAverage: data.previosAverage,
+            sum: data.sum
+          });
+        }
+      } catch (error) {
+        if (!cancelled) {
+          setResult({ ...EMPTY_RESULT, key });
+          showError(error);
+        }
+      }
+    };
+
+    void loadCategory();
+
+    return () => {
+      cancelled = true;
+    };
   }, [dataCategory, numMonths]);
 
-  const fetchIncomesOnlyCategory = async (foundCategory: DropDownSelectFormat) => {
+  // Ocultar el tooltip después de unos segundos
+  useEffect(() => {
+    if (activePointState === null) {
+      return undefined;
+    }
+
+    const timeout = setTimeout(() => {
+      setActivePointState(null);
+    }, TOOLTIP_TIMEOUT_MS);
+
+    return () => clearTimeout(timeout);
+  }, [activePointState]);
+
+  const handleCategoryChange = (foundCategory: DropDownSelectFormat): void => {
     setDataCategory(foundCategory);
   };
 
-  const fetchCategory = async () => {
-    try {
-      if (!dataCategory) return;
-
-      setActivePoint(null);
-      setLoading(true);
-      const params = { numMonths };
-      const { data } = await findLastIncomesMonthsFromOnlyCategory(dataCategory.id, params);
-      setLoading(false);
-
-      setLabels(data.labels);
-      setCategoryLabel(dataCategory.label);
-      setAverage(data.average);
-      setPreviousAverage(data.previosAverage);
-      setSum(data.sum);
-
-      if (data.graph.length > 0) {
-        setDataIncomes(data.graph);
-      } else {
-        setDataIncomes([0]);
-      }
-    } catch (e) {
-      setLoading(false);
-      showError(e);
-    }
-  };
-
-  const updateNum = (val: number) => {
+  const updateNum = (val: number): void => {
     setNumMonths(val);
   };
 
-  useEffect(() => {
-    if (activePoint !== null) {
-      const timeout = setTimeout(() => {
-        setActivePoint(null);
-      }, 3000);
-
-      return () => clearTimeout(timeout);
+  const handlePointPress = (datumX: number): void => {
+    const point = safeChartData.find((d) => d.x === datumX);
+    if (point && result) {
+      setActivePointState({ resultKey: result.key, point });
     }
-  }, [activePoint]);
+  };
 
   return (
-    <View style={[styles.container, { backgroundColor: colors.BACKGROUND }]}>
+    <View style={[styles.container, dynamicStyles.container]}>
       {/* Header */}
       <View style={styles.header}>
-        <View style={{ flex: 1 }}>
-          <Text style={[styles.headerTitle, { color: colors.TEXT_PRIMARY }]}>
+        <View style={styles.headerText}>
+          <Text style={[styles.headerTitle, dynamicStyles.headerTitle]}>
             Evolución por categorías
           </Text>
-          <Text style={[styles.headerSubtitle, { color: colors.TEXT_SECONDARY }]}>
+          <Text style={[styles.headerSubtitle, dynamicStyles.headerSubtitle]}>
             Ingresos en los últimos {numMonths} meses
           </Text>
         </View>
@@ -153,28 +280,24 @@ export default function GraphIncomesByCategory({ navigation }: GraphIncomesByCat
       </View>
 
       {/* Selector */}
-      <SelectOnlyCategory
-        searchType={1}
-        handleCategoryChange={fetchIncomesOnlyCategory}
-        ref={selectOnlyCategoryRef}
-      />
+      <SelectOnlyCategory searchType={1} handleCategoryChange={handleCategoryChange} />
 
       {loading ? (
         <MyLoading />
       ) : (
         <View>
           {/* Stats Cards */}
-          {categoryLabel && (
-            <View style={[styles.statsContainer, { backgroundColor: colors.CARD_BACKGROUND }]}>
-              <Text style={[styles.categoryName, { color: colors.SUCCESS }]} numberOfLines={1}>
+          {categoryLabel !== '' && (
+            <View style={[styles.statsContainer, dynamicStyles.card]}>
+              <Text style={[styles.categoryName, dynamicStyles.categoryName]} numberOfLines={1}>
                 {categoryLabel}
               </Text>
 
               <View style={styles.statsGrid}>
                 <View style={styles.statItem}>
-                  <Text style={[styles.statLabel, { color: colors.TEXT_SECONDARY }]}>Promedio</Text>
+                  <Text style={[styles.statLabel, dynamicStyles.statLabel]}>Promedio</Text>
                   <Text
-                    style={[styles.statValue, { color: colors.TEXT_PRIMARY }]}
+                    style={[styles.statValue, dynamicStyles.statValue]}
                     numberOfLines={1}
                     adjustsFontSizeToFit
                   >
@@ -183,9 +306,9 @@ export default function GraphIncomesByCategory({ navigation }: GraphIncomesByCat
                 </View>
 
                 <View style={styles.statItem}>
-                  <Text style={[styles.statLabel, { color: colors.TEXT_SECONDARY }]}>Anterior</Text>
+                  <Text style={[styles.statLabel, dynamicStyles.statLabel]}>Anterior</Text>
                   <Text
-                    style={[styles.statValue, { color: colors.TEXT_PRIMARY }]}
+                    style={[styles.statValue, dynamicStyles.statValue]}
                     numberOfLines={1}
                     adjustsFontSizeToFit
                   >
@@ -194,9 +317,9 @@ export default function GraphIncomesByCategory({ navigation }: GraphIncomesByCat
                 </View>
 
                 <View style={styles.statItem}>
-                  <Text style={[styles.statLabel, { color: colors.TEXT_SECONDARY }]}>Total</Text>
+                  <Text style={[styles.statLabel, dynamicStyles.statLabel]}>Total</Text>
                   <Text
-                    style={[styles.statValue, { color: colors.TEXT_PRIMARY }]}
+                    style={[styles.statValue, dynamicStyles.statValue]}
                     numberOfLines={1}
                     adjustsFontSizeToFit
                   >
@@ -208,10 +331,10 @@ export default function GraphIncomesByCategory({ navigation }: GraphIncomesByCat
           )}
 
           {/* Gráfico con tooltip integrado */}
-          <View style={[styles.chartContainer, { backgroundColor: colors.CARD_BACKGROUND }]}>
+          <View style={[styles.chartContainer, dynamicStyles.card]}>
             {/* Tooltip dentro del contenedor del gráfico */}
             {activePoint && (
-              <View style={[styles.tooltip, { backgroundColor: colors.SUCCESS }]}>
+              <View style={[styles.tooltip, dynamicStyles.tooltip]}>
                 <Text style={styles.tooltipMonth}>{activePoint.label}</Text>
                 <Text style={styles.tooltipValue}>{NumberFormat(activePoint.y)}</Text>
               </View>
@@ -226,69 +349,27 @@ export default function GraphIncomesByCategory({ navigation }: GraphIncomesByCat
             >
               <VictoryAxis
                 tickValues={safeChartData.map((d) => d.x)}
-                tickFormat={(val: any) => {
+                tickFormat={(val: number) => {
                   const item = safeChartData[Math.round(val)];
-                  return item?.label.substring(0, 3) || '';
+                  return item ? item.label.substring(0, 3) : '';
                 }}
-                style={{
-                  axis: { stroke: colors.BORDER, strokeWidth: 1.5 },
-                  tickLabels: {
-                    fill: colors.TEXT_SECONDARY,
-                    fontSize: 10,
-                    fontWeight: '600',
-                    angle: -45,
-                    textAnchor: 'end',
-                    padding: 3
-                  },
-                  grid: { stroke: 'transparent' }
-                }}
+                style={chartStyles.xAxis}
               />
 
-              <VictoryAxis
-                dependentAxis
-                tickFormat={formatYAxis}
-                style={{
-                  axis: { stroke: colors.BORDER, strokeWidth: 1.5 },
-                  tickLabels: {
-                    fill: colors.TEXT_SECONDARY,
-                    fontSize: 10,
-                    fontWeight: '600',
-                    padding: 8
-                  },
-                  grid: {
-                    stroke: colors.BORDER,
-                    strokeWidth: 0.8,
-                    strokeDasharray: '3,5',
-                    opacity: 0.25
-                  }
-                }}
-              />
+              <VictoryAxis dependentAxis tickFormat={formatYAxis} style={chartStyles.yAxis} />
 
               {/* Área de relleno */}
               <VictoryArea
                 data={safeChartData}
                 interpolation="monotoneX"
-                style={{
-                  data: {
-                    fill: colors.SUCCESS,
-                    fillOpacity: 0.15,
-                    stroke: 'transparent'
-                  }
-                }}
+                style={chartStyles.area}
               />
 
               {/* Línea */}
               <VictoryLine
                 data={safeChartData}
                 interpolation="monotoneX"
-                style={{
-                  data: {
-                    stroke: colors.SUCCESS,
-                    strokeWidth: 3,
-                    strokeLinecap: 'round',
-                    strokeLinejoin: 'round'
-                  }
-                }}
+                style={chartStyles.line}
               />
 
               {/* Puntos sin labels */}
@@ -307,9 +388,8 @@ export default function GraphIncomesByCategory({ navigation }: GraphIncomesByCat
                   {
                     target: 'data',
                     eventHandlers: {
-                      onPressIn: (_evt: any, props: any) => {
-                        const point = safeChartData.find((d) => d.x === props.datum.x);
-                        if (point) setActivePoint(point);
+                      onPressIn: (_evt: unknown, props: { datum: ChartDataPoint }) => {
+                        handlePointPress(props.datum.x);
                         return [];
                       }
                     }
@@ -320,14 +400,12 @@ export default function GraphIncomesByCategory({ navigation }: GraphIncomesByCat
 
             {/* Leyenda compacta */}
             <View style={styles.legendContainer}>
-              <View style={[styles.legendDot, { backgroundColor: colors.SUCCESS }]} />
-              <Text style={[styles.legendText, { color: colors.TEXT_PRIMARY }]}>Ingresos</Text>
+              <View style={[styles.legendDot, dynamicStyles.legendDot]} />
+              <Text style={[styles.legendText, dynamicStyles.legendText]}>Ingresos</Text>
             </View>
           </View>
 
-          <Text style={[styles.hint, { color: colors.TEXT_SECONDARY }]}>
-            Toca los puntos para ver valores
-          </Text>
+          <Text style={[styles.hint, dynamicStyles.hint]}>Toca los puntos para ver valores</Text>
         </View>
       )}
     </View>
@@ -345,6 +423,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: 12
   },
+  headerText: {
+    flex: 1
+  },
   headerTitle: {
     fontSize: 18,
     fontWeight: '700'
@@ -357,7 +438,7 @@ const styles = StyleSheet.create({
     padding: 14,
     borderRadius: 12,
     marginVertical: 12,
-    shadowColor: '#000',
+    shadowColor: SHADOW_COLOR,
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.05,
     shadowRadius: 4,
@@ -390,7 +471,7 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     paddingHorizontal: 8,
     borderRadius: 16,
-    shadowColor: '#000',
+    shadowColor: SHADOW_COLOR,
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.05,
     shadowRadius: 4,
@@ -405,20 +486,20 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
     borderRadius: 16,
     zIndex: 1000,
-    shadowColor: '#000',
+    shadowColor: SHADOW_COLOR,
     shadowOffset: { width: 0, height: 3 },
     shadowOpacity: 0.3,
     shadowRadius: 6,
     elevation: 8
   },
   tooltipValue: {
-    color: '#FFFFFF',
+    color: TOOLTIP_TEXT_COLOR,
     fontSize: 13,
     fontWeight: '800',
     textAlign: 'center'
   },
   tooltipMonth: {
-    color: '#FFFFFF',
+    color: TOOLTIP_TEXT_COLOR,
     fontSize: 10,
     fontWeight: '700',
     textAlign: 'center',

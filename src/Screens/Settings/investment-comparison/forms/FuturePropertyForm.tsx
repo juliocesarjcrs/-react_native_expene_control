@@ -1,8 +1,9 @@
 // ~/components/investment-comparison/forms/FuturePropertyForm.tsx
 
-import React from 'react';
+import React, { useState } from 'react';
 import { View, Text, ScrollView, StyleSheet } from 'react-native';
-import { useForm } from 'react-hook-form';
+import { useForm, useWatch } from 'react-hook-form';
+import * as Crypto from 'expo-crypto';
 
 // Components
 import MyButton from '~/components/MyButton';
@@ -22,72 +23,79 @@ import {
 import { ShowToast } from '~/utils/toastUtils';
 import { NumberFormat } from '~/utils/Helpers';
 
-// Styles
+// Theme & Styles
+import { useThemeColors } from '~/customHooks/useThemeColors';
 import { MEDIUM, SMALL } from '~/styles/fonts';
 
 interface Props {
-  colors: any;
-  navigation: any;
+  navigation: { goBack: () => void };
   existingData?: FuturePropertyScenario;
 }
 
-export const FuturePropertyForm: React.FC<Props> = ({ colors, navigation, existingData }) => {
+const buildDefaults = (
+  existing: FuturePropertyScenario | undefined,
+  id: string
+): FuturePropertyScenario => ({
+  id: existing?.id ?? id,
+  name: existing?.name ?? 'Vivienda VIS a Futuro',
+  propertyPrice: existing?.propertyPrice ?? DEFAULTS.VIS_MAX_VALUE,
+  downPaymentPercent: existing?.downPaymentPercent ?? DEFAULTS.VIS_DOWN_PAYMENT,
+  savingMonths: existing?.savingMonths ?? 24,
+  monthlyContribution: existing?.monthlyContribution ?? 3_030_000,
+  savingsRate: existing?.savingsRate ?? DEFAULTS.NUBANK_CAJITAS_RATE,
+  notaryFees: existing?.notaryFees ?? DEFAULTS.VIS_NOTARY_FEES,
+  registrationFees: existing?.registrationFees ?? DEFAULTS.VIS_REGISTRATION,
+  beneficiaryTax: existing?.beneficiaryTax ?? DEFAULTS.VIS_BENEFICIARY_TAX,
+  ivaPercent: existing?.ivaPercent ?? DEFAULTS.VIS_IVA,
+  refurbishmentCost: existing?.refurbishmentCost ?? DEFAULTS.VIS_REFURBISHMENT,
+  refurbishmentMonths: existing?.refurbishmentMonths ?? DEFAULTS.VIS_REFURBISHMENT_MONTHS,
+  monthlyRent: existing?.monthlyRent ?? DEFAULTS.DEFAULT_RENT,
+  vacancyMonthsPerYear: existing?.vacancyMonthsPerYear ?? DEFAULTS.VACANCY_MONTHS,
+  monthlyAdministration: existing?.monthlyAdministration ?? DEFAULTS.DEFAULT_ADMINISTRATION,
+  administrationAnnualIncrease:
+    existing?.administrationAnnualIncrease ?? DEFAULTS.ADMINISTRATION_INCREASE,
+  maintenancePercent: existing?.maintenancePercent ?? DEFAULTS.MAINTENANCE_PERCENT,
+  propertyTaxPercent: existing?.propertyTaxPercent ?? DEFAULTS.PROPERTY_TAX,
+  rentalIncomeTax: existing?.rentalIncomeTax ?? 0,
+  propertyAppreciation: existing?.propertyAppreciation ?? DEFAULTS.PROPERTY_APPRECIATION,
+  horizonMonths: existing?.horizonMonths ?? 60
+});
+
+export const FuturePropertyForm: React.FC<Props> = ({ navigation, existingData }) => {
+  const colors = useThemeColors();
   const { saveScenario } = useInvestmentComparison();
 
-  const { handleSubmit, control, watch } = useForm<FuturePropertyScenario>({
+  // El id por defecto se genera una sola vez (no en cada render)
+  const [defaultId] = useState(() => Crypto.randomUUID());
+
+  const { handleSubmit, control } = useForm<FuturePropertyScenario>({
     mode: 'onTouched',
-    defaultValues: {
-      id: existingData?.id || Date.now().toString(),
-      name: existingData?.name || 'Vivienda VIS a Futuro',
-      propertyPrice: existingData?.propertyPrice || DEFAULTS.VIS_MAX_VALUE,
-      downPaymentPercent: existingData?.downPaymentPercent || DEFAULTS.VIS_DOWN_PAYMENT,
-      savingMonths: existingData?.savingMonths || 24,
-      monthlyContribution: existingData?.monthlyContribution || 3_030_000,
-      savingsRate: existingData?.savingsRate || DEFAULTS.NUBANK_CAJITAS_RATE,
-      notaryFees: existingData?.notaryFees || DEFAULTS.VIS_NOTARY_FEES,
-      registrationFees: existingData?.registrationFees || DEFAULTS.VIS_REGISTRATION,
-      beneficiaryTax: existingData?.beneficiaryTax || DEFAULTS.VIS_BENEFICIARY_TAX,
-      ivaPercent: existingData?.ivaPercent || DEFAULTS.VIS_IVA,
-      refurbishmentCost: existingData?.refurbishmentCost || DEFAULTS.VIS_REFURBISHMENT,
-      refurbishmentMonths: existingData?.refurbishmentMonths || DEFAULTS.VIS_REFURBISHMENT_MONTHS,
-      monthlyRent: existingData?.monthlyRent || DEFAULTS.DEFAULT_RENT,
-      vacancyMonthsPerYear: existingData?.vacancyMonthsPerYear || DEFAULTS.VACANCY_MONTHS,
-      monthlyAdministration: existingData?.monthlyAdministration || DEFAULTS.DEFAULT_ADMINISTRATION,
-      administrationAnnualIncrease:
-        existingData?.administrationAnnualIncrease || DEFAULTS.ADMINISTRATION_INCREASE,
-      maintenancePercent: existingData?.maintenancePercent || DEFAULTS.MAINTENANCE_PERCENT,
-      propertyTaxPercent: existingData?.propertyTaxPercent || DEFAULTS.PROPERTY_TAX,
-      rentalIncomeTax: existingData?.rentalIncomeTax || 0,
-      propertyAppreciation: existingData?.propertyAppreciation || DEFAULTS.PROPERTY_APPRECIATION,
-      horizonMonths: existingData?.horizonMonths || 60
-    }
+    defaultValues: buildDefaults(existingData, defaultId)
   });
 
-  // Watch values for helper text
-  const propertyPrice = watch('propertyPrice');
-  const savingMonths = watch('savingMonths');
-  const monthlyContribution = watch('monthlyContribution');
-  const refurbishmentCost = watch('refurbishmentCost');
-  const monthlyRent = watch('monthlyRent');
-  const monthlyAdministration = watch('monthlyAdministration');
-  const horizonMonths = watch('horizonMonths');
+  // Valores observados para los textos de ayuda
+  const values = useWatch({ control });
 
   const onSubmit = (data: FuturePropertyScenario) => {
-    saveScenario(ScenarioType.FUTURE_PROPERTY, data);
+    saveScenario(ScenarioType.FUTURE_PROPERTY, { ...data, id: data.id || defaultId });
     ShowToast('Escenario de vivienda configurado');
     navigation.goBack();
   };
 
+  const sectionStyle = [
+    styles.section,
+    {
+      backgroundColor: colors.CARD_BACKGROUND,
+      borderColor: colors.BORDER,
+      shadowColor: colors.BLACK
+    }
+  ];
+
   return (
-    <ScrollView style={{ flex: 1 }} contentContainerStyle={{ paddingBottom: 20 }}>
-      <View style={{ paddingHorizontal: 16, paddingTop: 10 }}>
+    <ScrollView style={styles.scroll} contentContainerStyle={styles.scrollContent}>
+      <View style={styles.content}>
         {/* FASE 1: AHORRO */}
-        <View
-          style={[
-            styles.section,
-            { backgroundColor: colors.CARD_BACKGROUND, borderColor: colors.BORDER }
-          ]}
-        >
+        <View style={sectionStyle}>
           <Text style={[styles.sectionTitle, { color: colors.TEXT_PRIMARY }]}>
             💵 Fase 1: Ahorro de Cuota Inicial
           </Text>
@@ -116,7 +124,7 @@ export const FuturePropertyForm: React.FC<Props> = ({ colors, navigation, existi
               }
             }}
             leftIcon="home"
-            helperText={NumberFormat(propertyPrice || 0)}
+            helperText={NumberFormat(values.propertyPrice ?? 0)}
           />
 
           <MyInput
@@ -143,7 +151,7 @@ export const FuturePropertyForm: React.FC<Props> = ({ colors, navigation, existi
               min: { value: 1, message: 'Mínimo 1 mes' }
             }}
             leftIcon="calendar-clock"
-            helperText={`${Math.floor((savingMonths || 0) / 12)} años`}
+            helperText={`${Math.floor((values.savingMonths ?? 0) / 12)} años`}
           />
 
           <MyInput
@@ -157,7 +165,7 @@ export const FuturePropertyForm: React.FC<Props> = ({ colors, navigation, existi
               min: { value: 100000, message: 'Mínimo $100.000' }
             }}
             leftIcon="cash-multiple"
-            helperText={NumberFormat(monthlyContribution || 0)}
+            helperText={NumberFormat(values.monthlyContribution ?? 0)}
           />
 
           <MyInput
@@ -176,12 +184,7 @@ export const FuturePropertyForm: React.FC<Props> = ({ colors, navigation, existi
         </View>
 
         {/* FASE 2: COMPRA */}
-        <View
-          style={[
-            styles.section,
-            { backgroundColor: colors.CARD_BACKGROUND, borderColor: colors.BORDER }
-          ]}
-        >
+        <View style={sectionStyle}>
           <Text style={[styles.sectionTitle, { color: colors.TEXT_PRIMARY }]}>
             🏠 Fase 2: Compra y Adecuación
           </Text>
@@ -193,7 +196,7 @@ export const FuturePropertyForm: React.FC<Props> = ({ colors, navigation, existi
             label="Costo de adecuación"
             placeholder="0"
             leftIcon="tools"
-            helperText={NumberFormat(refurbishmentCost || 0)}
+            helperText={NumberFormat(values.refurbishmentCost ?? 0)}
           />
 
           <MyInput
@@ -205,18 +208,15 @@ export const FuturePropertyForm: React.FC<Props> = ({ colors, navigation, existi
             leftIcon="clock-outline"
           />
 
-          <Text style={[styles.helperText, { color: colors.INFO }]}>
+          <Text
+            style={[styles.helperText, { color: colors.INFO, backgroundColor: colors.INFO + '15' }]}
+          >
             💡 Gastos de escrituración VIS: ≈ 2.21% del valor (incluido automáticamente)
           </Text>
         </View>
 
         {/* FASE 3: RENTA */}
-        <View
-          style={[
-            styles.section,
-            { backgroundColor: colors.CARD_BACKGROUND, borderColor: colors.BORDER }
-          ]}
-        >
+        <View style={sectionStyle}>
           <Text style={[styles.sectionTitle, { color: colors.TEXT_PRIMARY }]}>
             💰 Fase 3: Generación de Renta
           </Text>
@@ -232,7 +232,7 @@ export const FuturePropertyForm: React.FC<Props> = ({ colors, navigation, existi
               min: { value: 100000, message: 'Mínimo $100.000' }
             }}
             leftIcon="cash"
-            helperText={NumberFormat(monthlyRent || 0)}
+            helperText={NumberFormat(values.monthlyRent ?? 0)}
           />
 
           <MyInput
@@ -242,7 +242,7 @@ export const FuturePropertyForm: React.FC<Props> = ({ colors, navigation, existi
             label="Administración mensual"
             placeholder="0"
             leftIcon="office-building"
-            helperText={NumberFormat(monthlyAdministration || 0)}
+            helperText={NumberFormat(values.monthlyAdministration ?? 0)}
           />
 
           <MyInput
@@ -269,11 +269,11 @@ export const FuturePropertyForm: React.FC<Props> = ({ colors, navigation, existi
               min: { value: 1, message: 'Mínimo 1 mes' }
             }}
             leftIcon="calendar-range"
-            helperText={`${Math.floor((horizonMonths || 0) / 12)} años`}
+            helperText={`${Math.floor((values.horizonMonths ?? 0) / 12)} años`}
           />
         </View>
 
-        <View style={{ marginTop: 16, gap: 8 }}>
+        <View style={styles.actions}>
           <MyButton
             title="Guardar Configuración"
             variant="primary"
@@ -287,12 +287,25 @@ export const FuturePropertyForm: React.FC<Props> = ({ colors, navigation, existi
 };
 
 const styles = StyleSheet.create({
+  scroll: {
+    flex: 1
+  },
+  scrollContent: {
+    paddingBottom: 20
+  },
+  content: {
+    paddingHorizontal: 16,
+    paddingTop: 10
+  },
+  actions: {
+    marginTop: 16,
+    gap: 8
+  },
   section: {
     marginBottom: 16,
     padding: 16,
     borderRadius: 12,
     borderWidth: 1,
-    shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 4,
@@ -308,7 +321,6 @@ const styles = StyleSheet.create({
     lineHeight: 16,
     marginTop: 4,
     padding: 8,
-    borderRadius: 8,
-    backgroundColor: 'rgba(0, 123, 255, 0.1)'
+    borderRadius: 8
   }
 });

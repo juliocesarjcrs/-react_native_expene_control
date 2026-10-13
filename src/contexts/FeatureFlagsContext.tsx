@@ -1,4 +1,12 @@
-import React, { createContext, useState, useEffect, useContext, ReactNode } from 'react';
+import React, {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useState,
+  ReactNode
+} from 'react';
 import { FeatureFlag } from '~/shared/types/models/feature-flags.type';
 import {
   getMyFeatures,
@@ -26,7 +34,7 @@ interface FeatureFlagsProviderProps {
 // CONTEXT
 // ============================================
 
-const FeatureFlagsContext = createContext<FeatureFlagsContextType | undefined>(undefined);
+export const FeatureFlagsContext = createContext<FeatureFlagsContextType | undefined>(undefined);
 
 // ============================================
 // PROVIDER
@@ -36,46 +44,66 @@ export const FeatureFlagsProvider: React.FC<FeatureFlagsProviderProps> = ({ chil
   const [features, setFeatures] = useState<FeatureFlag[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
 
+  // Carga inicial (loading ya inicia en true)
   useEffect(() => {
-    loadFeatures();
+    let isMounted = true;
+
+    const loadInitialFeatures = async () => {
+      try {
+        const data = await getMyFeatures();
+        if (isMounted) setFeatures(data);
+      } catch (error) {
+        if (isMounted) showError(error);
+      } finally {
+        if (isMounted) setLoading(false);
+      }
+    };
+
+    loadInitialFeatures();
+
+    return () => {
+      isMounted = false;
+    };
   }, []);
 
   /**
-   * Cargar features accesibles para el usuario actual
-   * Obtiene SOLO las features que el usuario puede usar según sus permisos
+   * Refrescar features desde el servidor
+   * Útil después de cambios de permisos
    */
-  const loadFeatures = async () => {
+  const refreshFeatures = useCallback(async () => {
     try {
       setLoading(true);
-      const data = await getMyFeatures();
-      setFeatures(data);
+      setFeatures(await getMyFeatures());
     } catch (error) {
       showError(error);
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
   /**
    * Verificación local rápida (usa features cargadas en memoria)
-   * ✅ Usa esto en la mayoría de casos (rápido, sin red)
+   * Usa esto en la mayoría de casos (rápido, sin red)
    *
    * @param key - Feature key (ej: 'chatbot', 'invoice_scanner')
    * @returns true si la feature está habilitada y el usuario tiene acceso
    */
-  const isFeatureEnabled = (key: string): boolean => {
-    const feature = features.find((f) => f.featureKey === key);
-    return feature ? feature.isEnabled === 1 : false;
-  };
+  const isFeatureEnabled = useCallback(
+    (key: string): boolean => {
+      const feature = features.find((f) => f.featureKey === key);
+      return feature ? feature.isEnabled === 1 : false;
+    },
+    [features]
+  );
 
   /**
    * Verificación en servidor (hace request al backend)
-   * ⚠️ Usa esto solo cuando necesites verificación en tiempo real
+   * Usa esto solo cuando necesites verificación en tiempo real
    *
    * @param key - Feature key (ej: 'chatbot', 'invoice_scanner')
    * @returns Promise<boolean> - true si el usuario puede acceder
    */
-  const canAccessFeature = async (key: string): Promise<boolean> => {
+  const canAccessFeature = useCallback(async (key: string): Promise<boolean> => {
     try {
       const result = await canAccessFeatureAPI(key);
       return result.canAccess;
@@ -83,29 +111,14 @@ export const FeatureFlagsProvider: React.FC<FeatureFlagsProviderProps> = ({ chil
       showError(error);
       return false;
     }
-  };
+  }, []);
 
-  /**
-   * Refrescar features desde el servidor
-   * Útil después de cambios de permisos
-   */
-  const refreshFeatures = async () => {
-    await loadFeatures();
-  };
-
-  return (
-    <FeatureFlagsContext.Provider
-      value={{
-        features,
-        loading,
-        isFeatureEnabled,
-        canAccessFeature,
-        refreshFeatures
-      }}
-    >
-      {children}
-    </FeatureFlagsContext.Provider>
+  const value = useMemo<FeatureFlagsContextType>(
+    () => ({ features, loading, isFeatureEnabled, canAccessFeature, refreshFeatures }),
+    [features, loading, isFeatureEnabled, canAccessFeature, refreshFeatures]
   );
+
+  return <FeatureFlagsContext.Provider value={value}>{children}</FeatureFlagsContext.Provider>;
 };
 
 // ============================================
@@ -128,7 +141,7 @@ export const useFeatureFlags = (): FeatureFlagsContextType => {
 
 /**
  * Hook simplificado para verificar UNA feature específica
- * ✅ Usa este hook en la mayoría de casos
+ * Usa este hook en la mayoría de casos
  *
  * @param featureKey - Key de la feature (ej: 'chatbot', 'invoice_scanner')
  * @returns Objeto con { isEnabled, loading, feature }
@@ -148,9 +161,3 @@ export const useFeatureFlag = (featureKey: string) => {
     feature: features.find((f) => f.featureKey === featureKey)
   };
 };
-
-// ============================================
-// EXPORT DEL CONTEXT (para casos avanzados)
-// ============================================
-
-export { FeatureFlagsContext };

@@ -11,50 +11,38 @@ interface RowInputProps {
   updateTotal: (product: Product) => void;
 }
 
+// Precio con descuento aplicado (0 si no hay precio válido)
+const calculateRealValue = (price: string, discount: string): number => {
+  const priceNum = Number.parseFloat(price) || 0;
+  const discountNum = Number.parseFloat(discount) || 0;
+
+  if (priceNum <= 0) return 0;
+  if (discountNum > 0) return priceNum - (priceNum * discountNum) / 100;
+  return priceNum;
+};
+
 export default function RowInput({ prod, sendRemoveRow, updateTotal }: RowInputProps) {
   const colors = useThemeColors();
   const [price, setPrice] = useState<string>(prod.price);
   const [discount, setDiscount] = useState<string>(prod.discount);
-  const [realVal, setRealVal] = useState<number>(prod.realVal);
+  const [prevParentDiscount, setPrevParentDiscount] = useState<string>(prod.discount);
 
-  // Actualizar discount cuando cambie desde el padre
-  useEffect(() => {
+  // Si el padre cambia el descuento, se refleja aquí (durante el render, sin efecto)
+  if (prod.discount !== prevParentDiscount) {
+    setPrevParentDiscount(prod.discount);
     setDiscount(prod.discount);
-  }, [prod.discount]);
+  }
 
+  const realVal = calculateRealValue(price, discount);
+
+  // Avisa al padre solo cuando lo que tiene difiere de lo que se muestra aquí
   useEffect(() => {
-    calculateRealValue();
-  }, [price, discount]);
-
-  const removeRow = (): void => {
-    sendRemoveRow(prod.id);
-  };
-
-  const handlePriceChange = (val: string): void => {
-    setPrice(val);
-  };
-
-  const handleDiscountChange = (val: string): void => {
-    setDiscount(val);
-  };
-
-  const calculateRealValue = (): void => {
-    const priceNum = parseFloat(price) || 0;
-    const discountNum = parseFloat(discount) || 0;
-
-    if (discountNum > 0 && priceNum > 0) {
-      const productDiscount = (priceNum * discountNum) / 100;
-      const result = priceNum - productDiscount;
-      setRealVal(result);
-      updateTotal({ ...prod, price, realVal: result, discount });
-    } else if (priceNum > 0) {
-      setRealVal(priceNum);
-      updateTotal({ ...prod, price, realVal: priceNum, discount });
-    } else {
-      setRealVal(0);
-      updateTotal({ ...prod, price, realVal: 0, discount });
+    if (prod.price !== price || prod.discount !== discount || prod.realVal !== realVal) {
+      updateTotal({ ...prod, price, discount, realVal });
     }
-  };
+  }, [prod, price, discount, realVal, updateTotal]);
+
+  const inputTextStyle = { color: colors.TEXT_PRIMARY };
 
   return (
     <View style={[styles.container, { backgroundColor: colors.CARD_BACKGROUND }]}>
@@ -63,9 +51,9 @@ export default function RowInput({ prod, sendRemoveRow, updateTotal }: RowInputP
           <Input
             value={price}
             placeholder="Ej: 20000"
-            onChangeText={handlePriceChange}
+            onChangeText={setPrice}
             keyboardType="numeric"
-            inputStyle={{ color: colors.TEXT_PRIMARY }}
+            inputStyle={inputTextStyle}
             containerStyle={styles.input}
           />
         </View>
@@ -74,9 +62,9 @@ export default function RowInput({ prod, sendRemoveRow, updateTotal }: RowInputP
           <Input
             value={discount}
             placeholder="Ej: 5"
-            onChangeText={handleDiscountChange}
+            onChangeText={setDiscount}
             keyboardType="numeric"
-            inputStyle={{ color: colors.TEXT_PRIMARY }}
+            inputStyle={inputTextStyle}
             containerStyle={styles.input}
           />
         </View>
@@ -93,7 +81,7 @@ export default function RowInput({ prod, sendRemoveRow, updateTotal }: RowInputP
             name="trash-can-outline"
             size={25}
             color={colors.ERROR}
-            onPress={removeRow}
+            onPress={() => sendRemoveRow(prod.id)}
           />
         </View>
       </View>

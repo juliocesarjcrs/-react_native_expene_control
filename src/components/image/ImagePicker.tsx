@@ -74,7 +74,6 @@ const ImagePickerComponent: React.FC<ImagePickerComponentProps> = ({
       );
 
       if (manipResult.base64) {
-        const compressedSize = (manipResult.base64.length * 3) / 4;
         onImageSelected(manipResult.base64, manipResult.uri);
       } else {
         log.error('Compression returned no base64', { uri });

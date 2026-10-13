@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import {
   Modal,
   View,
@@ -23,52 +23,64 @@ interface ModelEditorProps {
   onClose: (reload?: boolean) => void;
 }
 
-export const ModelEditor: React.FC<ModelEditorProps> = ({ visible, model, onClose }) => {
+type Provider = 'openrouter' | 'openai' | 'custom';
+
+// Los campos numéricos se guardan como texto mientras se edita
+type FormState = {
+  provider_type: Provider;
+  model_name: string;
+  api_endpoint: string;
+  api_key_ref: string;
+  priority: string;
+  is_active: boolean;
+  max_tokens: string;
+  temperature: string;
+  supports_tools: boolean;
+};
+
+const PROVIDERS: Provider[] = ['openrouter', 'openai', 'custom'];
+
+const DEFAULT_PRIORITY = 1;
+const DEFAULT_MAX_TOKENS = 2000;
+const DEFAULT_TEMPERATURE = 0.7;
+const MAX_TEMPERATURE = 2;
+
+const buildInitialForm = (model: AIModel | null): FormState => ({
+  provider_type: model?.provider_type ?? 'openrouter',
+  model_name: model?.model_name ?? '',
+  api_endpoint: model?.api_endpoint ?? '',
+  api_key_ref: model?.api_key_ref ?? '',
+  priority: String(model?.priority ?? DEFAULT_PRIORITY),
+  is_active: model?.is_active ?? true,
+  max_tokens: String(model?.max_tokens ?? DEFAULT_MAX_TOKENS),
+  temperature: String(model?.temperature ?? DEFAULT_TEMPERATURE),
+  supports_tools: model?.supports_tools ?? true
+});
+
+const parseTemperature = (text: string): number => {
+  const value = Number.parseFloat(text);
+  return Number.isNaN(value) ? 0 : Math.min(MAX_TEMPERATURE, Math.max(0, value));
+};
+
+// ─────────────────────────────────────────────
+// Contenido (solo existe mientras el modal está abierto)
+// ─────────────────────────────────────────────
+
+const ModelEditorContent: React.FC<Omit<ModelEditorProps, 'visible'>> = ({ model, onClose }) => {
   const colors = useThemeColors();
-  const isEditing = !!model;
 
-  const [formData, setFormData] = useState({
-    provider_type: 'openrouter' as 'openrouter' | 'openai' | 'custom',
-    model_name: '',
-    api_endpoint: '',
-    api_key_ref: '',
-    priority: 1,
-    is_active: true,
-    max_tokens: 2000,
-    temperature: 0.7,
-    supports_tools: true
-  });
-
+  const [formData, setFormData] = useState<FormState>(() => buildInitialForm(model));
   const [loading, setLoading] = useState(false);
 
-  useEffect(() => {
-    if (model) {
-      setFormData({
-        provider_type: model.provider_type,
-        model_name: model.model_name,
-        api_endpoint: model.api_endpoint,
-        api_key_ref: model.api_key_ref,
-        priority: model.priority,
-        is_active: model.is_active,
-        max_tokens: model.max_tokens,
-        temperature: model.temperature,
-        supports_tools: model.supports_tools
-      });
-    } else {
-      // Reset form
-      setFormData({
-        provider_type: 'openrouter',
-        model_name: '',
-        api_endpoint: '',
-        api_key_ref: '',
-        priority: 1,
-        is_active: true,
-        max_tokens: 2000,
-        temperature: 0.7,
-        supports_tools: true
-      });
-    }
-  }, [model, visible]);
+  const setField = <K extends keyof FormState>(key: K, value: FormState[K]) => {
+    setFormData((prev) => ({ ...prev, [key]: value }));
+  };
+
+  const inputTheme = {
+    backgroundColor: colors.CARD_BACKGROUND,
+    color: colors.TEXT_PRIMARY,
+    borderColor: colors.BORDER
+  };
 
   const handleSave = async () => {
     // Validaciones
@@ -85,14 +97,21 @@ export const ModelEditor: React.FC<ModelEditorProps> = ({ visible, model, onClos
       return;
     }
 
+    const payload = {
+      ...formData,
+      priority: Number.parseInt(formData.priority, 10) || DEFAULT_PRIORITY,
+      max_tokens: Number.parseInt(formData.max_tokens, 10) || DEFAULT_MAX_TOKENS,
+      temperature: parseTemperature(formData.temperature)
+    };
+
     try {
       setLoading(true);
 
-      if (isEditing) {
-        await updateModel(model.id, formData);
+      if (model) {
+        await updateModel(model.id, payload);
         Alert.alert('Éxito', 'Modelo actualizado correctamente');
       } else {
-        await createModel(formData);
+        await createModel(payload);
         Alert.alert('Éxito', 'Modelo creado correctamente');
       }
 
@@ -106,7 +125,7 @@ export const ModelEditor: React.FC<ModelEditorProps> = ({ visible, model, onClos
 
   return (
     <Modal
-      visible={visible}
+      visible
       animationType="slide"
       presentationStyle="fullScreen"
       onRequestClose={() => onClose(false)}
@@ -123,9 +142,9 @@ export const ModelEditor: React.FC<ModelEditorProps> = ({ visible, model, onClos
             <Icon name="close" type="material-community" size={24} color={colors.TEXT_PRIMARY} />
           </TouchableOpacity>
           <Text style={[styles.headerTitle, { color: colors.TEXT_PRIMARY }]}>
-            {isEditing ? 'Editar Modelo' : 'Nuevo Modelo'}
+            {model ? 'Editar Modelo' : 'Nuevo Modelo'}
           </Text>
-          <View style={{ width: 24 }} />
+          <View style={styles.headerSpacer} />
         </View>
 
         {/* Form */}
@@ -134,33 +153,32 @@ export const ModelEditor: React.FC<ModelEditorProps> = ({ visible, model, onClos
           <View style={styles.section}>
             <Text style={[styles.label, { color: colors.TEXT_PRIMARY }]}>Proveedor *</Text>
             <View style={styles.providerButtons}>
-              {(['openrouter', 'openai', 'custom'] as const).map((provider) => (
-                <TouchableOpacity
-                  key={provider}
-                  style={[
-                    styles.providerButton,
-                    {
-                      backgroundColor:
-                        formData.provider_type === provider
-                          ? colors.PRIMARY
-                          : colors.CARD_BACKGROUND,
-                      borderColor: colors.BORDER
-                    }
-                  ]}
-                  onPress={() => setFormData({ ...formData, provider_type: provider })}
-                >
-                  <Text
+              {PROVIDERS.map((provider) => {
+                const selected = formData.provider_type === provider;
+
+                return (
+                  <TouchableOpacity
+                    key={provider}
                     style={[
-                      styles.providerButtonText,
+                      styles.providerButton,
                       {
-                        color: formData.provider_type === provider ? '#fff' : colors.TEXT_PRIMARY
+                        backgroundColor: selected ? colors.PRIMARY : colors.CARD_BACKGROUND,
+                        borderColor: colors.BORDER
                       }
                     ]}
+                    onPress={() => setField('provider_type', provider)}
                   >
-                    {provider}
-                  </Text>
-                </TouchableOpacity>
-              ))}
+                    <Text
+                      style={[
+                        styles.providerButtonText,
+                        { color: selected ? colors.WHITE : colors.TEXT_PRIMARY }
+                      ]}
+                    >
+                      {provider}
+                    </Text>
+                  </TouchableOpacity>
+                );
+              })}
             </View>
           </View>
 
@@ -169,17 +187,10 @@ export const ModelEditor: React.FC<ModelEditorProps> = ({ visible, model, onClos
             <Text style={[styles.label, { color: colors.TEXT_PRIMARY }]}>Nombre del Modelo *</Text>
             <TextInput
               value={formData.model_name}
-              onChangeText={(text) => setFormData({ ...formData, model_name: text })}
+              onChangeText={(text) => setField('model_name', text)}
               placeholder="ej: meta-llama/llama-3.1-8b-instruct"
               placeholderTextColor={colors.TEXT_SECONDARY}
-              style={[
-                styles.input,
-                {
-                  backgroundColor: colors.CARD_BACKGROUND,
-                  color: colors.TEXT_PRIMARY,
-                  borderColor: colors.BORDER
-                }
-              ]}
+              style={[styles.input, inputTheme]}
             />
           </View>
 
@@ -188,17 +199,10 @@ export const ModelEditor: React.FC<ModelEditorProps> = ({ visible, model, onClos
             <Text style={[styles.label, { color: colors.TEXT_PRIMARY }]}>API Endpoint *</Text>
             <TextInput
               value={formData.api_endpoint}
-              onChangeText={(text) => setFormData({ ...formData, api_endpoint: text })}
+              onChangeText={(text) => setField('api_endpoint', text)}
               placeholder="ej: https://openrouter.ai/api/v1/chat/completions"
               placeholderTextColor={colors.TEXT_SECONDARY}
-              style={[
-                styles.input,
-                {
-                  backgroundColor: colors.CARD_BACKGROUND,
-                  color: colors.TEXT_PRIMARY,
-                  borderColor: colors.BORDER
-                }
-              ]}
+              style={[styles.input, inputTheme]}
               autoCapitalize="none"
             />
           </View>
@@ -211,17 +215,10 @@ export const ModelEditor: React.FC<ModelEditorProps> = ({ visible, model, onClos
             </Text>
             <TextInput
               value={formData.api_key_ref}
-              onChangeText={(text) => setFormData({ ...formData, api_key_ref: text })}
+              onChangeText={(text) => setField('api_key_ref', text)}
               placeholder="OPENROUTER_API_KEY"
               placeholderTextColor={colors.TEXT_SECONDARY}
-              style={[
-                styles.input,
-                {
-                  backgroundColor: colors.CARD_BACKGROUND,
-                  color: colors.TEXT_PRIMARY,
-                  borderColor: colors.BORDER
-                }
-              ]}
+              style={[styles.input, inputTheme]}
               autoCapitalize="characters"
             />
           </View>
@@ -233,17 +230,10 @@ export const ModelEditor: React.FC<ModelEditorProps> = ({ visible, model, onClos
               Menor número = mayor prioridad (1 es la más alta)
             </Text>
             <TextInput
-              value={formData.priority.toString()}
-              onChangeText={(text) => setFormData({ ...formData, priority: parseInt(text) || 1 })}
+              value={formData.priority}
+              onChangeText={(text) => setField('priority', text)}
               keyboardType="number-pad"
-              style={[
-                styles.input,
-                {
-                  backgroundColor: colors.CARD_BACKGROUND,
-                  color: colors.TEXT_PRIMARY,
-                  borderColor: colors.BORDER
-                }
-              ]}
+              style={[styles.input, inputTheme]}
             />
           </View>
 
@@ -251,45 +241,26 @@ export const ModelEditor: React.FC<ModelEditorProps> = ({ visible, model, onClos
           <View style={styles.section}>
             <Text style={[styles.label, { color: colors.TEXT_PRIMARY }]}>Max Tokens</Text>
             <TextInput
-              value={formData.max_tokens.toString()}
-              onChangeText={(text) =>
-                setFormData({ ...formData, max_tokens: parseInt(text) || 2000 })
-              }
+              value={formData.max_tokens}
+              onChangeText={(text) => setField('max_tokens', text)}
               keyboardType="number-pad"
-              style={[
-                styles.input,
-                {
-                  backgroundColor: colors.CARD_BACKGROUND,
-                  color: colors.TEXT_PRIMARY,
-                  borderColor: colors.BORDER
-                }
-              ]}
+              style={[styles.input, inputTheme]}
             />
           </View>
 
           {/* Temperature */}
           <View style={styles.section}>
             <Text style={[styles.label, { color: colors.TEXT_PRIMARY }]}>
-              Temperature: {formData.temperature.toFixed(2)}
+              Temperature: {parseTemperature(formData.temperature).toFixed(2)}
             </Text>
             <Text style={[styles.hint, { color: colors.TEXT_SECONDARY }]}>
               0 = determinista, 2 = muy creativo
             </Text>
             <TextInput
-              value={formData.temperature.toString()}
-              onChangeText={(text) => {
-                const val = parseFloat(text) || 0;
-                setFormData({ ...formData, temperature: Math.min(2, Math.max(0, val)) });
-              }}
+              value={formData.temperature}
+              onChangeText={(text) => setField('temperature', text)}
               keyboardType="decimal-pad"
-              style={[
-                styles.input,
-                {
-                  backgroundColor: colors.CARD_BACKGROUND,
-                  color: colors.TEXT_PRIMARY,
-                  borderColor: colors.BORDER
-                }
-              ]}
+              style={[styles.input, inputTheme]}
             />
           </View>
 
@@ -298,7 +269,7 @@ export const ModelEditor: React.FC<ModelEditorProps> = ({ visible, model, onClos
             <Text style={[styles.label, { color: colors.TEXT_PRIMARY }]}>Soporta Tools</Text>
             <Switch
               value={formData.supports_tools}
-              onValueChange={(value) => setFormData({ ...formData, supports_tools: value })}
+              onValueChange={(value) => setField('supports_tools', value)}
               trackColor={{ false: colors.GRAY, true: colors.PRIMARY }}
               thumbColor={formData.supports_tools ? colors.PRIMARY : colors.LIGHT_GRAY}
             />
@@ -308,7 +279,7 @@ export const ModelEditor: React.FC<ModelEditorProps> = ({ visible, model, onClos
             <Text style={[styles.label, { color: colors.TEXT_PRIMARY }]}>Activar modelo</Text>
             <Switch
               value={formData.is_active}
-              onValueChange={(value) => setFormData({ ...formData, is_active: value })}
+              onValueChange={(value) => setField('is_active', value)}
               trackColor={{ false: colors.GRAY, true: colors.SUCCESS }}
               thumbColor={formData.is_active ? colors.SUCCESS : colors.LIGHT_GRAY}
             />
@@ -323,15 +294,21 @@ export const ModelEditor: React.FC<ModelEditorProps> = ({ visible, model, onClos
           ]}
         >
           <MyButton title="Cancelar" variant="cancel" onPress={() => onClose(false)} />
-          <MyButton
-            title={isEditing ? 'Guardar' : 'Crear'}
-            onPress={handleSave}
-            loading={loading}
-          />
+          <MyButton title={model ? 'Guardar' : 'Crear'} onPress={handleSave} loading={loading} />
         </View>
       </View>
     </Modal>
   );
+};
+
+// ─────────────────────────────────────────────
+// Componente público
+// ─────────────────────────────────────────────
+
+export const ModelEditor: React.FC<ModelEditorProps> = ({ visible, ...rest }) => {
+  // Mientras está cerrado no se monta nada; al abrirse, el formulario arranca limpio
+  if (!visible) return null;
+  return <ModelEditorContent {...rest} />;
 };
 
 const styles = StyleSheet.create({
@@ -348,6 +325,9 @@ const styles = StyleSheet.create({
   headerTitle: {
     fontSize: 18,
     fontWeight: '600'
+  },
+  headerSpacer: {
+    width: 24
   },
   form: {
     flex: 1,

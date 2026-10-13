@@ -10,7 +10,6 @@ import {
   TouchableOpacity
 } from 'react-native';
 import { StackNavigationProp } from '@react-navigation/stack';
-import { RouteProp } from '@react-navigation/native';
 
 import { useFeatureFlags } from '~/contexts/FeatureFlagsContext';
 
@@ -37,11 +36,9 @@ import { commonStyles } from '~/styles/common';
 import { screenConfigs } from '~/config/screenConfigs';
 
 type ManageFeatureFlagsScreenNavigationProp = StackNavigationProp<SettingsStackParamList>;
-type ManageFeatureFlagsScreenRouteProp = RouteProp<SettingsStackParamList>;
 
 interface ManageFeatureFlagsScreenProps {
   navigation: ManageFeatureFlagsScreenNavigationProp;
-  route: ManageFeatureFlagsScreenRouteProp;
 }
 
 export default function ManageFeatureFlagsScreen({ navigation }: ManageFeatureFlagsScreenProps) {
@@ -53,29 +50,32 @@ export default function ManageFeatureFlagsScreen({ navigation }: ManageFeatureFl
   const { refreshFeatures } = useFeatureFlags();
 
   useEffect(() => {
-    fetchFeatures();
-    const unsubscribe = navigation.addListener('focus', () => {
-      fetchFeatures();
-    });
-    return unsubscribe;
-  }, [navigation]);
+    let isMounted = true;
 
-  const fetchFeatures = async () => {
-    try {
-      setLoading(true);
-      const data = await getAllFeatures();
-      setFeatures(data);
-    } catch (error) {
-      showError(error);
-    } finally {
-      setLoading(false);
-    }
-  };
+    const fetchFeatures = async () => {
+      try {
+        const data = await getAllFeatures();
+        if (isMounted) setFeatures(data);
+      } catch (error) {
+        if (isMounted) showError(error);
+      } finally {
+        if (isMounted) setLoading(false);
+      }
+    };
+
+    // 'focus' también se dispara en el primer enfoque de la pantalla.
+    const unsubscribe = navigation.addListener('focus', fetchFeatures);
+
+    return () => {
+      isMounted = false;
+      unsubscribe();
+    };
+  }, [navigation]);
 
   const handleToggle = async (featureKey: string, currentStatus: number) => {
     try {
       setTogglingKey(featureKey);
-      const newStatus = currentStatus === 1 ? false : true;
+      const newStatus = currentStatus !== 1;
 
       await toggleFeature(featureKey, newStatus);
 
@@ -234,7 +234,7 @@ export default function ManageFeatureFlagsScreen({ navigation }: ManageFeatureFl
         )}
 
         {/* Bottom spacing for FAB */}
-        <View style={{ height: 100 }} />
+        <View style={styles.fabSpacer} />
       </ScrollView>
 
       {/* Floating Action Button */}
@@ -423,6 +423,9 @@ const styles = StyleSheet.create({
   emptySubtext: {
     fontSize: 14,
     color: '#999'
+  },
+  fabSpacer: {
+    height: 100
   },
   fab: {
     position: 'absolute',

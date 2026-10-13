@@ -1,8 +1,8 @@
 import { StatusBar } from 'expo-status-bar';
-import React, { useCallback, useEffect, useState } from 'react';
-import { Keyboard, View, ScrollView, Text, StyleSheet, Switch } from 'react-native';
+import React, { useEffect, useMemo, useState } from 'react';
+import { Keyboard, ScrollView, StyleSheet, Switch, Text, View } from 'react-native';
 import { useForm } from 'react-hook-form';
-import { RouteProp } from '@react-navigation/native';
+import type { RouteProp } from '@react-navigation/native';
 
 // Services
 import { EditCategory, getCategory } from '../../services/categories';
@@ -15,8 +15,8 @@ import { ScreenHeader } from '~/components/ScreenHeader';
 import MyInput from '~/components/inputs/MyInput';
 
 // Types
-import { CategoryModel, ExpenseStackParamList } from '~/shared/types';
-import { EditCategoryPayload } from '~/shared/types/services';
+import type { ExpenseStackParamList } from '~/shared/types';
+import type { EditCategoryPayload } from '~/shared/types/services';
 
 // Utils
 import { ShowToast } from '../../utils/toastUtils';
@@ -40,24 +40,39 @@ interface EditCategoryScreenProps {
 
 // Solo los campos realmente controlados por react-hook-form.
 // Mantenerlo angosto evita el choque de tipos con Control<any> de MyInput.
-type EditCategoryFormValues = {
+interface EditCategoryFormValues {
   name: string;
   budget: number;
-};
+}
 
-export default function EditCategoryScreen({ route }: EditCategoryScreenProps) {
+const DEFAULT_ICON = 'home';
+const MAX_NAME_LENGTH = 200;
+const MIN_BUDGET = 0;
+const MAX_BUDGET = 99999999;
+
+export default function EditCategoryScreen({ route }: EditCategoryScreenProps): React.JSX.Element {
   const screenConfig = screenConfigs.editCategory;
   const colors = useThemeColors();
   const idCategory = route.params.idCategory;
 
-  const [category, setCategory] = useState<CategoryModel | undefined>(undefined);
   const { handleSubmit, control, reset } = useForm<EditCategoryFormValues>({
     mode: 'onTouched',
     defaultValues: { name: '', budget: 0 }
   });
-  const [icon, setIcon] = useState<string>('home');
+  const [icon, setIcon] = useState<string>(DEFAULT_ICON);
   const [isOperational, setIsOperational] = useState<boolean>(true);
   const [loading, setLoading] = useState<boolean>(false);
+
+  const dynamicStyles = useMemo(
+    () =>
+      StyleSheet.create({
+        screen: { backgroundColor: colors.BACKGROUND },
+        switchCard: { backgroundColor: colors.CARD_BACKGROUND, borderColor: colors.BORDER },
+        switchLabel: { color: colors.TEXT_PRIMARY },
+        switchDescription: { color: colors.TEXT_SECONDARY }
+      }),
+    [colors]
+  );
 
   useEffect(() => {
     let ignore = false;
@@ -67,10 +82,8 @@ export default function EditCategoryScreen({ route }: EditCategoryScreenProps) {
         const { data } = await getCategory(idCategory);
         if (ignore) return;
 
-        const editIcon = data.icon ? data.icon : 'home';
-        setIcon(editIcon);
+        setIcon(data.icon ? data.icon : DEFAULT_ICON);
         setIsOperational(data.isOperational ?? true);
-        setCategory(data);
         reset({ name: data.name, budget: data.budget ?? 0 });
       } catch (error) {
         if (!ignore) {
@@ -79,7 +92,7 @@ export default function EditCategoryScreen({ route }: EditCategoryScreenProps) {
       }
     };
 
-    loadCategory();
+    void loadCategory();
 
     return () => {
       ignore = true;
@@ -95,13 +108,17 @@ export default function EditCategoryScreen({ route }: EditCategoryScreenProps) {
       };
       setLoading(true);
       await EditCategory(idCategory, sendPayload);
-      setLoading(false);
       Keyboard.dismiss();
       ShowToast('Categoría editada exitosamente');
     } catch (error) {
-      setLoading(false);
       showError(error);
+    } finally {
+      setLoading(false);
     }
+  };
+
+  const submitForm = (): void => {
+    void handleSubmit(onSubmit)();
   };
 
   const setIconHandle = (val: string): void => {
@@ -109,16 +126,16 @@ export default function EditCategoryScreen({ route }: EditCategoryScreenProps) {
   };
 
   return (
-    <View style={[commonStyles.screenContainer, { backgroundColor: colors.BACKGROUND }]}>
+    <View style={[commonStyles.screenContainer, dynamicStyles.screen]}>
       <ScreenHeader title={screenConfig.title} subtitle={screenConfig.subtitle} />
       <StatusBar style="auto" />
 
       <ScrollView
-        style={{ flex: 1 }}
-        contentContainerStyle={{ paddingBottom: 20 }}
+        style={styles.scroll}
+        contentContainerStyle={styles.scrollContent}
         keyboardShouldPersistTaps="handled"
       >
-        <View style={{ paddingHorizontal: 16, paddingTop: 10 }}>
+        <View style={styles.form}>
           <MyInput
             name="name"
             control={control}
@@ -127,12 +144,12 @@ export default function EditCategoryScreen({ route }: EditCategoryScreenProps) {
             rules={{
               required: 'El nombre de la categoría es obligatorio',
               maxLength: {
-                value: 200,
+                value: MAX_NAME_LENGTH,
                 message: 'El nombre no puede superar 200 caracteres'
               }
             }}
             leftIcon="tag"
-            maxLength={200}
+            maxLength={MAX_NAME_LENGTH}
             autoFocus
           />
 
@@ -143,9 +160,9 @@ export default function EditCategoryScreen({ route }: EditCategoryScreenProps) {
             label="Presupuesto"
             placeholder="0"
             rules={{
-              min: { value: 0, message: 'El mínimo valor aceptado es 0' },
+              min: { value: MIN_BUDGET, message: 'El mínimo valor aceptado es 0' },
               max: {
-                value: 99999999,
+                value: MAX_BUDGET,
                 message: 'El presupuesto no puede superar el valor de 99.999.999'
               }
             }}
@@ -154,17 +171,12 @@ export default function EditCategoryScreen({ route }: EditCategoryScreenProps) {
 
           <ModalIcon icon={icon} setIcon={setIconHandle} />
 
-          <View
-            style={[
-              styles.switchCard,
-              { backgroundColor: colors.CARD_BACKGROUND, borderColor: colors.BORDER }
-            ]}
-          >
+          <View style={[styles.switchCard, dynamicStyles.switchCard]}>
             <View style={styles.switchText}>
-              <Text style={[styles.switchLabel, { color: colors.TEXT_PRIMARY }]}>
+              <Text style={[styles.switchLabel, dynamicStyles.switchLabel]}>
                 Categoría operativa
               </Text>
-              <Text style={[styles.switchDescription, { color: colors.TEXT_SECONDARY }]}>
+              <Text style={[styles.switchDescription, dynamicStyles.switchDescription]}>
                 Se incluye en el promedio de ahorro. Desactívala para ingresos o gastos esporádicos
                 (ej. cesantías, compra de activos).
               </Text>
@@ -177,7 +189,7 @@ export default function EditCategoryScreen({ route }: EditCategoryScreenProps) {
             />
           </View>
 
-          {loading ? <MyLoading /> : <MyButton onPress={handleSubmit(onSubmit)} title="Editar" />}
+          {loading ? <MyLoading /> : <MyButton onPress={submitForm} title="Editar" />}
         </View>
       </ScrollView>
     </View>
@@ -185,6 +197,16 @@ export default function EditCategoryScreen({ route }: EditCategoryScreenProps) {
 }
 
 const styles = StyleSheet.create({
+  scroll: {
+    flex: 1
+  },
+  scrollContent: {
+    paddingBottom: 20
+  },
+  form: {
+    paddingHorizontal: 16,
+    paddingTop: 10
+  },
   switchCard: {
     flexDirection: 'row',
     alignItems: 'center',

@@ -7,8 +7,8 @@
  *
  * Cuando agregues un detector/parser nuevo: añade sus casos a CASES.
  */
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as templates from '~/utils/commentary/commentaryTemplates.utils';
-import { getDefaultTemplateConfig } from '~/utils/commentary/commentaryTemplates.utils';
 import { CONFIG_VERSION, getTemplateConfig } from '~/utils/commentary/templateStorage.utils';
 
 // AsyncStorage en memoria
@@ -32,8 +32,19 @@ jest.mock(
   },
   { virtual: true }
 );
-// eslint-disable-next-line @typescript-eslint/no-var-requires
-const AsyncStorage = require('@react-native-async-storage/async-storage').default;
+
+// El mock expone su almacén interno para poder inspeccionarlo y vaciarlo
+type MockedStorage = typeof AsyncStorage & { __store: Record<string, string> };
+const store = (AsyncStorage as MockedStorage).__store;
+
+const clearStore = () => {
+  for (const k of Object.keys(store)) delete store[k];
+};
+
+// Escribe directamente en el almacén (simula cachés viejas o corruptas)
+const writeRaw = (key: string, value: string) => {
+  store[key] = value;
+};
 
 const BANK = 'Bancarios y de inversión';
 
@@ -73,7 +84,7 @@ const CASES: [number, string, string, string][] = [
 
 describe('getDefaultTemplateConfig — contrato por subcategoría', () => {
   it.each(CASES)('#%i "%s" (%s) → %s', (id, name, cat, expected) => {
-    expect(getDefaultTemplateConfig(id, name, cat).parserType).toBe(expected);
+    expect(templates.getDefaultTemplateConfig(id, name, cat).parserType).toBe(expected);
   });
 });
 
@@ -83,23 +94,36 @@ describe('getDefaultTemplateConfig — robustez', () => {
   const ids = [0, 1, 99999, 100000, 100001];
 
   it('nunca lanza, sea cual sea la combinación', () => {
+    const throwing: string[] = [];
+
     for (const id of ids)
       for (const n of names)
-        for (const c of cats) expect(() => getDefaultTemplateConfig(id, n, c)).not.toThrow();
+        for (const c of cats) {
+          try {
+            templates.getDefaultTemplateConfig(id, n, c);
+          } catch {
+            throwing.push(`#${id} "${n.slice(0, 20)}" (${c})`);
+          }
+        }
+
+    expect(throwing).toEqual([]);
   });
 
-  it('toda config "structured" trae chips, y los chips son válidos', () => {
-    for (const [id, name, cat] of CASES) {
-      const cfg = getDefaultTemplateConfig(id, name, cat);
-      if (cfg.assistanceLevel === 'structured') expect(cfg.chips.length).toBeGreaterThan(0);
-      const labels = cfg.chips.map((c) => c.label);
-      expect(new Set(labels).size).toBe(labels.length); // labels únicos (keys de la UI)
-      for (const chip of cfg.chips) {
-        expect(chip.label.trim()).not.toBe('');
-        expect(chip.icon.trim()).not.toBe('');
-        expect(chip.template.trim()).not.toBe('');
-      }
-    }
+  it.each(CASES)('#%i "%s" (%s): chips válidos', (id, name, cat) => {
+    const cfg = templates.getDefaultTemplateConfig(id, name, cat);
+
+    // Una config "structured" debe traer chips
+    expect(cfg.assistanceLevel !== 'structured' || cfg.chips.length > 0).toBe(true);
+
+    // Labels únicos (son las keys de la UI)
+    const labels = cfg.chips.map((c) => c.label);
+    expect(new Set(labels).size).toBe(labels.length);
+
+    // Ningún campo del chip vacío
+    const emptyChips = cfg.chips
+      .filter((c) => !c.label.trim() || !c.icon.trim() || !c.template.trim())
+      .map((c) => c.label);
+    expect(emptyChips).toEqual([]);
   });
 });
 
@@ -113,7 +137,7 @@ describe('getTemplateConfig — storage', () => {
   const flush = () => new Promise((r) => setImmediate(r));
 
   beforeEach(() => {
-    for (const k of Object.keys(AsyncStorage.__store)) delete AsyncStorage.__store[k];
+    clearStore();
     jest.restoreAllMocks();
   });
 
@@ -124,70 +148,81 @@ describe('getTemplateConfig — storage', () => {
   });
 
   it('caché de versión anterior sin chips → se regenera y se persiste en la versión actual', async () => {
-    AsyncStorage.__store[key] = JSON.stringify({
-      subcategoryId: ID,
-      subcategoryName: NAME,
-      categoryName: BANK,
-      assistanceLevel: 'free',
-      parserType: 'none',
-      chips: [],
-      enableValidation: false,
-      configVersion: CONFIG_VERSION - 1
-    });
+    writeRaw(
+      key,
+      JSON.stringify({
+        subcategoryId: ID,
+        subcategoryName: NAME,
+        categoryName: BANK,
+        assistanceLevel: 'free',
+        parserType: 'none',
+        chips: [],
+        enableValidation: false,
+        configVersion: CONFIG_VERSION - 1
+      })
+    );
     const cfg = await getTemplateConfig(ID, NAME, BANK);
     await flush();
     expect(cfg.parserType).toBe('asset');
-    expect(JSON.parse(AsyncStorage.__store[key]).configVersion).toBe(CONFIG_VERSION);
+    expect(JSON.parse(store[key]).configVersion).toBe(CONFIG_VERSION);
   });
 
   it('caché actual de tipo asset pero sin chips → se considera obsoleta', async () => {
-    AsyncStorage.__store[key] = JSON.stringify({
-      subcategoryId: ID,
-      subcategoryName: NAME,
-      categoryName: BANK,
-      assistanceLevel: 'structured',
-      parserType: 'asset',
-      chips: [],
-      enableValidation: true,
-      configVersion: CONFIG_VERSION
-    });
+    writeRaw(
+      key,
+      JSON.stringify({
+        subcategoryId: ID,
+        subcategoryName: NAME,
+        categoryName: BANK,
+        assistanceLevel: 'structured',
+        parserType: 'asset',
+        chips: [],
+        enableValidation: true,
+        configVersion: CONFIG_VERSION
+      })
+    );
     expect((await getTemplateConfig(ID, NAME, BANK)).chips.length).toBeGreaterThan(10);
   });
 
   it('caché de la versión actual personalizada → se respeta tal cual', async () => {
-    const custom = {
-      subcategoryId: ID,
-      subcategoryName: NAME,
-      categoryName: BANK,
-      assistanceLevel: 'structured',
-      parserType: 'asset',
-      chips: [{ label: 'Mío', icon: 'star', template: 'Otros: mío' }],
-      enableValidation: true,
-      isCustomized: true,
-      configVersion: CONFIG_VERSION
-    };
-    AsyncStorage.__store[key] = JSON.stringify(custom);
+    writeRaw(
+      key,
+      JSON.stringify({
+        subcategoryId: ID,
+        subcategoryName: NAME,
+        categoryName: BANK,
+        assistanceLevel: 'structured',
+        parserType: 'asset',
+        chips: [{ label: 'Mío', icon: 'star', template: 'Otros: mío' }],
+        enableValidation: true,
+        isCustomized: true,
+        configVersion: CONFIG_VERSION
+      })
+    );
     expect((await getTemplateConfig(ID, NAME, BANK)).chips[0].label).toBe('Mío');
   });
 
   it('chips de ingreso guardados con la versión anterior (sin [Bien: ...]) se regeneran', async () => {
-    const incomeKey = 'template_config_100554';
-    AsyncStorage.__store[incomeKey] = JSON.stringify({
-      subcategoryId: 100554,
-      subcategoryName: 'Arriendos',
-      categoryName: 'Ingresos',
-      assistanceLevel: 'structured',
-      parserType: 'asset',
-      chips: [{ label: 'Arriendo', icon: 'home-account', template: 'Arriendo: Oct 2026' }],
-      enableValidation: true,
-      configVersion: CONFIG_VERSION - 1
-    });
+    writeRaw(
+      'template_config_100554',
+      JSON.stringify({
+        subcategoryId: 100554,
+        subcategoryName: 'Arriendos',
+        categoryName: 'Ingresos',
+        assistanceLevel: 'structured',
+        parserType: 'asset',
+        chips: [{ label: 'Arriendo', icon: 'home-account', template: 'Arriendo: Oct 2026' }],
+        enableValidation: true,
+        configVersion: CONFIG_VERSION - 1
+      })
+    );
     const cfg = await getTemplateConfig(100554, 'Arriendos', 'Ingresos');
-    expect(cfg.chips.every((c) => c.template.includes('[Bien:'))).toBe(true);
+    const withoutProperty = cfg.chips.filter((c) => !c.template.includes('[Bien:'));
+    expect(withoutProperty).toEqual([]);
   });
 
   it('JSON corrupto → default, sin lanzar', async () => {
-    AsyncStorage.__store[key] = '{no es json';
+    writeRaw(key, '{no es json');
     expect((await getTemplateConfig(ID, NAME, BANK)).parserType).toBe('asset');
   });
 
@@ -195,7 +230,7 @@ describe('getTemplateConfig — storage', () => {
     jest.spyOn(templates, 'getDefaultTemplateConfig').mockImplementation(() => {
       throw new Error('boom');
     });
-    const warn = jest.spyOn(console, 'warn').mockImplementation(() => {});
+    const warn = jest.spyOn(console, 'warn').mockImplementation(() => undefined);
     const cfg = await getTemplateConfig(ID, NAME, BANK);
     expect(cfg.parserType).toBe('none');
     expect(warn).toHaveBeenCalled();

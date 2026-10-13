@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { View, Text, ScrollView, StyleSheet } from 'react-native';
+import React, { useEffect, useState } from 'react';
+import { View, Text, ScrollView, StyleSheet, DimensionValue } from 'react-native';
 import { StackNavigationProp } from '@react-navigation/stack';
 import { RouteProp } from '@react-navigation/native';
 import { Icon } from 'react-native-elements';
@@ -34,70 +34,96 @@ interface Props {
   route: RoutePropType;
 }
 
+type AppColors = ReturnType<typeof useThemeColors>;
+type Comparison = NonNullable<
+  Awaited<ReturnType<typeof InvestmentComparisonService.getComparison>>
+>;
+type ScenarioResults = Parameters<typeof InvestmentComparisonService.generateRecommendation>[1];
+type MetricKey = 'profitability' | 'liquidity' | 'security' | 'cashFlow';
+
+const SCENARIO_NAMES: Record<ScenarioType, string> = {
+  [ScenarioType.SAVINGS]: 'Ahorro/Inversión',
+  [ScenarioType.FUTURE_PROPERTY]: 'Vivienda a Futuro',
+  [ScenarioType.IMMEDIATE_RENT]: 'Compra Inmediata',
+  [ScenarioType.EXISTING_PROPERTY]: 'Propiedad Actual'
+};
+
+const METRICS: { key: MetricKey; label: string; color: keyof AppColors }[] = [
+  { key: 'profitability', label: 'Rentabilidad', color: 'SUCCESS' },
+  { key: 'liquidity', label: 'Liquidez', color: 'INFO' },
+  { key: 'security', label: 'Seguridad', color: 'PRIMARY' },
+  { key: 'cashFlow', label: 'Flujo de caja', color: 'WARNING' }
+];
+
+// Calcula los resultados de cada escenario y genera la recomendación
+const buildResult = (comparison: Comparison): ComparisonResult => {
+  const { scenarios } = comparison;
+  const results = {} as ScenarioResults;
+
+  if (scenarios.savings) {
+    results.savings = InvestmentComparisonService.calculateSavingsScenario(scenarios.savings);
+  }
+  if (scenarios.futureProperty) {
+    results.futureProperty = InvestmentComparisonService.calculateFuturePropertyScenario(
+      scenarios.futureProperty
+    );
+  }
+  if (scenarios.immediateRent) {
+    results.immediateRent = InvestmentComparisonService.calculateImmediateRentScenario(
+      scenarios.immediateRent
+    );
+  }
+  if (scenarios.existingProperty) {
+    results.existingProperty = InvestmentComparisonService.calculateExistingPropertyScenario(
+      scenarios.existingProperty
+    );
+  }
+
+  const recommendation = InvestmentComparisonService.generateRecommendation(comparison, results);
+  return { comparison, recommendation };
+};
+
+const toPercentWidth = (value: number): DimensionValue =>
+  `${Math.min(Math.max(value, 0), 100)}%` as DimensionValue;
+
 export default function ComparisonResultsScreen({ navigation, route }: Props) {
   const colors = useThemeColors();
   const screenConfig = screenConfigs.comparisonResults;
   const { comparisonId } = route.params;
 
-  const [loading, setLoading] = useState<boolean>(true);
+  // Mientras no haya resultado, la pantalla está cargando
   const [result, setResult] = useState<ComparisonResult | null>(null);
 
   useEffect(() => {
-    loadComparison();
-  }, []);
+    let isMounted = true;
 
-  const loadComparison = async (): Promise<void> => {
-    try {
-      setLoading(true);
-      const comparison = await InvestmentComparisonService.getComparison(comparisonId);
+    const loadComparison = async (): Promise<void> => {
+      try {
+        const comparison = await InvestmentComparisonService.getComparison(comparisonId);
+        if (!isMounted) return;
 
-      if (!comparison) {
-        ShowToast('Comparación no encontrada');
+        if (!comparison) {
+          ShowToast('Comparación no encontrada');
+          navigation.goBack();
+          return;
+        }
+
+        setResult(buildResult(comparison));
+      } catch {
+        if (!isMounted) return;
+        ShowToast('Error al cargar comparación');
         navigation.goBack();
-        return;
       }
+    };
 
-      // Calcular resultados
-      const results: any = {};
+    loadComparison();
 
-      if (comparison.scenarios.savings) {
-        results.savings = InvestmentComparisonService.calculateSavingsScenario(
-          comparison.scenarios.savings
-        );
-      }
+    return () => {
+      isMounted = false;
+    };
+  }, [comparisonId, navigation]);
 
-      if (comparison.scenarios.futureProperty) {
-        results.futureProperty = InvestmentComparisonService.calculateFuturePropertyScenario(
-          comparison.scenarios.futureProperty
-        );
-      }
-
-      if (comparison.scenarios.immediateRent) {
-        results.immediateRent = InvestmentComparisonService.calculateImmediateRentScenario(
-          comparison.scenarios.immediateRent
-        );
-      }
-      if (comparison.scenarios.existingProperty) {
-        results.existingProperty = InvestmentComparisonService.calculateExistingPropertyScenario(
-          comparison.scenarios.existingProperty
-        );
-      }
-
-      // Generar recomendación
-      const recommendation = InvestmentComparisonService.generateRecommendation(
-        comparison,
-        results
-      );
-
-      setResult({ comparison, recommendation });
-      setLoading(false);
-    } catch {
-      ShowToast('Error al cargar comparación');
-      setLoading(false);
-    }
-  };
-
-  if (loading || !result) {
+  if (!result) {
     return (
       <View style={[commonStyles.screenContainer, { backgroundColor: colors.BACKGROUND }]}>
         <ScreenHeader title={screenConfig.title} subtitle={screenConfig.subtitle} />
@@ -106,20 +132,14 @@ export default function ComparisonResultsScreen({ navigation, route }: Props) {
     );
   }
 
-  const { comparison, recommendation } = result;
-  const scenarioNames = {
-    [ScenarioType.SAVINGS]: 'Ahorro/Inversión',
-    [ScenarioType.FUTURE_PROPERTY]: 'Vivienda a Futuro',
-    [ScenarioType.IMMEDIATE_RENT]: 'Compra Inmediata',
-    [ScenarioType.EXISTING_PROPERTY]: 'Propiedad Actual'
-  };
+  const { recommendation } = result;
 
   return (
     <View style={[commonStyles.screenContainer, { backgroundColor: colors.BACKGROUND }]}>
       <ScreenHeader title={screenConfig.title} subtitle={screenConfig.subtitle} />
 
-      <ScrollView style={{ flex: 1 }} contentContainerStyle={{ paddingBottom: 20 }}>
-        <View style={{ paddingHorizontal: 16, paddingTop: 10 }}>
+      <ScrollView style={styles.scroll} contentContainerStyle={styles.scrollContent}>
+        <View style={styles.content}>
           {/* Recomendación Principal */}
           <View
             style={[
@@ -138,12 +158,12 @@ export default function ComparisonResultsScreen({ navigation, route }: Props) {
             </View>
 
             <Text style={[styles.recommendationScenario, { color: colors.TEXT_PRIMARY }]}>
-              {scenarioNames[recommendation.recommendedScenario]}
+              {SCENARIO_NAMES[recommendation.recommendedScenario]}
             </Text>
 
             <View style={styles.reasoningList}>
-              {recommendation.reasoning.map((reason, index) => (
-                <View key={index} style={styles.reasoningItem}>
+              {recommendation.reasoning.map((reason) => (
+                <View key={reason} style={styles.reasoningItem}>
                   <Icon
                     type="material-community"
                     name="check-circle"
@@ -169,136 +189,59 @@ export default function ComparisonResultsScreen({ navigation, route }: Props) {
               📊 Comparación de Resultados
             </Text>
 
-            {recommendation.scores.map((score) => (
-              <View
-                key={score.scenarioType}
-                style={[
-                  styles.scoreCard,
-                  {
-                    backgroundColor:
-                      score.scenarioType === recommendation.recommendedScenario
-                        ? colors.SUCCESS + '10'
-                        : colors.BACKGROUND,
-                    borderColor:
-                      score.scenarioType === recommendation.recommendedScenario
-                        ? colors.SUCCESS
-                        : colors.BORDER
-                  }
-                ]}
-              >
-                <View style={styles.scoreHeader}>
-                  <Text style={[styles.scoreTitle, { color: colors.TEXT_PRIMARY }]}>
-                    {scenarioNames[score.scenarioType]}
-                  </Text>
-                  <View
-                    style={[
-                      styles.scoreBadge,
-                      {
-                        backgroundColor:
-                          score.scenarioType === recommendation.recommendedScenario
-                            ? colors.SUCCESS
-                            : colors.INFO
-                      }
-                    ]}
-                  >
-                    <Text style={[styles.scoreBadgeText, { color: colors.WHITE }]}>
-                      {score.totalScore.toFixed(0)}/100
+            {recommendation.scores.map((score) => {
+              const isRecommended = score.scenarioType === recommendation.recommendedScenario;
+
+              return (
+                <View
+                  key={score.scenarioType}
+                  style={[
+                    styles.scoreCard,
+                    {
+                      backgroundColor: isRecommended ? colors.SUCCESS + '10' : colors.BACKGROUND,
+                      borderColor: isRecommended ? colors.SUCCESS : colors.BORDER
+                    }
+                  ]}
+                >
+                  <View style={styles.scoreHeader}>
+                    <Text style={[styles.scoreTitle, { color: colors.TEXT_PRIMARY }]}>
+                      {SCENARIO_NAMES[score.scenarioType]}
+                    </Text>
+                    <View
+                      style={[
+                        styles.scoreBadge,
+                        { backgroundColor: isRecommended ? colors.SUCCESS : colors.INFO }
+                      ]}
+                    >
+                      <Text style={[styles.scoreBadgeText, { color: colors.WHITE }]}>
+                        {score.totalScore.toFixed(0)}/100
+                      </Text>
+                    </View>
+                  </View>
+
+                  <View style={styles.metricsGrid}>
+                    {METRICS.map((metric) => (
+                      <MetricRow
+                        key={metric.key}
+                        label={metric.label}
+                        value={score.scores[metric.key]}
+                        barColor={colors[metric.color]}
+                        colors={colors}
+                      />
+                    ))}
+                  </View>
+
+                  <View style={[styles.returnRow, { borderTopColor: colors.BORDER }]}>
+                    <Text style={[styles.returnLabel, { color: colors.TEXT_SECONDARY }]}>
+                      Retorno anualizado:
+                    </Text>
+                    <Text style={[styles.returnValue, { color: colors.SUCCESS }]}>
+                      {score.adjustedReturn.toFixed(2)}% E.A.
                     </Text>
                   </View>
                 </View>
-
-                <View style={styles.metricsGrid}>
-                  <View style={styles.metric}>
-                    <Text style={[styles.metricLabel, { color: colors.TEXT_SECONDARY }]}>
-                      Rentabilidad
-                    </Text>
-                    <View style={styles.metricBar}>
-                      <View
-                        style={[
-                          styles.metricBarFill,
-                          {
-                            width: `${score.scores.profitability}%`,
-                            backgroundColor: colors.SUCCESS
-                          }
-                        ]}
-                      />
-                    </View>
-                    <Text style={[styles.metricValue, { color: colors.TEXT_PRIMARY }]}>
-                      {score.scores.profitability.toFixed(0)}%
-                    </Text>
-                  </View>
-
-                  <View style={styles.metric}>
-                    <Text style={[styles.metricLabel, { color: colors.TEXT_SECONDARY }]}>
-                      Liquidez
-                    </Text>
-                    <View style={styles.metricBar}>
-                      <View
-                        style={[
-                          styles.metricBarFill,
-                          {
-                            width: `${score.scores.liquidity}%`,
-                            backgroundColor: colors.INFO
-                          }
-                        ]}
-                      />
-                    </View>
-                    <Text style={[styles.metricValue, { color: colors.TEXT_PRIMARY }]}>
-                      {score.scores.liquidity.toFixed(0)}%
-                    </Text>
-                  </View>
-
-                  <View style={styles.metric}>
-                    <Text style={[styles.metricLabel, { color: colors.TEXT_SECONDARY }]}>
-                      Seguridad
-                    </Text>
-                    <View style={styles.metricBar}>
-                      <View
-                        style={[
-                          styles.metricBarFill,
-                          {
-                            width: `${score.scores.security}%`,
-                            backgroundColor: colors.PRIMARY
-                          }
-                        ]}
-                      />
-                    </View>
-                    <Text style={[styles.metricValue, { color: colors.TEXT_PRIMARY }]}>
-                      {score.scores.security.toFixed(0)}%
-                    </Text>
-                  </View>
-
-                  <View style={styles.metric}>
-                    <Text style={[styles.metricLabel, { color: colors.TEXT_SECONDARY }]}>
-                      Flujo de caja
-                    </Text>
-                    <View style={styles.metricBar}>
-                      <View
-                        style={[
-                          styles.metricBarFill,
-                          {
-                            width: `${score.scores.cashFlow}%`,
-                            backgroundColor: colors.WARNING
-                          }
-                        ]}
-                      />
-                    </View>
-                    <Text style={[styles.metricValue, { color: colors.TEXT_PRIMARY }]}>
-                      {score.scores.cashFlow.toFixed(0)}%
-                    </Text>
-                  </View>
-                </View>
-
-                <View style={styles.returnRow}>
-                  <Text style={[styles.returnLabel, { color: colors.TEXT_SECONDARY }]}>
-                    Retorno anualizado:
-                  </Text>
-                  <Text style={[styles.returnValue, { color: colors.SUCCESS }]}>
-                    {score.adjustedReturn.toFixed(2)}% E.A.
-                  </Text>
-                </View>
-              </View>
-            ))}
+              );
+            })}
           </View>
 
           {/* Advertencias */}
@@ -312,8 +255,8 @@ export default function ComparisonResultsScreen({ navigation, route }: Props) {
               <Text style={[styles.sectionTitle, { color: colors.WARNING }]}>
                 ⚠️ Consideraciones Importantes
               </Text>
-              {recommendation.warnings.map((warning, index) => (
-                <Text key={index} style={[styles.warningText, { color: colors.TEXT_PRIMARY }]}>
+              {recommendation.warnings.map((warning) => (
+                <Text key={warning} style={[styles.warningText, { color: colors.TEXT_PRIMARY }]}>
                   {warning}
                 </Text>
               ))}
@@ -329,8 +272,11 @@ export default function ComparisonResultsScreen({ navigation, route }: Props) {
               ]}
             >
               <Text style={[styles.sectionTitle, { color: colors.INFO }]}>💡 Alternativas</Text>
-              {recommendation.alternatives.map((alternative, index) => (
-                <Text key={index} style={[styles.alternativeText, { color: colors.TEXT_PRIMARY }]}>
+              {recommendation.alternatives.map((alternative) => (
+                <Text
+                  key={alternative}
+                  style={[styles.alternativeText, { color: colors.TEXT_PRIMARY }]}
+                >
                   {alternative}
                 </Text>
               ))}
@@ -338,7 +284,7 @@ export default function ComparisonResultsScreen({ navigation, route }: Props) {
           )}
 
           {/* Acciones */}
-          <View style={{ marginTop: 16, gap: 8 }}>
+          <View style={styles.actions}>
             <MyButton
               title="Nueva Comparación"
               variant="primary"
@@ -361,7 +307,44 @@ export default function ComparisonResultsScreen({ navigation, route }: Props) {
   );
 }
 
+// ============================================================================
+// Componente: Fila de métrica con barra
+// ============================================================================
+
+interface MetricRowProps {
+  label: string;
+  value: number;
+  barColor: string;
+  colors: AppColors;
+}
+
+const MetricRow: React.FC<MetricRowProps> = ({ label, value, barColor, colors }) => (
+  <View style={styles.metric}>
+    <Text style={[styles.metricLabel, { color: colors.TEXT_SECONDARY }]}>{label}</Text>
+    <View style={[styles.metricBar, { backgroundColor: colors.BORDER }]}>
+      <View
+        style={[styles.metricBarFill, { width: toPercentWidth(value), backgroundColor: barColor }]}
+      />
+    </View>
+    <Text style={[styles.metricValue, { color: colors.TEXT_PRIMARY }]}>{value.toFixed(0)}%</Text>
+  </View>
+);
+
 const styles = StyleSheet.create({
+  scroll: {
+    flex: 1
+  },
+  scrollContent: {
+    paddingBottom: 20
+  },
+  content: {
+    paddingHorizontal: 16,
+    paddingTop: 10
+  },
+  actions: {
+    marginTop: 16,
+    gap: 8
+  },
   recommendationCard: {
     padding: 16,
     borderRadius: 12,
@@ -445,7 +428,6 @@ const styles = StyleSheet.create({
   },
   metricBar: {
     height: 6,
-    backgroundColor: '#E0E0E0',
     borderRadius: 3,
     overflow: 'hidden'
   },
@@ -462,8 +444,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     paddingTop: 8,
-    borderTopWidth: 1,
-    borderTopColor: '#E0E0E0'
+    borderTopWidth: 1
   },
   returnLabel: {
     fontSize: SMALL

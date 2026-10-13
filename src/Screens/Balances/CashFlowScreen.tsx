@@ -1,9 +1,10 @@
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { StyleSheet, Text, View, ScrollView, TouchableOpacity, Switch } from 'react-native';
 import { useSelector } from 'react-redux';
 import { Icon } from 'react-native-elements';
 import { useQuery } from '@apollo/client/react';
 import { StackNavigationProp } from '@react-navigation/stack';
+import { useFocusEffect } from '@react-navigation/native';
 
 // Services
 import { getSavingsByUser, getUpdateAllSavingsByUser } from '../../services/savings';
@@ -45,65 +46,148 @@ import { commonStyles } from '~/styles/common';
 // Configs
 import { screenConfigs } from '~/config/screenConfigs';
 
-type ExportExpenseScreenNavigationProp = StackNavigationProp<BalanceStackParamList, 'cashFlow'>;
+type CashFlowScreenNavigationProp = StackNavigationProp<BalanceStackParamList, 'cashFlow'>;
 
 interface CashFlowScreenProps {
-  navigation: ExportExpenseScreenNavigationProp;
+  navigation: CashFlowScreenNavigationProp;
 }
+
+type Month = RootState['date']['month'];
+type Loans = GetLoanResult['loans'];
+
+// Datos crudos junto con la petición para la que se cargaron
+type FetchedData = {
+  key: string;
+  data: GetSavingsByUserResponse | null;
+};
+
+type CashFlowView = {
+  totalExpenses: number;
+  totalIncomes: number;
+  totalSavings: number;
+  dataExpenses: number[];
+  dataIncomes: number[];
+  dataSavings: number[];
+  averageExpenses: number;
+  previousAverageExpenses: number;
+  averageIncomes: number;
+  previousAverageIncomes: number;
+  sumPreviousSavings: number;
+  labels: string[];
+  tableData: string[][];
+  historySavings: number[];
+};
+
+const DEFAULT_NUM_MONTHS = 4;
+const LOAN_TYPE_BASE = 1;
+
+const EMPTY_VIEW: CashFlowView = {
+  totalExpenses: 0,
+  totalIncomes: 0,
+  totalSavings: 0,
+  dataExpenses: [0],
+  dataIncomes: [0],
+  dataSavings: [0],
+  averageExpenses: 0,
+  previousAverageExpenses: 0,
+  averageIncomes: 0,
+  previousAverageIncomes: 0,
+  sumPreviousSavings: 0,
+  labels: [''],
+  tableData: [],
+  historySavings: []
+};
+
+const sum = (values: number[]): number => values.reduce((acu, val) => acu + val, 0);
+
+// Calcula tabla, gráficas y totales a partir de los datos crudos
+const buildCashFlowView = (
+  raw: GetSavingsByUserResponse | null,
+  excludeInv: boolean,
+  numMonths: number,
+  month: Month
+): CashFlowView => {
+  if (!raw) return EMPTY_VIEW;
+
+  const rows = filterLimitDataForGraph<FinancialRecord>(raw.data, numMonths);
+  const getSaving = (e: FinancialRecord) => (excludeInv ? e.operationalSaving : e.saving);
+
+  // Tabla
+  const percentOf = (e: FinancialRecord) => (e.income > 0 ? (getSaving(e) * 100) / e.income : 0);
+  const meanPercent = rows.length > 0 ? Math.round(sum(rows.map(percentOf)) / rows.length) : 0;
+  const meanValue = rows.length > 0 ? sum(rows.map(getSaving)) / rows.length : 0;
+
+  const tableData = rows.map((e) => [
+    DateFormat(e.date, 'MMMM YYYY'),
+    `${Math.round(percentOf(e))} %`,
+    NumberFormat(getSaving(e))
+  ]);
+  tableData.push(['Promedio', `${meanPercent} %`, NumberFormat(meanValue)]);
+
+  // Gráficas
+  const { graph } = raw;
+  const expenses = filterLimitDataForGraph<number>(
+    excludeInv ? graph.operationalExpenses : graph.expenses,
+    numMonths
+  );
+  const incomes = filterLimitDataForGraph<number>(
+    excludeInv ? graph.operationalIncomes : graph.incomes,
+    numMonths
+  );
+  const savings = filterLimitDataForGraph<number>(
+    excludeInv ? graph.operationalSavings : graph.savings,
+    numMonths
+  );
+
+  // Totales del mes seleccionado
+  const monthRow = raw.data.find((e) => e.date === getDateStartOfMonth(month));
+
+  return {
+    totalExpenses: monthRow ? (excludeInv ? monthRow.operationalExpense : monthRow.expense) : 0,
+    totalIncomes: monthRow ? (excludeInv ? monthRow.operationalIncome : monthRow.income) : 0,
+    totalSavings: monthRow ? (excludeInv ? monthRow.operationalSaving : monthRow.saving) : 0,
+    dataExpenses: expenses,
+    dataIncomes: incomes,
+    dataSavings: savings,
+    averageExpenses: calculateAverage(expenses),
+    previousAverageExpenses: calculateAverage(expenses.slice(0, -1)),
+    averageIncomes: calculateAverage(incomes),
+    previousAverageIncomes: calculateAverage(incomes.slice(0, -1)),
+    sumPreviousSavings: sum(savings.slice(0, -1)),
+    labels: filterLimitDataForGraph<string>(graph.labels, numMonths),
+    tableData,
+    historySavings: excludeInv ? graph.operationalSavings : graph.savings
+  };
+};
+
+// Ahorro histórico real y con préstamos
+const buildSavingsHistory = (history: number[], loans: Loans | undefined) => {
+  if (!loans) return { real: 0, withLoans: 0 };
+
+  const baseLoan = loans.find((e) => e.type === LOAN_TYPE_BASE);
+  const withLoans = sum(history) + (baseLoan ? baseLoan.amount : 0);
+  const otherLoans = sum(loans.filter((e) => e.type !== LOAN_TYPE_BASE).map((e) => e.amount));
+
+  return { real: withLoans - otherLoans, withLoans };
+};
 
 export default function CashFlowScreen({ navigation }: CashFlowScreenProps) {
   const config = screenConfigs.cashFlow;
   const colors = useThemeColors();
   const month = useSelector((state: RootState) => state.date.month);
 
-  const [totalExpenses, setTotalExpenses] = useState(0);
-  const [totalIncomes, setTotalIncomes] = useState(0);
-  const [totalSavings, setTotalSavings] = useState(0);
-  const [dataExpenses, setDataExpenses] = useState([0]);
-  const [dataIncomes, setDataIncomes] = useState([0]);
-  const [dataSavings, setDataSavings] = useState([0]);
-  const [averageExpenses, setAverageExpenses] = useState(0);
-  const [previousAverageExpenses, setPreviousAverageExpenses] = useState(0);
-  const [averageIncomes, setAverageIncomes] = useState(0);
-  const [previousAverageIncomes, setPreviousAverageIncomes] = useState(0);
-  const [sumPreviousSavings, setSumPreviousSavings] = useState(0);
-  const [numMonthsGraph, setNumMonthsGraph] = useState(4);
-  const [numMonthsQuery, setNumMonthsQuery] = useState(4);
-  const [totalSavingsHistory, setTotalSavingsHistory] = useState(0);
-  const [totalSavingsWithLoansHistory, setTotalSavingsWithLoansHistory] = useState(0);
-
-  const [labels, setLabels] = useState(['']);
-  const [loading, setLoading] = useState(false);
-  const [tableData, setTableData] = useState<string[][]>([]);
+  const [numMonthsQuery, setNumMonthsQuery] = useState(DEFAULT_NUM_MONTHS);
+  const [reloadToken, setReloadToken] = useState(0);
+  const [fetched, setFetched] = useState<FetchedData | null>(null);
+  const [updating, setUpdating] = useState(false);
 
   // Estado para mostrar/ocultar información sensible
   const [showSensitiveInfo, setShowSensitiveInfo] = useState(false);
 
-  // Datos crudos del último fetch + toggle de vista operativa
-  const [rawData, setRawData] = useState<GetSavingsByUserResponse | null>(null);
+  // Toggle de vista operativa
   const [excludeInvestments, setExcludeInvestments] = useState<boolean>(false);
 
-  const { loading: loadingGraphql, error, data } = useQuery<GetLoanResult>(GET_LOANS);
-
-  const fetchSavingsByUser = async (): Promise<void> => {
-    try {
-      setLoading(true);
-      const query = {
-        numMonths: numMonthsQuery
-      };
-      const { data } = await getSavingsByUser(query);
-      setLoading(false);
-      setRawData(data);
-    } catch (e) {
-      setLoading(false);
-      showError(e);
-    }
-  };
-  useEffect(() => {
-    if (!loadingGraphql && !error && data) {
-      fetchSavingsByUser();
-    }
-  }, [loadingGraphql, error, data]);
+  const { loading: loadingGraphql, error, data: loansData } = useQuery<GetLoanResult>(GET_LOANS);
 
   useEffect(() => {
     if (error) {
@@ -111,149 +195,62 @@ export default function CashFlowScreen({ navigation }: CashFlowScreenProps) {
     }
   }, [error]);
 
-  const setSearchTotalInMonth = (allData: FinancialRecord[], excludeInv: boolean): void => {
-    const startMonthFormat = getDateStartOfMonth(month);
-    const objData = allData.filter((e) => e.date === startMonthFormat);
-    let totalExpenseByMonth = 0;
-    let totalIncomeByMonth = 0;
-    let totalSavingByMonth = 0;
-    if (objData.length > 0) {
-      totalExpenseByMonth = excludeInv ? objData[0].operationalExpense : objData[0].expense;
-      totalIncomeByMonth = excludeInv ? objData[0].operationalIncome : objData[0].income;
-      totalSavingByMonth = excludeInv ? objData[0].operationalSaving : objData[0].saving;
-    }
-    setTotalExpenses(totalExpenseByMonth);
-    setTotalIncomes(totalIncomeByMonth);
-    setTotalSavings(totalSavingByMonth);
-  };
-  const historySaving = async (history: number[]) => {
-    let totalHistory = 0;
-    const acuHistorySavings = history.reduce((acu, val) => {
-      return acu + val;
-    }, 0);
-    totalHistory = acuHistorySavings;
-    if (data) {
-      const filter = data.loans.find((e) => e.type === 1);
-      if (filter) {
-        totalHistory += filter.amount;
-      }
-      const filterLoans = data.loans.filter((e) => e.type !== 1);
-      const acuLoans = filterLoans.reduce((acu, val) => {
-        return acu + val.amount;
-      }, 0);
-      setTotalSavingsWithLoansHistory(totalHistory);
-      totalHistory -= acuLoans;
-      setTotalSavingsHistory(totalHistory);
-    }
-  };
+  const requestKey = `${month}|${numMonthsQuery}|${reloadToken}`;
 
-  const processSavingsData = (data: GetSavingsByUserResponse, excludeInv: boolean): void => {
-    const allDataSavings = filterLimitDataForGraph<FinancialRecord>(data.data, numMonthsQuery);
+  // Carga al enfocar la pantalla y cuando cambia el mes, el rango o se pide recargar
+  useFocusEffect(
+    useCallback(() => {
+      let active = true;
 
-    const getSaving = (e: FinancialRecord) => (excludeInv ? e.operationalSaving : e.saving);
-    // const getExpense = (e: FinancialRecord) => (excludeInv ? e.operationalExpense : e.expense);
+      const load = async (): Promise<void> => {
+        try {
+          const { data: response } = await getSavingsByUser({ numMonths: numMonthsQuery });
+          if (active) setFetched({ key: requestKey, data: response });
+        } catch (e) {
+          if (!active) return;
+          showError(e);
+          // Conserva los datos previos de esta petición; si no hay, termina la carga vacía
+          setFetched((prev) => (prev?.key === requestKey ? prev : { key: requestKey, data: null }));
+        }
+      };
 
-    const sumPercentSaving = allDataSavings.reduce((acu, val) => {
-      const saving = getSaving(val);
-      return acu + (val.income > 0 ? (saving * 100) / val.income : 0);
-    }, 0);
-    const meanSavingsByNumMonths =
-      allDataSavings.length > 0 ? Math.round(sumPercentSaving / allDataSavings.length) : 0;
-    const dataTable = allDataSavings.map((e) => {
-      const saving = getSaving(e);
-      const meanSaaving = e.income > 0 ? Math.round((saving * 100) / e.income) : 0;
-      return [`${DateFormat(e.date, 'MMMM YYYY')}`, `${meanSaaving} %`, `${NumberFormat(saving)}`];
-    });
+      load();
 
-    const sumSaving = allDataSavings.reduce((acu, val) => acu + getSaving(val), 0);
-    const meanSavingsValByNumMonths =
-      allDataSavings.length > 0 ? sumSaving / allDataSavings.length : 0;
+      return () => {
+        active = false;
+      };
+    }, [requestKey, numMonthsQuery])
+  );
 
-    dataTable.push([
-      'Promedio',
-      `${meanSavingsByNumMonths} %`,
-      `${NumberFormat(meanSavingsValByNumMonths)}`
-    ]);
-    setTableData(dataTable);
+  // Hay carga mientras los datos no correspondan a la petición actual
+  const loading = updating || fetched?.key !== requestKey;
 
-    const filterLabels = filterLimitDataForGraph<string>(data.graph.labels, numMonthsQuery);
-    const filterExpenses = filterLimitDataForGraph<number>(
-      excludeInv ? data.graph.operationalExpenses : data.graph.expenses,
-      numMonthsQuery
-    );
-    const filterIncomes = filterLimitDataForGraph<number>(
-      excludeInv ? data.graph.operationalIncomes : data.graph.incomes,
-      numMonthsQuery
-    );
-    const filterSavings = filterLimitDataForGraph<number>(
-      excludeInv ? data.graph.operationalSavings : data.graph.savings,
-      numMonthsQuery
-    );
-    const previosExpenses = filterExpenses.slice(0);
-    previosExpenses.pop();
-    const previosIncomes = filterIncomes.slice(0);
-    previosIncomes.pop();
-    const previosSavings = filterSavings.slice(0);
-    previosSavings.pop();
+  const view = useMemo(
+    () => buildCashFlowView(fetched?.data ?? null, excludeInvestments, numMonthsQuery, month),
+    [fetched, excludeInvestments, numMonthsQuery, month]
+  );
 
-    setLabels(filterLabels);
-    setSearchTotalInMonth(data.data, excludeInv);
-
-    setDataExpenses(filterExpenses);
-    setAverageExpenses(calculateAverage(filterExpenses));
-    setPreviousAverageExpenses(calculateAverage(previosExpenses));
-
-    setDataIncomes(filterIncomes);
-    setAverageIncomes(calculateAverage(filterIncomes));
-    setPreviousAverageIncomes(calculateAverage(previosIncomes));
-
-    const acuPreviosSavings = previosSavings.reduce((acu, val) => acu + val, 0);
-    setDataSavings(filterSavings);
-    setSumPreviousSavings(acuPreviosSavings);
-
-    historySaving(excludeInv ? data.graph.operationalSavings : data.graph.savings);
-  };
-
-  // Recalcula tabla, gráficas y totales cada vez que cambian los datos crudos
-  // o el toggle de vista operativa. No dispara ningún request nuevo.
-  useEffect(() => {
-    if (!rawData) return;
-    processSavingsData(rawData, excludeInvestments);
-  }, [rawData, excludeInvestments]);
-
-  useEffect(() => {
-    fetchSavingsByUser();
-    return navigation.addListener('focus', () => {
-      fetchSavingsByUser();
-    });
-  }, [month, numMonthsQuery]);
+  const savingsHistory = useMemo(
+    () => buildSavingsHistory(view.historySavings, loansData?.loans),
+    [view.historySavings, loansData]
+  );
 
   const updateAllSavingsByUser = async () => {
     try {
-      setLoading(true);
-      const query = {
-        numMonths: numMonthsQuery
-      };
-      const { data } = await getUpdateAllSavingsByUser(query);
-      setLoading(false);
-      if (data.result) {
-        fetchSavingsByUser();
+      setUpdating(true);
+      const { data: result } = await getUpdateAllSavingsByUser({ numMonths: numMonthsQuery });
+      if (result.result) {
+        setReloadToken((token) => token + 1);
       }
-    } catch (error) {
-      setLoading(false);
-      showError(error);
+    } catch (e) {
+      showError(e);
+    } finally {
+      setUpdating(false);
     }
   };
 
-  const updateNum = (val: number) => {
-    setNumMonthsQuery(val);
-    setNumMonthsGraph(val);
-  };
-
   const tableHead = ['Mes', '% Ahorro', 'Valor'];
-  const sendGraphBalancesScreen = () => {
-    navigation.navigate('graphBalances');
-  };
+  const cardShadow = { shadowColor: colors.BLACK };
 
   return (
     <View style={[commonStyles.screenContentWithPadding, { backgroundColor: colors.BACKGROUND }]}>
@@ -275,8 +272,10 @@ export default function CashFlowScreen({ navigation }: CashFlowScreenProps) {
         ) : (
           <View>
             {/* Toggle vista operativa */}
-            <View style={[styles.natureToggle, { backgroundColor: colors.CARD_BACKGROUND }]}>
-              <View style={{ flex: 1 }}>
+            <View
+              style={[styles.natureToggle, cardShadow, { backgroundColor: colors.CARD_BACKGROUND }]}
+            >
+              <View style={styles.natureToggleInfo}>
                 <Text style={[styles.natureToggleLabel, { color: colors.TEXT_PRIMARY }]}>
                   Vista operativa
                 </Text>
@@ -294,7 +293,9 @@ export default function CashFlowScreen({ navigation }: CashFlowScreenProps) {
 
             {/* Cards minimalistas sin iconos */}
             <View style={styles.cardsGrid}>
-              <View style={[styles.miniCard, { backgroundColor: colors.CARD_BACKGROUND }]}>
+              <View
+                style={[styles.miniCard, cardShadow, { backgroundColor: colors.CARD_BACKGROUND }]}
+              >
                 <Text style={[styles.miniCardLabel, { color: colors.TEXT_SECONDARY }]}>
                   Ingresos
                 </Text>
@@ -303,22 +304,26 @@ export default function CashFlowScreen({ navigation }: CashFlowScreenProps) {
                   numberOfLines={1}
                   adjustsFontSizeToFit
                 >
-                  {NumberFormat(totalIncomes)}
+                  {NumberFormat(view.totalIncomes)}
                 </Text>
               </View>
 
-              <View style={[styles.miniCard, { backgroundColor: colors.CARD_BACKGROUND }]}>
+              <View
+                style={[styles.miniCard, cardShadow, { backgroundColor: colors.CARD_BACKGROUND }]}
+              >
                 <Text style={[styles.miniCardLabel, { color: colors.TEXT_SECONDARY }]}>Gastos</Text>
                 <Text
                   style={[styles.miniCardValue, { color: colors.ERROR }]}
                   numberOfLines={1}
                   adjustsFontSizeToFit
                 >
-                  {NumberFormat(totalExpenses)}
+                  {NumberFormat(view.totalExpenses)}
                 </Text>
               </View>
 
-              <View style={[styles.miniCard, { backgroundColor: colors.CARD_BACKGROUND }]}>
+              <View
+                style={[styles.miniCard, cardShadow, { backgroundColor: colors.CARD_BACKGROUND }]}
+              >
                 <Text style={[styles.miniCardLabel, { color: colors.TEXT_SECONDARY }]}>
                   Balance
                 </Text>
@@ -327,14 +332,14 @@ export default function CashFlowScreen({ navigation }: CashFlowScreenProps) {
                   numberOfLines={1}
                   adjustsFontSizeToFit
                 >
-                  {NumberFormat(totalSavings)}
+                  {NumberFormat(view.totalSavings)}
                 </Text>
               </View>
             </View>
 
             {/* Botón para info sensible */}
             <TouchableOpacity
-              style={[styles.toggleButton, { backgroundColor: colors.CARD_BACKGROUND }]}
+              style={[styles.toggleButton, cardShadow, { backgroundColor: colors.CARD_BACKGROUND }]}
               onPress={() => setShowSensitiveInfo(!showSensitiveInfo)}
               activeOpacity={0.7}
             >
@@ -351,7 +356,13 @@ export default function CashFlowScreen({ navigation }: CashFlowScreenProps) {
 
             {/* Info sensible colapsable */}
             {showSensitiveInfo && (
-              <View style={[styles.sensitiveSection, { backgroundColor: colors.CARD_BACKGROUND }]}>
+              <View
+                style={[
+                  styles.sensitiveSection,
+                  cardShadow,
+                  { backgroundColor: colors.CARD_BACKGROUND }
+                ]}
+              >
                 {/* Nota informativa */}
                 <View
                   style={[
@@ -378,7 +389,7 @@ export default function CashFlowScreen({ navigation }: CashFlowScreenProps) {
                       Promedio
                     </Text>
                     <Text style={[styles.historyValue, { color: colors.TEXT_PRIMARY }]}>
-                      {NumberFormat(averageIncomes)}
+                      {NumberFormat(view.averageIncomes)}
                     </Text>
                   </View>
                   <View style={styles.historyRow}>
@@ -386,7 +397,7 @@ export default function CashFlowScreen({ navigation }: CashFlowScreenProps) {
                       Anterior
                     </Text>
                     <Text style={[styles.historyValue, { color: colors.TEXT_PRIMARY }]}>
-                      {NumberFormat(previousAverageIncomes)}
+                      {NumberFormat(view.previousAverageIncomes)}
                     </Text>
                   </View>
                 </View>
@@ -401,7 +412,7 @@ export default function CashFlowScreen({ navigation }: CashFlowScreenProps) {
                       Promedio
                     </Text>
                     <Text style={[styles.historyValue, { color: colors.TEXT_PRIMARY }]}>
-                      {NumberFormat(averageExpenses)}
+                      {NumberFormat(view.averageExpenses)}
                     </Text>
                   </View>
                   <View style={styles.historyRow}>
@@ -409,7 +420,7 @@ export default function CashFlowScreen({ navigation }: CashFlowScreenProps) {
                       Anterior
                     </Text>
                     <Text style={[styles.historyValue, { color: colors.TEXT_PRIMARY }]}>
-                      {NumberFormat(previousAverageExpenses)}
+                      {NumberFormat(view.previousAverageExpenses)}
                     </Text>
                   </View>
                 </View>
@@ -424,7 +435,7 @@ export default function CashFlowScreen({ navigation }: CashFlowScreenProps) {
                       Anterior
                     </Text>
                     <Text style={[styles.historyValue, { color: colors.TEXT_PRIMARY }]}>
-                      {NumberFormat(sumPreviousSavings)}
+                      {NumberFormat(view.sumPreviousSavings)}
                     </Text>
                   </View>
                   <View style={styles.historyRow}>
@@ -432,7 +443,7 @@ export default function CashFlowScreen({ navigation }: CashFlowScreenProps) {
                       Histórico real
                     </Text>
                     <Text style={[styles.historyValue, { color: colors.TEXT_PRIMARY }]}>
-                      {NumberFormat(totalSavingsHistory)}
+                      {NumberFormat(savingsHistory.real)}
                     </Text>
                   </View>
                   <View style={styles.historyRow}>
@@ -440,7 +451,7 @@ export default function CashFlowScreen({ navigation }: CashFlowScreenProps) {
                       Con préstamos
                     </Text>
                     <Text style={[styles.historyValue, { color: colors.TEXT_PRIMARY }]}>
-                      {NumberFormat(totalSavingsWithLoansHistory)}
+                      {NumberFormat(savingsHistory.withLoans)}
                     </Text>
                   </View>
                 </View>
@@ -449,8 +460,12 @@ export default function CashFlowScreen({ navigation }: CashFlowScreenProps) {
 
             {/* Actualizar */}
             <TouchableOpacity
-              style={[styles.refreshButton, { backgroundColor: colors.CARD_BACKGROUND }]}
-              onPress={() => updateAllSavingsByUser()}
+              style={[
+                styles.refreshButton,
+                cardShadow,
+                { backgroundColor: colors.CARD_BACKGROUND }
+              ]}
+              onPress={updateAllSavingsByUser}
               activeOpacity={0.7}
             >
               <Text style={[styles.refreshText, { color: colors.TEXT_SECONDARY }]}>
@@ -459,11 +474,8 @@ export default function CashFlowScreen({ navigation }: CashFlowScreenProps) {
               <Icon type="material-community" name="refresh" size={18} color={colors.PRIMARY} />
             </TouchableOpacity>
 
-            {/* ========================================== */}
-            {/* NUEVA CARD DE ANÁLISIS DE AHORROS */}
-            {/* ========================================== */}
+            {/* Card de análisis de ahorros */}
             <SavingsAnalysisCard />
-            {/* ========================================== */}
           </View>
         )}
 
@@ -472,33 +484,37 @@ export default function CashFlowScreen({ navigation }: CashFlowScreenProps) {
           <View>
             <Text style={[styles.chartTitle, { color: colors.TEXT_PRIMARY }]}>Evolución</Text>
             <Text style={[styles.chartSubtitle, { color: colors.TEXT_SECONDARY }]}>
-              {numMonthsGraph} meses
+              {numMonthsQuery} meses
             </Text>
           </View>
-          <CheckBoxOptions navigation={navigation} updateNum={updateNum} />
+          <CheckBoxOptions navigation={navigation} updateNum={setNumMonthsQuery} />
         </View>
 
         {/* Gráfico */}
         <CashFlowLineChart
-          labels={labels}
-          dataExpenses={dataExpenses}
-          dataIncomes={dataIncomes}
-          dataSavings={dataSavings}
+          labels={view.labels}
+          dataExpenses={view.dataExpenses}
+          dataIncomes={view.dataIncomes}
+          dataSavings={view.dataSavings}
         />
 
         {/* Tabla */}
         <ModernTable
           tableHead={tableHead}
-          tableData={tableData}
+          tableData={view.tableData}
           columnWidths={[90, 90, 130]}
           columnAlignments={['left', 'center', 'right']}
-          highlightedRows={[tableData.length - 1]}
+          highlightedRows={[view.tableData.length - 1]}
         />
 
         {/* Botón */}
         {!loading && (
           <View style={styles.buttonContainer}>
-            <MyButton title="Más gráficas" onPress={sendGraphBalancesScreen} variant="primary" />
+            <MyButton
+              title="Más gráficas"
+              onPress={() => navigation.navigate('graphBalances')}
+              variant="primary"
+            />
           </View>
         )}
       </ScrollView>
@@ -529,11 +545,13 @@ const styles = StyleSheet.create({
     padding: 14,
     borderRadius: 12,
     marginBottom: 12,
-    shadowColor: '#000',
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.05,
     shadowRadius: 4,
     elevation: 2
+  },
+  natureToggleInfo: {
+    flex: 1
   },
   natureToggleLabel: {
     fontSize: 13,
@@ -552,7 +570,6 @@ const styles = StyleSheet.create({
     flex: 1,
     padding: 12,
     borderRadius: 12,
-    shadowColor: '#000',
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.05,
     shadowRadius: 4,
@@ -576,7 +593,6 @@ const styles = StyleSheet.create({
     padding: 14,
     borderRadius: 12,
     marginBottom: 12,
-    shadowColor: '#000',
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.05,
     shadowRadius: 4,
@@ -590,7 +606,6 @@ const styles = StyleSheet.create({
     padding: 16,
     borderRadius: 12,
     marginBottom: 12,
-    shadowColor: '#000',
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.05,
     shadowRadius: 4,
@@ -646,7 +661,6 @@ const styles = StyleSheet.create({
     padding: 12,
     borderRadius: 12,
     marginBottom: 16,
-    shadowColor: '#000',
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.05,
     shadowRadius: 4,

@@ -1,18 +1,20 @@
 import { parseAssetCommentary } from '~/utils/commentaryParser/assetParser';
-import { normalizeAlias } from '~/utils/commentaryParser/assetConcepts';
+import { ASSET_CONCEPTS, normalizeAlias } from '~/utils/commentaryParser/assetConcepts';
 import {
   getAssetTemplateConfig,
   validateAssetCommentary
 } from '~/utils/commentary/assetTemplates.utils';
 
-// // import {
-//   getAssetTemplateConfig,
-//   validateAssetCommentary
-// } from '~/utils/commentary/assetTemplates.utils';
-
 const COST = 1_000;
 const DATE = '2026-03-01';
 const parse = (t: string) => parseAssetCommentary(t, COST, DATE);
+
+// Falla con un mensaje claro si no hay plantilla (evita el operador "!")
+const getConfig = (...args: Parameters<typeof getAssetTemplateConfig>) => {
+  const config = getAssetTemplateConfig(...args);
+  if (!config) throw new Error(`Sin plantilla para "${args[1]}"`);
+  return config;
+};
 
 describe('parseAssetCommentary — adquisición', () => {
   it('Promesa / Abono / Saldo → cubeta purchase, investment', () => {
@@ -189,29 +191,28 @@ describe('getAssetTemplateConfig — detección', () => {
 });
 
 describe('chips → parser (cada chip debe parsear sin null)', () => {
-  const configs = [
-    getAssetTemplateConfig(
-      2001,
-      'Torre 2 Apt 1102 Mirador Villa Verde',
-      'Bancarios y de inversión'
-    ),
-    getAssetTemplateConfig(100_554, 'Arriendo Apt 1102', 'Ingresos')
-  ];
+  const expenseConfig = getConfig(
+    2001,
+    'Torre 2 Apt 1102 Mirador Villa Verde',
+    'Bancarios y de inversión'
+  );
+  const incomeConfig = getConfig(100_554, 'Arriendo Apt 1102', 'Ingresos');
 
   // El usuario reemplaza «Nombre» por el nombre real del bien
   const hydrate = (t: string) => t.replace('[Bien: Nombre]', '[Bien: Apt 1102]');
 
   it.each(
-    configs.flatMap((c) => c!.chips.map((chip) => [c!.chips.length, chip.label, chip.template]))
-  )('chip %s — %s', (_n, label, template) => {
-    const text = hydrate(template as string);
+    [expenseConfig, incomeConfig].flatMap((c) =>
+      c.chips.map((chip) => [chip.label, chip.template] as [string, string])
+    )
+  )('chip %s', (_label, template) => {
+    const text = hydrate(template);
     expect(parse(text)).not.toBeNull();
     expect(validateAssetCommentary(text).state).toBe('valid');
   });
 
   it('los chips de ingreso sin reemplazar «Nombre» avisan', () => {
-    const income = configs[1]!;
-    for (const chip of income.chips) {
+    for (const chip of incomeConfig.chips) {
       const v = validateAssetCommentary(chip.template);
       expect([chip.label, v.state, v.message]).toEqual([
         chip.label,
@@ -273,9 +274,8 @@ describe('Impuesto = Predial', () => {
 });
 
 describe('catálogo de conceptos — invariantes', () => {
-  // eslint-disable-next-line @typescript-eslint/no-var-requires
-  const { ASSET_CONCEPTS } = require('../../../utils/commentaryParser/assetConcepts');
-  const entries = Object.entries(ASSET_CONCEPTS) as [string, any][];
+  type ConceptInfo = (typeof ASSET_CONCEPTS)[keyof typeof ASSET_CONCEPTS];
+  const entries = Object.entries(ASSET_CONCEPTS) as [string, ConceptInfo][];
 
   it('ningún alias apunta a dos conceptos', () => {
     const seen = new Map<string, string>();
@@ -295,8 +295,10 @@ describe('catálogo de conceptos — invariantes', () => {
   });
 
   it('todo concepto con capitalRole "cost" es investment', () => {
-    for (const [, i] of entries)
-      if (i.capitalRole === 'cost') expect(i.expectedNature).toBe('investment');
+    const notInvestment = entries
+      .filter(([, i]) => i.capitalRole === 'cost' && i.expectedNature !== 'investment')
+      .map(([concept]) => concept);
+    expect(notInvestment).toEqual([]);
   });
 });
 

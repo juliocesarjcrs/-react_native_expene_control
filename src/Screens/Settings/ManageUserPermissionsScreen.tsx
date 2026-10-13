@@ -1,16 +1,13 @@
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import {
   StyleSheet,
   View,
   Text,
   ScrollView,
   ActivityIndicator,
-  Switch,
   Alert,
   TouchableOpacity
 } from 'react-native';
-import { StackNavigationProp } from '@react-navigation/stack';
-import { RouteProp } from '@react-navigation/native';
 
 // Components
 import { ScreenHeader } from '~/components/ScreenHeader';
@@ -25,7 +22,7 @@ import {
 import { getUsersList } from '~/services/users';
 
 // Types
-import { SettingsStackParamList, UserModel } from '../../shared/types';
+import { UserModel } from '../../shared/types';
 import { UserFeaturePermission, FeatureFlag } from '~/shared/types/models/feature-flags.type';
 
 // Utils
@@ -33,24 +30,23 @@ import { showError } from '~/utils/showError';
 import { useThemeColors } from '~/customHooks/useThemeColors';
 import { commonStyles } from '~/styles/common';
 
-type ManageUserPermissionsScreenNavigationProp = StackNavigationProp<
-  SettingsStackParamList,
-  'manageUserPermissions'
->;
-type ManageUserPermissionsScreenRouteProp = RouteProp<
-  SettingsStackParamList,
-  'manageUserPermissions'
->;
+const NORMAL_USER_ROLE = 0;
 
-interface ManageUserPermissionsScreenProps {
-  navigation: ManageUserPermissionsScreenNavigationProp;
-  route: ManageUserPermissionsScreenRouteProp;
-}
+const getToggleLabel = (status: boolean | null): string => {
+  if (status === null) return '🚫 Denegar';
+  if (status === false) return '✅ Permitir';
+  return '🔄 Resetear';
+};
 
-export default function ManageUserPermissionsScreen({
-  navigation,
-  route
-}: ManageUserPermissionsScreenProps) {
+const getPermissionLabel = (status: boolean | null, feature: FeatureFlag): string => {
+  if (status === null) {
+    // Sin permiso específico, usar default
+    return feature.defaultForUsers === 1 ? '✅ Por defecto' : '⚠️ No accesible';
+  }
+  return status ? '✅ Permitido' : '❌ Denegado';
+};
+
+export default function ManageUserPermissionsScreen() {
   const colors = useThemeColors();
   const [users, setUsers] = useState<UserModel[]>([]);
   const [selectedUser, setSelectedUser] = useState<UserModel | null>(null);
@@ -59,39 +55,49 @@ export default function ManageUserPermissionsScreen({
   const [loading, setLoading] = useState<boolean>(true);
   const [toggling, setToggling] = useState<string | null>(null);
 
-  useEffect(() => {
-    loadData();
-  }, []);
-
-  const loadData = async () => {
-    try {
-      setLoading(true);
-      const [usersData, featuresData] = await Promise.all([
-        getUsersList(), // Cargar todos los usuarios
-        getAllFeatures() // Cargar todas las features
-      ]);
-      setUsers(usersData.data.filter((u) => u.role === 0)); // Solo usuarios normales
-      setFeatures(featuresData);
-
-      if (usersData.data.length > 0) {
-        setSelectedUser(usersData.data[0]);
-        await loadUserPermissions(usersData.data[0].id);
-      }
-    } catch (error) {
-      showError(error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const loadUserPermissions = async (userId: number) => {
+  const loadUserPermissions = useCallback(async (userId: number) => {
     try {
       const perms = await getUserPermissions(userId);
       setPermissions(perms);
     } catch (error) {
       showError(error);
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    let isMounted = true;
+
+    const loadData = async () => {
+      try {
+        const [usersData, featuresData] = await Promise.all([
+          getUsersList(), // Cargar todos los usuarios
+          getAllFeatures() // Cargar todas las features
+        ]);
+        if (!isMounted) return;
+
+        // Solo usuarios normales
+        const normalUsers = usersData.data.filter((u) => u.role === NORMAL_USER_ROLE);
+        setUsers(normalUsers);
+        setFeatures(featuresData);
+
+        if (normalUsers.length > 0) {
+          setSelectedUser(normalUsers[0]);
+          const perms = await getUserPermissions(normalUsers[0].id);
+          if (isMounted) setPermissions(perms);
+        }
+      } catch (error) {
+        if (isMounted) showError(error);
+      } finally {
+        if (isMounted) setLoading(false);
+      }
+    };
+
+    loadData();
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
 
   const handleSelectUser = async (user: UserModel) => {
     setSelectedUser(user);
@@ -110,12 +116,10 @@ export default function ManageUserPermissionsScreen({
     try {
       setToggling(featureKey);
 
-      // Si no tiene permiso específico (null), crear permiso denegado
-      // Si está denegado (false), crear permiso permitido
-      // Si está permitido (true), revocar permiso (volver a default)
-
+      // Sin permiso específico (null) -> denegar
+      // Denegado (false) -> permitir
+      // Permitido (true) -> revocar (volver a default)
       if (currentValue === null) {
-        // Denegar
         await grantUserPermission({
           userId: selectedUser.id,
           featureKey,
@@ -123,7 +127,6 @@ export default function ManageUserPermissionsScreen({
           reason: 'Permiso denegado manualmente'
         });
       } else if (currentValue === false) {
-        // Permitir
         await grantUserPermission({
           userId: selectedUser.id,
           featureKey,
@@ -131,7 +134,6 @@ export default function ManageUserPermissionsScreen({
           reason: 'Permiso otorgado manualmente'
         });
       } else {
-        // Revocar (volver a default)
         await revokeUserPermission(selectedUser.id, featureKey);
       }
 
@@ -144,14 +146,6 @@ export default function ManageUserPermissionsScreen({
     } finally {
       setToggling(null);
     }
-  };
-
-  const getPermissionLabel = (status: boolean | null, feature: FeatureFlag): string => {
-    if (status === null) {
-      // Sin permiso específico, usar default
-      return feature.defaultForUsers === 1 ? '✅ Por defecto' : '⚠️ No accesible';
-    }
-    return status ? '✅ Permitido' : '❌ Denegado';
   };
 
   if (loading) {
@@ -228,11 +222,7 @@ export default function ManageUserPermissionsScreen({
                       onPress={() => handleTogglePermission(feature.featureKey, permissionStatus)}
                     >
                       <Text style={styles.toggleButtonText}>
-                        {permissionStatus === null
-                          ? '🚫 Denegar'
-                          : permissionStatus === false
-                            ? '✅ Permitir'
-                            : '🔄 Resetear'}
+                        {getToggleLabel(permissionStatus)}
                       </Text>
                     </TouchableOpacity>
                   )}

@@ -1,4 +1,12 @@
-import React, { createContext, useState, useEffect, useContext, ReactNode } from 'react';
+import React, {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useState,
+  ReactNode
+} from 'react';
 import { ThemeColors } from '../shared/types/services/theme-config-service.type';
 import { ThemeConfig } from '~/shared/types/models/theme-config.type';
 import { showError } from '~/utils/showError';
@@ -40,7 +48,17 @@ const DEFAULT_COLORS: ThemeColors = {
   BORDER: '#e0e0e0'
 };
 
-const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
+// Obtiene el tema del usuario actual; si falla, muestra el error y devuelve null
+const fetchTheme = async (): Promise<UserThemeConfig | null> => {
+  try {
+    return await getMyTheme();
+  } catch (error) {
+    showError(error);
+    return null;
+  }
+};
+
+export const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 
 type ThemeProviderProps = {
   children: ReactNode;
@@ -48,59 +66,59 @@ type ThemeProviderProps = {
 
 export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
   const [userTheme, setUserTheme] = useState<UserThemeConfig | null>(null);
-  const [colors, setColors] = useState<ThemeColors>(DEFAULT_COLORS);
   const [loading, setLoading] = useState<boolean>(true);
   const [availableThemes, setAvailableThemes] = useState<ThemeConfig[]>([]);
 
+  // Si no hay tema (aún no cargó o hubo error) se usan los colores por defecto
+  const colors = userTheme?.colors ?? DEFAULT_COLORS;
+
+  // Carga inicial (loading ya inicia en true)
   useEffect(() => {
-    loadTheme();
+    let isMounted = true;
+
+    const loadInitialTheme = async () => {
+      const theme = await fetchTheme();
+      if (!isMounted) return;
+      setUserTheme(theme);
+      setLoading(false);
+    };
+
+    loadInitialTheme();
+
+    return () => {
+      isMounted = false;
+    };
   }, []);
 
-  const loadTheme = async () => {
-    try {
-      setLoading(true);
-      // Obtener el tema configurado para el usuario actual
-      const themeConfig = await getMyTheme();
-      setUserTheme(themeConfig);
-      setColors(themeConfig.colors);
-    } catch (error) {
-      showError(error);
-      // En caso de error, usar colores por defecto
-      setColors(DEFAULT_COLORS);
-    } finally {
-      setLoading(false);
-    }
-  };
+  const refreshTheme = useCallback(async () => {
+    setLoading(true);
+    setUserTheme(await fetchTheme());
+    setLoading(false);
+  }, []);
 
-  const loadAvailableThemes = async () => {
+  const loadAvailableThemes = useCallback(async () => {
     try {
-      const themes = await getAvailableThemes();
-      setAvailableThemes(themes);
+      setAvailableThemes(await getAvailableThemes());
     } catch (error) {
       showError(error);
     }
-  };
+  }, []);
 
-  const refreshTheme = async () => {
-    await loadTheme();
-  };
-
-  return (
-    <ThemeContext.Provider
-      value={{
-        userTheme,
-        colors,
-        loading,
-        refreshTheme,
-        themeName: userTheme?.themeName || 'default',
-        isCustomTheme: userTheme?.isCustom || false,
-        availableThemes,
-        loadAvailableThemes
-      }}
-    >
-      {children}
-    </ThemeContext.Provider>
+  const value = useMemo<ThemeContextType>(
+    () => ({
+      userTheme,
+      colors,
+      loading,
+      refreshTheme,
+      themeName: userTheme?.themeName ?? 'default',
+      isCustomTheme: userTheme?.isCustom ?? false,
+      availableThemes,
+      loadAvailableThemes
+    }),
+    [userTheme, colors, loading, refreshTheme, availableThemes, loadAvailableThemes]
   );
+
+  return <ThemeContext.Provider value={value}>{children}</ThemeContext.Provider>;
 };
 
 export const useTheme = (): ThemeContextType => {

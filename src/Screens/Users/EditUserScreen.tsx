@@ -45,7 +45,31 @@ type EditUserFormData = {
   name: string;
 };
 
+type PickedImage = {
+  uri: string;
+  type: string;
+  name: string;
+};
+
+const requestPermissions = async (): Promise<void> => {
+  if (Platform.OS === 'web') return;
+
+  const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+  if (status !== 'granted') {
+    Alert.alert('Permisos requeridos', 'Necesitamos permisos para acceder a tu galería de fotos');
+  }
+};
+
+// Infiere el tipo MIME a partir de la extensión (jpg -> jpeg)
+const inferImageType = (fileName: string): string => {
+  const match = /\.(\w+)$/.exec(fileName);
+  if (!match) return 'image/jpeg';
+  const extension = match[1].toLowerCase();
+  return `image/${extension === 'jpg' ? 'jpeg' : extension}`;
+};
+
 export default function EditUserScreen({ navigation }: EditUserScreenProps) {
+  const screenConfig = screenConfigs.editUser;
   const colors = useThemeColors();
   const dispatch = useDispatch();
 
@@ -54,101 +78,87 @@ export default function EditUserScreen({ navigation }: EditUserScreenProps) {
   });
 
   const [idUser, setIdUser] = useState<number | null>(null);
-  const [image, setImage] = useState<string | null>(null);
-  const [saveImage, setSaveImage] = useState<string | null>(null);
-  const [type, setType] = useState<string | null>(null);
-  const [fileName, setFileName] = useState<string | null>(null);
+  const [pickedImage, setPickedImage] = useState<PickedImage | null>(null);
+  const [remoteImage, setRemoteImage] = useState<string | null>(null);
   const [loading, setLoading] = useState<boolean>(false);
 
-  const requestPermissions = async (): Promise<void> => {
-    if (Platform.OS !== 'web') {
-      const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
-      if (status !== 'granted') {
-        Alert.alert(
-          'Permisos requeridos',
-          'Necesitamos permisos para acceder a tu galería de fotos'
-        );
-      }
-    }
-  };
-  const getUrlAws = async (keyImg: string): Promise<void> => {
-    try {
-      if (keyImg) {
-        setLoading(true);
-        const query = { file: keyImg };
-        const { data } = await getUrlSignedAws(query);
-        setLoading(false);
-        setSaveImage(data);
-      }
-    } catch (error) {
-      setLoading(false);
-      showError(error);
-    }
-  };
+  const previewUri = pickedImage?.uri ?? remoteImage;
 
-  const fetchData = async (): Promise<void> => {
-    try {
-      const jsonValue = await AsyncStorage.getItem('user');
-      const user: UserModel | null = jsonValue != null ? JSON.parse(jsonValue) : null;
-
-      if (!user) {
-        showError(new Error('No se encontró el usuario'));
-        return;
-      }
-
-      const { data } = await getUser(user.id);
-      setValue('email', data.email);
-      setValue('name', data.name);
-
-      if (data.image) {
-        getUrlAws(data.image);
-      }
-
-      setIdUser(data.id);
-    } catch (error) {
-      showError(error);
-    }
-  };
   useEffect(() => {
     requestPermissions();
   }, []);
 
   useEffect(() => {
-    fetchData();
-    const unsubscribe = navigation.addListener('focus', () => {
-      fetchData();
-    });
-    return unsubscribe;
-  }, [navigation]);
+    let isMounted = true;
+
+    const loadUser = async (): Promise<void> => {
+      try {
+        const jsonValue = await AsyncStorage.getItem('user');
+        const storedUser: UserModel | null = jsonValue ? JSON.parse(jsonValue) : null;
+
+        if (!storedUser) {
+          showError(new Error('No se encontró el usuario'));
+          return;
+        }
+
+        const { data } = await getUser(storedUser.id);
+        if (!isMounted) return;
+
+        setValue('email', data.email);
+        setValue('name', data.name);
+        setIdUser(data.id);
+
+        if (data.image) {
+          const { data: signedUrl } = await getUrlSignedAws({ file: data.image });
+          if (isMounted) setRemoteImage(signedUrl);
+        }
+      } catch (error) {
+        if (isMounted) showError(error);
+      }
+    };
+
+    // 'focus' también se dispara en el primer enfoque de la pantalla.
+    const unsubscribe = navigation.addListener('focus', loadUser);
+
+    return () => {
+      isMounted = false;
+      unsubscribe();
+    };
+  }, [navigation, setValue]);
 
   const onSubmit = async (payload: EditUserFormData): Promise<void> => {
+    if (!idUser) {
+      showError(new Error('ID de usuario no encontrado'));
+      return;
+    }
+
     try {
-      if (!idUser) {
-        showError(new Error('ID de usuario no encontrado'));
-        return;
-      }
+      setLoading(true);
 
       const formData = new FormData();
       formData.append('email', payload.email);
       formData.append('name', payload.name);
 
-      if (image && type && fileName) {
+      if (pickedImage) {
+        // React Native acepta este objeto como archivo en FormData
         formData.append('image', {
-          type: type,
-          uri: image,
-          name: fileName
-        } as any);
+          type: pickedImage.type,
+          uri: pickedImage.uri,
+          name: pickedImage.name
+        } as unknown as Blob);
       }
 
-      setLoading(true);
-      const { data } = await editUser(idUser, formData as any);
-      setLoading(false);
+      const { data } = await editUser(
+        idUser,
+        formData as unknown as Parameters<typeof editUser>[1]
+      );
 
       dispatch(setUser(data));
       ShowToast('Perfil actualizado exitosamente');
     } catch (error) {
-      setLoading(false);
       showError(error);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -161,26 +171,22 @@ export default function EditUserScreen({ navigation }: EditUserScreenProps) {
         quality: 1
       });
 
-      if (!result.canceled && result.assets && result.assets.length > 0) {
-        const selectedImage = result.assets[0];
-        setImage(selectedImage.uri);
+      if (result.canceled) return;
 
-        const localUri = selectedImage.uri;
-        const nameImagen = localUri.split('/').pop() || 'image.jpg';
+      const [asset] = result.assets;
+      if (!asset) return;
 
-        // Inferir el tipo de imagen
-        const match = /\.(\w+)$/.exec(nameImagen);
-        const imageType = match ? `image/${match[1]}` : `image`;
+      const name = asset.fileName ?? asset.uri.split('/').pop() ?? 'image.jpg';
 
-        setType(imageType);
-        setFileName(nameImagen);
-      }
+      setPickedImage({
+        uri: asset.uri,
+        name,
+        type: asset.mimeType ?? inferImageType(name)
+      });
     } catch (error) {
       showError(error);
     }
   };
-
-  const screenConfig = screenConfigs.editUser;
 
   return (
     <View style={[commonStyles.screenContainer, { backgroundColor: colors.BACKGROUND }]}>
@@ -231,9 +237,9 @@ export default function EditUserScreen({ navigation }: EditUserScreenProps) {
 
           <MyButton title="Seleccionar imagen" onPress={pickImage} />
 
-          {(image || saveImage) && (
+          {previewUri && (
             <View style={[styles.imageContainer, { borderColor: colors.BORDER }]}>
-              <Image source={{ uri: image || saveImage || '' }} style={styles.image} />
+              <Image source={{ uri: previewUri }} style={styles.image} />
             </View>
           )}
         </View>

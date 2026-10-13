@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import {
   SubcategoryTemplateConfig,
   HistorySuggestion,
@@ -31,95 +31,120 @@ interface UseCommentaryInputReturn {
   openSuggestions: () => void;
 }
 
+type CachedHistory = Awaited<ReturnType<typeof getCachedHistory>>;
+
 const DEBOUNCE_MS = 200;
+
+// Referencias estables (evitan invalidar los useMemo en cada render)
+const NO_EXPENSES: RecentExpenseForSuggestion[] = [];
+const EMPTY_CACHE = [] as unknown as CachedHistory;
+const NEUTRAL_VALIDATION: CommentaryValidationResult = { state: 'neutral' };
 
 export const useCommentaryInput = ({
   subcategoryId,
   subcategoryName,
   categoryName,
-  recentExpenses = [],
+  recentExpenses = NO_EXPENSES,
   currentValue
 }: UseCommentaryInputProps): UseCommentaryInputReturn => {
-  const [templateConfig, setTemplateConfig] = useState<SubcategoryTemplateConfig | null>(null);
-  const [allSuggestions, setAllSuggestions] = useState<HistorySuggestion[]>([]);
-  const [filteredSuggestions, setFilteredSuggestions] = useState<HistorySuggestion[]>([]);
+  // Cada resultado guarda la clave para la que se cargó. Si la clave actual
+  // no coincide, el dato se considera inexistente (sin tener que "limpiar" estado).
+  const [configState, setConfigState] = useState<{
+    key: string;
+    config: SubcategoryTemplateConfig | null;
+  } | null>(null);
+  const [cacheState, setCacheState] = useState<{
+    subcategoryId: number;
+    cached: CachedHistory;
+  } | null>(null);
+  const [debouncedValue, setDebouncedValue] = useState(currentValue);
   const [showSuggestions, setShowSuggestions] = useState(false);
-  const [validation, setValidation] = useState<CommentaryValidationResult>({ state: 'neutral' });
-  const [loading, setLoading] = useState(false);
 
-  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const configKey =
+    subcategoryId && subcategoryName && categoryName
+      ? `${subcategoryId}|${subcategoryName}|${categoryName}`
+      : null;
 
-  // ── Cargar config + historial cuando cambia la subcategoría ──
+  // ── Cargar config cuando cambia la subcategoría ──
   useEffect(() => {
-    if (!subcategoryId || !subcategoryName || !categoryName) {
-      setTemplateConfig(null);
-      setAllSuggestions([]);
-      return;
-    }
+    if (!configKey || !subcategoryId || !subcategoryName || !categoryName) return;
 
     let cancelled = false;
 
     const load = async () => {
-      setLoading(true);
       try {
-        const [config, cached] = await Promise.all([
-          getTemplateConfig(subcategoryId, subcategoryName, categoryName),
-          getCachedHistory(subcategoryId)
-        ]);
-
-        if (cancelled) return;
-
-        setTemplateConfig(config);
-
-        const merged = mergeHistorySuggestions(recentExpenses, cached);
-        setAllSuggestions(merged);
-        setFilteredSuggestions(merged);
-      } finally {
-        if (!cancelled) setLoading(false);
+        const config = await getTemplateConfig(subcategoryId, subcategoryName, categoryName);
+        if (!cancelled) setConfigState({ key: configKey, config });
+      } catch {
+        // Si falla, se continúa sin plantilla (y se termina el loading)
+        if (!cancelled) setConfigState({ key: configKey, config: null });
       }
     };
 
     load();
+
     return () => {
       cancelled = true;
     };
-  }, [subcategoryId, subcategoryName, categoryName]);
+  }, [configKey, subcategoryId, subcategoryName, categoryName]);
 
-  // ── Actualizar sugerencias cuando lleguen recentExpenses del backend ──
+  // ── Cargar historial cacheado (y recargarlo cuando llegan recentExpenses) ──
   useEffect(() => {
     if (!subcategoryId) return;
 
-    getCachedHistory(subcategoryId).then((cached) => {
-      const merged = mergeHistorySuggestions(recentExpenses, cached);
-      setAllSuggestions(merged);
-      setFilteredSuggestions(filterSuggestions(merged, currentValue));
-    });
-  }, [recentExpenses]);
+    let cancelled = false;
 
-  // ── Filtrar sugerencias + validar con debounce ──
-  useEffect(() => {
-    if (debounceRef.current) clearTimeout(debounceRef.current);
-
-    debounceRef.current = setTimeout(() => {
-      setFilteredSuggestions(filterSuggestions(allSuggestions, currentValue));
-
-      if (templateConfig) {
-        setValidation(validateCommentary(currentValue, templateConfig));
+    const load = async () => {
+      try {
+        const cached = await getCachedHistory(subcategoryId);
+        if (!cancelled) setCacheState({ subcategoryId, cached });
+      } catch {
+        if (!cancelled) setCacheState({ subcategoryId, cached: EMPTY_CACHE });
       }
-    }, DEBOUNCE_MS);
+    };
+
+    load();
 
     return () => {
-      if (debounceRef.current) clearTimeout(debounceRef.current);
+      cancelled = true;
     };
-  }, [currentValue, allSuggestions, templateConfig]);
+  }, [subcategoryId, recentExpenses]);
+
+  // ── Debounce del valor escrito ──
+  useEffect(() => {
+    const timeout = setTimeout(() => setDebouncedValue(currentValue), DEBOUNCE_MS);
+    return () => clearTimeout(timeout);
+  }, [currentValue]);
+
+  // ── Estado derivado ──
+  const templateConfig = configState?.key === configKey ? configState.config : null;
+  const loading = configKey !== null && configState?.key !== configKey;
+
+  const cached = cacheState?.subcategoryId === subcategoryId ? cacheState.cached : EMPTY_CACHE;
+
+  const allSuggestions = useMemo(
+    () => (subcategoryId ? mergeHistorySuggestions(recentExpenses, cached) : []),
+    [subcategoryId, recentExpenses, cached]
+  );
+
+  const filteredSuggestions = useMemo(
+    () => filterSuggestions(allSuggestions, debouncedValue),
+    [allSuggestions, debouncedValue]
+  );
+
+  const validation = useMemo<CommentaryValidationResult>(
+    () =>
+      templateConfig ? validateCommentary(debouncedValue, templateConfig) : NEUTRAL_VALIDATION,
+    [templateConfig, debouncedValue]
+  );
 
   const hideSuggestions = useCallback(() => setShowSuggestions(false), []);
 
-  // FIX: abrir dropdown si hay sugerencias YA filtradas, no allSuggestions
-  // Evita que no abra cuando allSuggestions aún está vacío al hacer focus
+  // Abre el dropdown solo si ya hay sugerencias filtradas
+  const hasSuggestions = filteredSuggestions.length > 0;
   const openSuggestions = useCallback(() => {
-    if (filteredSuggestions.length > 0) setShowSuggestions(true);
-  }, [filteredSuggestions]);
+    if (hasSuggestions) setShowSuggestions(true);
+  }, [hasSuggestions]);
 
   return {
     templateConfig,

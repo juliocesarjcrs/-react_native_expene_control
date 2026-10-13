@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import {
   ScrollView,
   StyleSheet,
@@ -41,61 +41,122 @@ import { MEDIUM, SMALL } from '~/styles/fonts';
 // Configs
 import { screenConfigs } from '~/config/screenConfigs';
 
-type VirtualBudgetScreenNavigationProp = StackNavigationProp<SettingsStackParamList, 'exportData'>;
+type VirtualBudgetScreenNavigationProp = StackNavigationProp<
+  SettingsStackParamList,
+  'virtualBudget'
+>;
 
 interface VirtualBudgetScreenProps {
   navigation: VirtualBudgetScreenNavigationProp;
 }
 
+type AppColors = ReturnType<typeof useThemeColors>;
+
+type ScreenData = {
+  categories: CategoryExpense[];
+  budgets: CreateBudgetPayload[];
+  averages: Map<number, number>;
+};
+
+// ====================================
+// Funciones de carga (a nivel de módulo)
+// ====================================
+
+const fetchBudgets = async (year: number, city: string): Promise<CreateBudgetPayload[]> => {
+  const { data } = await getBudgets({ year, city });
+  return data.data;
+};
+
+// Promedios mensuales por categoría del año en curso
+const fetchCurrentYearAverages = async (): Promise<Map<number, number>> => {
+  const averages = new Map<number, number>();
+  try {
+    const currentYear = new Date().getFullYear();
+    const { data } = await getAverageBySubcategories({
+      year: currentYear,
+      referenceYear: currentYear,
+      nature: 'operational'
+    });
+    data.data.forEach((category) => {
+      averages.set(category.categoryId, category.averageMonthly);
+    });
+  } catch {
+    // Silencioso: si fallan los promedios no se muestra error
+  }
+  return averages;
+};
+
+const fetchScreenData = async (year: number, city: string): Promise<ScreenData> => {
+  const [categoriesResponse, budgets, averages] = await Promise.all([
+    getCategoryWithSubcategories(),
+    fetchBudgets(year, city),
+    fetchCurrentYearAverages()
+  ]);
+  return { categories: categoriesResponse.data.data, budgets, averages };
+};
+
 export default function VirtualBudgetScreen({ navigation }: VirtualBudgetScreenProps) {
   const config = screenConfigs.virtualBudget;
   const colors = useThemeColors();
 
-  const [loading, setLoading] = useState<boolean>(false);
+  const [loading, setLoading] = useState<boolean>(true);
   const [categories, setCategories] = useState<CategoryExpense[]>([]);
   const [budgetValues, setBudgetValues] = useState<CreateBudgetPayload[]>([]);
   const [selectedYear, setSelectedYear] = useState<number>(new Date().getFullYear());
   const [selectedCity, setSelectedCity] = useState<string>('Pereira');
   const [expandedCategories, setExpandedCategories] = useState<number[]>([]);
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState<boolean>(false);
-  const [referenceYear, setReferenceYear] = useState<number>(new Date().getFullYear() - 1);
   const [loadingAverage, setLoadingAverage] = useState<boolean>(false);
   const [categoryAverages, setCategoryAverages] = useState<Map<number, number>>(new Map());
 
-  useEffect(() => {
-    fetchData();
-    const unsubscribe = navigation.addListener('focus', () => {
-      fetchData();
-    });
-    return unsubscribe;
-  }, [navigation]);
+  // Año de referencia elegido manualmente. Solo vale para el año seleccionado
+  // en el que se eligió; si cambia el año, vuelve al valor por defecto.
+  const [referenceYearChoice, setReferenceYearChoice] = useState<{
+    forYear: number;
+    year: number;
+  } | null>(null);
+  const referenceYear =
+    referenceYearChoice?.forYear === selectedYear ? referenceYearChoice.year : selectedYear - 1;
 
-  // Actualizar año de referencia cuando cambia el año seleccionado
-  useEffect(() => {
-    setReferenceYear(selectedYear - 1);
-  }, [selectedYear]);
+  const applyScreenData = useCallback((data: ScreenData) => {
+    setCategories(data.categories);
+    setBudgetValues(data.budgets);
+    setCategoryAverages(data.averages);
+    setHasUnsavedChanges(false); // los datos locales se reemplazaron por los del servidor
+  }, []);
 
-  const fetchData = async (): Promise<void> => {
+  // Recarga al enfocar la pantalla (también en el primer enfoque)
+  useEffect(() => {
+    let isMounted = true;
+
+    const loadOnFocus = async (): Promise<void> => {
+      try {
+        const data = await fetchScreenData(selectedYear, selectedCity);
+        if (isMounted) applyScreenData(data);
+      } catch (error) {
+        if (isMounted) showError(error);
+      } finally {
+        if (isMounted) setLoading(false);
+      }
+    };
+
+    const unsubscribe = navigation.addListener('focus', loadOnFocus);
+
+    return () => {
+      isMounted = false;
+      unsubscribe();
+    };
+  }, [navigation, selectedYear, selectedCity, applyScreenData]);
+
+  // Botón "Consultar" (con spinner)
+  const handleConsult = async (): Promise<void> => {
     try {
       setLoading(true);
-      const { data } = await getCategoryWithSubcategories();
-      setCategories(data.data);
-      await fetchGetBudgets();
-      await fetchCurrentYearAverages(); // Cargar promedios del año en curso
-      setLoading(false);
-    } catch (error) {
-      setLoading(false);
-      showError(error);
-    }
-  };
-
-  const fetchGetBudgets = async (): Promise<void> => {
-    try {
-      const query = { year: selectedYear, city: selectedCity };
-      const { data } = await getBudgets(query);
-      setBudgetValues(data.data);
+      applyScreenData(await fetchScreenData(selectedYear, selectedCity));
     } catch (error) {
       showError(error);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -105,24 +166,24 @@ export default function VirtualBudgetScreen({ navigation }: VirtualBudgetScreenP
     text: string
   ): void => {
     const value = parseFormattedNumber(text);
-    const updatedBudgets = [...budgetValues];
-    const existingBudgetIndex = updatedBudgets.findIndex(
-      (budget) => budget.categoryId === categoryId && budget.subcategoryId === subcategoryId
-    );
+    const isTarget = (budget: CreateBudgetPayload) =>
+      budget.categoryId === categoryId && budget.subcategoryId === subcategoryId;
 
-    if (existingBudgetIndex !== -1) {
-      updatedBudgets[existingBudgetIndex].budget = value;
-    } else {
-      updatedBudgets.push({
-        budget: value,
-        year: selectedYear,
-        city: selectedCity,
-        categoryId,
-        subcategoryId
-      });
-    }
-
-    setBudgetValues(updatedBudgets);
+    setBudgetValues((prev) => {
+      if (prev.some(isTarget)) {
+        return prev.map((budget) => (isTarget(budget) ? { ...budget, budget: value } : budget));
+      }
+      return [
+        ...prev,
+        {
+          budget: value,
+          year: selectedYear,
+          city: selectedCity,
+          categoryId,
+          subcategoryId
+        }
+      ];
+    });
     setHasUnsavedChanges(true); // Marcar cambios pendientes
   };
 
@@ -131,46 +192,56 @@ export default function VirtualBudgetScreen({ navigation }: VirtualBudgetScreenP
     return NumberFormat(total);
   };
 
-  const calculateCategoryTotal = (categoryId: number): number => {
-    return budgetValues
+  const calculateCategoryTotal = (categoryId: number): number =>
+    budgetValues
       .filter((budget) => budget.categoryId === categoryId)
       .reduce((acc, budget) => acc + budget.budget, 0);
-  };
 
   const handleSaveBudget = async (): Promise<void> => {
     try {
       setLoading(true);
       await createBudgets(budgetValues);
-      await fetchGetBudgets();
-      setLoading(false);
+      setBudgetValues(await fetchBudgets(selectedYear, selectedCity));
       setHasUnsavedChanges(false); // Quitar marca de cambios pendientes
       ShowToast('Presupuesto guardado exitosamente');
     } catch (error) {
-      setLoading(false);
       showError(error);
+    } finally {
+      setLoading(false);
     }
   };
 
-  const handleAutoComplete = (): void => {
-    Alert.alert(
-      'Auto-completar desde Gastos',
-      `¿Calcular el presupuesto basado en el promedio de gastos del año ${referenceYear}?`,
-      [
-        {
-          text: 'Cancelar',
-          style: 'cancel'
-        },
-        {
-          text: 'Cambiar año',
-          onPress: () => showYearPicker()
-        },
-        {
-          text: 'Continuar',
-          onPress: () => fetchAverageAndFill(referenceYear),
-          style: 'default'
-        }
-      ]
-    );
+  const fetchAverageAndFill = async (year: number): Promise<void> => {
+    try {
+      setLoadingAverage(true);
+      const { data } = await getAverageBySubcategories({
+        year: selectedYear,
+        referenceYear: year,
+        nature: 'operational'
+      });
+
+      // Crear nuevos valores de presupuesto basados en los promedios
+      const newBudgetValues: CreateBudgetPayload[] = data.data.flatMap((category) =>
+        category.subcategories
+          .filter((subcategory) => subcategory.averageMonthly > 0)
+          .map((subcategory) => ({
+            budget: subcategory.averageMonthly,
+            year: selectedYear,
+            city: selectedCity,
+            categoryId: category.categoryId,
+            subcategoryId: subcategory.subcategoryId
+          }))
+      );
+
+      setBudgetValues(newBudgetValues);
+      setHasUnsavedChanges(true);
+      setReferenceYearChoice({ forYear: selectedYear, year });
+      ShowToast(`Presupuesto calculado desde año ${year}`);
+    } catch (error) {
+      showError(error);
+    } finally {
+      setLoadingAverage(false);
+    }
   };
 
   const showYearPicker = (): void => {
@@ -189,62 +260,26 @@ export default function VirtualBudgetScreen({ navigation }: VirtualBudgetScreenP
     ]);
   };
 
-  const fetchAverageAndFill = async (year: number): Promise<void> => {
-    try {
-      setLoadingAverage(true);
-      const { data } = await getAverageBySubcategories({
-        year: selectedYear,
-        referenceYear: year,
-        nature: 'operational'
-      });
-
-      // Crear nuevos valores de presupuesto basados en los promedios
-      const newBudgetValues: CreateBudgetPayload[] = [];
-
-      data.data.forEach((category) => {
-        category.subcategories.forEach((subcategory) => {
-          if (subcategory.averageMonthly > 0) {
-            newBudgetValues.push({
-              budget: subcategory.averageMonthly,
-              year: selectedYear,
-              city: selectedCity,
-              categoryId: category.categoryId,
-              subcategoryId: subcategory.subcategoryId
-            });
-          }
-        });
-      });
-
-      setBudgetValues(newBudgetValues);
-      setHasUnsavedChanges(true);
-      setReferenceYear(year);
-      setLoadingAverage(false);
-      ShowToast(`Presupuesto calculado desde año ${year}`);
-    } catch (error) {
-      setLoadingAverage(false);
-      showError(error);
-    }
-  };
-
-  const fetchCurrentYearAverages = async (): Promise<void> => {
-    try {
-      const currentYear = new Date().getFullYear();
-      const { data } = await getAverageBySubcategories({
-        year: currentYear,
-        referenceYear: currentYear,
-        nature: 'operational'
-      });
-
-      // Crear mapa de promedios por categoría
-      const averagesMap = new Map<number, number>();
-      data.data.forEach((category) => {
-        averagesMap.set(category.categoryId, category.averageMonthly);
-      });
-
-      setCategoryAverages(averagesMap);
-    } catch {
-      // Silencioso - no mostrar error si falla la carga de promedios
-    }
+  const handleAutoComplete = (): void => {
+    Alert.alert(
+      'Auto-completar desde Gastos',
+      `¿Calcular el presupuesto basado en el promedio de gastos del año ${referenceYear}?`,
+      [
+        {
+          text: 'Cancelar',
+          style: 'cancel'
+        },
+        {
+          text: 'Cambiar año',
+          onPress: showYearPicker
+        },
+        {
+          text: 'Continuar',
+          onPress: () => fetchAverageAndFill(referenceYear),
+          style: 'default'
+        }
+      ]
+    );
   };
 
   const getBudgetValue = (categoryId: number, subcategoryId: number | null): string => {
@@ -263,97 +298,108 @@ export default function VirtualBudgetScreen({ navigation }: VirtualBudgetScreenP
   return (
     <View style={[commonStyles.screenContainer, { backgroundColor: colors.BACKGROUND }]}>
       <ScreenHeader title={config.title} subtitle={config.subtitle} />
-      <View style={{ flex: 1 }}>
-        <View style={styles.container}>
-          <YearCitySelector
-            selectedYear={selectedYear}
-            setSelectedYear={setSelectedYear}
-            selectedCity={selectedCity}
-            setSelectedCity={setSelectedCity}
-            onConsult={fetchData}
-          />
 
-          <View style={styles.actionButtons}>
-            <View style={styles.buttonRow}>
-              <View style={{ flex: 1, marginRight: 4 }}>
-                <MyButton title="Consultar" onPress={fetchData} variant="secondary" size="small" />
-              </View>
-              <View style={{ flex: 1, marginLeft: 4 }}>
-                <MyButton
-                  title="Auto-completar"
-                  onPress={handleAutoComplete}
-                  variant="outline"
-                  icon={
-                    <Icon
-                      type="material-community"
-                      name="calculator"
-                      size={16}
-                      color={colors.PRIMARY}
-                    />
-                  }
-                  disabled={loadingAverage}
-                  loading={loadingAverage}
-                  size="small"
-                />
-              </View>
-            </View>
-            <View style={{ position: 'relative', marginTop: 8 }}>
+      <View style={styles.container}>
+        <YearCitySelector
+          selectedYear={selectedYear}
+          setSelectedYear={setSelectedYear}
+          selectedCity={selectedCity}
+          setSelectedCity={setSelectedCity}
+          onConsult={handleConsult}
+        />
+
+        <View style={styles.actionButtons}>
+          <View style={styles.buttonRow}>
+            <View style={styles.buttonLeft}>
               <MyButton
-                title="Guardar Presupuesto"
-                onPress={handleSaveBudget}
-                variant="primary"
-                fullWidth
+                title="Consultar"
+                onPress={handleConsult}
+                variant="secondary"
+                size="small"
               />
-              {hasUnsavedChanges && (
-                <View style={[styles.unsavedBadge, { backgroundColor: colors.WARNING }]}>
-                  <Text style={styles.unsavedText}>●</Text>
-                </View>
-              )}
+            </View>
+            <View style={styles.buttonRight}>
+              <MyButton
+                title="Auto-completar"
+                onPress={handleAutoComplete}
+                variant="outline"
+                icon={
+                  <Icon
+                    type="material-community"
+                    name="calculator"
+                    size={16}
+                    color={colors.PRIMARY}
+                  />
+                }
+                disabled={loadingAverage}
+                loading={loadingAverage}
+                size="small"
+              />
             </View>
           </View>
-
-          <View style={[styles.totalCard, { backgroundColor: colors.CARD_BACKGROUND }]}>
-            <Text style={[styles.totalLabel, { color: colors.TEXT_SECONDARY }]}>
-              Presupuesto total:
-            </Text>
-            <Text style={[styles.totalAmount, { color: colors.PRIMARY }]}>{calculateTotal()}</Text>
-          </View>
-          <ScrollView
-            style={{ flex: 1 }}
-            contentContainerStyle={{ paddingBottom: 20 }}
-            keyboardShouldPersistTaps="handled"
-          >
-            {loading ? (
-              <MyLoading />
-            ) : (
-              <View style={styles.categoriesContainer}>
-                {categories.map((category) => (
-                  <CategoryBudgetCard
-                    key={category.id}
-                    category={category}
-                    expanded={expandedCategories.includes(category.id)}
-                    onToggle={toggleCategory}
-                    categoryTotal={calculateCategoryTotal(category.id)}
-                    currentYearAverage={categoryAverages.get(category.id) || 0}
-                    getBudgetValue={getBudgetValue}
-                    onBudgetChange={handleBudgetChange}
-                    colors={colors}
-                  />
-                ))}
+          <View style={styles.saveWrapper}>
+            <MyButton
+              title="Guardar Presupuesto"
+              onPress={handleSaveBudget}
+              variant="primary"
+              fullWidth
+            />
+            {hasUnsavedChanges && (
+              <View
+                style={[
+                  styles.unsavedBadge,
+                  { backgroundColor: colors.WARNING, shadowColor: colors.BLACK }
+                ]}
+              >
+                <Text style={[styles.unsavedText, { color: colors.WHITE }]}>●</Text>
               </View>
             )}
-          </ScrollView>
+          </View>
         </View>
+
+        <View
+          style={[
+            styles.totalCard,
+            { backgroundColor: colors.CARD_BACKGROUND, shadowColor: colors.BLACK }
+          ]}
+        >
+          <Text style={[styles.totalLabel, { color: colors.TEXT_SECONDARY }]}>
+            Presupuesto total:
+          </Text>
+          <Text style={[styles.totalAmount, { color: colors.PRIMARY }]}>{calculateTotal()}</Text>
+        </View>
+
+        <ScrollView
+          style={styles.list}
+          contentContainerStyle={styles.listContent}
+          keyboardShouldPersistTaps="handled"
+        >
+          {loading ? (
+            <MyLoading />
+          ) : (
+            <View style={styles.categoriesContainer}>
+              {categories.map((category) => (
+                <CategoryBudgetCard
+                  key={category.id}
+                  category={category}
+                  expanded={expandedCategories.includes(category.id)}
+                  onToggle={toggleCategory}
+                  categoryTotal={calculateCategoryTotal(category.id)}
+                  currentYearAverage={categoryAverages.get(category.id) || 0}
+                  getBudgetValue={getBudgetValue}
+                  onBudgetChange={handleBudgetChange}
+                  colors={colors}
+                />
+              ))}
+            </View>
+          )}
+        </ScrollView>
       </View>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  scrollContent: {
-    flexGrow: 1,
-    paddingBottom: 20
-  },
   container: {
     flex: 1,
     paddingHorizontal: 16,
@@ -367,6 +413,18 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center'
   },
+  buttonLeft: {
+    flex: 1,
+    marginRight: 4
+  },
+  buttonRight: {
+    flex: 1,
+    marginLeft: 4
+  },
+  saveWrapper: {
+    position: 'relative',
+    marginTop: 8
+  },
   totalCard: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -375,7 +433,6 @@ const styles = StyleSheet.create({
     paddingVertical: 16,
     borderRadius: 12,
     marginBottom: 20,
-    shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 4,
@@ -389,6 +446,12 @@ const styles = StyleSheet.create({
     fontSize: MEDIUM + 2,
     fontWeight: 'bold'
   },
+  list: {
+    flex: 1
+  },
+  listContent: {
+    paddingBottom: 20
+  },
   categoriesContainer: {
     marginTop: 8
   },
@@ -401,14 +464,12 @@ const styles = StyleSheet.create({
     borderRadius: 6,
     justifyContent: 'center',
     alignItems: 'center',
-    shadowColor: '#000',
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.3,
     shadowRadius: 2,
     elevation: 2
   },
   unsavedText: {
-    color: '#fff',
     fontSize: 8,
     fontWeight: 'bold'
   }
@@ -426,7 +487,7 @@ interface CategoryBudgetCardProps {
   currentYearAverage: number;
   getBudgetValue: (categoryId: number, subcategoryId: number | null) => string;
   onBudgetChange: (categoryId: number, subcategoryId: number | null, text: string) => void;
-  colors: ReturnType<typeof useThemeColors>;
+  colors: AppColors;
 }
 
 const CategoryBudgetCard = ({
@@ -439,7 +500,6 @@ const CategoryBudgetCard = ({
   onBudgetChange,
   colors
 }: CategoryBudgetCardProps) => {
-  const [showTooltip, setShowTooltip] = useState(false);
   const currentYear = new Date().getFullYear();
 
   const handleInfoPress = (): void => {
@@ -451,7 +511,12 @@ const CategoryBudgetCard = ({
   };
 
   return (
-    <View style={[cardStyles.container, { backgroundColor: colors.CARD_BACKGROUND }]}>
+    <View
+      style={[
+        cardStyles.container,
+        { backgroundColor: colors.CARD_BACKGROUND, shadowColor: colors.BLACK }
+      ]}
+    >
       <TouchableOpacity
         style={cardStyles.header}
         onPress={() => onToggle(category.id)}
@@ -536,7 +601,6 @@ const cardStyles = StyleSheet.create({
   container: {
     marginBottom: 12,
     borderRadius: 12,
-    shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.08,
     shadowRadius: 4,
@@ -614,7 +678,7 @@ interface SubcategoryBudgetInputProps {
   categoryId: number;
   value: string;
   onChange: (categoryId: number, subcategoryId: number, text: string) => void;
-  colors: ReturnType<typeof useThemeColors>;
+  colors: AppColors;
 }
 
 const SubcategoryBudgetInput = ({
@@ -634,7 +698,7 @@ const SubcategoryBudgetInput = ({
           name="label-outline"
           size={16}
           color={colors.TEXT_SECONDARY}
-          containerStyle={{ marginRight: 6 }}
+          containerStyle={inputStyles.labelIcon}
         />
         <Text style={[inputStyles.label, { color: colors.TEXT_PRIMARY }]}>{subcategory.name}</Text>
       </View>
@@ -671,6 +735,9 @@ const inputStyles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     flex: 1
+  },
+  labelIcon: {
+    marginRight: 6
   },
   label: {
     fontSize: SMALL + 1

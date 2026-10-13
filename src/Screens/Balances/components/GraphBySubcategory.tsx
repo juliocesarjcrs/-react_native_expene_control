@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useRef } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { View, Text, StyleSheet, useWindowDimensions } from 'react-native';
 import {
   VictoryChart,
@@ -16,7 +16,9 @@ import {
 } from '../../../services/expenses';
 
 // Components
-import SelectJoinCategory from '../../../components/dropDown/SelectJoinCategory';
+import SelectJoinCategory, {
+  SelectJoinCategoryHandle
+} from '../../../components/dropDown/SelectJoinCategory';
 import CheckBoxOptions from '../../../components/checbox/CheckBoxOptions';
 import MyLoading from '../../../components/loading/MyLoading';
 
@@ -46,138 +48,183 @@ interface ChartDataPoint {
   label: string;
 }
 
+// Datos del gráfico (sin la clave de la petición)
+type GraphResult = {
+  labels: string[];
+  graph: number[];
+  categoryLabel: string;
+  average: number;
+  previousAverage: number;
+  sum: number;
+};
+
+// Resultado junto con la petición para la que se cargó
+type FetchedResult = GraphResult & { key: string };
+
+// Punto activo junto con la petición en la que se tocó
+type ActivePoint = { key: string; point: ChartDataPoint };
+
+// Datos que Victory entrega al handler de eventos de un punto
+type ScatterEventProps = { datum: { x: number } };
+
+const DEFAULT_NUM_MONTHS = 3;
+const TOOLTIP_TIMEOUT_MS = 3000;
+
+const EMPTY_RESULT: GraphResult = {
+  labels: [''],
+  graph: [0],
+  categoryLabel: '',
+  average: 0,
+  previousAverage: 0,
+  sum: 0
+};
+
+const NO_DATA: ChartDataPoint[] = [{ x: 0, y: 0, label: 'Sin datos' }];
+
+const formatYAxis = (val: number): string => {
+  if (Math.abs(val) >= 1000000) {
+    return `${(val / 1000000).toFixed(1).replace(/\.0$/, '')}M`;
+  }
+  if (Math.abs(val) >= 1000) {
+    return `${(val / 1000).toFixed(0)}K`;
+  }
+  return val.toFixed(0);
+};
+
+const fetchSubcategoryResult = async (
+  subcategory: SubcategorySelection,
+  numMonths: number
+): Promise<GraphResult> => {
+  const { data } = await getExpensesLastMonthsFromSubcategory(subcategory.value, { numMonths });
+  return {
+    labels: data.labels,
+    graph: data.graph.length > 0 ? data.graph : [0],
+    categoryLabel: subcategory.label,
+    average: data.average,
+    previousAverage: 0,
+    sum: data.sum
+  };
+};
+
+const fetchCategoryResult = async (
+  category: CategorySelection,
+  numMonths: number
+): Promise<GraphResult> => {
+  if (!category.id) return EMPTY_RESULT;
+
+  const { data } = await findLastMonthsFromOnlyCategory(category.id, { numMonths });
+  return {
+    labels: data.labels,
+    graph: data.graph.length > 0 ? data.graph : [0],
+    categoryLabel: category.label,
+    average: data.average,
+    previousAverage: data.previosAverage,
+    sum: 0
+  };
+};
+
 export default function GraphBySubcategory({ navigation }: GraphBySubcategoryProps) {
   const colors = useThemeColors();
   const { width: windowWidth, height: windowHeight } = useWindowDimensions();
-  const selectJoinCategoryRef = useRef<any>(null);
-  const [dataExpenses, setDataExpenses] = useState<number[]>([0]);
-  const [labels, setLabels] = useState<string[]>(['']);
-  const [categoryLabel, setCategoryLabel] = useState<string>('');
-  const [average, setAverage] = useState<number>(0);
-  const [previousAverage, setPreviousAverage] = useState<number>(0);
-  const [sum, setSum] = useState<number>(0);
-  const [loading, setLoading] = useState(false);
-  const [activePoint, setActivePoint] = useState<ChartDataPoint | null>(null);
-  const [dataCategory, setDataCategory] = useState<CategorySelection>();
-  const [numMonths, setNumMonths] = useState(3);
+  const selectJoinCategoryRef = useRef<SelectJoinCategoryHandle>(null);
+
+  const [category, setCategory] = useState<CategorySelection>();
+  const [subcategory, setSubcategory] = useState<SubcategorySelection | null>(null);
+  const [numMonths, setNumMonths] = useState(DEFAULT_NUM_MONTHS);
+  const [fetched, setFetched] = useState<FetchedResult | null>(null);
+  const [activePoint, setActivePoint] = useState<ActivePoint | null>(null);
+
+  // Identifica la petición actual (null si aún no hay nada seleccionado)
+  let requestKey: string | null = null;
+  if (subcategory) requestKey = `sub-${subcategory.value}-${numMonths}`;
+  else if (category) requestKey = `cat-${category.id}-${numMonths}`;
+
+  // Hay carga mientras los datos no correspondan a la petición actual
+  const loading = requestKey !== null && fetched?.key !== requestKey;
+  const result: GraphResult = fetched && fetched.key === requestKey ? fetched : EMPTY_RESULT;
+
+  // El tooltip solo vale para la petición en la que se abrió
+  const activeDatum = activePoint?.key === requestKey ? activePoint.point : null;
 
   // Responsive: ajustar según orientación
   const isLandscape = windowWidth > windowHeight;
   const chartWidth = windowWidth - 32;
   const chartHeight = isLandscape ? 280 : 300;
 
-  // Preparar datos para Victory
-  const chartData: ChartDataPoint[] = labels.map((label, index) => ({
-    x: index,
-    y: dataExpenses[index] || 0,
-    label
-  }));
+  // Carga al cambiar la selección o el número de meses
+  useEffect(() => {
+    if (!requestKey) return;
 
-  const hasValidData = chartData.length > 0 && chartData.some((d) => d.y > 0);
-  const safeChartData = hasValidData ? chartData : [{ x: 0, y: 0, label: 'Sin datos' }];
+    let active = true;
+
+    const load = async (): Promise<void> => {
+      try {
+        const data = subcategory
+          ? await fetchSubcategoryResult(subcategory, numMonths)
+          : await fetchCategoryResult(category as CategorySelection, numMonths);
+        if (active) setFetched({ key: requestKey, ...data });
+      } catch (e) {
+        if (!active) return;
+        showError(e);
+        setFetched({ key: requestKey, ...EMPTY_RESULT });
+      }
+    };
+
+    load();
+
+    return () => {
+      active = false;
+    };
+  }, [requestKey, category, subcategory, numMonths]);
+
+  // El tooltip se oculta solo a los 3 segundos
+  useEffect(() => {
+    if (!activePoint) return;
+
+    const timeout = setTimeout(() => setActivePoint(null), TOOLTIP_TIMEOUT_MS);
+    return () => clearTimeout(timeout);
+  }, [activePoint]);
+
+  // Preparar datos para Victory
+  const safeChartData = useMemo(() => {
+    const chartData: ChartDataPoint[] = result.labels.map((label, index) => ({
+      x: index,
+      y: result.graph[index] ?? 0,
+      label
+    }));
+    return chartData.some((d) => d.y > 0) ? chartData : NO_DATA;
+  }, [result]);
 
   // Calcular dominio Y
-  const yValues = safeChartData.map((d) => d.y);
-  const minY = Math.min(...yValues, 0);
-  const maxY = Math.max(...yValues, 1);
-  const yPadding = (maxY - minY) * 0.15;
+  const { minY, maxY, yPadding } = useMemo(() => {
+    const yValues = safeChartData.map((d) => d.y);
+    const min = Math.min(...yValues, 0);
+    const max = Math.max(...yValues, 1);
+    return { minY: min, maxY: max, yPadding: (max - min) * 0.15 };
+  }, [safeChartData]);
 
-  const formatYAxis = (val: number) => {
-    if (Math.abs(val) >= 1000000) {
-      return `${(val / 1000000).toFixed(1).replace(/\.0$/, '')}M`;
-    }
-    if (Math.abs(val) >= 1000) {
-      return `${(val / 1000).toFixed(0)}K`;
-    }
-    return val.toFixed(0);
+  const isHighlighted = (x: number): boolean => activeDatum?.x === x;
+
+  const fetchExpensesSubcategory = (foundSubcategory: SubcategorySelection) => {
+    setSubcategory(foundSubcategory);
   };
 
-  const fetchExpensesSubcategory = async (foundSubcategory: SubcategorySelection) => {
-    try {
-      setActivePoint(null);
-      setLoading(true);
-      const params = { numMonths };
-      const { data } = await getExpensesLastMonthsFromSubcategory(foundSubcategory.value, params);
-      setLoading(false);
-
-      setLabels(data.labels);
-      setCategoryLabel(foundSubcategory.label);
-      setAverage(data.average);
-      setSum(data.sum);
-      setPreviousAverage(0);
-
-      if (data.graph.length > 0) {
-        setDataExpenses(data.graph);
-      } else {
-        setDataExpenses([0]);
-      }
-    } catch (e) {
-      setLoading(false);
-      showError(e);
-    }
-  };
-
-  useEffect(() => {
-    if (dataCategory) {
-      fetchCategory();
-    }
-  }, [dataCategory, numMonths]);
-
-  const fetchExpensesOnlyCategory = async (foundCategory: CategorySelection) => {
-    setDataCategory(foundCategory);
-  };
-
-  const fetchCategory = async () => {
-    try {
-      if (!dataCategory) return;
-
-      setActivePoint(null);
-      setLoading(true);
-      const params = { numMonths };
-      if (dataCategory.id) {
-        const { data } = await findLastMonthsFromOnlyCategory(dataCategory.id, params);
-        setLoading(false);
-
-        setLabels(data.labels);
-        setCategoryLabel(dataCategory.label);
-        setAverage(data.average);
-        setPreviousAverage(data.previosAverage);
-        setSum(0);
-
-        if (data.graph.length > 0) {
-          setDataExpenses(data.graph);
-        } else {
-          setDataExpenses([0]);
-        }
-      }
-    } catch (e) {
-      setLoading(false);
-      showError(e);
-    }
+  const fetchExpensesOnlyCategory = (foundCategory: CategorySelection) => {
+    setCategory(foundCategory);
+    setSubcategory(null);
   };
 
   const updateNum = (val: number) => {
-    if (selectJoinCategoryRef.current) {
-      selectJoinCategoryRef.current.resetSubcategory();
-    }
+    selectJoinCategoryRef.current?.resetSubcategory();
+    setSubcategory(null);
     setNumMonths(val);
   };
-
-  useEffect(() => {
-    if (activePoint !== null) {
-      const timeout = setTimeout(() => {
-        setActivePoint(null);
-      }, 3000);
-
-      return () => clearTimeout(timeout);
-    }
-  }, [activePoint]);
 
   return (
     <View style={[styles.container, { backgroundColor: colors.BACKGROUND }]}>
       {/* Header */}
       <View style={styles.header}>
-        <View style={{ flex: 1 }}>
+        <View style={styles.headerInfo}>
           <Text style={[styles.headerTitle, { color: colors.TEXT_PRIMARY }]}>
             Evolución por categorías
           </Text>
@@ -200,10 +247,15 @@ export default function GraphBySubcategory({ navigation }: GraphBySubcategoryPro
       ) : (
         <View>
           {/* Stats Cards */}
-          {categoryLabel && (
-            <View style={[styles.statsContainer, { backgroundColor: colors.CARD_BACKGROUND }]}>
+          {result.categoryLabel ? (
+            <View
+              style={[
+                styles.statsContainer,
+                { backgroundColor: colors.CARD_BACKGROUND, shadowColor: colors.BLACK }
+              ]}
+            >
               <Text style={[styles.categoryName, { color: colors.PRIMARY }]} numberOfLines={1}>
-                {cutText(categoryLabel, 30)}
+                {cutText(result.categoryLabel, 30)}
               </Text>
 
               <View style={styles.statsGrid}>
@@ -214,11 +266,11 @@ export default function GraphBySubcategory({ navigation }: GraphBySubcategoryPro
                     numberOfLines={1}
                     adjustsFontSizeToFit
                   >
-                    {NumberFormat(average)}
+                    {NumberFormat(result.average)}
                   </Text>
                 </View>
 
-                {previousAverage > 0 && (
+                {result.previousAverage > 0 && (
                   <View style={styles.statItem}>
                     <Text style={[styles.statLabel, { color: colors.TEXT_SECONDARY }]}>
                       Anterior
@@ -228,12 +280,12 @@ export default function GraphBySubcategory({ navigation }: GraphBySubcategoryPro
                       numberOfLines={1}
                       adjustsFontSizeToFit
                     >
-                      {NumberFormat(previousAverage)}
+                      {NumberFormat(result.previousAverage)}
                     </Text>
                   </View>
                 )}
 
-                {sum > 0 && (
+                {result.sum > 0 && (
                   <View style={styles.statItem}>
                     <Text style={[styles.statLabel, { color: colors.TEXT_SECONDARY }]}>Total</Text>
                     <Text
@@ -241,26 +293,35 @@ export default function GraphBySubcategory({ navigation }: GraphBySubcategoryPro
                       numberOfLines={1}
                       adjustsFontSizeToFit
                     >
-                      {NumberFormat(sum)}
+                      {NumberFormat(result.sum)}
                     </Text>
                   </View>
                 )}
               </View>
             </View>
-          )}
+          ) : null}
 
           {/* Gráfico con tooltip integrado */}
-          <View style={[styles.chartContainer, { backgroundColor: colors.CARD_BACKGROUND }]}>
+          <View
+            style={[
+              styles.chartContainer,
+              { backgroundColor: colors.CARD_BACKGROUND, shadowColor: colors.BLACK }
+            ]}
+          >
             {/* Tooltip dentro del contenedor del gráfico */}
-            {activePoint && (
+            {activeDatum && (
               <View
                 style={[
                   styles.tooltip,
-                  { backgroundColor: colors.ERROR, shadowColor: colors.ERROR }
+                  { backgroundColor: colors.ERROR, shadowColor: colors.BLACK }
                 ]}
               >
-                <Text style={styles.tooltipMonth}>{activePoint.label}</Text>
-                <Text style={styles.tooltipValue}>{NumberFormat(activePoint.y)}</Text>
+                <Text style={[styles.tooltipMonth, { color: colors.WHITE }]}>
+                  {activeDatum.label}
+                </Text>
+                <Text style={[styles.tooltipValue, { color: colors.WHITE }]}>
+                  {NumberFormat(activeDatum.y)}
+                </Text>
               </View>
             )}
 
@@ -273,7 +334,7 @@ export default function GraphBySubcategory({ navigation }: GraphBySubcategoryPro
             >
               <VictoryAxis
                 tickValues={safeChartData.map((d) => d.x)}
-                tickFormat={(val: any) => {
+                tickFormat={(val: number) => {
                   const item = safeChartData[Math.round(val)];
                   return item?.label.substring(0, 3) || '';
                 }}
@@ -341,22 +402,22 @@ export default function GraphBySubcategory({ navigation }: GraphBySubcategoryPro
               {/* Puntos sin labels */}
               <VictoryScatter
                 data={safeChartData}
-                size={({ datum }) => (activePoint?.x === datum.x ? 10 : 5)}
+                size={({ datum }) => (isHighlighted(datum.x) ? 10 : 5)}
                 style={{
                   data: {
                     fill: colors.ERROR,
                     stroke: ({ datum }) =>
-                      activePoint?.x === datum.x ? colors.CARD_BACKGROUND : colors.ERROR,
-                    strokeWidth: ({ datum }) => (activePoint?.x === datum.x ? 3 : 0)
+                      isHighlighted(datum.x) ? colors.CARD_BACKGROUND : colors.ERROR,
+                    strokeWidth: ({ datum }) => (isHighlighted(datum.x) ? 3 : 0)
                   }
                 }}
                 events={[
                   {
                     target: 'data',
                     eventHandlers: {
-                      onPressIn: (_evt: any, props: any) => {
+                      onPressIn: (_evt: unknown, props: ScatterEventProps) => {
                         const point = safeChartData.find((d) => d.x === props.datum.x);
-                        if (point) setActivePoint(point);
+                        if (point && requestKey) setActivePoint({ key: requestKey, point });
                         return [];
                       }
                     }
@@ -392,6 +453,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: 12
   },
+  headerInfo: {
+    flex: 1
+  },
   headerTitle: {
     fontSize: 18,
     fontWeight: '700'
@@ -404,7 +468,6 @@ const styles = StyleSheet.create({
     padding: 14,
     borderRadius: 12,
     marginVertical: 12,
-    shadowColor: '#000',
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.05,
     shadowRadius: 4,
@@ -437,7 +500,6 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     paddingHorizontal: 8,
     borderRadius: 16,
-    shadowColor: '#000',
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.05,
     shadowRadius: 4,
@@ -452,14 +514,12 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
     borderRadius: 16,
     zIndex: 1000,
-    shadowColor: '#000',
     shadowOffset: { width: 0, height: 3 },
     shadowOpacity: 0.3,
     shadowRadius: 6,
     elevation: 8
   },
   tooltipMonth: {
-    color: '#FFFFFF',
     fontSize: 10,
     fontWeight: '700',
     textAlign: 'center',
@@ -468,7 +528,6 @@ const styles = StyleSheet.create({
     letterSpacing: 0.5
   },
   tooltipValue: {
-    color: '#FFFFFF',
     fontSize: 13,
     fontWeight: '800',
     textAlign: 'center'

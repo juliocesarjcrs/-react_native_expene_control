@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { View } from 'react-native';
+import React, { useState } from 'react';
+import { StyleSheet, View } from 'react-native';
 import { Text } from 'react-native-paper';
 import DateTimePicker, { DateTimePickerEvent } from '@react-native-community/datetimepicker';
 import { useThemeColors } from '~/customHooks/useThemeColors';
@@ -15,40 +15,41 @@ interface Props {
 export default function DateRangeSelector({ label, onChange, value }: Props) {
   const colors = useThemeColors();
 
-  const [start, setStart] = useState<Date | null>(value?.start || null);
-  const [end, setEnd] = useState<Date | null>(value?.end || null);
+  const [start, setStart] = useState<Date | null>(value?.start ?? null);
+  const [end, setEnd] = useState<Date | null>(value?.end ?? null);
   const [showPicker, setShowPicker] = useState<'start' | 'end' | null>(null);
+  const [prevValue, setPrevValue] = useState(value);
 
-  // Sincronizar con el valor externo cuando cambie
-  useEffect(() => {
+  // Sincronizar con el valor externo: si el padre lo reinicia a null, limpiamos
+  // la selección local. Se hace durante el render, no en un efecto.
+  if (value !== prevValue) {
+    setPrevValue(value);
     if (value === null) {
       setStart(null);
       setEnd(null);
     }
-  }, [value]);
+  }
 
   const handleDateChange = (event: DateTimePickerEvent, selectedDate?: Date) => {
-    if (event.type === 'set' && selectedDate) {
-      if (showPicker === 'start') {
-        setStart(selectedDate);
-        if (end) {
-          onChange({ start: selectedDate, end });
-        }
-      } else if (showPicker === 'end') {
-        setEnd(selectedDate);
-        if (start) {
-          onChange({ start, end: selectedDate });
-        }
-      }
-    }
     setShowPicker(null);
+
+    if (event.type !== 'set' || !selectedDate) return;
+
+    const nextStart = showPicker === 'start' ? selectedDate : start;
+    const nextEnd = showPicker === 'end' ? selectedDate : end;
+
+    if (showPicker === 'start') setStart(selectedDate);
+    if (showPicker === 'end') setEnd(selectedDate);
+
+    // Solo se notifica al padre cuando el rango está completo
+    if (nextStart && nextEnd) {
+      onChange({ start: nextStart, end: nextEnd });
+    }
   };
 
   return (
-    <View style={{ flex: 1 }}>
-      <Text style={{ color: colors.TEXT_PRIMARY, fontWeight: '600', marginBottom: 4 }}>
-        {label}
-      </Text>
+    <View style={styles.container}>
+      <Text style={[styles.label, { color: colors.TEXT_PRIMARY }]}>{label}</Text>
 
       <MyButton
         title={start ? DateFormat(start, 'DD MMM') : 'Inicio'}
@@ -64,12 +65,12 @@ export default function DateRangeSelector({ label, onChange, value }: Props) {
         variant="outline"
         size="small"
         fullWidth
-        style={{ marginTop: 8 }}
+        style={styles.endButton}
       />
 
       {showPicker && (
         <DateTimePicker
-          value={showPicker === 'start' ? start || new Date() : end || new Date()}
+          value={(showPicker === 'start' ? start : end) ?? new Date()}
           mode="date"
           display="default"
           onChange={handleDateChange}
@@ -78,3 +79,16 @@ export default function DateRangeSelector({ label, onChange, value }: Props) {
     </View>
   );
 }
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1
+  },
+  label: {
+    fontWeight: '600',
+    marginBottom: 4
+  },
+  endButton: {
+    marginTop: 8
+  }
+});

@@ -1,8 +1,14 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
+import type { SetStateAction } from 'react';
 import { Keyboard, Platform, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSelector } from 'react-redux';
-import { useForm } from 'react-hook-form';
+import { useForm, useWatch } from 'react-hook-form';
 import { Icon } from 'react-native-elements';
+import DateTimePicker from '@react-native-community/datetimepicker';
+import type { DateTimePickerEvent } from '@react-native-community/datetimepicker';
+import DropDownPicker from 'react-native-dropdown-picker';
+import type { StackNavigationProp } from '@react-navigation/stack';
+import type { RouteProp } from '@react-navigation/native';
 
 // Services
 import { editExpense, getOneExpense } from '../../services/expenses';
@@ -17,23 +23,19 @@ import MyInput from '~/components/inputs/MyInput';
 import ExpenseNatureSelector from '~/components/inputs/ExpenseNatureSelector';
 
 // Types
-import DateTimePicker, { DateTimePickerEvent } from '@react-native-community/datetimepicker';
-import DropDownPicker from 'react-native-dropdown-picker';
-import { ExpenseStackParamList, SubcategoryModel } from '~/shared/types';
-import {
+import type { ExpenseStackParamList } from '~/shared/types';
+import type { RootState } from '~/shared/types/reducers';
+import type {
   CategoryOption,
   FormValues,
   SubcategoryOption
 } from '~/shared/types/screens/expenses/edit-expenses.type';
-import { EditExpensePayload } from '~/shared/types/services/expense-service.type';
-import { StackNavigationProp } from '@react-navigation/stack';
+import type { EditExpensePayload } from '~/shared/types/services/expense-service.type';
 
 // Utils
 import { DateFormat } from '../../utils/Helpers';
 import { showError } from '~/utils/showError';
 import { ShowToast } from '../../utils/toastUtils';
-
-import { RouteProp } from '@react-navigation/native';
 
 // Theme
 import { useThemeColors } from '~/customHooks/useThemeColors';
@@ -52,195 +54,186 @@ interface EditExpenseScreenProps {
   route: EditExpenseScreenRouteProp;
 }
 
-export default function EditExpenseScreen({ route, navigation }: EditExpenseScreenProps) {
+const ITEM_HEIGHT = 42;
+const DEFAULT_NATURE = 'operational';
+const SELECTED_ITEM_OPACITY_HEX = '22';
+const MIN_COST = 1;
+const MAX_COST = 999999999;
+const MAX_COMMENTARY_LENGTH = 200;
+
+// DropDownPicker llama a setValue con un valor o con una función (prev) => valor
+const resolve = <T,>(next: SetStateAction<T>, prev: T): T =>
+  typeof next === 'function' ? (next as (prevState: T) => T)(prev) : next;
+
+// Definido fuera del componente para que sea una referencia estable
+const LoadingIndicator = (): React.JSX.Element => <MyLoading />;
+
+// La fecha llega en UTC; se ajusta a la zona horaria local
+const parseExpenseDate = (value: string): Date => {
+  const parsed = new Date(value);
+  parsed.setMinutes(parsed.getMinutes() + parsed.getTimezoneOffset());
+  return parsed;
+};
+
+export default function EditExpenseScreen({
+  route,
+  navigation
+}: EditExpenseScreenProps): React.JSX.Element {
   const config = screenConfigs.editExpense;
   const colors = useThemeColors();
-  const idExpense = route.params.objectExpense.id;
-  const objectExpense = route.params.objectExpense;
+  const { objectExpense } = route.params;
+  const idExpense = objectExpense.id;
 
-  const month = useSelector((state: any) => state.date.month);
+  const month = useSelector((state: RootState) => state.date.month);
 
-  const [expenseEdit, setExpenseEdit] = useState<FormValues>({
-    cost: objectExpense.cost,
-    commentary: objectExpense.commentary ?? '',
-    nature: objectExpense.nature ?? 'operational'
+  const { handleSubmit, control, reset } = useForm<FormValues>({
+    defaultValues: {
+      cost: objectExpense.cost,
+      commentary: objectExpense.commentary ?? '',
+      nature: objectExpense.nature ?? DEFAULT_NATURE
+    }
   });
-
-  const {
-    handleSubmit,
-    control,
-    reset,
-    formState: { errors }
-  } = useForm<FormValues>({
-    defaultValues: expenseEdit
-  });
+  const nature = useWatch({ control, name: 'nature' });
 
   const [categories, setCategories] = useState<CategoryOption[]>([]);
-  const [subcategories, setSubcategories] = useState<SubcategoryOption[]>([]);
+  const [idCategory, setIdCategory] = useState<number | null>(null);
   const [subcategoryId, setSubcategoryId] = useState<number | null>(null);
-  const [, setSumCost] = useState<number>(0);
-  const [, setExpenses] = useState<any[]>([]);
-  const [loading, setLoading] = useState<boolean>(false);
-
-  const ITEM_HEIGHT = 42;
+  const [loading, setLoading] = useState<boolean>(true); // carga inicial
+  const [saving, setSaving] = useState<boolean>(false); // envío del formulario
   const [open, setOpen] = useState<boolean>(false);
   const [open2, setOpen2] = useState<boolean>(false);
-  const [idCategory, setIdCategory] = useState<number | null>(null);
 
   // DATE PICKER
-  let loadDate = new Date(objectExpense.date);
-  // Ajuste timezone
-  loadDate.setMinutes(loadDate.getMinutes() + loadDate.getTimezoneOffset());
-
-  const [date, setDate] = useState<Date>(loadDate);
-  const today = DateFormat(loadDate, 'YYYY MMM DD');
-  const [dateString, setDateString] = useState<string>(today);
-  const [mode, setMode] = useState<'date' | 'time'>('date');
+  const [date, setDate] = useState<Date>(() => parseExpenseDate(objectExpense.date));
   const [show, setShow] = useState<boolean>(false);
+  const dateString = DateFormat(date, 'YYYY MMM DD');
 
-  const onChange = (event: DateTimePickerEvent, selectedDate?: Date) => {
-    const currentDate = selectedDate || date;
-    setShow(Platform.OS === 'ios');
-    const newDate = DateFormat(currentDate, 'YYYY MMM DD');
-    setDateString(newDate);
-    setDate(currentDate);
-  };
+  const dynamicStyles = useMemo(
+    () =>
+      StyleSheet.create({
+        screen: { backgroundColor: colors.BACKGROUND },
+        card: { backgroundColor: colors.CARD_BACKGROUND, borderColor: colors.BORDER },
+        label: { color: colors.TEXT_PRIMARY },
+        textDate: { backgroundColor: colors.PRIMARY, color: colors.WHITE }
+      }),
+    [colors]
+  );
 
-  const showMode = (currentMode: 'date' | 'time') => {
-    setShow(true);
-    setMode(currentMode);
-  };
+  // Subcategorías derivadas de la categoría seleccionada
+  const subcategories = useMemo<SubcategoryOption[]>(() => {
+    const selected = categories.find((c) => c.value === idCategory);
+    return (selected?.subcategories ?? []).map((e) => ({ label: e.name, value: e.id }));
+  }, [categories, idCategory]);
 
-  const showDatepicker = () => {
-    showMode('date');
-  };
-  const sendDataSubcategory = (index: number | null) => {
-    if (!index || Number.isNaN(index)) {
-      setExpenses([]);
-      setSumCost(0);
-    } else {
-      // Si quieres descomentar fetchExpenses
-      // fetchExpenses(index);
-    }
-  };
-  const formatOptionsSubcategories = (data: SubcategoryModel[] = []) => {
-    return data.map((e) => {
-      return { label: e.name, value: e.id };
-    });
-  };
-  const sendFromDropDownPickerCategory = (index: number | null) => {
-    setExpenses([]);
-    setSumCost(0);
-
-    const indexArray = categories.findIndex((e) => {
-      return e.value === index;
-    });
-    if (indexArray >= 0) {
-      const dataFormat = formatOptionsSubcategories(categories[indexArray].subcategories ?? []);
-      setSubcategories(dataFormat);
-    } else {
-      setSubcategories([]);
-    }
-  };
-  const defaultIdCategory = async () => {
-    try {
-      const { data } = await getOneExpense(idExpense);
-      // rellena formulario
-      setExpenseEdit({
-        cost: data.cost ?? 0,
-        commentary: data.commentary ?? '',
-        nature: data.nature ?? 'operational'
-      });
-      reset({
-        cost: data.cost ?? 0,
-        commentary: data.commentary ?? '',
-        nature: data.nature ?? 'operational'
-      });
-
-      // data.subcategory existe según contrato
-      const idCategoryEdit = data.subcategory?.category?.id ?? null;
-      setIdCategory(idCategoryEdit);
-      const idsubcategoryEdit = data.subcategory?.id ?? null;
-      setSubcategoryId(idsubcategoryEdit);
-    } catch (error) {
-      showError(error);
-    }
-  };
-  // ---------------------- Fetching ----------------------
-
-  const fetchCategories = async () => {
-    try {
-      setLoading(true);
-      const { data } = await getAllSubcategoriesExpensesByMonth(month);
-      setLoading(false);
-      const filter = (data.data ?? []).filter((f: any) => f.subcategories?.length > 0);
-      const dataFormat: CategoryOption[] = filter.map((e: any) => {
-        return { label: e.name, value: e.id, subcategories: e.subcategories };
-      });
-      setCategories(dataFormat);
-
-      await defaultIdCategory();
-    } catch (error) {
-      setLoading(false);
-      showError(error);
-    }
-  };
-
-  // efectos para category/subcategory
+  // Carga de categorías y del gasto
   useEffect(() => {
-    sendFromDropDownPickerCategory(idCategory);
-  }, [idCategory, categories]);
+    let isMounted = true;
 
-  useEffect(() => {
-    sendDataSubcategory(subcategoryId);
-  }, [subcategoryId]);
+    const loadData = async (): Promise<void> => {
+      try {
+        const [categoriesResponse, expenseResponse] = await Promise.all([
+          getAllSubcategoriesExpensesByMonth(month),
+          getOneExpense(idExpense)
+        ]);
+        if (!isMounted) return;
 
-  useEffect(() => {
-    fetchCategories();
-  }, []);
+        const withSubcategories = (categoriesResponse.data.data ?? []).filter(
+          (f) => (f.subcategories?.length ?? 0) > 0
+        );
+        setCategories(
+          withSubcategories.map((e) => ({
+            label: e.name,
+            value: e.id,
+            subcategories: e.subcategories
+          }))
+        );
 
-  // ---------------------- Submit ----------------------
-
-  const onSubmit = async (payload: FormValues) => {
-    try {
-      if (!subcategoryId) {
-        return;
+        const { data } = expenseResponse;
+        reset({
+          cost: data.cost ?? 0,
+          commentary: data.commentary ?? '',
+          nature: data.nature ?? DEFAULT_NATURE
+        });
+        setIdCategory(data.subcategory?.category?.id ?? null);
+        setSubcategoryId(data.subcategory?.id ?? null);
+      } catch (error) {
+        if (isMounted) showError(error);
+      } finally {
+        if (isMounted) setLoading(false);
       }
-      const dataSend: EditExpensePayload = {
-        ...payload,
-        cost: payload.cost,
-        subcategoryId,
-        date: DateFormat(date, 'YYYY-MM-DD'),
-        nature: payload.nature ?? 'operational'
-      };
-      setLoading(true);
+    };
+
+    void loadData();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [month, idExpense, reset]);
+
+  const onChangeDate = (_event: DateTimePickerEvent, selectedDate?: Date): void => {
+    setShow(Platform.OS === 'ios');
+    setDate(selectedDate ?? date);
+  };
+
+  const handleCategoryChange = (next: number | null): void => {
+    setIdCategory(next);
+    setSubcategoryId(null); // la subcategoría anterior ya no pertenece a la nueva categoría
+  };
+
+  const onSubmit = async (payload: FormValues): Promise<void> => {
+    if (!subcategoryId) return;
+
+    const dataSend: EditExpensePayload = {
+      ...payload,
+      subcategoryId,
+      date: DateFormat(date, 'YYYY-MM-DD'),
+      nature: payload.nature ?? DEFAULT_NATURE
+    };
+
+    try {
+      setSaving(true);
       await editExpense(idExpense, dataSend);
-      setLoading(false);
 
       ShowToast();
-      reset();
       Keyboard.dismiss();
       navigation.replace('lastExpenses');
     } catch (error) {
-      setLoading(false);
       showError(error);
+    } finally {
+      setSaving(false);
     }
   };
 
+  const submitForm = (): void => {
+    void handleSubmit(onSubmit)();
+  };
+
+  // Props de estilo compartidas por ambos pickers
+  const sharedPickerProps = {
+    loading,
+    listMode: 'MODAL' as const,
+    placeholderStyle: { color: colors.GRAY },
+    style: { backgroundColor: colors.CARD_BACKGROUND, borderColor: colors.BORDER },
+    dropDownContainerStyle: { backgroundColor: colors.CARD_BACKGROUND, borderColor: colors.BORDER },
+    modalContentContainerStyle: { backgroundColor: colors.CARD_BACKGROUND },
+    selectedItemContainerStyle: {
+      backgroundColor: `${colors.PRIMARY}${SELECTED_ITEM_OPACITY_HEX}`
+    },
+    itemSeparator: true,
+    itemSeparatorStyle: { backgroundColor: colors.BORDER },
+    selectedItemLabelStyle: { fontWeight: 'bold' as const, color: colors.TEXT_PRIMARY },
+    textStyle: { color: colors.TEXT_PRIMARY }
+  };
+
   return (
-    <View style={[commonStyles.screenContentWithPadding, { backgroundColor: colors.BACKGROUND }]}>
+    <View style={[commonStyles.screenContentWithPadding, dynamicStyles.screen]}>
       <ScreenHeader title={config.title} subtitle={config.subtitle} />
       <ScrollView
-        style={{ flex: 1 }}
+        style={styles.scroll}
         contentContainerStyle={styles.scrollContent}
         keyboardShouldPersistTaps="handled"
       >
-        <View
-          style={[
-            styles.card,
-            { backgroundColor: colors.CARD_BACKGROUND, borderColor: colors.BORDER }
-          ]}
-        >
+        <View style={[styles.card, dynamicStyles.card]}>
           {/* COST */}
           <MyInput
             name="cost"
@@ -250,9 +243,9 @@ export default function EditExpenseScreen({ route, navigation }: EditExpenseScre
             placeholder="0"
             rules={{
               required: 'El gasto es obligatorio',
-              min: { value: 1, message: 'El mínimo valor aceptado es 1' },
+              min: { value: MIN_COST, message: 'El mínimo valor aceptado es 1' },
               max: {
-                value: 999999999,
+                value: MAX_COST,
                 message: 'El gasto no puede superar el valor de 999.999.999'
               }
             }}
@@ -261,7 +254,7 @@ export default function EditExpenseScreen({ route, navigation }: EditExpenseScre
           />
 
           {/* NATURE */}
-          <ExpenseNatureSelector control={control} defaultValue={expenseEdit.nature} />
+          <ExpenseNatureSelector control={control} name="nature" defaultValue={nature} />
 
           {/* COMMENTARY */}
           <MyInput
@@ -272,93 +265,59 @@ export default function EditExpenseScreen({ route, navigation }: EditExpenseScre
             placeholder="Ej: Compra de una camisa"
             rules={{
               maxLength: {
-                value: 200,
+                value: MAX_COMMENTARY_LENGTH,
                 message: 'El comentario no puede superar los 200 caracteres'
               }
             }}
             multiline
             numberOfLines={2}
-            maxLength={200}
+            maxLength={MAX_COMMENTARY_LENGTH}
             leftIcon="text"
           />
 
           {/* CATEGORY */}
-          <Text style={[styles.label, { color: colors.TEXT_PRIMARY }]}>Categoría</Text>
+          <Text style={[styles.label, dynamicStyles.label]}>Categoría</Text>
 
           <DropDownPicker
+            {...sharedPickerProps}
             open={open}
             value={idCategory}
             items={categories}
             setOpen={setOpen}
-            setValue={setIdCategory as any}
-            setItems={setCategories as any}
+            setValue={(next) => handleCategoryChange(resolve(next, idCategory))}
             maxHeight={ITEM_HEIGHT * Math.max(1, categories.length)}
             placeholder="Seleccione una categoría"
             zIndex={2000}
             zIndexInverse={1000}
-            loading={loading}
-            ActivityIndicatorComponent={() => <MyLoading />}
+            ActivityIndicatorComponent={LoadingIndicator}
             activityIndicatorSize={30}
-            dropDownContainerStyle={{
-              backgroundColor: colors.CARD_BACKGROUND,
-              borderColor: colors.BORDER
-            }}
-            listMode="MODAL"
-            selectedItemContainerStyle={{
-              backgroundColor: colors.PRIMARY + '22'
-            }}
-            itemSeparator={true}
-            itemSeparatorStyle={{
-              backgroundColor: colors.BORDER
-            }}
-            selectedItemLabelStyle={{
-              fontWeight: 'bold',
-              color: colors.TEXT_PRIMARY
-            }}
           />
-          {!idCategory ? <ErrorText msg="Necesita seleccionar una  Categoria" /> : null}
+          {!idCategory && <ErrorText msg="Necesita seleccionar una categoría" />}
 
           {/* SUBCATEGORY */}
-          <Text style={[styles.label, { color: colors.TEXT_PRIMARY, marginTop: 12 }]}>
+          <Text style={[styles.label, styles.subcategoryLabel, dynamicStyles.label]}>
             Subcategoría
           </Text>
 
           <DropDownPicker
+            {...sharedPickerProps}
             open={open2}
             value={subcategoryId}
             items={subcategories}
             setOpen={setOpen2}
-            setValue={setSubcategoryId as any}
-            setItems={setSubcategories as any}
+            setValue={(next) => setSubcategoryId(resolve(next, subcategoryId))}
             maxHeight={ITEM_HEIGHT * Math.max(1, subcategories.length)}
             placeholder="Seleccione una subcategoría"
             zIndex={1000}
             zIndexInverse={2000}
-            loading={loading}
-            listMode="MODAL"
-            dropDownContainerStyle={{
-              backgroundColor: colors.CARD_BACKGROUND,
-              borderColor: colors.BORDER
-            }}
-            selectedItemContainerStyle={{
-              backgroundColor: colors.PRIMARY + '22'
-            }}
-            itemSeparator={true}
-            itemSeparatorStyle={{
-              backgroundColor: colors.BORDER
-            }}
-            selectedItemLabelStyle={{
-              fontWeight: 'bold',
-              color: colors.TEXT_PRIMARY
-            }}
           />
-          {!subcategoryId ? <ErrorText msg="Necesita seleccionar una subcategoria" /> : null}
+          {!subcategoryId && <ErrorText msg="Necesita seleccionar una subcategoría" />}
 
           {/* DATE PICKER */}
           <View style={styles.containerDate}>
             <MyButton
               title="Fecha"
-              onPress={showDatepicker}
+              onPress={() => setShow(true)}
               icon={
                 <Icon
                   type="material-community"
@@ -370,36 +329,31 @@ export default function EditExpenseScreen({ route, navigation }: EditExpenseScre
               variant="primary"
               size="medium"
             />
-            <Text
-              style={[styles.textDate, { backgroundColor: colors.PRIMARY, color: colors.WHITE }]}
-            >
-              {dateString}
-            </Text>
+            <Text style={[styles.textDate, dynamicStyles.textDate]}>{dateString}</Text>
           </View>
 
           {show && (
             <DateTimePicker
               testID="dateTimePicker"
               value={date}
-              mode={mode}
-              is24Hour={true}
+              mode="date"
+              is24Hour
               display="default"
-              onChange={onChange}
+              onChange={onChangeDate}
             />
           )}
 
           {/* SUBMIT */}
-          <View style={{ marginTop: 10 }}>
-            {loading ? (
+          <View style={styles.submit}>
+            {saving ? (
               <MyLoading />
             ) : (
               <MyButton
                 title="Editar"
-                onPress={handleSubmit(onSubmit)}
+                onPress={submitForm}
                 variant="primary"
                 size="large"
                 fullWidth
-                loading={loading}
               />
             )}
           </View>
@@ -410,6 +364,9 @@ export default function EditExpenseScreen({ route, navigation }: EditExpenseScre
 }
 
 const styles = StyleSheet.create({
+  scroll: {
+    flex: 1
+  },
   card: {
     flex: 1,
     padding: 12,
@@ -418,7 +375,6 @@ const styles = StyleSheet.create({
     borderWidth: 1
   },
   containerDate: {
-    display: 'flex',
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
@@ -435,6 +391,12 @@ const styles = StyleSheet.create({
     marginTop: 8,
     marginBottom: 6,
     fontWeight: '600'
+  },
+  subcategoryLabel: {
+    marginTop: 12
+  },
+  submit: {
+    marginTop: 10
   },
   scrollContent: {
     flexGrow: 1,

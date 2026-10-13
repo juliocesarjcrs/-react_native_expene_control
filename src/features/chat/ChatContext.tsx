@@ -1,5 +1,5 @@
 import { AxiosError } from 'axios';
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { chatbotService } from '~/services/chatbot';
 import {
   ChatMessage,
@@ -13,7 +13,34 @@ interface ChatContextType extends BaseChatContextType {
   clearError: () => void;
 }
 
+type BackendErrorBody = {
+  message?: string | string[];
+  error?: string | string[];
+};
+
+const ERROR_TIMEOUT_MS = 5000;
+
 const ChatContext = createContext<ChatContextType | undefined>(undefined);
+
+// Historial de una conversación sin los mensajes del sistema
+const fetchHistory = async (conversationId: number): Promise<ChatMessage[]> => {
+  const response = await chatbotService.getConversationHistory(conversationId);
+  return response.data.data.filter((msg: ChatMessage) => msg.role !== 'system');
+};
+
+// Mensaje amigable para el cuadro rojo del chat
+const getSendErrorMessage = (err: unknown): string => {
+  if (!(err instanceof AxiosError)) return 'No se pudo enviar el mensaje.';
+
+  const body = err.response?.data as BackendErrorBody | undefined;
+  const backendMsg = body?.message || body?.error;
+
+  if (backendMsg) return Array.isArray(backendMsg) ? backendMsg[0] : backendMsg;
+  if (!err.response) return 'Sin conexión al servidor.';
+  if (err.response.status === 400) return 'El modelo de IA no está disponible. Intenta de nuevo.';
+
+  return 'No se pudo enviar el mensaje.';
+};
 
 export function ChatProvider({ children }: { children: React.ReactNode }) {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
@@ -21,141 +48,60 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [currentConversationId, setCurrentConversationId] = useState<number | null>(null);
-  const [hasLoadedInitialConversation, setHasLoadedInitialConversation] = useState(false);
 
-  // Cargar conversaciones al iniciar
+  // Carga inicial: trae las conversaciones y abre la más reciente
+  // (se asume que vienen ordenadas por fecha descendente)
   useEffect(() => {
+    let isMounted = true;
+
     const initializeChat = async () => {
-      await loadConversations();
+      let list: Conversation[];
+
+      try {
+        const response = await chatbotService.getConversations();
+        list = response.data.data;
+        if (!isMounted) return;
+        setConversations(list);
+      } catch {
+        if (isMounted) setError('No se pudieron cargar las conversaciones.');
+        return;
+      }
+
+      if (list.length === 0) return;
+
+      try {
+        setIsLoading(true);
+        const history = await fetchHistory(list[0].id);
+        if (!isMounted) return;
+        setMessages(history);
+        setCurrentConversationId(list[0].id);
+      } catch {
+        if (isMounted) setError('No se pudo cargar la conversación.');
+      } finally {
+        if (isMounted) setIsLoading(false);
+      }
     };
 
     initializeChat();
-  }, []);
 
-  // Seleccionar la conversación más reciente cuando se cargan las conversaciones por primera vez
-  useEffect(() => {
-    if (conversations.length > 0 && !currentConversationId && !hasLoadedInitialConversation) {
-      // La primera conversación es la más reciente (asumiendo que vienen ordenadas por fecha desc)
-      const mostRecentConversation = conversations[0];
-      selectConversation(mostRecentConversation.id);
-      setHasLoadedInitialConversation(true);
-    }
-  }, [conversations, currentConversationId, hasLoadedInitialConversation]);
+    return () => {
+      isMounted = false;
+    };
+  }, []);
 
   // Limpiar error automáticamente después de 5 segundos
   useEffect(() => {
-    if (error) {
-      const timer = setTimeout(() => {
-        setError(null);
-      }, 5000);
+    if (!error) return;
 
-      return () => clearTimeout(timer);
-    }
+    const timer = setTimeout(() => setError(null), ERROR_TIMEOUT_MS);
+    return () => clearTimeout(timer);
   }, [error]);
 
-  // Limpiar error cuando cambia la conversación
-  useEffect(() => {
+  const clearError = useCallback(() => {
     setError(null);
-  }, [currentConversationId]);
+  }, []);
 
-  const clearError = () => {
-    setError(null);
-  };
-
-  const sendMessage = async (content: string) => {
-    try {
-      setIsLoading(true);
-      setError(null); // Limpiar error previo al enviar nuevo mensaje
-
-      // Si no hay conversación activa, crear una nueva
-      let conversationId = currentConversationId;
-      if (!conversationId) {
-        const newConversationResponse = await chatbotService.createConversation();
-        conversationId = newConversationResponse.data.id;
-        setCurrentConversationId(conversationId);
-        // Recargar lista de conversaciones para incluir la nueva
-        await loadConversations();
-      }
-
-      // Agregar mensaje del usuario inmediatamente (optimistic update)
-      const userMessage: ChatMessage = {
-        id: Date.now(), // Temporal, será reemplazado por el ID real del servidor
-        content,
-        role: 'user',
-        createdAt: new Date().toISOString()
-      };
-      setMessages((prev) => [...prev, userMessage]);
-
-      // Enviar mensaje al servicio
-      const response = await chatbotService.sendMessage(content, conversationId);
-
-      // La respuesta contiene el mensaje del asistente
-      // response.data.data contiene el ChatMessage
-      const assistantMessage: ChatMessage = response.data.data;
-
-      setMessages((prev) => [...prev, assistantMessage]);
-
-      // Actualizar lista de conversaciones después de enviar mensaje
-      await loadConversations();
-    } catch (err) {
-      // Mensaje amigable para el cuadro rojo del chat
-      let errorMessage = 'No se pudo enviar el mensaje.';
-
-      if (err instanceof AxiosError) {
-        const backendMsg = err.response?.data?.message || err.response?.data?.error;
-
-        if (backendMsg) {
-          errorMessage = Array.isArray(backendMsg) ? backendMsg[0] : backendMsg;
-        } else if (!err.response) {
-          errorMessage = 'Sin conexión al servidor.';
-        } else if (err.response.status === 400) {
-          errorMessage = 'El modelo de IA no está disponible. Intenta de nuevo.';
-        }
-      }
-
-      setError(errorMessage);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const selectConversation = async (conversationId: number) => {
-    try {
-      setIsLoading(true);
-      setError(null); // Limpiar error al cambiar de conversación
-
-      const response = await chatbotService.getConversationHistory(conversationId);
-
-      // Filtrar mensajes del sistema y solo mostrar user y assistant
-      const filteredMessages = response.data.data.filter(
-        (msg: ChatMessage) => msg.role !== 'system'
-      );
-
-      setMessages(filteredMessages);
-      setCurrentConversationId(conversationId);
-    } catch {
-      setError('No se pudo cargar la conversación.');
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const startNewConversation = async () => {
-    setMessages([]);
-    setCurrentConversationId(null);
-    setError(null); // Limpiar error al iniciar nueva conversación
-    setHasLoadedInitialConversation(true); // Evitar que se recargue automáticamente
-    // Recargar la lista de conversaciones
-    await loadConversations();
-  };
-
-  const clearChat = () => {
-    setMessages([]);
-    setCurrentConversationId(null);
-    setError(null);
-  };
-
-  const loadConversations = async (params?: GetConversationsQuery) => {
+  const loadConversations = useCallback(async (params?: GetConversationsQuery) => {
     try {
       setError(null);
       const response = await chatbotService.getConversations(params);
@@ -165,46 +111,128 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
     } catch {
       setError('No se pudieron cargar las conversaciones.');
     }
-  };
+  }, []);
 
-  const deleteConversation = async (conversationId: number) => {
+  const selectConversation = useCallback(async (conversationId: number) => {
     try {
-      setError(null);
-      await chatbotService.deleteConversation(conversationId);
+      setIsLoading(true);
+      setError(null); // Limpiar error al cambiar de conversación
 
-      // Si es la conversación actual, limpiar
-      if (currentConversationId === conversationId) {
-        setMessages([]);
-        setCurrentConversationId(null);
-      }
-
-      // Recargar la lista de conversaciones
-      await loadConversations();
+      setMessages(await fetchHistory(conversationId));
+      setCurrentConversationId(conversationId);
     } catch {
-      setError('No se pudo eliminar la conversación.');
+      setError('No se pudo cargar la conversación.');
+    } finally {
+      setIsLoading(false);
     }
-  };
+  }, []);
 
-  return (
-    <ChatContext.Provider
-      value={{
-        messages,
-        conversations,
-        isLoading,
-        error,
-        currentConversationId,
-        sendMessage,
-        selectConversation,
-        startNewConversation,
-        clearChat,
-        loadConversations,
-        deleteConversation,
-        clearError
-      }}
-    >
-      {children}
-    </ChatContext.Provider>
+  const sendMessage = useCallback(
+    async (content: string) => {
+      try {
+        setIsLoading(true);
+        setError(null); // Limpiar error previo al enviar nuevo mensaje
+
+        // Si no hay conversación activa, crear una nueva
+        let conversationId = currentConversationId;
+        if (conversationId === null) {
+          const newConversationResponse = await chatbotService.createConversation();
+          conversationId = newConversationResponse.data.id;
+          setCurrentConversationId(conversationId);
+          // Recargar lista de conversaciones para incluir la nueva
+          await loadConversations();
+        }
+
+        // Agregar mensaje del usuario inmediatamente (optimistic update)
+        const userMessage: ChatMessage = {
+          id: Date.now(), // Temporal
+          content,
+          role: 'user',
+          createdAt: new Date().toISOString()
+        };
+        setMessages((prev) => [...prev, userMessage]);
+
+        // response.data.data contiene el mensaje del asistente
+        const response = await chatbotService.sendMessage(content, conversationId);
+        const assistantMessage: ChatMessage = response.data.data;
+        setMessages((prev) => [...prev, assistantMessage]);
+
+        // Actualizar lista de conversaciones después de enviar mensaje
+        await loadConversations();
+      } catch (err) {
+        setError(getSendErrorMessage(err));
+      } finally {
+        setIsLoading(false);
+      }
+    },
+    [currentConversationId, loadConversations]
   );
+
+  const startNewConversation = useCallback(async () => {
+    setMessages([]);
+    setCurrentConversationId(null);
+    setError(null);
+    await loadConversations();
+  }, [loadConversations]);
+
+  const clearChat = useCallback(() => {
+    setMessages([]);
+    setCurrentConversationId(null);
+    setError(null);
+  }, []);
+
+  const deleteConversation = useCallback(
+    async (conversationId: number) => {
+      try {
+        setError(null);
+        await chatbotService.deleteConversation(conversationId);
+
+        // Si es la conversación actual, limpiar
+        if (currentConversationId === conversationId) {
+          setMessages([]);
+          setCurrentConversationId(null);
+        }
+
+        await loadConversations();
+      } catch {
+        setError('No se pudo eliminar la conversación.');
+      }
+    },
+    [currentConversationId, loadConversations]
+  );
+
+  const value = useMemo<ChatContextType>(
+    () => ({
+      messages,
+      conversations,
+      isLoading,
+      error,
+      currentConversationId,
+      sendMessage,
+      selectConversation,
+      startNewConversation,
+      clearChat,
+      loadConversations,
+      deleteConversation,
+      clearError
+    }),
+    [
+      messages,
+      conversations,
+      isLoading,
+      error,
+      currentConversationId,
+      sendMessage,
+      selectConversation,
+      startNewConversation,
+      clearChat,
+      loadConversations,
+      deleteConversation,
+      clearError
+    ]
+  );
+
+  return <ChatContext.Provider value={value}>{children}</ChatContext.Provider>;
 }
 
 export function useChat() {

@@ -1,10 +1,12 @@
-import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import React, { useEffect, useMemo, useState } from 'react';
+import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { CheckBox, Icon } from 'react-native-elements';
 import Popover from 'react-native-popover-view';
+import type { NavigationProp, ParamListBase } from '@react-navigation/native';
 
 // Components
 import MyLoading from '~/components/loading/MyLoading';
+import { TransactionItem } from './TransactionItem';
 
 // Utils
 import { showError } from '~/utils/showError';
@@ -14,7 +16,6 @@ import { useThemeColors } from '~/customHooks/useThemeColors';
 
 // Styles
 import { MEDIUM, SMALL } from '~/styles/fonts';
-import { TransactionItem } from './TransactionItem';
 
 export interface Transaction {
   id: number;
@@ -28,13 +29,33 @@ export interface Transaction {
   subcategory?: string;
 }
 
+interface FetchParams {
+  take: number;
+  orderBy?: string;
+}
+
 interface LastTransactionsCardProps<T extends Transaction> {
   title: string;
   type: 'expense' | 'income';
-  navigation: any;
+  navigation: NavigationProp<ParamListBase>;
   navigationScreen: string;
-  fetchFunction: (params: { take: number; orderBy?: string }) => Promise<{ data: { data: T[] } }>;
+  fetchFunction: (params: FetchParams) => Promise<{ data: { data: T[] } }>;
 }
+
+interface TakeOption {
+  id: number;
+  title: string;
+  take: number;
+}
+
+const DEFAULT_TAKE = 5;
+const BADGE_OPACITY_HEX = '20';
+
+const TAKE_OPTIONS: TakeOption[] = [
+  { id: 1, title: 'Últimas 5 transacciones', take: 5 },
+  { id: 2, title: 'Últimas 10 transacciones', take: 10 },
+  { id: 3, title: 'Últimas 15 transacciones', take: 15 }
+];
 
 export default function LastTransactionsCard<T extends Transaction>({
   title,
@@ -45,65 +66,113 @@ export default function LastTransactionsCard<T extends Transaction>({
 }: LastTransactionsCardProps<T>) {
   const colors = useThemeColors();
 
-  const [transactions, setTransactions] = useState<T[]>([]);
-  const [take, setTake] = useState<number>(5);
-  const [loading, setLoading] = useState<boolean>(false);
-  const [checkboxes, setCheckboxes] = useState([
-    { id: 1, title: 'Últimas 5 transacciones', checked: true, take: 5 },
-    { id: 2, title: 'Últimas 10 transacciones', checked: false, take: 10 },
-    { id: 3, title: 'Últimas 15 transacciones', checked: false, take: 15 }
-  ]);
+  const [take, setTake] = useState<number>(DEFAULT_TAKE);
+  // Guardamos el resultado junto con el `take` con el que se pidió.
+  // Así `loading` se deriva y no hay que llamar setState de forma síncrona en el efecto.
+  const [result, setResult] = useState<{ take: number; data: T[] } | null>(null);
+
+  const transactions = result?.data ?? [];
+  const loading = result?.take !== take;
+
+  const isExpense = type === 'expense';
+  const typeColor = isExpense ? colors.WARNING : colors.SUCCESS;
+
+  const dynamicStyles = useMemo(
+    () =>
+      StyleSheet.create({
+        container: { backgroundColor: colors.CARD_BACKGROUND },
+        iconBadge: { backgroundColor: `${typeColor}${BADGE_OPACITY_HEX}` },
+        title: { color: colors.TEXT_PRIMARY },
+        popover: { backgroundColor: colors.CARD_BACKGROUND },
+        popoverContent: { backgroundColor: colors.CARD_BACKGROUND },
+        checkboxContainer: { backgroundColor: colors.CARD_BACKGROUND },
+        checkboxText: { color: colors.TEXT_PRIMARY, fontSize: SMALL + 1 },
+        emptyText: { color: colors.TEXT_SECONDARY }
+      }),
+    [colors, typeColor]
+  );
 
   useEffect(() => {
-    fetchData();
+    let cancelled = false;
+
+    const loadTransactions = async (): Promise<void> => {
+      try {
+        const params: FetchParams = { take, ...(isExpense && { orderBy: 'id' }) };
+        const { data } = await fetchFunction(params);
+        if (!cancelled) {
+          setResult({ take, data: data.data });
+        }
+      } catch (error) {
+        if (!cancelled) {
+          setResult((prev) => ({ take, data: prev?.data ?? [] }));
+          showError(error);
+        }
+      }
+    };
+
+    void loadTransactions();
     const unsubscribe = navigation.addListener('focus', () => {
-      fetchData();
+      void loadTransactions();
     });
-    return unsubscribe;
-  }, [take, navigation]);
 
-  const fetchData = async (): Promise<void> => {
-    try {
-      setLoading(true);
-      const params = { take, ...(type === 'expense' && { orderBy: 'id' }) };
-      const { data } = await fetchFunction(params);
-      setLoading(false);
-      setTransactions(data.data);
-    } catch (error) {
-      setLoading(false);
-      showError(error);
-    }
-  };
+    return () => {
+      cancelled = true;
+      unsubscribe();
+    };
+  }, [take, isExpense, fetchFunction, navigation]);
 
-  const toggleCheckbox = (id: number, index: number): void => {
-    const checkboxData = checkboxes.map((cb, idx) => ({
-      ...cb,
-      checked: idx === index
-    }));
-    setCheckboxes(checkboxData);
-    setTake(checkboxData[index].take);
+  const selectTake = (option: TakeOption): void => {
+    setTake(option.take);
   };
 
   const navigateToFullScreen = (): void => {
     navigation.navigate(navigationScreen);
   };
 
-  const typeColor = type === 'expense' ? colors.WARNING : colors.SUCCESS;
+  const renderContent = (): React.ReactNode => {
+    if (loading) {
+      return <MyLoading />;
+    }
+
+    if (transactions.length === 0) {
+      return (
+        <View style={styles.emptyContainer}>
+          <Icon
+            type="material-community"
+            name={isExpense ? 'receipt-text-outline' : 'cash-check'}
+            size={40}
+            color={colors.TEXT_SECONDARY}
+          />
+          <Text style={[styles.emptyText, dynamicStyles.emptyText]}>
+            No hay {isExpense ? 'gastos' : 'ingresos'} registrados
+          </Text>
+        </View>
+      );
+    }
+
+    return (
+      <View style={styles.transactionsList}>
+        {transactions.map((item) => (
+          <TransactionItem key={item.id} item={item} type={type} colors={colors} />
+        ))}
+      </View>
+    );
+  };
 
   return (
-    <View style={[styles.container, { backgroundColor: colors.CARD_BACKGROUND }]}>
+    <View style={[styles.container, dynamicStyles.container]}>
       {/* Header */}
       <View style={styles.header}>
         <View style={styles.headerLeft}>
-          <View style={[styles.iconBadge, { backgroundColor: typeColor + '20' }]}>
+          <View style={[styles.iconBadge, dynamicStyles.iconBadge]}>
             <Icon
               type="material-community"
-              name={type === 'expense' ? 'cash-minus' : 'cash-plus'}
+              name={isExpense ? 'cash-minus' : 'cash-plus'}
               size={18}
               color={typeColor}
             />
           </View>
-          <Text style={[styles.title, { color: colors.TEXT_PRIMARY }]}>{title}</Text>
+          <Text style={[styles.title, dynamicStyles.title]}>{title}</Text>
         </View>
 
         <View style={styles.headerRight}>
@@ -127,20 +196,17 @@ export default function LastTransactionsCard<T extends Transaction>({
                 />
               </TouchableOpacity>
             }
-            popoverStyle={{ backgroundColor: colors.CARD_BACKGROUND }}
+            popoverStyle={dynamicStyles.popover}
           >
-            <View style={[styles.popoverContent, { backgroundColor: colors.CARD_BACKGROUND }]}>
-              {checkboxes.map((cb, index) => (
+            <View style={[styles.popoverContent, dynamicStyles.popoverContent]}>
+              {TAKE_OPTIONS.map((option) => (
                 <CheckBox
-                  key={cb.id}
-                  title={cb.title}
-                  checked={cb.checked}
-                  onPress={() => toggleCheckbox(cb.id, index)}
-                  containerStyle={[
-                    styles.checkboxContainer,
-                    { backgroundColor: colors.CARD_BACKGROUND }
-                  ]}
-                  textStyle={{ color: colors.TEXT_PRIMARY, fontSize: SMALL + 1 }}
+                  key={option.id}
+                  title={option.title}
+                  checked={take === option.take}
+                  onPress={() => selectTake(option)}
+                  containerStyle={[styles.checkboxContainer, dynamicStyles.checkboxContainer]}
+                  textStyle={dynamicStyles.checkboxText}
                   checkedColor={colors.PRIMARY}
                   uncheckedColor={colors.TEXT_SECONDARY}
                 />
@@ -151,27 +217,7 @@ export default function LastTransactionsCard<T extends Transaction>({
       </View>
 
       {/* Content */}
-      {loading ? (
-        <MyLoading />
-      ) : transactions.length === 0 ? (
-        <View style={styles.emptyContainer}>
-          <Icon
-            type="material-community"
-            name={type === 'expense' ? 'receipt-text-outline' : 'cash-check'}
-            size={40}
-            color={colors.TEXT_SECONDARY}
-          />
-          <Text style={[styles.emptyText, { color: colors.TEXT_SECONDARY }]}>
-            No hay {type === 'expense' ? 'gastos' : 'ingresos'} registrados
-          </Text>
-        </View>
-      ) : (
-        <View style={styles.transactionsList}>
-          {transactions.map((item) => (
-            <TransactionItem key={item.id} item={item} type={type} colors={colors} />
-          ))}
-        </View>
-      )}
+      {renderContent()}
     </View>
   );
 }

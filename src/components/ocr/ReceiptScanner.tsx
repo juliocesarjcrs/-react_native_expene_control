@@ -5,7 +5,7 @@
  * Soporta imagen (galería/cámara) y PDF.
  */
 
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   View,
   Text,
@@ -17,7 +17,6 @@ import {
 } from 'react-native';
 import { File, Paths } from 'expo-file-system';
 import * as Sharing from 'expo-sharing';
-import * as Clipboard from 'expo-clipboard';
 
 import {
   OcrAccuracy,
@@ -35,9 +34,19 @@ import ImagePickerComponent from '../image/ImagePicker';
 import OcrEvaluationSection from './OcrEvaluationSection';
 import { useThemeColors } from '~/customHooks/useThemeColors';
 import MyButton from '../MyButton';
-import { getDebugLogs, clearDebugLogs } from '~/utils/debugLog';
 
-const fileName = 'extractions_v3.csv';
+const CSV_FILE_NAME = 'extractions_v3.csv';
+const CSV_HEADERS = [
+  'raw_text',
+  'extracted_data',
+  'ocr_quality',
+  'receipt_type',
+  'evaluation_date',
+  'evaluator_id',
+  'model_version'
+].join(',');
+
+const STORE_HINTS = ['Carulla', 'Exito'] as const;
 
 interface ReceiptScannerProps {
   onExtractedData?: (data: {
@@ -47,6 +56,22 @@ interface ReceiptScannerProps {
     rawText: string;
   }) => void;
 }
+
+const getErrorMessage = (e: unknown): string => (e instanceof Error ? e.message : String(e));
+
+// Cuenta los registros del CSV (sin contar el encabezado)
+const readCsvRowCount = async (): Promise<number> => {
+  try {
+    const file = new File(Paths.document, CSV_FILE_NAME);
+    if (!file.exists) return 0;
+
+    const content = await file.text();
+    const lines = content.trim().split('\n');
+    return lines.length > 1 ? lines.length - 1 : 0;
+  } catch {
+    return 0;
+  }
+};
 
 const ReceiptScanner: React.FC<ReceiptScannerProps> = () => {
   const colors = useThemeColors();
@@ -66,27 +91,21 @@ const ReceiptScanner: React.FC<ReceiptScannerProps> = () => {
 
   // ─── CSV ────────────────────────────────────────────────────────────────────
 
-  const updateCsvRowCount = useCallback(async () => {
-    try {
-      const file = new File(Paths.document, fileName);
-      if (file.exists) {
-        const content = await file.text();
-        const lines = content.trim().split('\n');
-        setCsvRows(lines.length > 1 ? lines.length - 1 : 0);
-      } else {
-        setCsvRows(0);
-      }
-    } catch (e) {
-      console.log('Error contando filas CSV:', e);
-      setCsvRows(0);
-    }
+  useEffect(() => {
+    let isMounted = true;
+
+    readCsvRowCount().then((count) => {
+      if (isMounted) setCsvRows(count);
+    });
+
+    return () => {
+      isMounted = false;
+    };
   }, []);
 
-  useEffect(() => {
-    void (async () => {
-      await updateCsvRowCount();
-    })();
-  }, [updateCsvRowCount]);
+  const refreshCsvRows = useCallback(async () => {
+    setCsvRows(await readCsvRowCount());
+  }, []);
 
   // ─── Procesamiento compartido ────────────────────────────────────────────────
 
@@ -113,10 +132,10 @@ const ReceiptScanner: React.FC<ReceiptScannerProps> = () => {
   // ─── Flujo imagen ────────────────────────────────────────────────────────────
 
   const processImage = useCallback(
-    async (base64: string, mock: boolean = false) => {
+    async (base64: string, mock = false) => {
       setLoading(true);
       setText('');
-      setError('');
+      setError(null);
       setSourceType('image');
       try {
         const data = mock
@@ -127,8 +146,8 @@ const ReceiptScanner: React.FC<ReceiptScannerProps> = () => {
         } else {
           handleOcrError(data);
         }
-      } catch (e: any) {
-        setError('Error al procesar imagen: ' + e?.message);
+      } catch (e) {
+        setError(`Error al procesar imagen: ${getErrorMessage(e)}`);
       } finally {
         setLoading(false);
       }
@@ -142,7 +161,7 @@ const ReceiptScanner: React.FC<ReceiptScannerProps> = () => {
     async (base64: string) => {
       setLoading(true);
       setText('');
-      setError('');
+      setError(null);
       setSourceType('pdf');
       try {
         const data = await callOCRSpaceAPIPdf({ base64Pdf: base64 });
@@ -154,8 +173,8 @@ const ReceiptScanner: React.FC<ReceiptScannerProps> = () => {
         } else {
           handleOcrError(data);
         }
-      } catch (e: any) {
-        setError('Error al procesar PDF: ' + e?.message);
+      } catch (e) {
+        setError(`Error al procesar PDF: ${getErrorMessage(e)}`);
       } finally {
         setLoading(false);
       }
@@ -171,18 +190,18 @@ const ReceiptScanner: React.FC<ReceiptScannerProps> = () => {
       setEditModalVisible(false);
       setEditableProducts(
         expenses.map((exp) => ({
-          description: exp.commentary || '',
+          description: exp.commentary ?? '',
           price: exp.cost
         }))
       );
       Alert.alert('Éxito', 'Gastos guardados correctamente');
-    } catch (error) {
-      console.error('Error al guardar gastos:', error);
+    } catch {
       Alert.alert('Error', 'No se pudieron guardar los gastos');
     }
   }, []);
 
   // ─── CSV actions ─────────────────────────────────────────────────────────────
+
   const resetForm = useCallback(() => {
     setPendingRawText('');
     setOcrAccuracy('');
@@ -194,6 +213,7 @@ const ReceiptScanner: React.FC<ReceiptScannerProps> = () => {
     setError(null);
     setSourceType('image');
   }, []);
+
   const saveToCSV = useCallback(async () => {
     if (!ocrAccuracy || !receiptType || editableProducts.length === 0) {
       Alert.alert('Datos incompletos', 'Complete todos los campos requeridos');
@@ -207,26 +227,17 @@ const ReceiptScanner: React.FC<ReceiptScannerProps> = () => {
         customReceiptType,
         editableProducts
       });
-      const file = new File(Paths.document, fileName);
+      const file = new File(Paths.document, CSV_FILE_NAME);
       const csvLine = generateCsvLine(csvData);
-      const headers = [
-        'raw_text',
-        'extracted_data',
-        'ocr_quality',
-        'receipt_type',
-        'evaluation_date',
-        'evaluator_id',
-        'model_version'
-      ].join(',');
-      const content = file.exists ? (await file.text()) + csvLine : headers + '\n' + csvLine;
+      const content = file.exists ? (await file.text()) + csvLine : `${CSV_HEADERS}\n${csvLine}`;
       await file.write(content);
-      updateCsvRowCount();
+      await refreshCsvRows();
       Alert.alert('Dataset actualizado', 'Datos guardados para entrenamiento.', [
         { text: 'Nuevo escaneo', onPress: resetForm },
         { text: 'Ver datos', style: 'cancel' }
       ]);
-    } catch (error: any) {
-      Alert.alert('Error al guardar', error.message);
+    } catch (e) {
+      Alert.alert('Error al guardar', getErrorMessage(e));
     }
   }, [
     ocrAccuracy,
@@ -234,38 +245,35 @@ const ReceiptScanner: React.FC<ReceiptScannerProps> = () => {
     editableProducts,
     pendingRawText,
     customReceiptType,
-    updateCsvRowCount
+    refreshCsvRows,
+    resetForm
   ]);
 
   const shareCSV = useCallback(async () => {
     try {
-      const file = new File(Paths.document, fileName);
+      const file = new File(Paths.document, CSV_FILE_NAME);
       if (file.exists) {
         await Sharing.shareAsync(file.uri);
       } else {
         setError('No hay archivo CSV para compartir.');
       }
-    } catch (e: any) {
-      setError('Error al compartir: ' + e?.message);
+    } catch (e) {
+      setError(`Error al compartir: ${getErrorMessage(e)}`);
     }
   }, []);
 
-  // ─── Debug logs ──────────────────────────────────────────────────────────────
+  // ─── Modal de gastos ─────────────────────────────────────────────────────────
 
-  const exportLogs = useCallback(async () => {
-    const logs = await getDebugLogs();
-    if (logs.length === 0) {
-      Alert.alert('Sin logs', 'No hay logs registrados aún');
-      return;
-    }
-    await Clipboard.setStringAsync(JSON.stringify(logs, null, 2));
-    Alert.alert('✅ Copiado', `${logs.length} entradas copiadas al portapapeles`);
-  }, []);
-
-  const resetLogs = useCallback(async () => {
-    await clearDebugLogs();
-    Alert.alert('Logs borrados');
-  }, []);
+  const initialExpenses = useMemo(
+    () =>
+      editableProducts.map((exp) => ({
+        description: exp.description,
+        cost: exp.price,
+        categoryId: null,
+        subcategoryId: null
+      })),
+    [editableProducts]
+  );
 
   // ─── Render ──────────────────────────────────────────────────────────────────
 
@@ -279,20 +287,32 @@ const ReceiptScanner: React.FC<ReceiptScannerProps> = () => {
               ¿Es factura de Carulla o Éxito? (opcional)
             </Text>
             <View style={styles.storeHintRow}>
-              {(['Carulla', 'Exito'] as const).map((store) => (
-                <TouchableOpacity
-                  key={store}
-                  style={[
-                    styles.storeHintButton,
-                    receiptType === store && styles.storeHintButtonSelected
-                  ]}
-                  onPress={() => setReceiptType(receiptType === store ? '' : store)}
-                >
-                  <Text style={receiptType === store ? styles.storeHintTextSelected : undefined}>
-                    {store}
-                  </Text>
-                </TouchableOpacity>
-              ))}
+              {STORE_HINTS.map((store) => {
+                const selected = receiptType === store;
+
+                return (
+                  <TouchableOpacity
+                    key={store}
+                    style={[
+                      styles.storeHintButton,
+                      {
+                        backgroundColor: selected ? colors.INFO + '15' : colors.CARD_BACKGROUND,
+                        borderColor: selected ? colors.INFO : colors.BORDER
+                      }
+                    ]}
+                    onPress={() => setReceiptType(selected ? '' : store)}
+                  >
+                    <Text
+                      style={[
+                        { color: selected ? colors.INFO : colors.TEXT_PRIMARY },
+                        selected && styles.storeHintTextSelected
+                      ]}
+                    >
+                      {store}
+                    </Text>
+                  </TouchableOpacity>
+                );
+              })}
             </View>
           </View>
         )}
@@ -352,23 +372,10 @@ const ReceiptScanner: React.FC<ReceiptScannerProps> = () => {
           </>
         )}
 
-        {/* Debug — solo producción */}
-        {/* {!__DEV__ && (
-          <View style={styles.debugRow}>
-            <MyButton title="📋 Exportar logs" variant="secondary" fullWidth onPress={exportLogs} />
-            <MyButton title="🗑️ Borrar logs" variant="secondary" fullWidth onPress={resetLogs} />
-          </View>
-        )} */}
-
         <MultiExpenseModal
           visible={editModalVisible}
           sourceType={sourceType}
-          initialExpenses={editableProducts.map((exp) => ({
-            description: exp.description,
-            cost: exp.price,
-            categoryId: null,
-            subcategoryId: null
-          }))}
+          initialExpenses={initialExpenses}
           onClose={(updated) => {
             if (updated) {
               setEditableProducts(
@@ -389,27 +396,59 @@ const ReceiptScanner: React.FC<ReceiptScannerProps> = () => {
 };
 
 const styles = StyleSheet.create({
-  container: { flexGrow: 1, padding: 16 },
-  inner: { flex: 1, alignItems: 'center', width: '100%' },
-  storeHintContainer: { width: '100%', marginBottom: 12 },
-  storeHintLabel: { fontSize: 13, fontWeight: '600', marginBottom: 6 },
-  storeHintRow: { flexDirection: 'row', gap: 8 },
+  container: {
+    flexGrow: 1,
+    padding: 16
+  },
+  inner: {
+    flex: 1,
+    alignItems: 'center',
+    width: '100%'
+  },
+  storeHintContainer: {
+    width: '100%',
+    marginBottom: 12
+  },
+  storeHintLabel: {
+    fontSize: 13,
+    fontWeight: '600',
+    marginBottom: 6
+  },
+  storeHintRow: {
+    flexDirection: 'row',
+    gap: 8
+  },
   storeHintButton: {
     paddingHorizontal: 16,
     paddingVertical: 8,
     borderRadius: 6,
-    borderWidth: 1,
-    borderColor: '#ddd',
-    backgroundColor: '#f8f9fa'
+    borderWidth: 1
   },
-  storeHintButtonSelected: { backgroundColor: '#e3f2fd', borderColor: '#2196f3' },
-  storeHintTextSelected: { color: '#2196f3', fontWeight: '600' },
-  csvCounter: { marginVertical: 12, fontWeight: '600' },
-  error: { marginVertical: 8, textAlign: 'center' },
-  resultBox: { width: '100%', padding: 12, borderRadius: 10, marginTop: 16 },
-  label: { fontWeight: '700', marginBottom: 8 },
-  text: { fontSize: 14, lineHeight: 20 },
-  debugRow: { width: '100%', gap: 8, marginTop: 8 }
+  storeHintTextSelected: {
+    fontWeight: '600'
+  },
+  csvCounter: {
+    marginVertical: 12,
+    fontWeight: '600'
+  },
+  error: {
+    marginVertical: 8,
+    textAlign: 'center'
+  },
+  resultBox: {
+    width: '100%',
+    padding: 12,
+    borderRadius: 10,
+    marginTop: 16
+  },
+  label: {
+    fontWeight: '700',
+    marginBottom: 8
+  },
+  text: {
+    fontSize: 14,
+    lineHeight: 20
+  }
 });
 
 export default ReceiptScanner;

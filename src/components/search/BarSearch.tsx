@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { View, TextInput, StyleSheet, TouchableOpacity } from 'react-native';
 import { Icon } from 'react-native-elements';
 import { useDispatch, useSelector } from 'react-redux';
@@ -33,58 +33,48 @@ export default function BarSearch({
   const colors = useThemeColors();
   const dispatch: AppDispatch = useDispatch();
 
-  // Obtener el query del store cuando shouldDispatch es true
-  const queryFromStore = useSelector((state: RootState) =>
-    shouldDispatch ? state.search.query : null
-  );
+  const queryFromStore = useSelector((state: RootState) => state.search.query);
+  const storeValue = shouldDispatch ? (queryFromStore ?? '') : null;
 
-  // Inicializar con el valor del store si existe
-  const [queryState, setQueryState] = useState<string>(queryFromStore || '');
+  const [queryState, setQueryState] = useState<string>(storeValue ?? '');
+  const [prevStoreValue, setPrevStoreValue] = useState(storeValue);
 
-  // Sincronizar con el store cuando el query cambia externamente
-  useEffect(() => {
-    if (shouldDispatch) {
-      // Si el store tiene un valor, sincronizarlo con el estado local
-      if (queryFromStore !== null && queryFromStore !== queryState) {
-        setQueryState(queryFromStore);
-      }
-      // Si el store está null, limpiar el estado local
-      else if (queryFromStore === null && queryState !== '') {
-        setQueryState('');
-      }
+  // Sincroniza con el store cuando cambia externamente (durante el render, sin efecto)
+  if (storeValue !== prevStoreValue) {
+    setPrevStoreValue(storeValue);
+    if (storeValue !== null) {
+      setQueryState(storeValue);
     }
-  }, [queryFromStore, shouldDispatch]);
+  }
 
-  const handleSearch = (text: string): void => {
-    setQueryState(text);
+  // Envía la búsqueda al store o al callback del padre
+  const submitQuery = (text: string): void => {
+    if (shouldDispatch) {
+      // null si está vacío, o el texto si tiene contenido
+      dispatch(setQuery(text || null));
+    } else if (onQueryChange) {
+      onQueryChange(text);
+    }
   };
 
+  // El texto se mantiene en el input después de buscar
   const handleSubmit = (): void => {
-    const trimmedQuery = queryState.trim();
-
-    if (shouldDispatch) {
-      // Enviar null si está vacío, o el texto si tiene contenido
-      dispatch(setQuery(trimmedQuery || null));
-    } else if (onQueryChange) {
-      onQueryChange(trimmedQuery);
-    }
-
-    // ✅ Mantener el texto en el input después de buscar
-    // Esto mejora la UX permitiendo al usuario ver qué buscó y modificarlo fácilmente
+    submitQuery(queryState.trim());
   };
 
   const handleClear = (): void => {
     setQueryState('');
-    if (shouldDispatch) {
-      dispatch(setQuery(null));
-    } else if (onQueryChange) {
-      onQueryChange('');
-    }
+    submitQuery('');
   };
 
   return (
     <View style={styles.container}>
-      <View style={[styles.searchContainer, { backgroundColor: colors.CARD_BACKGROUND }]}>
+      <View
+        style={[
+          styles.searchContainer,
+          { backgroundColor: colors.CARD_BACKGROUND, shadowColor: colors.BLACK }
+        ]}
+      >
         {/* Icono de búsqueda */}
         <Icon
           type="material-community"
@@ -96,14 +86,8 @@ export default function BarSearch({
 
         {/* Input */}
         <TextInput
-          style={[
-            styles.input,
-            {
-              color: colors.TEXT_PRIMARY,
-              flex: 1
-            }
-          ]}
-          onChangeText={handleSearch}
+          style={[styles.input, { color: colors.TEXT_PRIMARY }]}
+          onChangeText={setQueryState}
           value={queryState}
           placeholder={placeholder}
           placeholderTextColor={colors.TEXT_SECONDARY}
@@ -147,7 +131,6 @@ const styles = StyleSheet.create({
     height: 44,
     borderRadius: 22,
     paddingHorizontal: 12,
-    shadowColor: '#000',
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.1,
     shadowRadius: 2,
@@ -157,6 +140,7 @@ const styles = StyleSheet.create({
     marginRight: 8
   },
   input: {
+    flex: 1,
     fontSize: SMALL + 1,
     padding: 0
   },

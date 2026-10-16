@@ -1,8 +1,10 @@
 import React, { useMemo, useRef, useState } from 'react';
 import { Keyboard, ScrollView, StyleSheet, Text, View } from 'react-native';
-import { useSelector } from 'react-redux';
 import { useForm, useWatch } from 'react-hook-form';
 import * as Crypto from 'expo-crypto';
+
+// Redux
+import { selectSelectedMonth } from '~/features/period/periodSelectors';
 
 // Services
 import { CreateExpense, getExpensesFromSubcategory } from '~/services/expenses';
@@ -20,7 +22,6 @@ import CommentaryInput from '~/components/CommentaryInput';
 import ExpenseNatureSelector from '~/components/inputs/ExpenseNatureSelector';
 
 // Types
-import type { RootState } from '~/shared/types/reducers';
 import type { ExpenseModel } from '~/shared/types';
 import type { FormExpensesValues } from '~/shared/types/screens/expenses/create-expenses.type';
 import type { CreateExpensePayload } from '~/shared/types/services/expense-service.type';
@@ -34,6 +35,9 @@ import { showError } from '~/utils/showError';
 import { saveCommentaryToHistory } from '~/utils/commentary/commentaryHistory.utils';
 import { registerDefaultTemplateConfig } from '~/utils/commentary/templateStorage.utils';
 import { getDefaultTemplateConfig } from '~/utils/commentary/commentaryTemplates.utils';
+
+// Hooks
+import { useAppSelector } from '~/store/hooks';
 
 // Theme
 import { useThemeColors } from '~/customHooks/useThemeColors';
@@ -65,8 +69,7 @@ export default function CreateExpenseScreen(): React.JSX.Element {
   const config = screenConfigs.createExpense;
   const colors = useThemeColors();
 
-  const month = useSelector((state: RootState) => state.date.month);
-
+  const month = useAppSelector(selectSelectedMonth);
   const { handleSubmit, control, reset, setValue } = useForm<FormExpensesValues>({
     mode: 'onTouched'
   });

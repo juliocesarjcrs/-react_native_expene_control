@@ -1,17 +1,16 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { View, TextInput, StyleSheet, TouchableOpacity } from 'react-native';
 import { Icon } from 'react-native-elements';
-import { useDispatch, useSelector } from 'react-redux';
 
 // Redux
-import { setQuery } from '~/features/search/searchSlice';
+import { clearQuery, setQuery } from '~/features/search/searchSlice';
+import { selectSearchQuery } from '~/features/search/searchSelectors';
 
 // Components
 import MyButton from '~/components/MyButton';
 
-// Types
-import { AppDispatch } from '~/shared/types/reducers/root-state.type';
-import { RootState } from '~/shared/types/reducers';
+// Hooks
+import { useAppDispatch, useAppSelector } from '~/store/hooks';
 
 // Theme
 import { useThemeColors } from '~/customHooks/useThemeColors';
@@ -31,13 +30,20 @@ export default function BarSearch({
   placeholder = 'Buscar...'
 }: BarSearchProps) {
   const colors = useThemeColors();
-  const dispatch: AppDispatch = useDispatch();
+  const dispatch = useAppDispatch();
 
-  const queryFromStore = useSelector((state: RootState) => state.search.query);
+  const queryFromStore = useAppSelector(selectSearchQuery);
   const storeValue = shouldDispatch ? (queryFromStore ?? '') : null;
 
   const [queryState, setQueryState] = useState<string>(storeValue ?? '');
   const [prevStoreValue, setPrevStoreValue] = useState(storeValue);
+
+  useEffect(() => {
+    if (!shouldDispatch) return;
+    return () => {
+      dispatch(clearQuery());
+    };
+  }, [dispatch, shouldDispatch]);
 
   // Sincroniza con el store cuando cambia externamente (durante el render, sin efecto)
   if (storeValue !== prevStoreValue) {

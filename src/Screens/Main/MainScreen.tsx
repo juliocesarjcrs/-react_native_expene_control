@@ -1,17 +1,12 @@
 import React, { useCallback, useState } from 'react';
 import { ScrollView, StyleSheet, Text, View, Image } from 'react-native';
 import { Icon } from 'react-native-elements';
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import { useDispatch, useSelector } from 'react-redux';
+import { selectSelectedMonth } from '~/features/period/periodSelectors';
 import Constants from 'expo-constants';
 import { StackNavigationProp } from '@react-navigation/stack';
 import { useFocusEffect } from '@react-navigation/native';
 
-// Redux
-import { setIsAuth } from '~/features/auth/authSlice';
-
 // Services
-import { getUser } from '~/services/users';
 import { getUrlSignedAws } from '~/services/files';
 import { getAllExpensesByMonth } from '~/services/categories';
 
@@ -26,9 +21,7 @@ import { ScreenHeader } from '~/components/ScreenHeader';
 import { ChatScreen } from '~/Screens/common/ChatScreen';
 
 // Types
-import { ExpenseStackParamList, UserModel } from '~/shared/types';
-import { RootState } from '~/shared/types/reducers';
-import { AppDispatch } from '~/shared/types/reducers/root-state.type';
+import { ExpenseStackParamList } from '~/shared/types';
 
 // Utils
 import { AsignColor, compareValues } from '~/utils/Helpers';
@@ -36,6 +29,7 @@ import { showError } from '~/utils/showError';
 
 // Hooks
 import { useFeatureFlag } from '~/contexts/FeatureFlagsContext';
+import { useAppDispatch, useAppSelector } from '~/store/hooks';
 
 // Theme
 import { useThemeColors } from '~/customHooks/useThemeColors';
@@ -46,7 +40,7 @@ import { SMALL } from '~/styles/fonts';
 
 // Configs
 import { screenConfigs } from '~/config/screenConfigs';
-import { clearApolloCache } from '~/plugins/ApolloClient';
+import { signOut } from '~/features/auth/authThunks';
 
 type MainScreenNavigationProp = StackNavigationProp<ExpenseStackParamList, 'main'>;
 
@@ -84,11 +78,12 @@ const buildCategories = (rows: RawExpenses): CategoryDataFormat[] => {
 export default function MainScreen({ navigation }: MainScreenProps) {
   const config = screenConfigs.main;
   const colors = useThemeColors();
-  const month = useSelector((state: RootState) => state.date.month);
-  const dispatch: AppDispatch = useDispatch();
+
+  const dispatch = useAppDispatch();
+  const month = useAppSelector(selectSelectedMonth);
+  const user = useAppSelector((s) => s.auth.user);
 
   const [expenseData, setExpenseData] = useState<ExpenseData | null>(null);
-  const [userLoggued, setUserLoggued] = useState<UserModel | null>(null);
   const [userImgSigned, setUserImgSigned] = useState<string | null>(null);
 
   const { isEnabled } = useFeatureFlag('chatbot');
@@ -127,43 +122,37 @@ export default function MainScreen({ navigation }: MainScreenProps) {
   );
 
   // Usuario y foto: al enfocar la pantalla
+  const userImage = user?.image;
+
   useFocusEffect(
     useCallback(() => {
+      if (!userImage) {
+        setUserImgSigned(null);
+        return;
+      }
+
       let active = true;
 
-      const loadUser = async (): Promise<void> => {
+      const loadAvatar = async (): Promise<void> => {
         try {
-          const jsonValue = await AsyncStorage.getItem('user');
-          const storedUser: UserModel | null = jsonValue ? JSON.parse(jsonValue) : null;
-          if (!storedUser?.id) return;
-
-          const { data } = await getUser(storedUser.id);
-          if (!active) return;
-          setUserLoggued(data);
-
-          if (data.image) {
-            const { data: signedUrl } = await getUrlSignedAws({ file: data.image });
-            if (active) setUserImgSigned(signedUrl);
-          }
+          const { data: signedUrl } = await getUrlSignedAws({ file: userImage });
+          if (active) setUserImgSigned(signedUrl);
         } catch (error) {
           if (active) showError(error);
         }
       };
 
-      loadUser();
+      loadAvatar();
 
       return () => {
         active = false;
       };
-    }, [])
+    }, [userImage])
   );
 
   const logOut = async (): Promise<void> => {
     try {
-      await AsyncStorage.removeItem('access_token');
-      await AsyncStorage.removeItem('user');
-      dispatch(setIsAuth(false));
-      await clearApolloCache();
+      await dispatch(signOut()).unwrap();
     } catch (error) {
       showError(error);
     }
@@ -192,7 +181,7 @@ export default function MainScreen({ navigation }: MainScreenProps) {
         rightComponent={
           <View style={styles.userHeaderCompact}>
             <View style={[styles.avatarSmall, { borderColor: colors.PRIMARY }]}>
-              {userLoggued?.image && userImgSigned ? (
+              {user?.image && userImgSigned ? (
                 <Image source={{ uri: userImgSigned }} style={styles.avatarSmallImage} />
               ) : (
                 <View
@@ -206,7 +195,7 @@ export default function MainScreen({ navigation }: MainScreenProps) {
               )}
             </View>
             <Text style={[styles.userName, { color: colors.TEXT_PRIMARY }]} numberOfLines={1}>
-              {userLoggued?.name ?? 'Usuario'}
+              {user?.name ?? 'Usuario'}
             </Text>
           </View>
         }

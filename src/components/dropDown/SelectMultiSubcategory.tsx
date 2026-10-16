@@ -17,8 +17,10 @@ import {
   ScrollView
 } from 'react-native';
 import DropDownPicker from 'react-native-dropdown-picker';
-import { useSelector } from 'react-redux';
 import { Icon } from 'react-native-elements';
+
+// Redux
+import { selectSelectedMonth } from '~/features/period/periodSelectors';
 
 // Services
 import { getAllSubcategoriesExpensesByMonth } from '~/services/categories';
@@ -27,8 +29,10 @@ import { getAllSubcategoriesExpensesByMonth } from '~/services/categories';
 import MyLoading from '../loading/MyLoading';
 import ErrorText from '../ErrorText';
 
+// Hooks
+import { useAppSelector } from '~/store/hooks';
+
 // Types
-import { RootState } from '~/shared/types/reducers';
 import { CategoryFormat } from '~/shared/types/components/dropDown/SelectJoinCategory.type';
 
 // Theme & Styles
@@ -77,7 +81,7 @@ const SelectMultiSubcategory = forwardRef<
   SelectMultiSubcategoryProps
 >(({ onSelectionChange, containerStyle }, ref) => {
   const colors = useThemeColors();
-  const month = useSelector((state: RootState) => state.date.month);
+  const month = useAppSelector(selectSelectedMonth);
 
   const [openCategory, setOpenCategory] = useState(false);
   const [rawCategories, setRawCategories] = useState<RawCategory[]>([]);

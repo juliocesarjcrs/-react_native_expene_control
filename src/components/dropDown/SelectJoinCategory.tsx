@@ -9,8 +9,10 @@ import React, {
 } from 'react';
 import { View, Text, StyleSheet, StyleProp, ViewStyle } from 'react-native';
 import DropDownPicker from 'react-native-dropdown-picker';
-import { useSelector } from 'react-redux';
 import { Icon } from 'react-native-elements';
+
+// Redux
+import { selectSelectedMonth } from '~/features/period/periodSelectors';
 
 // Services
 import { getAllSubcategoriesExpensesByMonth } from '~/services/categories';
@@ -20,7 +22,6 @@ import ErrorText from '../ErrorText';
 import MyLoading from '../loading/MyLoading';
 
 // Types
-import { RootState } from '~/shared/types/reducers';
 import {
   CategoryFormat,
   CategorySelection,
@@ -29,6 +30,9 @@ import {
 
 // Utils
 import { showError } from '~/utils/showError';
+
+// Hooks
+import { useAppSelector } from '~/store/hooks';
 
 // Theme
 import { useThemeColors } from '~/customHooks/useThemeColors';
@@ -67,7 +71,7 @@ const LoadingIndicator = () => <MyLoading />;
 const SelectJoinCategory = forwardRef<SelectJoinCategoryHandle, SelectJoinCategoryProps>(
   ({ fetchExpensesSubcategory, fetchExpensesOnlyCategory, containerStyle }, ref) => {
     const colors = useThemeColors();
-    const month = useSelector((state: RootState) => state.date.month);
+    const month = useAppSelector(selectSelectedMonth);
 
     const [rawCategories, setRawCategories] = useState<RawCategory[]>([]);
     const [idCategory, setIdCategory] = useState<null | number>(null);

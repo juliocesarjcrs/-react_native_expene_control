@@ -1,19 +1,14 @@
 /* prettier-ignore-file */
 import { createStackNavigator } from '@react-navigation/stack';
 import { NavigationContainer } from '@react-navigation/native';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import React, { useEffect } from 'react';
-import { useSelector, useDispatch } from 'react-redux';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { Icon } from 'react-native-elements';
 import AuthStackNavigator from './AuthStack';
 
 // Redux
-import { setIsAuth, setLoadingAuth, setUser } from '../features/auth/authSlice';
 import Routes from './stackRoutes';
-
-// Services
-import { getUser } from '../services/users';
+import { useAppDispatch, useAppSelector } from '~/store/hooks';
 
 // Contexts
 import { FeatureFlagsProvider } from '~/contexts/FeatureFlagsContext';
@@ -26,18 +21,14 @@ import {
   BalanceStackParamList,
   ExpenseStackParamList,
   IncomeStackParamList,
-  SettingsStackParamList,
-  UserModel
+  SettingsStackParamList
 } from '../shared/types';
-import { RootState } from '../shared/types/reducers';
-import { AppDispatch } from '../shared/types/reducers/root-state.type';
-
-// Utils
-import { showError } from '~/utils/showError';
 
 // Theme
 import { useNavigationTheme } from '~/customHooks/useNavigationTheme';
 import { useThemeColors } from '~/customHooks/useThemeColors';
+import { restoreSession } from '~/features/auth/authThunks';
+import MyLoading from '~/components/loading/MyLoading';
 
 // ====================================
 // Navegadores (a nivel de módulo)
@@ -399,31 +390,15 @@ function MainTabs() {
 
 export default function MyStack() {
   const navigationTheme = useNavigationTheme();
-  const dispatch: AppDispatch = useDispatch();
-  const isAuth = useSelector((state: RootState) => state.auth.isAuth);
+  const dispatch = useAppDispatch();
+  const isAuth = useAppSelector((s) => s.auth.isAuth);
+  const isRestoring = useAppSelector((s) => s.auth.isRestoringSession);
 
-  // Restaura la sesión guardada al abrir la app
   useEffect(() => {
-    const restoreSession = async () => {
-      try {
-        dispatch(setLoadingAuth(true));
-        const jsonValue = await AsyncStorage.getItem('user');
-        const storedUser: UserModel | null = jsonValue ? JSON.parse(jsonValue) : null;
-
-        if (storedUser?.id) {
-          const { data } = await getUser(storedUser.id);
-          dispatch(setUser(data));
-          dispatch(setIsAuth(true));
-        }
-      } catch (error) {
-        showError(error);
-      } finally {
-        dispatch(setLoadingAuth(false));
-      }
-    };
-
-    restoreSession();
+    dispatch(restoreSession());
   }, [dispatch]);
+
+  if (isRestoring) return <MyLoading />;
 
   return (
     <FeatureFlagsProvider>

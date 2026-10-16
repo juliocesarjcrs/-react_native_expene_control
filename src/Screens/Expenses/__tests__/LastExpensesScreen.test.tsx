@@ -4,8 +4,6 @@ import { Provider } from 'react-redux';
 import createMockStore, { MockStoreEnhanced } from 'redux-mock-store';
 import LastExpensesScreen from '../LastExpensesScreen';
 import * as expensesService from '../../../services/expenses';
-import { setQuery } from '~/features/search/searchSlice';
-
 // Mock navigationP
 const mockNavigation = {
   addListener: jest.fn(() => jest.fn()),
@@ -130,20 +128,6 @@ describe('LastExpensesScreen behaviors', () => {
       }
       return Promise.resolve({ data: { data: [] } });
     });
-  });
-
-  it('should reset the query on mount', () => {
-    store = mockStore({ search: { query: 'something' } });
-
-    render(
-      <Provider store={store}>
-        <LastExpensesScreen navigation={mockNavigation} />
-      </Provider>
-    );
-
-    const actions = store.getActions();
-    expect(actions[0].type).toBe(setQuery.type);
-    expect(actions[0].payload).toBe(null);
   });
 
   it('should fetch first page on mount with query null', async () => {

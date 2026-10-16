@@ -1,8 +1,10 @@
 import React, { useEffect, useState } from 'react';
 import { View, Text, ScrollView } from 'react-native';
-import { useSelector } from 'react-redux';
 import { RouteProp } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
+
+// Redux
+import { selectSelectedMonth } from '~/features/period/periodSelectors';
 
 // Services
 import { getCategoryTypeIncome } from '../../services/categories';
@@ -15,13 +17,15 @@ import MyButton from '~/components/MyButton';
 import { ScreenHeader } from '~/components/ScreenHeader';
 
 // Types
-import { RootState } from '~/shared/types/reducers';
 import { CategoryIncomesSumary } from '~/shared/types/services';
 import { IncomeStackParamList } from '~/shared/types';
 
 // Utils
 import { DateFormat, NumberFormat } from '../../utils/Helpers';
 import { showError } from '~/utils/showError';
+
+// Hooks
+import { useAppSelector } from '~/store/hooks';
 
 // Theme
 import { useThemeColors } from '~/customHooks/useThemeColors';
@@ -50,7 +54,7 @@ export default function SumaryIncomesScreen({ navigation }: SumaryIncomesScreenP
   const [total, setTotal] = useState(0);
   const [categories, setCategories] = useState<CategoryIncomesSumary[]>([]);
   const [loading, setLoading] = useState(false);
-  const month = useSelector((state: RootState) => state.date.month);
+  const month = useAppSelector(selectSelectedMonth);
 
   const fetchData = async () => {
     try {

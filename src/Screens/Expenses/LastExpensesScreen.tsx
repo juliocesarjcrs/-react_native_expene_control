@@ -2,8 +2,8 @@ import React, { useCallback, useEffect, useState } from 'react';
 import { FlatList, StyleSheet, Text } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { StackNavigationProp } from '@react-navigation/stack';
-import { useDispatch, useSelector } from 'react-redux';
-import { setQuery } from '~/features/search/searchSlice';
+// Hooks
+import { selectSearchQuery } from '~/features/search/searchSelectors';
 // Services
 import { getLastExpensesWithPaginate } from '../../services/expenses';
 
@@ -15,13 +15,12 @@ import BarSearch from '~/components/search/BarSearch';
 
 // Types
 import { ExpenseStackParamList } from '../../shared/types';
-import { RootState } from '../../shared/types/reducers';
 
 // Utils
 import { ExtendedExpenseModel } from '../../shared/types/models/expense.type';
-import { AppDispatch } from '../../shared/types/reducers/root-state.type';
 import { showError } from '~/utils/showError';
 
+import { useAppSelector } from '~/store/hooks';
 // Styles
 import { commonStyles } from '~/styles/common';
 
@@ -45,13 +44,8 @@ export default function LastExpensesScreen({ navigation }: LastExpenseScreenProp
   const [loadingFooter, setLoadingFotter] = useState(false);
   const [page, setPage] = useState(1);
   const [stopeFetch, setStopeFetch] = useState(false);
-  const dispatch: AppDispatch = useDispatch();
-  const query = useSelector((state: RootState) => state.search.query);
+  const query = useAppSelector(selectSearchQuery);
   const isFirstRender = React.useRef(true);
-
-  useEffect(() => {
-    dispatch(setQuery(null));
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const fetchData = useCallback(
     async (pageToFetch: number, reset: boolean) => {

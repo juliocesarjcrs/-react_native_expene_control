@@ -1,8 +1,7 @@
 import React, { useState } from 'react';
 import { View, ScrollView, Text, StyleSheet } from 'react-native';
 import { useForm } from 'react-hook-form';
-import { useSelector } from 'react-redux';
-
+import type { RouteProp } from '@react-navigation/native';
 // Services
 import { checkRecoverycode } from '~/services/auth';
 
@@ -31,28 +30,18 @@ import { SMALL } from '~/styles/fonts';
 import { screenConfigs } from '~/config/screenConfigs';
 
 type ScreenNavigationProp = StackNavigationProp<AuthStackParamList, 'checkCodePassword'>;
-
 interface ScreenProps {
   navigation: ScreenNavigationProp;
+  route: RouteProp<AuthStackParamList, 'checkCodePassword'>;
 }
-
 interface FormData {
   recoveryCode: string;
 }
 
-interface RootState {
-  auth: {
-    user: {
-      id: number;
-    };
-  };
-}
-
-export default function CheckCodePasswordScreen({ navigation }: ScreenProps) {
+export default function CheckCodePasswordScreen({ navigation, route }: ScreenProps) {
+  const { userId } = route.params;
   const colors = useThemeColors();
   const screenConfig = screenConfigs.checkCodePassword;
-  const user = useSelector((state: RootState) => state.auth.user);
-
   // Form
   const { handleSubmit, control } = useForm<FormData>({
     mode: 'onTouched',
@@ -72,11 +61,11 @@ export default function CheckCodePasswordScreen({ navigation }: ScreenProps) {
       };
 
       setLoading(true);
-      const { data } = await checkRecoverycode(user.id, params);
+      const { data } = await checkRecoverycode(userId, params);
       setLoading(false);
 
       if (data.checkCode) {
-        navigation.navigate('resetPassword');
+        navigation.navigate('resetPassword', { userId });
       }
     } catch (error) {
       setLoading(false);

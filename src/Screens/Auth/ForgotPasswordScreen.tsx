@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import { View, StyleSheet, Text, ScrollView } from 'react-native';
 import { useForm } from 'react-hook-form';
-import { useDispatch } from 'react-redux';
 import { StackNavigationProp } from '@react-navigation/stack';
 
 // Services
@@ -16,10 +15,6 @@ import { ScreenHeader } from '~/components/ScreenHeader';
 // Types
 import { AuthStackParamList } from '../../shared/types';
 import { ForgotPasswordPayload } from '../../shared/types/services';
-import { AppDispatch } from '../../shared/types/reducers/root-state.type';
-
-// Redux
-import { setUser } from '../../features/auth/authSlice';
 
 // Utils
 import { showError } from '~/utils/showError';
@@ -45,7 +40,6 @@ interface ForgotPasswordScreenProps {
 
 export default function ForgotPasswordScreen({ navigation }: ForgotPasswordScreenProps) {
   const colors = useThemeColors();
-  const dispatch: AppDispatch = useDispatch();
   const screenConfig = screenConfigs.forgotPassword;
 
   const { handleSubmit, control } = useForm<ForgotPasswordPayload>({
@@ -59,8 +53,7 @@ export default function ForgotPasswordScreen({ navigation }: ForgotPasswordScree
     try {
       setLoading(true);
       const { data } = await forgotPassword(payload);
-      dispatch(setUser(data.user));
-      navigation.navigate('checkCodePassword');
+      navigation.navigate('checkCodePassword', { userId: data.user.id });
     } catch (error) {
       showError(error);
     } finally {

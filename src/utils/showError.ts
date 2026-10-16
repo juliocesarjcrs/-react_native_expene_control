@@ -1,8 +1,10 @@
 import { Alert, ToastAndroid, Platform } from 'react-native';
 import { AxiosError } from 'axios';
 import { logger } from '~/utils/logger';
+import { wasNotified } from './errorNotification';
 
 export function showError(error: unknown, customMessage?: string) {
+  if (!customMessage && wasNotified(error)) return; // el interceptor ya avisó y registró
   let message = customMessage || 'Ocurrió un error inesperado. Intenta de nuevo.';
 
   if (error instanceof AxiosError) {

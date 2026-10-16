@@ -1,7 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import type { SetStateAction } from 'react';
 import { Keyboard, Platform, ScrollView, StyleSheet, Text, View } from 'react-native';
-import { useSelector } from 'react-redux';
 import { useForm, useWatch } from 'react-hook-form';
 import { Icon } from 'react-native-elements';
 import DateTimePicker from '@react-native-community/datetimepicker';
@@ -9,6 +8,9 @@ import type { DateTimePickerEvent } from '@react-native-community/datetimepicker
 import DropDownPicker from 'react-native-dropdown-picker';
 import type { StackNavigationProp } from '@react-navigation/stack';
 import type { RouteProp } from '@react-navigation/native';
+
+// Redux
+import { selectSelectedMonth } from '~/features/period/periodSelectors';
 
 // Services
 import { editExpense, getOneExpense } from '../../services/expenses';
@@ -24,7 +26,6 @@ import ExpenseNatureSelector from '~/components/inputs/ExpenseNatureSelector';
 
 // Types
 import type { ExpenseStackParamList } from '~/shared/types';
-import type { RootState } from '~/shared/types/reducers';
 import type {
   CategoryOption,
   FormValues,
@@ -36,6 +37,9 @@ import type { EditExpensePayload } from '~/shared/types/services/expense-service
 import { DateFormat } from '../../utils/Helpers';
 import { showError } from '~/utils/showError';
 import { ShowToast } from '../../utils/toastUtils';
+
+// Hooks
+import { useAppSelector } from '~/store/hooks';
 
 // Theme
 import { useThemeColors } from '~/customHooks/useThemeColors';
@@ -84,7 +88,7 @@ export default function EditExpenseScreen({
   const { objectExpense } = route.params;
   const idExpense = objectExpense.id;
 
-  const month = useSelector((state: RootState) => state.date.month);
+  const month = useAppSelector(selectSelectedMonth);
 
   const { handleSubmit, control, reset } = useForm<FormValues>({
     defaultValues: {

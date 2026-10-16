@@ -1,13 +1,16 @@
-import { createSlice, PayloadAction } from '@reduxjs/toolkit';
+import { createSlice, type PayloadAction } from '@reduxjs/toolkit';
+import type { UserModel } from '~/shared/types';
 
-// Types
-import { AuthState } from '../../shared/types/reducers';
-import { UserModel } from '../../shared/types';
+export type AuthState = {
+  user: UserModel | null;
+  isAuth: boolean;
+  isRestoringSession: boolean;
+};
 
 const initialState: AuthState = {
   user: null,
   isAuth: false,
-  loadingAuth: false
+  isRestoringSession: true // la app arranca "restaurando" hasta que se sepa si hay sesión
 };
 
 const authSlice = createSlice({
@@ -20,15 +23,13 @@ const authSlice = createSlice({
     setIsAuth: (state, action: PayloadAction<boolean>) => {
       state.isAuth = action.payload;
     },
-    logout: (state) => {
-      state.user = null;
-      state.isAuth = false;
+    setRestoringSession: (state, action: PayloadAction<boolean>) => {
+      state.isRestoringSession = action.payload;
     },
-    setLoadingAuth: (state, action: PayloadAction<boolean>) => {
-      state.loadingAuth = action.payload;
-    }
+    // Al cerrar sesión ya no se está restaurando nada
+    logout: () => ({ ...initialState, isRestoringSession: false })
   }
 });
 
-export const { setUser, setIsAuth, logout, setLoadingAuth } = authSlice.actions;
+export const { setUser, setIsAuth, setRestoringSession, logout } = authSlice.actions;
 export default authSlice.reducer;

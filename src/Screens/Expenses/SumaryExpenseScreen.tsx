@@ -1,8 +1,10 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import type { StackNavigationProp } from '@react-navigation/stack';
-import { useSelector } from 'react-redux';
 import { Icon } from 'react-native-elements';
+
+// Redux
+import { selectSelectedMonth } from '~/features/period/periodSelectors';
 
 // Services
 import { getAllSubcategoriesExpensesByMonth } from '~/services/categories';
@@ -16,13 +18,15 @@ import MyLoading from '~/components/loading/MyLoading';
 import YearCitySelector from '../Budgest/components/YearCytySelector';
 
 // Types
-import type { RootState } from '~/shared/types/reducers';
 import type { CategoryExpense } from '~/shared/types/services';
 import type { ExpenseStackParamList } from '~/shared/types';
 
 // Utils
 import { NumberFormat } from '~/utils/Helpers';
 import { showError } from '~/utils/showError';
+
+// Hooks
+import { useAppSelector } from '~/store/hooks';
 
 // Styles
 import { BIG, SMALL } from '~/styles/fonts';
@@ -81,7 +85,7 @@ const fetchBudgetSummary = async (year: number, city: string): Promise<BudgetSum
 
 export default function SumaryExpenseScreen({ navigation }: SumaryExpenseScreenProps) {
   const colors = useThemeColors();
-  const month = useSelector((state: RootState) => state.date.month);
+  const month = useAppSelector(selectSelectedMonth);
   const screenConfig = screenConfigs.sumary;
 
   const [selectedYear, setSelectedYear] = useState<number>(new Date().getFullYear());

@@ -1,21 +1,15 @@
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useState } from 'react';
 import { FlatList, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useDispatch, useSelector } from 'react-redux';
 import { StackNavigationProp } from '@react-navigation/stack';
 import { useFocusEffect } from '@react-navigation/native';
 
 // Services
 import { getLastIncomesWithPaginate } from '../../services/incomes';
 
-// Redux
-import { setQuery } from '~/features/search/searchSlice';
-
 // Types
 import { IncomeStackParamList } from '../../shared/types';
 import { LastIncomes } from '../../shared/types/services/income-service.type';
-import { RootState } from '../../shared/types/reducers';
-import { AppDispatch } from '../../shared/types/reducers/root-state.type';
 
 // Components
 import MyLoading from '../../components/loading/MyLoading';
@@ -26,6 +20,9 @@ import BarSearch from '~/components/search/BarSearch';
 // Utils
 import { showError } from '~/utils/showError';
 
+// Hooks
+import { useAppSelector } from '~/store/hooks';
+
 // Theme
 import { useThemeColors } from '~/customHooks/useThemeColors';
 
@@ -34,6 +31,7 @@ import { commonStyles } from '~/styles/common';
 
 // Configs
 import { screenConfigs } from '~/config/screenConfigs';
+import { selectSearchQuery } from '~/features/search/searchSelectors';
 
 export type LastIncomesScreenNavigationProp = StackNavigationProp<
   IncomeStackParamList,
@@ -65,9 +63,7 @@ const mergePages = (current: LastIncomes[], next: LastIncomes[]): LastIncomes[] 
 export default function LastIncomesScreen({ navigation }: LastIncomesScreenProps) {
   const config = screenConfigs.lastIncomes;
   const colors = useThemeColors();
-  const dispatch: AppDispatch = useDispatch();
-  const query = useSelector((state: RootState) => state.search.query);
-
+  const query = useAppSelector(selectSearchQuery);
   const [reloadToken, setReloadToken] = useState(0);
   const [fetched, setFetched] = useState<FetchedIncomes | null>(null);
   const [loadingMore, setLoadingMore] = useState(false);
@@ -80,9 +76,9 @@ export default function LastIncomesScreen({ navigation }: LastIncomesScreenProps
   const items = fetched?.items ?? [];
 
   // Resetear query solo al montar
-  useEffect(() => {
-    dispatch(setQuery(null));
-  }, [dispatch]);
+  // useEffect(() => {
+  //   dispatch(setQuery(null));
+  // }, [dispatch]);
 
   // Página 1: al enfocar la pantalla y cuando cambia la búsqueda o se pide recargar
   useFocusEffect(

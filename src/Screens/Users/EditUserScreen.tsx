@@ -2,13 +2,11 @@ import React, { useEffect, useState } from 'react';
 import { StyleSheet, Text, View, Image, Platform, Alert } from 'react-native';
 import { useForm } from 'react-hook-form';
 import { StackNavigationProp } from '@react-navigation/stack';
-import { useDispatch } from 'react-redux';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as ImagePicker from 'expo-image-picker';
 import { setUser } from '~/features/auth/authSlice';
 
 // Services
-import { editUser, getUser } from '~/services/users';
+import { editUser } from '~/services/users';
 import { getUrlSignedAws } from '~/services/files';
 
 // Components
@@ -18,7 +16,7 @@ import MyLoading from '~/components/loading/MyLoading';
 import MyInput from '~/components/inputs/MyInput';
 
 // Types
-import { SettingsStackParamList, UserModel } from '~/shared/types';
+import { SettingsStackParamList } from '~/shared/types';
 
 // Utils
 import { showError } from '~/utils/showError';
@@ -33,6 +31,7 @@ import { commonStyles } from '~/styles/common';
 
 // Configs
 import { screenConfigs } from '~/config/screenConfigs';
+import { useAppDispatch, useAppSelector } from '~/store/hooks';
 
 export type EditUserScreenNavigationProp = StackNavigationProp<SettingsStackParamList, 'editUser'>;
 
@@ -71,13 +70,13 @@ const inferImageType = (fileName: string): string => {
 export default function EditUserScreen({ navigation }: EditUserScreenProps) {
   const screenConfig = screenConfigs.editUser;
   const colors = useThemeColors();
-  const dispatch = useDispatch();
+  const dispatch = useAppDispatch();
+  const user = useAppSelector((s) => s.auth.user);
 
   const { handleSubmit, control, setValue } = useForm<EditUserFormData>({
     defaultValues: { email: '', name: '' }
   });
 
-  const [idUser, setIdUser] = useState<number | null>(null);
   const [pickedImage, setPickedImage] = useState<PickedImage | null>(null);
   const [remoteImage, setRemoteImage] = useState<string | null>(null);
   const [loading, setLoading] = useState<boolean>(false);
@@ -88,49 +87,27 @@ export default function EditUserScreen({ navigation }: EditUserScreenProps) {
     requestPermissions();
   }, []);
 
+  const userImage = user?.image;
+
   useEffect(() => {
-    let isMounted = true;
-
-    const loadUser = async (): Promise<void> => {
-      try {
-        const jsonValue = await AsyncStorage.getItem('user');
-        const storedUser: UserModel | null = jsonValue ? JSON.parse(jsonValue) : null;
-
-        if (!storedUser) {
-          showError(new Error('No se encontró el usuario'));
-          return;
-        }
-
-        const { data } = await getUser(storedUser.id);
-        if (!isMounted) return;
-
-        setValue('email', data.email);
-        setValue('name', data.name);
-        setIdUser(data.id);
-
-        if (data.image) {
-          const { data: signedUrl } = await getUrlSignedAws({ file: data.image });
-          if (isMounted) setRemoteImage(signedUrl);
-        }
-      } catch (error) {
-        if (isMounted) showError(error);
-      }
-    };
-
-    // 'focus' también se dispara en el primer enfoque de la pantalla.
-    const unsubscribe = navigation.addListener('focus', loadUser);
-
+    if (!userImage) return;
+    let active = true;
+    getUrlSignedAws({ file: userImage })
+      .then(({ data }) => active && setRemoteImage(data))
+      .catch((e) => active && showError(e));
     return () => {
-      isMounted = false;
-      unsubscribe();
+      active = false;
     };
-  }, [navigation, setValue]);
+  }, [userImage]);
+
+  useEffect(() => {
+    if (!user) return;
+    setValue('email', user.email);
+    setValue('name', user.name);
+  }, [user, setValue]);
 
   const onSubmit = async (payload: EditUserFormData): Promise<void> => {
-    if (!idUser) {
-      showError(new Error('ID de usuario no encontrado'));
-      return;
-    }
+    if (!user) return;
 
     try {
       setLoading(true);
@@ -149,7 +126,7 @@ export default function EditUserScreen({ navigation }: EditUserScreenProps) {
       }
 
       const { data } = await editUser(
-        idUser,
+        user.id,
         formData as unknown as Parameters<typeof editUser>[1]
       );
 

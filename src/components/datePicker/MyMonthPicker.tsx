@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
 import { View, Modal, TouchableOpacity, Text, StyleSheet } from 'react-native';
 import { Button, Icon } from 'react-native-elements';
-import { useDispatch, useSelector } from 'react-redux';
-import { setMonth } from '../../features/date/dateSlice';
+
+// Redux
+import { selectSelectedMonth } from '~/features/period/periodSelectors';
 
 // Components
 import MyButton from '../MyButton';
@@ -12,11 +13,11 @@ import { DateFormat } from '../../utils/Helpers';
 
 // Hooks
 import { useThemeColors } from '~/customHooks/useThemeColors';
+import { useAppDispatch, useAppSelector } from '~/store/hooks';
 
 // Types
-import { RootState } from '../../shared/types/reducers';
-import { AppDispatch } from '../../shared/types/reducers/root-state.type';
 import { ThemeColors } from '~/shared/types/services/theme-config-service.type';
+import { setSelectedMonth } from '~/features/period/periodSlice';
 
 const MONTHS = [
   'Enero',
@@ -35,8 +36,8 @@ const MONTHS = [
 
 const MyMonthPicker = () => {
   const colors = useThemeColors();
-  const dispatch: AppDispatch = useDispatch();
-  const month = useSelector((state: RootState) => state.date.month);
+  const dispatch = useAppDispatch();
+  const month = useAppSelector(selectSelectedMonth);
 
   const [visible, setVisible] = useState(false);
 
@@ -49,7 +50,7 @@ const MyMonthPicker = () => {
 
   const handleSelect = (index: number) => {
     const formatted = `${year}-${(index + 1).toString().padStart(2, '0')}-01`;
-    dispatch(setMonth(formatted));
+    dispatch(setSelectedMonth(formatted));
     setVisible(false);
   };
 

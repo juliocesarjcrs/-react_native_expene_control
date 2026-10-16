@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { View, ScrollView, Text, StyleSheet } from 'react-native';
 import { useForm } from 'react-hook-form';
-import { useSelector } from 'react-redux';
+import type { RouteProp } from '@react-navigation/native';
 
 // Services
 import { passwordRecovery } from '~/services/auth';
@@ -15,7 +15,6 @@ import MyLoading from '~/components/loading/MyLoading';
 // Types
 import { StackNavigationProp } from '@react-navigation/stack';
 import { AuthStackParamList } from '~/shared/types';
-import { RootState } from '~/shared/types/reducers';
 
 // Utils
 import { ShowToast } from '~/utils/toastUtils';
@@ -35,6 +34,7 @@ type ScreenNavigationProp = StackNavigationProp<AuthStackParamList, 'resetPasswo
 
 interface ScreenProps {
   navigation: ScreenNavigationProp;
+  route: RouteProp<AuthStackParamList, 'resetPassword'>;
 }
 
 interface FormData {
@@ -45,11 +45,10 @@ interface FormData {
 const MIN_PASSWORD_LENGTH = 6;
 const MAX_PASSWORD_LENGTH = 50;
 
-export default function ResetPasswordScreen({ navigation }: ScreenProps) {
+export default function ResetPasswordScreen({ navigation, route }: ScreenProps) {
+  const { userId } = route.params;
   const colors = useThemeColors();
   const screenConfig = screenConfigs.resetPassword;
-  const user = useSelector((state: RootState) => state.auth.user);
-
   const { handleSubmit, control, getValues } = useForm<FormData>({
     mode: 'onTouched',
     defaultValues: {
@@ -63,7 +62,7 @@ export default function ResetPasswordScreen({ navigation }: ScreenProps) {
   const onSubmit = async (formData: FormData): Promise<void> => {
     try {
       setLoading(true);
-      const { data } = await passwordRecovery(user.id, { password: formData.password });
+      const { data } = await passwordRecovery(userId, { password: formData.password });
 
       if (data.user) {
         ShowToast('Contraseña restablecida exitosamente');

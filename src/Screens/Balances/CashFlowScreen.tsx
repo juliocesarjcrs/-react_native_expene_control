@@ -1,10 +1,13 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { StyleSheet, Text, View, ScrollView, TouchableOpacity, Switch } from 'react-native';
-import { useSelector } from 'react-redux';
 import { Icon } from 'react-native-elements';
 import { useQuery } from '@apollo/client/react';
 import { StackNavigationProp } from '@react-navigation/stack';
 import { useFocusEffect } from '@react-navigation/native';
+
+// Redux
+import { selectSelectedMonth } from '~/features/period/periodSelectors';
+import { Month } from '~/features/period/periodSlice';
 
 // Services
 import { getSavingsByUser, getUpdateAllSavingsByUser } from '../../services/savings';
@@ -23,7 +26,6 @@ import { SavingsAnalysisCard } from './components/SavingsAnalysisCard';
 
 // Types
 import { FinancialRecord, GetSavingsByUserResponse } from '../../shared/types/services';
-import { RootState } from '../../shared/types/reducers';
 import { BalanceStackParamList } from '../../shared/types';
 import { GetLoanResult } from '../../shared/types/graphql';
 
@@ -36,6 +38,9 @@ import {
   NumberFormat
 } from '../../utils/Helpers';
 import { showError } from '~/utils/showError';
+
+// Hooks
+import { useAppSelector } from '~/store/hooks';
 
 // Theme
 import { useThemeColors } from '~/customHooks/useThemeColors';
@@ -52,7 +57,6 @@ interface CashFlowScreenProps {
   navigation: CashFlowScreenNavigationProp;
 }
 
-type Month = RootState['date']['month'];
 type Loans = GetLoanResult['loans'];
 
 // Datos crudos junto con la petición para la que se cargaron
@@ -174,7 +178,7 @@ const buildSavingsHistory = (history: number[], loans: Loans | undefined) => {
 export default function CashFlowScreen({ navigation }: CashFlowScreenProps) {
   const config = screenConfigs.cashFlow;
   const colors = useThemeColors();
-  const month = useSelector((state: RootState) => state.date.month);
+  const month = useAppSelector(selectSelectedMonth);
 
   const [numMonthsQuery, setNumMonthsQuery] = useState(DEFAULT_NUM_MONTHS);
   const [reloadToken, setReloadToken] = useState(0);

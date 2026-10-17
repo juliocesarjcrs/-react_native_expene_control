@@ -1,22 +1,24 @@
-import { createSlice, PayloadAction } from '@reduxjs/toolkit';
+import { createSlice, type PayloadAction } from '@reduxjs/toolkit';
+
+export type SearchScope = 'expenses' | 'incomes';
 
 export type SearchState = {
-  query: string | null;
+  queries: Record<SearchScope, string | null>;
 };
 
 const initialState: SearchState = {
-  query: null
+  queries: { expenses: null, incomes: null }
 };
 
 const searchSlice = createSlice({
   name: 'search',
   initialState,
   reducers: {
-    setQuery: (state, action: PayloadAction<string | null>) => {
-      state.query = action.payload;
+    setQuery: (state, action: PayloadAction<{ scope: SearchScope; query: string | null }>) => {
+      state.queries[action.payload.scope] = action.payload.query;
     },
-    clearQuery: (state) => {
-      state.query = null;
+    clearQuery: (state, action: PayloadAction<SearchScope>) => {
+      state.queries[action.payload] = null;
     }
   }
 });

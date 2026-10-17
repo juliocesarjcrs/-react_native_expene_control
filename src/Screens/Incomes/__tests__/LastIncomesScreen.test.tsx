@@ -31,16 +31,17 @@ jest.mock('~/components/ScreenHeader', () => ({
   ScreenHeader: () => null
 }));
 
-// let capturedUpdateList: (() => void) | undefined;
-
-// jest.mock('../components/RenderItemIncome', () => {
-//   const MockRenderItemIncome = ({ updateList }: { updateList: () => void }) => {
-//     capturedUpdateList = updateList;
-//     return null;
-//   };
-
-//   return MockRenderItemIncome;
-// });
+jest.mock('@react-navigation/native', () => {
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
+  const React = require('react');
+  return {
+    ...jest.requireActual('@react-navigation/native'),
+    useFocusEffect: (effect: () => void | (() => void)) => {
+      // Se comporta como un useEffect: corre al montar y cuando cambia el callback
+      React.useEffect(effect, [effect]);
+    }
+  };
+});
 
 jest.mock('~/components/search/BarSearch', () => {
   return jest.fn(() => null);
@@ -87,14 +88,15 @@ jest.mock('@react-navigation/native', () => {
   };
 });
 
+const storeWith = (incomes: string | null) =>
+  mockStore({ search: { queries: { expenses: null, incomes: incomes } } });
+
 describe('LastIncomesScreen flows', () => {
   let store: ReturnType<typeof mockStore>;
 
   beforeEach(() => {
     jest.clearAllMocks();
-    store = mockStore({
-      search: { query: null }
-    });
+    store = storeWith(null);
 
     getLastIncomesWithPaginate.mockImplementation(({ page, query }) => {
       if (page === 1 && !query) {
@@ -140,7 +142,7 @@ describe('LastIncomesScreen flows', () => {
   });
 
   it('should fetch data on mount with query null', async () => {
-    store = mockStore({ search: { query: null } });
+    store = storeWith(null);
 
     render(
       <Provider store={store}>
@@ -160,7 +162,7 @@ describe('LastIncomesScreen flows', () => {
   });
 
   it('should fetch data when query changes', async () => {
-    store = mockStore({ search: { query: null } });
+    store = storeWith(null);
 
     const { rerender } = render(
       <Provider store={store}>
@@ -174,7 +176,7 @@ describe('LastIncomesScreen flows', () => {
     );
     getLastIncomesWithPaginate.mockClear();
 
-    const nextStore = mockStore({ search: { query: 'new-query' } });
+    const nextStore = storeWith('new-query');
     rerender(
       <Provider store={nextStore}>
         <LastIncomesScreen navigation={mockNavigation} />
@@ -189,7 +191,7 @@ describe('LastIncomesScreen flows', () => {
   });
 
   it('should paginate on scroll to end', async () => {
-    store = mockStore({ search: { query: null } });
+    store = storeWith(null);
 
     const { getByTestId } = render(
       <Provider store={store}>
@@ -216,7 +218,7 @@ describe('LastIncomesScreen flows', () => {
   });
 
   it('should fetch last incomes on mount if query is null and paginate on scroll', async () => {
-    store = mockStore({ search: { query: null } });
+    store = storeWith(null);
     getLastIncomesWithPaginate.mockClear();
 
     const { getByTestId } = render(
@@ -288,7 +290,7 @@ describe('LastIncomesScreen flows', () => {
       return Promise.resolve({ data: { data: [] } });
     });
 
-    store = mockStore({ search: { query: null } });
+    store = storeWith(null);
 
     const { getByTestId } = render(
       <Provider store={store}>

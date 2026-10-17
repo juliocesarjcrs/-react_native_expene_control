@@ -3,8 +3,7 @@ import { View, TextInput, StyleSheet, TouchableOpacity } from 'react-native';
 import { Icon } from 'react-native-elements';
 
 // Redux
-import { clearQuery, setQuery } from '~/features/search/searchSlice';
-import { selectSearchQuery } from '~/features/search/searchSelectors';
+import { clearQuery, setQuery, type SearchScope } from '~/features/search/searchSlice';
 
 // Components
 import MyButton from '~/components/MyButton';
@@ -19,31 +18,33 @@ import { useThemeColors } from '~/customHooks/useThemeColors';
 import { SMALL } from '~/styles/fonts';
 
 interface BarSearchProps {
+  scope?: SearchScope; // necesario cuando shouldDispatch es true
   shouldDispatch?: boolean;
   onQueryChange?: (query: string) => void;
   placeholder?: string;
+  loading?: boolean;
 }
 
 export default function BarSearch({
+  scope,
   shouldDispatch = true,
   onQueryChange,
-  placeholder = 'Buscar...'
+  placeholder = 'Buscar...',
+  loading = false
 }: BarSearchProps) {
   const colors = useThemeColors();
   const dispatch = useAppDispatch();
 
-  const queryFromStore = useAppSelector(selectSearchQuery);
-  const storeValue = shouldDispatch ? (queryFromStore ?? '') : null;
+  // Solo hay scope activo si se conecta al store; así TS estrecha el tipo
+  const activeScope = shouldDispatch ? scope : undefined;
+
+  const queryFromStore = useAppSelector((state) =>
+    activeScope ? state.search.queries[activeScope] : null
+  );
+  const storeValue = activeScope ? (queryFromStore ?? '') : null;
 
   const [queryState, setQueryState] = useState<string>(storeValue ?? '');
   const [prevStoreValue, setPrevStoreValue] = useState(storeValue);
-
-  useEffect(() => {
-    if (!shouldDispatch) return;
-    return () => {
-      dispatch(clearQuery());
-    };
-  }, [dispatch, shouldDispatch]);
 
   // Sincroniza con el store cuando cambia externamente (durante el render, sin efecto)
   if (storeValue !== prevStoreValue) {
@@ -53,11 +54,18 @@ export default function BarSearch({
     }
   }
 
+  // Al desmontarse, limpia solo la búsqueda de su propio scope
+  useEffect(() => {
+    if (!activeScope) return;
+    return () => {
+      dispatch(clearQuery(activeScope));
+    };
+  }, [dispatch, activeScope]);
+
   // Envía la búsqueda al store o al callback del padre
   const submitQuery = (text: string): void => {
-    if (shouldDispatch) {
-      // null si está vacío, o el texto si tiene contenido
-      dispatch(setQuery(text || null));
+    if (activeScope) {
+      dispatch(setQuery({ scope: activeScope, query: text || null }));
     } else if (onQueryChange) {
       onQueryChange(text);
     }
@@ -116,7 +124,7 @@ export default function BarSearch({
 
       {/* Botón Buscar */}
       <View style={styles.buttonContainer}>
-        <MyButton title="Buscar" onPress={handleSubmit} variant="primary" />
+        <MyButton title="Buscar" onPress={handleSubmit} variant="primary" loading={loading} />
       </View>
     </View>
   );

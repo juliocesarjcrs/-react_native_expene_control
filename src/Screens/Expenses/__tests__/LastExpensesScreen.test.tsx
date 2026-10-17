@@ -27,6 +27,18 @@ const mockNavigation = {
   preload: jest.fn()
 } as any;
 
+jest.mock('@react-navigation/native', () => {
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
+  const React = require('react');
+  return {
+    ...jest.requireActual('@react-navigation/native'),
+    useFocusEffect: (effect: () => void | (() => void)) => {
+      // Se comporta como un useEffect: corre al montar y cuando cambia el callback
+      React.useEffect(effect, [effect]);
+    }
+  };
+});
+
 // Mock services
 jest.mock('../../../services/expenses');
 const getLastExpensesWithPaginate = expensesService.getLastExpensesWithPaginate as jest.Mock;
@@ -70,12 +82,15 @@ jest.mock('../components/RenderItemExpense', () => {
 });
 const mockStore = createMockStore<object>();
 
+const storeWith = (expenses: string | null) =>
+  mockStore({ search: { queries: { expenses, incomes: null } } });
+
 describe('LastExpensesScreen behaviors', () => {
   let store: MockStoreEnhanced<object, object>;
 
   beforeEach(() => {
     jest.clearAllMocks();
-    store = mockStore({ search: { query: null } });
+    store = storeWith(null);
 
     getLastExpensesWithPaginate.mockImplementation(({ page, query }) => {
       if (page === 1 && !query) {
@@ -131,7 +146,7 @@ describe('LastExpensesScreen behaviors', () => {
   });
 
   it('should fetch first page on mount with query null', async () => {
-    store = mockStore({ search: { query: null } });
+    store = storeWith(null);
 
     render(
       <Provider store={store}>
@@ -152,7 +167,7 @@ describe('LastExpensesScreen behaviors', () => {
   });
 
   it('should paginate and accumulate data on scroll', async () => {
-    store = mockStore({ search: { query: null } });
+    store = storeWith(null);
 
     const { getByTestId } = render(
       <Provider store={store}>
@@ -183,7 +198,7 @@ describe('LastExpensesScreen behaviors', () => {
   });
 
   it('should fetch filtered data when query changes', async () => {
-    store = mockStore({ search: { query: null } });
+    store = storeWith(null);
 
     const { rerender } = render(
       <Provider store={store}>
@@ -199,7 +214,7 @@ describe('LastExpensesScreen behaviors', () => {
 
     getLastExpensesWithPaginate.mockClear();
 
-    store = mockStore({ search: { query: 'test' } });
+    store = storeWith('test');
     rerender(
       <Provider store={store}>
         <LastExpensesScreen navigation={mockNavigation} />
@@ -215,7 +230,7 @@ describe('LastExpensesScreen behaviors', () => {
 
   it('should paginate filtered data on scroll', async () => {
     // Start with null query first
-    store = mockStore({ search: { query: null } });
+    store = storeWith(null);
 
     const { getByTestId, rerender } = render(
       <Provider store={store}>
@@ -233,7 +248,7 @@ describe('LastExpensesScreen behaviors', () => {
     getLastExpensesWithPaginate.mockClear();
 
     // Change to filter query
-    store = mockStore({ search: { query: 'filter' } });
+    store = storeWith('filter');
     rerender(
       <Provider store={store}>
         <LastExpensesScreen navigation={mockNavigation} />
@@ -280,7 +295,7 @@ describe('LastExpensesScreen behaviors', () => {
       return Promise.resolve({ data: { data: [] } });
     });
 
-    store = mockStore({ search: { query: null } });
+    store = storeWith(null);
 
     const { getByTestId } = render(
       <Provider store={store}>
@@ -320,7 +335,7 @@ describe('LastExpensesScreen behaviors', () => {
 
   it('should reset data when query changes from value to null', async () => {
     // Start with null query first
-    store = mockStore({ search: { query: null } });
+    store = storeWith(null);
 
     const { rerender } = render(
       <Provider store={store}>
@@ -338,7 +353,7 @@ describe('LastExpensesScreen behaviors', () => {
     getLastExpensesWithPaginate.mockClear();
 
     // Change to test query
-    store = mockStore({ search: { query: 'test' } });
+    store = storeWith('test');
     rerender(
       <Provider store={store}>
         <LastExpensesScreen navigation={mockNavigation} />
@@ -354,7 +369,7 @@ describe('LastExpensesScreen behaviors', () => {
     getLastExpensesWithPaginate.mockClear();
 
     // Change query back to null
-    store = mockStore({ search: { query: null } });
+    store = storeWith(null);
     rerender(
       <Provider store={store}>
         <LastExpensesScreen navigation={mockNavigation} />

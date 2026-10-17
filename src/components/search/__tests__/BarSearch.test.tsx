@@ -3,7 +3,9 @@ import { render, fireEvent, waitFor } from '@testing-library/react-native';
 import { Provider } from 'react-redux';
 import createMockStore from 'redux-mock-store';
 import BarSearch from '../BarSearch';
-import { setQuery } from '~/features/search/searchSlice';
+import searchReducer, { setQuery } from '~/features/search/searchSlice';
+
+import { configureStore } from '@reduxjs/toolkit';
 
 const mockStore = createMockStore([]);
 
@@ -46,11 +48,14 @@ jest.mock('~/customHooks/useThemeColors', () => ({
 
 describe('BarSearch Component', () => {
   let store: any;
+  store = mockStore({
+    search: { queries: { expenses: null, incomes: null } }
+  });
 
   beforeEach(() => {
     jest.clearAllMocks();
     store = mockStore({
-      search: { query: null }
+      search: { queries: { expenses: null, incomes: null } }
     });
   });
 
@@ -58,7 +63,7 @@ describe('BarSearch Component', () => {
     it('should render correctly with default props', () => {
       const { getByPlaceholderText, getByTestId } = render(
         <Provider store={store}>
-          <BarSearch />
+          <BarSearch scope="expenses" />
         </Provider>
       );
 
@@ -69,7 +74,7 @@ describe('BarSearch Component', () => {
     it('should render with custom placeholder', () => {
       const { getByPlaceholderText } = render(
         <Provider store={store}>
-          <BarSearch placeholder="Buscar productos..." />
+          <BarSearch scope="expenses" placeholder="Buscar productos..." />
         </Provider>
       );
 
@@ -81,7 +86,7 @@ describe('BarSearch Component', () => {
     it('should update input value when typing', () => {
       const { getByPlaceholderText } = render(
         <Provider store={store}>
-          <BarSearch />
+          <BarSearch scope="expenses" />
         </Provider>
       );
 
@@ -95,7 +100,7 @@ describe('BarSearch Component', () => {
     it('should show clear button when text is present', () => {
       const { getByPlaceholderText, getByTestId } = render(
         <Provider store={store}>
-          <BarSearch />
+          <BarSearch scope="expenses" />
         </Provider>
       );
 
@@ -109,7 +114,7 @@ describe('BarSearch Component', () => {
     it('should not show clear button when input is empty', () => {
       const { getByPlaceholderText, queryByTestId } = render(
         <Provider store={store}>
-          <BarSearch />
+          <BarSearch scope="expenses" />
         </Provider>
       );
 
@@ -124,7 +129,7 @@ describe('BarSearch Component', () => {
     it('✅ CRITICAL: should maintain search text in input after submit', async () => {
       const { getByPlaceholderText, getByTestId } = render(
         <Provider store={store}>
-          <BarSearch />
+          <BarSearch scope="expenses" />
         </Provider>
       );
 
@@ -145,14 +150,14 @@ describe('BarSearch Component', () => {
       const actions = store.getActions();
       expect(actions).toContainEqual({
         type: setQuery.type,
-        payload: 'Luz'
+        payload: { scope: 'expenses', query: 'Luz' }
       });
     });
 
     it('should dispatch setQuery action with trimmed text', async () => {
       const { getByPlaceholderText, getByTestId } = render(
         <Provider store={store}>
-          <BarSearch />
+          <BarSearch scope="expenses" />
         </Provider>
       );
 
@@ -165,14 +170,14 @@ describe('BarSearch Component', () => {
       const actions = store.getActions();
       expect(actions).toContainEqual({
         type: setQuery.type,
-        payload: 'comida'
+        payload: { scope: 'expenses', query: 'comida' }
       });
     });
 
     it('should dispatch setQuery(null) when submitting empty text', async () => {
       const { getByPlaceholderText, getByTestId } = render(
         <Provider store={store}>
-          <BarSearch />
+          <BarSearch scope="expenses" />
         </Provider>
       );
 
@@ -185,14 +190,14 @@ describe('BarSearch Component', () => {
       const actions = store.getActions();
       expect(actions).toContainEqual({
         type: setQuery.type,
-        payload: null
+        payload: { scope: 'expenses', query: null }
       });
     });
 
     it('should submit search on keyboard return', async () => {
       const { getByPlaceholderText } = render(
         <Provider store={store}>
-          <BarSearch />
+          <BarSearch scope="expenses" />
         </Provider>
       );
 
@@ -204,7 +209,7 @@ describe('BarSearch Component', () => {
       const actions = store.getActions();
       expect(actions).toContainEqual({
         type: setQuery.type,
-        payload: 'test'
+        payload: { scope: 'expenses', query: 'test' }
       });
     });
   });
@@ -213,7 +218,7 @@ describe('BarSearch Component', () => {
     it('should clear input when clear button is pressed', async () => {
       const { getByPlaceholderText, getByTestId } = render(
         <Provider store={store}>
-          <BarSearch />
+          <BarSearch scope="expenses" />
         </Provider>
       );
 
@@ -240,7 +245,7 @@ describe('BarSearch Component', () => {
       const actions = store.getActions();
       expect(actions).toContainEqual({
         type: setQuery.type,
-        payload: null
+        payload: { scope: 'expenses', query: null }
       });
     });
   });
@@ -248,12 +253,12 @@ describe('BarSearch Component', () => {
   describe('Store Synchronization', () => {
     it('should initialize input from store value', () => {
       store = mockStore({
-        search: { query: 'existing search' }
+        search: { queries: { expenses: 'existing search', incomes: null } }
       });
 
       const { getByPlaceholderText } = render(
         <Provider store={store}>
-          <BarSearch />
+          <BarSearch scope="expenses" />
         </Provider>
       );
 
@@ -263,12 +268,12 @@ describe('BarSearch Component', () => {
 
     it('should clear input when store query becomes null', async () => {
       store = mockStore({
-        search: { query: 'test' }
+        search: { queries: { expenses: 'test', incomes: null } }
       });
 
       const { getByPlaceholderText, rerender } = render(
         <Provider store={store}>
-          <BarSearch />
+          <BarSearch scope="expenses" />
         </Provider>
       );
 
@@ -277,12 +282,12 @@ describe('BarSearch Component', () => {
 
       // Update store to null
       store = mockStore({
-        search: { query: null }
+        search: { queries: { expenses: null, incomes: null } }
       });
 
       rerender(
         <Provider store={store}>
-          <BarSearch />
+          <BarSearch scope="expenses" />
         </Provider>
       );
 
@@ -293,12 +298,12 @@ describe('BarSearch Component', () => {
 
     it('should sync input when store query changes', async () => {
       store = mockStore({
-        search: { query: 'initial' }
+        search: { queries: { expenses: 'initial', incomes: null } }
       });
 
       const { getByPlaceholderText, rerender } = render(
         <Provider store={store}>
-          <BarSearch />
+          <BarSearch scope="expenses" />
         </Provider>
       );
 
@@ -307,12 +312,12 @@ describe('BarSearch Component', () => {
 
       // Update store value
       store = mockStore({
-        search: { query: 'updated' }
+        search: { queries: { expenses: 'updated', incomes: null } }
       });
 
       rerender(
         <Provider store={store}>
-          <BarSearch />
+          <BarSearch scope="expenses" />
         </Provider>
       );
 
@@ -392,7 +397,7 @@ describe('BarSearch Component', () => {
     it('should handle multiple rapid searches', () => {
       const { getByPlaceholderText, getByTestId } = render(
         <Provider store={store}>
-          <BarSearch />
+          <BarSearch scope="expenses" />
         </Provider>
       );
 
@@ -418,7 +423,7 @@ describe('BarSearch Component', () => {
     it('should handle whitespace-only input', () => {
       const { getByPlaceholderText, getByTestId } = render(
         <Provider store={store}>
-          <BarSearch />
+          <BarSearch scope="expenses" />
         </Provider>
       );
 
@@ -431,14 +436,14 @@ describe('BarSearch Component', () => {
       const actions = store.getActions();
       expect(actions).toContainEqual({
         type: setQuery.type,
-        payload: null
+        payload: { scope: 'expenses', query: null }
       });
     });
 
     it('should handle special characters', () => {
       const { getByPlaceholderText, getByTestId } = render(
         <Provider store={store}>
-          <BarSearch />
+          <BarSearch scope="expenses" />
         </Provider>
       );
 
@@ -454,8 +459,52 @@ describe('BarSearch Component', () => {
       const actions = store.getActions();
       expect(actions).toContainEqual({
         type: setQuery.type,
-        payload: specialText
+        payload: { scope: 'expenses', query: specialText }
       });
+    });
+  });
+
+  describe('BarSearch: limpieza de la query', () => {
+    it('limpia la query del store al desmontarse, no al re-renderizar', () => {
+      const realStore = configureStore({
+        reducer: { search: searchReducer },
+        preloadedState: { search: { queries: { expenses: 'luz', incomes: null } } }
+      });
+      const tree = (
+        <Provider store={realStore}>
+          <BarSearch scope="expenses" />
+        </Provider>
+      );
+
+      const { rerender, unmount } = render(tree);
+      rerender(tree);
+      expect(realStore.getState().search.queries.expenses).toBe('luz');
+
+      unmount();
+      expect(realStore.getState().search.queries.expenses).toBeNull();
+    });
+
+    it('cada pantalla conserva su propia búsqueda', () => {
+      const realStore = configureStore({
+        reducer: { search: searchReducer },
+        preloadedState: { search: { queries: { expenses: 'luz', incomes: 'sueldo' } } }
+      });
+
+      const expenses = render(
+        <Provider store={realStore}>
+          <BarSearch scope="expenses" />
+        </Provider>
+      );
+      render(
+        <Provider store={realStore}>
+          <BarSearch scope="incomes" />
+        </Provider>
+      );
+
+      expenses.unmount();
+
+      expect(realStore.getState().search.queries.expenses).toBeNull();
+      expect(realStore.getState().search.queries.incomes).toBe('sueldo'); // no se toca
     });
   });
 });

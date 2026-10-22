@@ -18,6 +18,7 @@ import { parseCruzVerde } from './image/cruzVerde';
 import { isSuperCarnesJH, parseSuperCarnesJH } from './image/superCarnesJH';
 import { isFruverLaGranja, parseFruverLaGranja } from './image/fruverLaGranja';
 import { parsePdfText } from './pdf/pdfNormalizer';
+import { isAraThermal, parseAraThermal } from './image/araThermal';
 
 export type SourceType = 'image' | 'pdf';
 
@@ -49,6 +50,7 @@ function extractFromImage(ocr: string, storeHint?: string): Product[] {
   if (isCruzVerde) return parseCruzVerde(lines);
   if (isCarulla)
     return parseCarulla(lines, joined, [], storeHint as 'Carulla' | 'Exito' | undefined);
+  if (isAraThermal(ocr)) return parseAraThermal(lines);
   if (isD1) return parseD1(lines, joined);
   if (isDollarCity) return parseDollarCity(lines);
   if (isAra) return parseAra(lines);

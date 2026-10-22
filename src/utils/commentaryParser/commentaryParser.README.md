@@ -5,15 +5,25 @@ Cada parser es independiente y tiene su propio archivo.
 
 ## Punto de entrada
 
-Siempre importar desde el índice, nunca directamente del parser:
+El código de la app (pantallas, hooks, servicios) siempre importa desde el índice:
 
 ```typescript
 // ✅ Correcto
-import { parseCommentary, getParserType } from '~/utils/commentaryParser';
+import { parseCommentary, getParserType, parseCopagoCommentary } from '~/utils/commentaryParser';
 
-// ❌ Incorrecto
-import { parseUtilityCommentary } from '~/utils/commentaryParser/utilityParser';
+// ❌ Incorrecto en pantallas y hooks
+import { parseCopagoCommentary } from '~/utils/commentaryParser/copagoParser';
 ```
+
+Excepciones permitidas (todas por evitar dependencias circulares):
+
+- **Tests de un parser** importan el archivo del parser directamente (no necesitan el mapa de IDs).
+- **`utils/commentary/*Templates.utils.ts`** importan el parser directamente, porque el índice
+  arrastra el registry y las plantillas lo importan a él.
+- Un parser **solo puede importar tipos y su propio catálogo**. Nunca `./index`, el registry ni plantillas.
+
+Todo lo que una pantalla necesite de un parser (calculadoras, catálogos de etiquetas/iconos)
+debe estar re-exportado en `index.ts`. Si falta, se agrega ahí; no se importa del archivo.
 
 ## API pública
 
@@ -23,8 +33,8 @@ Parsea un comentario usando el parser correcto para la subcategoría.
 Retorna un `ParsedCommentary` con `type` y `data`, o `{ type: 'none', data: null }` si no matchea.
 
 ```typescript
-const result = parseCommentary(1444, 'Copago Colmedica terapia física #11/20', 43900, '2026-04-10');
-// → { type: 'copago', data: { institution: 'Colmedica', service: 'terapia física', sessionNumber: 11, ... } }
+const result = parseCommentary(1444, 'Colmedica Control Reumatología #2', 43900, '2026-04-10');
+// → { type: 'copago', data: { act: 'control', specialtyKey: 'reumatologia', sequenceNumber: 2, ... } }
 ```
 
 ### `getParserType(subcategoryId)`
@@ -36,6 +46,27 @@ Devuelve el `ParserType` asociado a una subcategoría según `SUBCATEGORY_PARSER
 
 Registra o actualiza la asociación subcategoría → parser en runtime.
 Usar cuando los IDs reales de BD difieren del mapa inicial.
+
+---
+
+## Agregar o cambiar un parser: dónde tocar
+
+Un parser vive en **seis** sitios. Si falta uno, algo falla en silencio (chips que no parsean,
+pantalla sin ruta, subcategoría sin parser):
+
+| #   | Archivo                                                      | Qué                                                                                         |
+| --- | ------------------------------------------------------------ | ------------------------------------------------------------------------------------------- |
+| 1   | `shared/types/utils/commentaryParser/{x}-analysis.types.ts`  | tipos del dato                                                                              |
+| 2   | `commentaryParser/{x}Parser.ts`                              | el parser y sus calculadoras                                                                |
+| 3   | `commentaryParser/index.ts`                                  | `ParserType`, `ParsedCommentary`, `case` del `switch`, re-exports, `SUBCATEGORY_PARSER_MAP` |
+| 4   | `shared/types/utils/commentaryParser/commentary-registry.ts` | entrada del registry (`exampleCommentary` DEBE parsear)                                     |
+| 5   | `utils/commentary/commentaryTemplates.utils.ts`              | detector de subcategoría, chips, validación                                                 |
+| 6   | `__tests__/commentaryParser/`                                | tests del parser y de los chips                                                             |
+
+**Regla de chips:** un chip es texto real que el parser entiende, sin placeholders. Si un chip
+necesita placeholders (`Producto`, `Persona`), `templateChipSync.test.ts` los reemplaza con `hydrate()`.
+Los parsers con validación en vivo (`enableValidation: true`) deben tener su `case` en
+`validateCommentary`; si no, el borde del input nunca cambia aunque la config diga lo contrario.
 
 ---
 
@@ -230,33 +261,69 @@ Nuevo valor apt 1004 Mirador Villa Verde
 
 ---
 
-### `copagoParser.ts` — Cuota moderadora, Copagos médicos
+### `copagoParser.ts` + `copagoCatalog.ts` — Subcategoría "Cuota moderadora"
 
-**Formato:**
+El parser maneja la **subcategoría** "Cuota moderadora", pero el comentario **no** debe empezar
+con esas palabras: "Cuota moderadora cita general" no se reconoce. El ancla del parser es el **acto**.
+
+**Formato** (todo lo que va entre `[]` es opcional):
 
 ```
-Copago Colmedica terapia física #11/20
-Copago Colmedica consulta neurología
-Copago Salud Total fisiatría #1/10
-Copago terapia física #3/20   ← sin institución
+[Copago] [Institución] {Acto} {Área} [#N[/Total]] [@Paciente] [- nota libre]
+```
+
+**Ejemplos:**
+
+```
+Colmedica Consulta Reumatología #1              ← primera vez = cita #1
+Colmedica Control Reumatología #2               ← primer control = cita #2
+Colmedica Control Reumatología #3 - resultado resonancia
+Colmedica Terapia Física #11/20                 ← terapia con ciclo cerrado
+Terapia Psicología #4 @Julio                    ← serie abierta, paciente Julio
+Colmedica Examen Gammagrafía ósea
+Salud Total Laboratorio Sangre                  ← laboratorio en sede física
+Domicilio Laboratorio - Lopez Correa            ← toma de muestra en casa
+Salud Total Medicamentos @Julio
+Colmedica Urgencia Psiquiatría - Clínica Comfamiliar
 ```
 
 **Reglas:**
 
-- `Copago` es obligatorio al inicio
-- La institución se detecta automáticamente si aparece después de `Copago`:
-  `colmedica`, `salud total`, `sura`, `nueva eps`, `compensar`, `sanitas`, etc.
-- `#{N}/{Total}` es opcional — para seguimiento de sesiones
-- Comentarios con múltiples copagos en una línea están **desincentivados** —
-  el parser toma solo la primera línea
+- **Acto** (obligatorio, primera palabra tras la institución): `Consulta`, `Control`, `Terapia`,
+  `Urgencia`, `Examen`, `Laboratorio`, `Medicamentos`, `Procedimiento`, `Domicilio`
+  (admite plural y sin tildes: `Exámenes`, `Laboratorios`).
+- **Área:** obligatoria en `Consulta`, `Control` y `Terapia`. En los demás actos es opcional.
+  Una especialidad que no esté en el catálogo igual se reconoce y se agrupa por su propio nombre.
+- **Atajos de acto implícito:** `Hidroterapia`, `Psicología` solas valen como `Terapia ...`.
+  En una especialidad médica el acto sí es obligatorio (no se sabe si fue consulta o control).
+- **Institución:** `Colmedica`, `Salud Total`, `Sura`, `Nueva EPS`, `Compensar`, `Sanitas`,
+  `Famisanar`, `Coomeva`, `Medimas`, `EPS` (sin tildes ni mayúsculas importa). Opcional.
+- **`#N`** es el número de cita **de esa especialidad** (la primera vez es `#1`). En terapias es el
+  número de sesión y admite `/Total`. El total exige la `/` (`#4 2026` no es total 2026).
+- **Paciente:** sin `@` se asume `DEFAULT_PATIENT` (Silvia). Julio se escribe `@Julio`. Los nombres
+  sueltos (`Julio`, `(Julio)`) se reconocen en datos históricos.
+- **Nota:** todo lo que sigue a `-` (guion con espacios) es nota y no ensucia el área.
+  `#18-19` no activa la nota.
+- **Un copago por gasto.** Varias líneas: se parsea solo la primera no vacía. Dos exámenes = dos gastos.
+- **Rechazos deliberados** (devuelven `null`, para que aparezcan en "Sin formato reconocido"):
+  sin acto; `Consulta`/`Control`/`Terapia` sin área; texto con la palabra `domicilio` y un acto
+  distinto de `Domicilio` (`Laboratorio sangre a domicilio` es ambiguo: ¿sede o casa?).
+- **Compatibilidad:** se acepta el acto al final (`Reumatología Control #1`) solo si el área es una
+  especialidad del catálogo.
 
-**Clasifica el servicio automáticamente:**
+**Series y ciclos:** `getSeriesStats()` agrupa por paciente + especialidad. Un ciclo nuevo empieza
+cuando aparece `#1`, cambia el total (`#20/20` y luego `#1/10`) o el número retrocede. Un total
+ausente nunca parte un ciclo. Avisa los números que faltan entre el menor y el mayor registrado.
 
-- `terapia_fisica`, `terapia_ocupacional`, `consulta`, `control`, `psicologia`, `psiquiatra`, `fisiatria`, `neurocirugia`, `otro`
+**Extrae:** `institution`, `patient`, `patientIsExplicit`, `act`, `area`, `specialtyKey`,
+`specialtyLabel`, `isKnownSpecialty`, `groupKey`, `groupLabel`, `sequenceNumber`, `totalSessions`,
+`hasSequence`, `sequenceKind` (`session` en terapias, `visit` en el resto), `note`
 
-**Extrae:** `institution`, `service`, `serviceType`, `sessionNumber`, `totalSessions`, `hasSessions`
+**Funciones de análisis:** `getSeriesStats()`, `getTotalByInstitution()`
 
-**Funciones de análisis:** `getSessionStats()`, `getTotalByInstitution()`
+**Para enseñarle algo nuevo** (otra especialidad, otra EPS, otro paciente): editar solo
+`copagoCatalog.ts`. `DEFAULT_PATIENT` y `KNOWN_PATIENTS` son específicos del usuario, igual que
+`SUBCATEGORY_PARSER_MAP`.
 
 ---
 
@@ -302,10 +369,18 @@ También compatible con datos históricos sin dos puntos:
 
 ---
 
+### `assetParser.ts` — Bienes e inversiones
+
+Pendiente de documentar aquí (existe en el código y en el registry, pero este README no lo describía).
+
+---
+
 ## SUBCATEGORY_PARSER_MAP
 
 El mapa de `subcategoryId → ParserType` en `index.ts` usa los IDs reales de la BD.
 **Estos IDs son específicos de un usuario** — actualizar con los IDs reales cuando cambien.
+Hoy el mapa no incluye `vacation` ni `asset`: esos dos parsers existen pero ninguna
+subcategoría los activa vía `parseCommentary()`.
 
 Para registrar un ID en runtime:
 
@@ -318,7 +393,9 @@ registerSubcategoryParser(1444, 'copago');
 ## Tests
 
 ```bash
-jest templateChipSync      # chips → parsers
+jest copagoParser          # parser de copagos (formato, paciente, series, ciclos)
+jest copagoTemplates       # chips de copago → parser, validación en vivo
+jest templateChipSync      # chips → parsers (todas las subcategorías del registry)
 jest registry-integrity    # registry → routes → parsers
 ```
 

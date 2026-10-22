@@ -25,6 +25,7 @@ import {
   filterSuggestions
 } from '~/utils/commentary/commentaryHistory.utils';
 import { getDefaultTemplateConfig } from '~/utils/commentary/commentaryTemplates.utils';
+import { parseCopagoCommentary } from '~/utils/commentaryParser';
 
 // ─────────────────────────────────────────────
 // HELPERS
@@ -70,7 +71,7 @@ describe('Flujo 1 — primera vez sin config en AsyncStorage', () => {
 
     // Todos los chips deben tener template que empiece con "Copago"
     config.chips.forEach((chip) => {
-      expect(chip.template).toMatch(/^Copago/i);
+      expect(parseCopagoCommentary(chip.template, 1000, '2026-01-01')).not.toBeNull();
       expect(chip.icon).toBeTruthy();
       expect(chip.label).toBeTruthy();
     });

@@ -31,6 +31,7 @@ import { parseRentCommentary } from '~/utils/commentaryParser/rentParser';
 import { ParserType } from '~/utils/commentaryParser';
 import { parseCopagoCommentary } from '~/utils/commentaryParser/copagoParser';
 import { parseAssetCommentary } from '~/utils/commentaryParser/assetParser';
+import { parseVacationCommentary } from '~/utils/commentaryParser/vacationParser';
 
 // ─────────────────────────────────────────────
 // CONSTANTES DE TEST
@@ -77,6 +78,8 @@ const parseByType = (
       return parseRentCommentary(commentary, MOCK_COST, MOCK_DATE);
     case 'copago':
       return parseCopagoCommentary(commentary, MOCK_COST, MOCK_DATE);
+    case 'vacation':
+      return parseVacationCommentary(commentary, MOCK_COST, MOCK_DATE);
     case 'asset':
       return parseAssetCommentary(commentary, MOCK_COST, MOCK_DATE);
   }
@@ -111,7 +114,7 @@ describe('Registry — exampleCommentary es parseable por su parser', () => {
   COMMENTARY_REGISTRY.forEach((entry: CommentaryAnalysisEntry) => {
     it(`[${entry.parserType}] "${entry.exampleCommentary}"`, () => {
       const result = parseByType(entry.parserType, entry.exampleCommentary);
-      expect(result).not.toBeNull();
+      expect(result).toBeTruthy();
     });
   });
 });
@@ -137,9 +140,10 @@ describe('Registry — subcategoryDetectors activan el parserType correcto en ge
         // Los parsers semi-estructurados usan parserType 'custom' en el template
         // porque no tienen validación estricta de formato (solo chips de guía).
         // utility, product y retention usan su propio parserType directamente.
-        const isStructured = ['utility', 'product', 'retention', 'asset'].includes(
+        const isStructured = ['utility', 'product', 'retention', 'asset', 'copago'].includes(
           entry.parserType
         );
+
         const expectedParserTypes = isStructured
           ? [entry.parserType]
           : [entry.parserType, 'custom'];
@@ -169,7 +173,8 @@ describe('Chips structured — texto generado es parseable por su parser', () =>
     'utility',
     'product',
     'retention',
-    'asset'
+    'asset',
+    'copago'
   ];
 
   COMMENTARY_REGISTRY.filter((entry) => STRUCTURED_PARSERS.includes(entry.parserType)).forEach(

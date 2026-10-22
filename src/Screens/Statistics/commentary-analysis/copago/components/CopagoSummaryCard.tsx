@@ -1,9 +1,10 @@
 /**
- * CopagoSummaryCard — Total por tipo de servicio con drill-down expandible
+ * CopagoSummaryCard — Total por especialidad / tipo con drill-down expandible
  * Ubicación: src/Screens/Statistics/commentary-analysis/copago/components/CopagoSummaryCard.tsx
  *
  * Al tocar una fila se expanden los comentarios del grupo para ver
- * por qué quedaron clasificados allí (útil para depurar el grupo "Otro").
+ * por qué quedaron clasificados allí. Las especialidades que no están en el
+ * catálogo aparecen con su propio nombre (ya no existe el grupo "Otro").
  */
 
 import React, { useState } from 'react';
@@ -15,6 +16,8 @@ import { CopagoServiceSummary } from '../hooks/useCopagoData';
 
 // Utils
 import { NumberFormat, DateFormat } from '~/utils/Helpers';
+import { getCopagoGroupIcon } from '~/utils/commentaryParser';
+import { getItemTitle, getSequenceLabel, getPatientBadge } from '../utils/copagoLabels';
 
 // Theme
 import { useThemeColors } from '~/customHooks/useThemeColors';
@@ -27,31 +30,14 @@ interface CopagoSummaryCardProps {
   totalCost: number;
 }
 
-const SERVICE_ICONS: Record<string, string> = {
-  terapia_fisica: 'run',
-  terapia_ocupacional: 'hand-heart',
-  consulta: 'doctor',
-  control: 'clipboard-check',
-  psicologia: 'head-heart',
-  psiquiatra: 'brain',
-  fisiatria: 'human-handsup',
-  neurocirugia: 'medical-bag',
-  medico_domicilio: 'home-heart',
-  otorrino: 'ear-hearing',
-  medicina_dolor: 'needle',
-  laboratorio: 'test-tube',
-  imagenologia: 'radiology-box',
-  otro: 'help-circle-outline'
-};
-
 export default function CopagoSummaryCard({ summaries, totalCost }: CopagoSummaryCardProps) {
   const colors = useThemeColors();
-  const [expandedType, setExpandedType] = useState<string | null>(null);
+  const [expandedKey, setExpandedKey] = useState<string | null>(null);
 
   if (summaries.length === 0) return null;
 
-  const toggleExpand = (serviceType: string) => {
-    setExpandedType((prev) => (prev === serviceType ? null : serviceType));
+  const toggleExpand = (groupKey: string) => {
+    setExpandedKey((prev) => (prev === groupKey ? null : groupKey));
   };
 
   return (
@@ -61,9 +47,7 @@ export default function CopagoSummaryCard({ summaries, totalCost }: CopagoSummar
       {/* Header */}
       <View style={styles.header}>
         <Icon type="material-community" name="chart-pie" size={20} color={colors.INFO} />
-        <Text style={[styles.title, { color: colors.TEXT_PRIMARY }]}>
-          Total por tipo de servicio
-        </Text>
+        <Text style={[styles.title, { color: colors.TEXT_PRIMARY }]}>Total por especialidad</Text>
       </View>
 
       {/* Total general */}
@@ -74,18 +58,18 @@ export default function CopagoSummaryCard({ summaries, totalCost }: CopagoSummar
         </Text>
       </View>
 
-      {/* Filas por servicio */}
+      {/* Filas por grupo */}
       {summaries.map((summary) => {
         const percent = totalCost > 0 ? Math.round((summary.totalCost / totalCost) * 100) : 0;
-        const iconName = SERVICE_ICONS[summary.serviceType] ?? 'hospital-box';
-        const isExpanded = expandedType === summary.serviceType;
+        const iconName = getCopagoGroupIcon(summary.groupKey);
+        const isExpanded = expandedKey === summary.groupKey;
 
         return (
-          <View key={summary.serviceType}>
+          <View key={summary.groupKey}>
             {/* Fila del grupo — toca para expandir */}
             <TouchableOpacity
               style={styles.row}
-              onPress={() => toggleExpand(summary.serviceType)}
+              onPress={() => toggleExpand(summary.groupKey)}
               activeOpacity={0.7}
             >
               <View style={styles.rowLeft}>
@@ -97,7 +81,7 @@ export default function CopagoSummaryCard({ summaries, totalCost }: CopagoSummar
                     {summary.displayName}
                   </Text>
                   <Text style={[styles.serviceDetail, { color: colors.TEXT_SECONDARY }]}>
-                    {summary.count} {summary.count === 1 ? 'cita' : 'citas'} · prom{' '}
+                    {summary.count} {summary.count === 1 ? 'registro' : 'registros'} · prom{' '}
                     {NumberFormat(summary.avgCost)}
                   </Text>
                 </View>
@@ -121,7 +105,7 @@ export default function CopagoSummaryCard({ summaries, totalCost }: CopagoSummar
               </View>
             </TouchableOpacity>
 
-            {/* Drill-down: comentarios del grupo */}
+            {/* Drill-down: registros del grupo */}
             {isExpanded && (
               <View
                 style={[
@@ -130,24 +114,28 @@ export default function CopagoSummaryCard({ summaries, totalCost }: CopagoSummar
                 ]}
               >
                 <Text style={[styles.drillDownTitle, { color: colors.TEXT_SECONDARY }]}>
-                  Comentarios en este grupo:
+                  Registros en este grupo:
                 </Text>
-                {summary.items.map((item, idx) => (
-                  <View
-                    key={idx}
-                    style={[styles.drillDownItem, { borderBottomColor: colors.BORDER }]}
-                  >
-                    <Text style={[styles.drillDownService, { color: colors.TEXT_PRIMARY }]}>
-                      {item.service}
-                    </Text>
-                    <Text style={[styles.drillDownMeta, { color: colors.TEXT_SECONDARY }]}>
-                      {DateFormat(item.date, 'DD MMM YYYY')} · {NumberFormat(item.cost)}
-                      {item.hasSessions
-                        ? ` · Sesión ${item.sessionNumber}${item.totalSessions ? `/${item.totalSessions}` : ''}`
-                        : ''}
-                    </Text>
-                  </View>
-                ))}
+                {summary.items.map((item, idx) => {
+                  const sequence = getSequenceLabel(item);
+                  const patient = getPatientBadge(item);
+                  return (
+                    <View
+                      key={idx}
+                      style={[styles.drillDownItem, { borderBottomColor: colors.BORDER }]}
+                    >
+                      <Text style={[styles.drillDownService, { color: colors.TEXT_PRIMARY }]}>
+                        {getItemTitle(item)}
+                      </Text>
+                      <Text style={[styles.drillDownMeta, { color: colors.TEXT_SECONDARY }]}>
+                        {DateFormat(item.date, 'DD MMM YYYY')} · {NumberFormat(item.cost)}
+                        {sequence ? ` · ${sequence}` : ''}
+                        {patient ? ` · ${patient}` : ''}
+                        {item.note ? ` · ${item.note}` : ''}
+                      </Text>
+                    </View>
+                  );
+                })}
               </View>
             )}
           </View>

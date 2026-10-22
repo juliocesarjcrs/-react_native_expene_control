@@ -34,8 +34,14 @@ const PRICE = String.raw`\d{1,3}(?:\.\s?\d{3})*`;
 
 const BARCODE_LINE = /^(?:(\d{1,3})\s+)?(\d{13,14})\s+(.+)$/;
 const STANDALONE_PRICE = new RegExp(`^(${PRICE})$`);
-const QTY_LINE = new RegExp(`^(\\d+(?:[.,]\\d+)?)\\s*(?:UN|UND|KG)\\s+(${PRICE})(?:\\s+(${PRICE}))?$`, 'i');
-const INLINE_QTY = new RegExp(`(\\d+(?:[.,]\\d+)?)\\s*(?:UN|UND|KG)\\s+(${PRICE})(?:\\s+(${PRICE}))?\\s*$`, 'i');
+const QTY_LINE = new RegExp(
+  `^(\\d+(?:[.,]\\d+)?)\\s*(?:UN|UND|KG)\\s+(${PRICE})(?:\\s+(${PRICE}))?$`,
+  'i'
+);
+const INLINE_QTY = new RegExp(
+  `(\\d+(?:[.,]\\d+)?)\\s*(?:UN|UND|KG)\\s+(${PRICE})(?:\\s+(${PRICE}))?\\s*$`,
+  'i'
+);
 
 function parsePrice(raw: string): number {
   return parseInt(raw.replace(/[.\s]/g, ''), 10);

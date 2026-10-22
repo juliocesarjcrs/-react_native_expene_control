@@ -12,6 +12,7 @@ import { CopagoData } from '~/shared/types/utils/commentaryParser/copago-analysi
 
 // Utils
 import { NumberFormat, DateFormat } from '~/utils/Helpers';
+import { getItemTitle, getSequenceLabel, getPatientBadge } from '../utils/copagoLabels';
 
 // Theme
 import { useThemeColors } from '~/customHooks/useThemeColors';
@@ -25,6 +26,8 @@ interface CopagoHistoryItemProps {
 
 export default function CopagoHistoryItem({ item }: CopagoHistoryItemProps) {
   const colors = useThemeColors();
+  const sequenceLabel = getSequenceLabel(item);
+  const patientBadge = getPatientBadge(item);
 
   return (
     <View
@@ -33,45 +36,62 @@ export default function CopagoHistoryItem({ item }: CopagoHistoryItemProps) {
         {
           backgroundColor: colors.CARD_BACKGROUND,
           borderColor: colors.BORDER,
-          borderLeftColor: item.hasSessions ? colors.INFO : colors.BORDER
+          borderLeftColor: item.hasSequence ? colors.INFO : colors.BORDER
         }
       ]}
     >
-      {/* Header: servicio + fecha */}
+      {/* Header: institución · acto + área, y fecha */}
       <View style={styles.header}>
         <Text style={[styles.service, { color: colors.TEXT_PRIMARY }]} numberOfLines={1}>
-          {item.institution ? `${item.institution} · ` : ''}
-          {item.service}
+          {getItemTitle(item)}
         </Text>
         <Text style={[styles.date, { color: colors.TEXT_SECONDARY }]}>
           {DateFormat(item.date, 'DD MMM YYYY')}
         </Text>
       </View>
 
-      {/* Footer: sesión + costo */}
+      {/* Nota libre */}
+      {item.note ? (
+        <Text style={[styles.note, { color: colors.TEXT_SECONDARY }]} numberOfLines={2}>
+          {item.note}
+        </Text>
+      ) : null}
+
+      {/* Footer: número + paciente + costo */}
       <View style={styles.footer}>
-        {/* Progreso de sesión */}
-        {item.hasSessions ? (
-          <View style={styles.sessionBadge}>
-            <Icon type="material-community" name="counter" size={14} color={colors.INFO} />
-            <Text style={[styles.sessionText, { color: colors.INFO }]}>
-              Sesión {item.sessionNumber}
-              {item.totalSessions ? `/${item.totalSessions}` : ''}
-            </Text>
-          </View>
-        ) : (
-          <View style={styles.sessionBadge}>
+        <View style={styles.badges}>
+          <View style={styles.badge}>
             <Icon
               type="material-community"
-              name="calendar-check"
+              name={sequenceLabel ? 'counter' : 'calendar-blank-outline'}
               size={14}
-              color={colors.TEXT_SECONDARY}
+              color={sequenceLabel ? colors.INFO : colors.TEXT_SECONDARY}
             />
-            <Text style={[styles.sessionText, { color: colors.TEXT_SECONDARY }]}>Cita única</Text>
+            <Text
+              style={[
+                styles.badgeText,
+                { color: sequenceLabel ? colors.INFO : colors.TEXT_SECONDARY }
+              ]}
+            >
+              {sequenceLabel ?? 'Sin número'}
+            </Text>
           </View>
-        )}
 
-        {/* Costo */}
+          {patientBadge ? (
+            <View style={styles.badge}>
+              <Icon
+                type="material-community"
+                name="account"
+                size={14}
+                color={colors.TEXT_SECONDARY}
+              />
+              <Text style={[styles.badgeText, { color: colors.TEXT_SECONDARY }]}>
+                {patientBadge}
+              </Text>
+            </View>
+          ) : null}
+        </View>
+
         <Text style={[styles.cost, { color: colors.TEXT_PRIMARY }]}>{NumberFormat(item.cost)}</Text>
       </View>
     </View>
@@ -101,17 +121,26 @@ const styles = StyleSheet.create({
   date: {
     fontSize: SMALL - 1
   },
+  note: {
+    fontSize: SMALL - 1,
+    fontStyle: 'italic'
+  },
   footer: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center'
   },
-  sessionBadge: {
+  badges: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12
+  },
+  badge: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 4
   },
-  sessionText: {
+  badgeText: {
     fontSize: SMALL - 1,
     fontWeight: '500'
   },

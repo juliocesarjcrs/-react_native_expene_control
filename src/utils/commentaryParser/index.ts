@@ -50,6 +50,15 @@ export { parseFamilyAidCommentary, getTotalByPerson } from './familyAidParser';
 export { parseNutritionCommentary, getAvgCostPerWeek } from './nutritionParser';
 export { parseSportsCommentary, getTotalByExpenseType } from './sportsParser';
 export { parseRentCommentary } from './rentParser';
+export { parseCopagoCommentary, getSeriesStats, getTotalByInstitution } from './copagoParser';
+export {
+  ACT_LABELS,
+  ACT_LABELS_PLURAL,
+  DEFAULT_PATIENT,
+  COPAGO_FORMAT_HINT,
+  COPAGO_FORMAT_HINT_SHORT,
+  getCopagoGroupIcon
+} from './copagoCatalog';
 
 // ─────────────────────────────────────────────
 // TIPOS
@@ -134,6 +143,7 @@ const SUBCATEGORY_PARSER_MAP: Record<number, ParserType> = {
   // ── Salud ─────────────────────────────────
   // Nutrición
   1465: 'nutrition',
+  // Cuota moderadora (copagos médicos)
   1444: 'copago',
 
   // ── Cultura / Deportes ────────────────────

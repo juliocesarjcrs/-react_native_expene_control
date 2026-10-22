@@ -22,6 +22,8 @@ import FilterSelector from '../components/FilterSelector';
 import CopagoSummaryCard from './components/CopagoSummaryCard';
 import CopagoHistoryItem from './components/CopagoHistoryItem';
 import EditCommentaryModal from '../components/EditCommentaryModal';
+import CopagoSeriesCard from './components/CopagoSeriesCard';
+import { COPAGO_FORMAT_HINT, COPAGO_FORMAT_HINT_SHORT } from '~/utils/commentaryParser';
 
 // Hooks
 import { useCopagoData } from './hooks/useCopagoData';
@@ -59,6 +61,7 @@ export default function CopagoAnalysisScreen({ navigation, route }: ScreenProps)
     loading,
     parsedData,
     serviceSummaries,
+    seriesStats,
     unrecognized,
     currentFilters,
     totalCost,
@@ -104,6 +107,8 @@ export default function CopagoAnalysisScreen({ navigation, route }: ScreenProps)
                   {/* Resumen por tipo de servicio con drill-down */}
                   <CopagoSummaryCard summaries={serviceSummaries} totalCost={totalCost} />
 
+                  <CopagoSeriesCard series={seriesStats} />
+
                   {/* Lista cronológica */}
                   <Text style={[styles.sectionTitle, { color: colors.TEXT_PRIMARY }]}>
                     Historial de copagos
@@ -140,7 +145,7 @@ export default function CopagoAnalysisScreen({ navigation, route }: ScreenProps)
                   >
                     <Text style={[styles.hintText, { color: colors.TEXT_SECONDARY }]}>
                       Toca &quot;Editar&quot; para corregir el formato.{'\n'}
-                      Esperado: Copago Colmedica terapia física #11/20
+                      {COPAGO_FORMAT_HINT}
                     </Text>
                   </View>
 
@@ -216,7 +221,7 @@ export default function CopagoAnalysisScreen({ navigation, route }: ScreenProps)
       <EditCommentaryModal
         visible={editingExpense !== null}
         expense={editingExpense}
-        formatHint="Ej: Copago Colmedica Terapia Física #11/20"
+        formatHint={COPAGO_FORMAT_HINT_SHORT}
         onClose={() => setEditingExpense(null)}
         onSaved={handleSaved}
       />

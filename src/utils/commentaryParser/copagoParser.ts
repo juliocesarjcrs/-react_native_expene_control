@@ -2,94 +2,78 @@
  * Parser de comentarios de copagos médicos
  * Ubicación: src/utils/commentaryParser/copagoParser.ts
  *
- * Formato estándar:
- *   Copago {Institución} {servicio} #{N}/{Total}
- *   Copago {Institución} {servicio}
- *   Copago {servicio} #{N}/{Total}
+ * Formato estándar (todo lo entre [] es opcional):
+ *   [Copago] [Institución] {Acto} {Área} [#N[/Total]] [@Paciente] [- nota libre]
  *
- * Ejemplos reales:
- *   "Copago Colmedica terapia física #11/20"
- *   "Copago Colmedica consulta neurología"
- *   "Copago fisiatría #1/10"
- *   "Copago Colmedica control psiquiatra #2"
+ * Ejemplos:
+ *   "Colmedica Consulta Reumatología #1"
+ *   "Colmedica Control Reumatología #2 - resultado resonancia"
+ *   "Colmedica Terapia Física #11/20"
+ *   "Salud Total Medicamentos @Julio"
+ *   "Domicilio Laboratorio - Lopez Correa"
  *
- * NOTA: Comentarios con múltiples copagos (dos servicios en un gasto)
- * están desincentivados — deben crearse como dos gastos separados.
- * Si el parser detecta múltiples líneas "Copago", parsea solo la primera.
+ * Reglas:
+ *   - El ANCLA es el acto, no la palabra "Copago". "Cuota moderadora ..." NO se acepta.
+ *   - #N es el número de cita de esa especialidad (la primera vez es #1).
+ *     En terapias es el número de sesión y admite /Total.
+ *   - Sin @Paciente se asume DEFAULT_PATIENT. También se reconoce el nombre suelto
+ *     (Julio, Silvia) para datos históricos.
+ *   - Todo lo que sigue a " - " (guion con espacios) es nota y no ensucia el área.
+ *   - Un comentario con varias líneas: solo se parsea la primera no vacía.
+ *   - Compatibilidad: se acepta el acto al final ("Reumatología Control #1") solo
+ *     si el área es una especialidad del catálogo.
+ *   - Un comentario con la palabra "domicilio" y un acto distinto de Domicilio
+ *     (ej. "Laboratorio sangre a domicilio") se rechaza: es ambiguo.
  */
 
 import {
+  CopagoAct,
   CopagoData,
-  CopagoServiceType,
-  CopagoSessionStats
+  CopagoSeriesStats
 } from '~/shared/types/utils/commentaryParser/copago-analysis.types';
+import {
+  ACT_GROUPS,
+  ACT_WORDS,
+  ACTS_REQUIRING_AREA,
+  ACTS_THAT_CONFLICT_WITH_HOME,
+  capitalizeFirst,
+  DEFAULT_PATIENT,
+  IMPLIED_ACT_WORDS,
+  INSTITUTIONS,
+  KNOWN_PATIENTS,
+  matchSpecialty,
+  normalizeText,
+  slugify,
+  SPECIALTY_ACTS
+} from './copagoCatalog';
 
 // ─────────────────────────────────────────────
-// INSTITUCIONES CONOCIDAS
-// Orden importa: más específico primero
-// ─────────────────────────────────────────────
-
-const KNOWN_INSTITUTIONS = [
-  'colmedica',
-  'salud total',
-  'sura',
-  'nueva eps',
-  'compensar',
-  'sanitas',
-  'famisanar',
-  'coomeva',
-  'medimas',
-  'eps'
-];
-
-// ─────────────────────────────────────────────
-// CLASIFICADOR DE SERVICIO
-// ─────────────────────────────────────────────
-
-const classifyService = (service: string): CopagoServiceType => {
-  const s = normalizeText(service);
-
-  if (s.includes('físic') || s.includes('fisic')) return 'terapia_fisica';
-  if (s.includes('ocupacional')) return 'terapia_ocupacional';
-  if (s.includes('psiquiat')) return 'psiquiatra';
-  if (s.includes('psicolog') || s.includes('sicolog')) return 'psicologia';
-  if (s.includes('fisiatra') || s.includes('fisiatría') || s.includes('fisiatria'))
-    return 'fisiatria';
-  if (s.includes('neurocirugía') || s.includes('neurocirugia')) return 'neurocirugia';
-  if (s.includes('otorrino') || s.includes('otorrinolaring')) return 'otorrino';
-  if (s.includes('medico en casa') || s.includes('domicilio')) return 'medico_domicilio';
-  if (s.includes('dolor')) return 'medicina_dolor';
-  if (
-    s.includes('laboratorio') ||
-    s.includes('creatinina') ||
-    s.includes('hemograma') ||
-    s.includes('parcial')
-  )
-    return 'laboratorio';
-  if (
-    s.includes('resonancia') ||
-    s.includes('gammagraf') ||
-    s.includes('radiograf') ||
-    s.includes('tomograf') ||
-    s.includes('ecograf')
-  )
-    return 'imagenologia';
-  if (s.includes('consulta')) return 'consulta';
-  if (s.includes('control')) return 'control';
-  return 'otro';
-};
-
-// ─────────────────────────────────────────────
-// REGEX PATTERNS
+// PATRONES
 // ─────────────────────────────────────────────
 
 const PATTERNS = {
-  // Línea que empieza con "Copago" — toma solo la primera si hay varias
-  copagoLine: /^copago\s+(.+)$/im,
+  /** "@Julio" */
+  mention: /@([A-Za-zÀ-ÿ]+)/,
 
-  // Número de sesión: "#11/20", "# 11 /20", "#11", "#11-12/20"
-  session: /#\s*(\d+)(?:-\d+)?\s*\/?\s*(\d+)?/
+  /** Nombre suelto, con o sin paréntesis: "Julio", "(Julio)" */
+  barePatient: new RegExp(`\\(?\\b(${KNOWN_PATIENTS.join('|')})\\b\\)?`, 'i'),
+
+  /** Guion con espacios a ambos lados: separa la nota. "#18-19" NO lo activa */
+  noteSeparator: /\s[-–—]\s/,
+
+  /**
+   * "#11/20", "# 11 /20", "#11", "#18-19/20".
+   * El total exige "/" — con "/" opcional, "#4 2026" leía 2026 como total.
+   */
+  session: /#\s*(\d+)(?:\s*-\s*\d+)?(?:\s*\/\s*(\d+))?/
 };
+
+const INSTITUTIONS_LONGEST_FIRST = [...INSTITUTIONS]
+  .map((i) => ({ ...i, words: i.phrase.split(' ') }))
+  .sort((a, b) => b.words.length - a.words.length);
+
+const capitalizeName = (name: string): string =>
+  name.charAt(0).toUpperCase() + name.slice(1).toLowerCase();
 
 // ─────────────────────────────────────────────
 // PARSER PRINCIPAL
@@ -97,7 +81,7 @@ const PATTERNS = {
 
 /**
  * Parsea el comentario de un copago médico.
- * Retorna null si el comentario no empieza con "Copago".
+ * Retorna null si no hay un acto reconocible (ver reglas arriba).
  */
 export const parseCopagoCommentary = (
   commentary: string,
@@ -107,56 +91,137 @@ export const parseCopagoCommentary = (
   if (!commentary?.trim()) return null;
 
   try {
-    const normalized = commentary.trim();
-    const lineMatch = normalized.match(PATTERNS.copagoLine);
-    // Tomar solo la primera línea que empiece con "Copago"
+    // Solo la primera línea con contenido
+    const line = commentary
+      .split(/\r?\n/)
+      .map((l) => l.trim())
+      .find((l) => l.length > 0);
+    if (!line) return null;
 
-    if (!lineMatch) return null;
+    let text = line;
 
-    let rest = lineMatch[1].trim(); // todo lo que sigue después de "Copago "
+    // ── 1. Paciente explícito (@Julio) ────────────────────────────────────
+    let patient: string | undefined;
+    let patientIsExplicit = false;
 
-    // ── 1. Extraer número de sesión ───────────────────────────────────────
-    let sessionNumber: number | undefined;
-    let totalSessions: number | undefined;
-
-    const sessionMatch = rest.match(PATTERNS.session);
-    if (sessionMatch) {
-      sessionNumber = parseInt(sessionMatch[1]);
-      totalSessions = sessionMatch[2] ? parseInt(sessionMatch[2]) : undefined;
-      // Eliminar la parte de sesión del texto para extraer servicio/institución
-      rest = rest.replace(PATTERNS.session, '').trim();
+    const mention = text.match(PATTERNS.mention);
+    if (mention) {
+      patient = capitalizeName(mention[1]);
+      patientIsExplicit = true;
+      text = text.replace(mention[0], ' ');
     }
 
-    // ── 2. Detectar institución al inicio ────────────────────────────────
-    let institution: string | undefined;
-    const restLower = rest.toLowerCase();
+    // ── 2. Nota libre (después de " - ") ─────────────────────────────────
+    const [bodyRaw, ...noteParts] = text.split(PATTERNS.noteSeparator);
+    const note = noteParts.join(' - ').trim() || undefined;
+    let body = bodyRaw;
 
-    for (const inst of KNOWN_INSTITUTIONS) {
-      if (restLower.startsWith(inst)) {
-        institution = rest.slice(0, inst.length);
-        // Capitalizar primera letra
-        institution = institution.charAt(0).toUpperCase() + institution.slice(1).toLowerCase();
-        // Casos especiales de capitalización
-        if (inst === 'nueva eps') institution = 'Nueva EPS';
-        if (inst === 'salud total') institution = 'Salud Total';
-        rest = rest.slice(inst.length).trim();
+    // ── 3. Paciente por nombre suelto (datos históricos) ─────────────────
+    if (!patient) {
+      const bare = body.match(PATTERNS.barePatient);
+      if (bare) {
+        patient = capitalizeName(bare[1]);
+        patientIsExplicit = true;
+        body = body.replace(bare[0], ' ');
+      }
+    }
+
+    // ── 4. Número de sesión / cita ───────────────────────────────────────
+    let sequenceNumber: number | undefined;
+    let totalSessions: number | undefined;
+
+    const sessionMatch = body.match(PATTERNS.session);
+    if (sessionMatch) {
+      sequenceNumber = parseInt(sessionMatch[1], 10);
+      totalSessions = sessionMatch[2] ? parseInt(sessionMatch[2], 10) : undefined;
+      body = body.replace(PATTERNS.session, ' ');
+    }
+
+    // ── 5. Tokens: quitar "Copago" e institución ────────────────────────
+    let tokens = body.replace(/[()]/g, ' ').split(/\s+/).filter(Boolean);
+
+    if (tokens.length > 0 && normalizeText(tokens[0]) === 'copago') tokens = tokens.slice(1);
+
+    let institution: string | undefined;
+    for (const inst of INSTITUTIONS_LONGEST_FIRST) {
+      const head = tokens.slice(0, inst.words.length).map(normalizeText).join(' ');
+      if (head === inst.phrase) {
+        institution = inst.label;
+        tokens = tokens.slice(inst.words.length);
         break;
       }
     }
 
-    // ── 3. Lo que queda es el servicio ────────────────────────────────────
-    const service = rest.trim();
-    if (!service) return null;
+    if (tokens.length === 0) return null;
+
+    // ── 6. Acto y área ────────────────────────────────────────────────────
+    const norm = tokens.map(normalizeText);
+    let act: CopagoAct;
+    let areaTokens: string[];
+
+    if (ACT_WORDS[norm[0]]) {
+      act = ACT_WORDS[norm[0]];
+      areaTokens = tokens.slice(1);
+    } else if (IMPLIED_ACT_WORDS[norm[0]]) {
+      act = IMPLIED_ACT_WORDS[norm[0]];
+      areaTokens = tokens; // "Hidroterapia" es acto y área a la vez
+    } else if (norm.length > 1 && ACT_WORDS[norm[norm.length - 1]]) {
+      // Compatibilidad con "Reumatología Control": solo si el área es conocida
+      const candidateAct = ACT_WORDS[norm[norm.length - 1]];
+      const candidateArea = tokens.slice(0, -1).join(' ');
+      if (!SPECIALTY_ACTS.includes(candidateAct) || !matchSpecialty(candidateArea)) return null;
+      act = candidateAct;
+      areaTokens = tokens.slice(0, -1);
+    } else {
+      return null;
+    }
+
+    if (ACTS_THAT_CONFLICT_WITH_HOME.includes(act) && norm.includes('domicilio')) return null;
+
+    const area = areaTokens.join(' ').trim() || undefined;
+    if (!area && ACTS_REQUIRING_AREA.includes(act)) return null;
+
+    // ── 7. Especialidad y grupo ───────────────────────────────────────────
+    let specialtyKey: string | undefined;
+    let specialtyLabel: string | undefined;
+    let isKnownSpecialty: boolean | undefined;
+
+    if (area && SPECIALTY_ACTS.includes(act)) {
+      const known = matchSpecialty(area);
+      if (known) {
+        specialtyKey = known.key;
+        specialtyLabel = known.label;
+        isKnownSpecialty = true;
+      } else {
+        specialtyKey = slugify(area);
+        specialtyLabel = capitalizeFirst(area);
+        isKnownSpecialty = false;
+      }
+    }
+
+    const actGroup = ACT_GROUPS[act];
+    const groupKey = specialtyKey ?? actGroup?.key ?? act;
+    const groupLabel = specialtyLabel ?? actGroup?.label ?? capitalizeFirst(act);
 
     return {
       cost,
       date,
       institution,
-      service,
-      serviceType: classifyService(service),
-      sessionNumber,
+      patient: patient ?? DEFAULT_PATIENT,
+      patientIsExplicit,
+      act,
+      area,
+      specialtyKey,
+      specialtyLabel,
+      isKnownSpecialty,
+      groupKey,
+      groupLabel,
+      sequenceNumber,
       totalSessions,
-      hasSessions: sessionNumber !== undefined
+      hasSequence: sequenceNumber !== undefined,
+      sequenceKind:
+        sequenceNumber === undefined ? undefined : act === 'terapia' ? 'session' : 'visit',
+      note
     };
   } catch {
     return null;
@@ -167,48 +232,103 @@ export const parseCopagoCommentary = (
 // CALCULADORAS
 // ─────────────────────────────────────────────
 
-/**
- * Estadísticas de progreso por servicio con sesiones.
- * Agrupa por servicio + institución y calcula progreso.
- */
-export const getSessionStats = (data: CopagoData[]): CopagoSessionStats[] => {
-  const withSessions = data.filter((d) => d.hasSessions);
+const byDateThenNumber = (a: CopagoData, b: CopagoData): number =>
+  new Date(a.date).getTime() - new Date(b.date).getTime() ||
+  (a.sequenceNumber ?? 0) - (b.sequenceNumber ?? 0);
 
-  // Agrupar por servicio normalizado
-  const groups = new Map<string, CopagoData[]>();
-  for (const item of withSessions) {
-    const key = `${item.serviceType}::${item.institution ?? ''}`;
-    const existing = groups.get(key) ?? [];
-    groups.set(key, [...existing, item]);
-  }
+const buildSeriesStats = (
+  items: CopagoData[],
+  episode: number,
+  totalEpisodes: number
+): CopagoSeriesStats => {
+  const numbers = items.map((i) => i.sequenceNumber as number);
+  const lastNumber = Math.max(...numbers);
+  const firstNumber = Math.min(...numbers);
+  const present = new Set(numbers);
 
-  return Array.from(groups.entries()).map(([, items]) => {
-    const sorted = [...items].sort(
-      (a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()
-    );
-    const last = sorted[sorted.length - 1];
+  const missingNumbers: number[] = [];
+  for (let n = firstNumber; n <= lastNumber; n++) if (!present.has(n)) missingNumbers.push(n);
 
-    // El total de sesiones viene del último registro que lo tenga
-    const totalSessions =
-      sorted.reverse().find((d) => d.totalSessions !== undefined)?.totalSessions ?? 0;
+  const totalSessions = [...items]
+    .reverse()
+    .find((i) => i.totalSessions !== undefined)?.totalSessions;
 
-    const totalCost = items.reduce((sum, d) => sum + d.cost, 0);
+  const acts: Partial<Record<CopagoAct, number>> = {};
+  for (const i of items) acts[i.act] = (acts[i.act] ?? 0) + 1;
 
-    return {
-      service: last.service,
-      institution: last.institution,
-      completedSessions: items.length,
-      totalSessions,
-      progressPercent: totalSessions > 0 ? Math.round((items.length / totalSessions) * 100) : 0,
-      totalCost,
-      avgCostPerSession: Math.round(totalCost / items.length)
-    };
-  });
+  const totalCost = items.reduce((sum, i) => sum + i.cost, 0);
+  const last = items[items.length - 1];
+
+  return {
+    patient: last.patient,
+    specialtyKey: last.specialtyKey as string,
+    specialtyLabel: last.specialtyLabel as string,
+    institution: [...items].reverse().find((i) => i.institution)?.institution,
+    sequenceKind: items.some((i) => i.act === 'terapia') ? 'session' : 'visit',
+    episode,
+    totalEpisodes,
+    entries: items.length,
+    lastNumber,
+    totalSessions,
+    progressPercent: totalSessions
+      ? Math.min(100, Math.round((lastNumber / totalSessions) * 100))
+      : undefined,
+    isClosed: totalSessions !== undefined && lastNumber >= totalSessions,
+    missingNumbers,
+    acts,
+    totalCost,
+    avgCost: Math.round(totalCost / items.length),
+    firstDate: items[0].date,
+    lastDate: last.date
+  };
 };
 
 /**
- * Total gastado en copagos por institución.
+ * Series numeradas por paciente + especialidad, separadas en ciclos.
+ *
+ * Un ciclo nuevo empieza cuando:
+ *   - aparece #1 y el ciclo ya tenía registros,
+ *   - cambia el total (#20/20 y luego #1/10, o #8/10 y luego #3/12), o
+ *   - el número retrocede.
+ * Un total ausente (psicología abierta) nunca parte un ciclo.
  */
+export const getSeriesStats = (data: CopagoData[]): CopagoSeriesStats[] => {
+  const groups = new Map<string, CopagoData[]>();
+  for (const item of data) {
+    if (!item.hasSequence || !item.specialtyKey) continue;
+    const key = `${item.patient}::${item.specialtyKey}`;
+    groups.set(key, [...(groups.get(key) ?? []), item]);
+  }
+
+  const result: CopagoSeriesStats[] = [];
+
+  groups.forEach((items) => {
+    const sorted = [...items].sort(byDateThenNumber);
+    const episodes: CopagoData[][] = [];
+
+    for (const item of sorted) {
+      const current = episodes[episodes.length - 1];
+      const prev = current?.[current.length - 1];
+
+      const startsNew =
+        !current ||
+        item.sequenceNumber === 1 ||
+        (prev.totalSessions !== undefined &&
+          item.totalSessions !== undefined &&
+          prev.totalSessions !== item.totalSessions) ||
+        (item.sequenceNumber as number) < (prev.sequenceNumber as number);
+
+      if (startsNew) episodes.push([item]);
+      else current.push(item);
+    }
+
+    episodes.forEach((ep, idx) => result.push(buildSeriesStats(ep, idx + 1, episodes.length)));
+  });
+
+  return result.sort((a, b) => new Date(b.lastDate).getTime() - new Date(a.lastDate).getTime());
+};
+
+/** Total gastado en copagos por institución. */
 export const getTotalByInstitution = (
   data: CopagoData[]
 ): { institution: string; total: number; count: number }[] => {
@@ -224,9 +344,3 @@ export const getTotalByInstitution = (
     .map(([institution, stats]) => ({ institution, ...stats }))
     .sort((a, b) => b.total - a.total);
 };
-
-const normalizeText = (text: string) =>
-  text
-    .toLowerCase()
-    .normalize('NFD') // separa letras de tildes
-    .replace(/[\u0300-\u036f]/g, ''); // elimina tildes

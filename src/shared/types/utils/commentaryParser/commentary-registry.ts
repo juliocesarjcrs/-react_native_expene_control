@@ -152,12 +152,12 @@ export const COMMENTARY_REGISTRY: CommentaryAnalysisEntry[] = [
   {
     parserType: 'copago',
     displayName: 'Copagos Médicos',
-    subtitle: 'Sesiones de terapia, consultas y controles',
+    subtitle: 'Citas por especialidad, terapias y exámenes',
     icon: 'hospital-box',
     iconColorKey: 'INFO',
     route: 'copagoAnalysis',
     subcategoryDetectors: ['Cuota moderadora', 'Copago'],
-    exampleCommentary: 'Copago Colmedica terapia física #11/20',
+    exampleCommentary: 'Colmedica Control Reumatología #2',
     hasScreen: true
   },
   {

@@ -1,3 +1,4 @@
+//  Ubicación: src/utils/commentary/commentaryTemplates.utils.ts
 import dayjs from 'dayjs';
 import 'dayjs/locale/es';
 import {
@@ -8,6 +9,8 @@ import {
 
 import { normalizeMonthAbbr, formatDateShort } from './commentaryDate.utils';
 import { getAssetTemplateConfig, validateAssetCommentary } from './assetTemplates.utils';
+import { buildCopagoConfig, validateCopagoCommentary } from './copagoTemplates.utils';
+
 export { normalizeMonthAbbr, formatDateShort, formatDateWithYear } from './commentaryDate.utils';
 
 // dayjs ya está configurado con locale 'es' en Helpers.ts — lo reusamos aquí
@@ -389,46 +392,6 @@ const buildPsychologyConfig = (
   };
 };
 
-const buildCopagoConfig = (
-  subcategoryId: number,
-  subcategoryName: string,
-  categoryName: string
-): SubcategoryTemplateConfig => ({
-  subcategoryId,
-  subcategoryName,
-  categoryName,
-  assistanceLevel: 'structured',
-  parserType: 'copago',
-  chips: [
-    {
-      label: 'Terapia',
-      icon: 'hospital-box',
-      template: 'Copago Colmedica terapia física #1/20',
-      hint: 'Terapia con número de sesión sobre total'
-    },
-    {
-      label: 'Consulta',
-      icon: 'doctor',
-      template: 'Copago Colmedica consulta neurología',
-      hint: 'Consulta o cita médica sin conteo de sesiones'
-    },
-    {
-      label: 'Control',
-      icon: 'clipboard-check',
-      template: 'Copago Colmedica control psiquiatra',
-      hint: 'Control de seguimiento'
-    },
-    {
-      label: 'Fisiatría',
-      icon: 'run',
-      template: 'Copago fisiatría #1/10',
-      hint: 'Copago fisiatría sin institución'
-    }
-  ],
-  smartPlaceholder: 'Ej: Copago Colmedica terapia física #11/20',
-  enableValidation: true
-});
-
 const buildCellPlanConfig = (
   subcategoryId: number,
   subcategoryName: string,
@@ -727,6 +690,8 @@ export const validateCommentary = (
       return validateRetention(commentary.trim());
     case 'asset':
       return validateAssetCommentary(commentary.trim());
+    case 'copago':
+      return validateCopagoCommentary(commentary.trim());
     default:
       return { state: 'neutral' };
   }

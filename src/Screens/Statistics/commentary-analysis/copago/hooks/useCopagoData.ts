@@ -9,12 +9,15 @@ import { useState, useCallback } from 'react';
 import { findExpensesBySubcategories } from '~/services/expenses';
 
 // Types
-import { CopagoData } from '~/shared/types/utils/commentaryParser/copago-analysis.types';
+import {
+  CopagoData,
+  CopagoSeriesStats
+} from '~/shared/types/utils/commentaryParser/copago-analysis.types';
 import { AnalysisFilters } from '../../components/FilterSelector';
 import { ExpenseToEdit } from '~/shared/types/screens/Statistics/commentary-analysis/components/edit-commentary-modal.types';
 
-// Utils
-import { parseCopagoCommentary } from '~/utils/commentaryParser/copagoParser';
+// Utils — siempre desde el índice (regla del README de commentaryParser)
+import { parseCopagoCommentary, getSeriesStats } from '~/utils/commentaryParser';
 import { showError } from '~/utils/showError';
 
 // ─────────────────────────────────────────────
@@ -22,7 +25,8 @@ import { showError } from '~/utils/showError';
 // ─────────────────────────────────────────────
 
 export interface CopagoServiceSummary {
-  serviceType: string;
+  /** Especialidad o grupo de acto: 'reumatologia', 'laboratorio', 'examenes'… */
+  groupKey: string;
   displayName: string;
   totalCost: number;
   count: number;
@@ -36,6 +40,8 @@ export interface UseCopagoDataReturn {
   unrecognized: ExpenseToEdit[];
   parsedData: CopagoData[];
   serviceSummaries: CopagoServiceSummary[];
+  /** Citas/sesiones numeradas por paciente + especialidad, separadas en ciclos */
+  seriesStats: CopagoSeriesStats[];
   currentFilters: AnalysisFilters | null;
   totalCost: number;
   loadData: (filters: AnalysisFilters) => Promise<void>;
@@ -46,39 +52,21 @@ export interface UseCopagoDataReturn {
 // HELPERS
 // ─────────────────────────────────────────────
 
-const SERVICE_DISPLAY_NAMES: Record<string, string> = {
-  terapia_fisica: 'Terapia Física',
-  terapia_ocupacional: 'Terapia Ocupacional',
-  consulta: 'Consulta',
-  control: 'Control',
-  psicologia: 'Psicología',
-  psiquiatra: 'Psiquiatría',
-  fisiatria: 'Fisiatría',
-  neurocirugia: 'Neurocirugía',
-  medico_domicilio: 'Médico domiciliario',
-  otorrino: 'Otorrino',
-  medicina_dolor: 'Medicina del Dolor',
-  laboratorio: 'Laboratorio',
-  imagenologia: 'Imagenología',
-  otro: 'Otro'
-};
-
+/** Agrupa por especialidad (o por acto si no tiene). Ya no existe el grupo "Otro". */
 const buildServiceSummaries = (data: CopagoData[]): CopagoServiceSummary[] => {
-  const map = new Map<string, { totalCost: number; items: CopagoData[] }>();
+  const map = new Map<string, { label: string; totalCost: number; items: CopagoData[] }>();
 
   for (const item of data) {
-    const key = item.serviceType;
-    const existing = map.get(key) ?? { totalCost: 0, items: [] };
-    map.set(key, {
-      totalCost: existing.totalCost + item.cost,
-      items: [...existing.items, item]
-    });
+    const existing = map.get(item.groupKey) ?? { label: item.groupLabel, totalCost: 0, items: [] };
+    existing.totalCost += item.cost;
+    existing.items.push(item);
+    map.set(item.groupKey, existing);
   }
 
   return Array.from(map.entries())
-    .map(([serviceType, stats]) => ({
-      serviceType,
-      displayName: SERVICE_DISPLAY_NAMES[serviceType] ?? serviceType,
+    .map(([groupKey, stats]) => ({
+      groupKey,
+      displayName: stats.label,
       totalCost: stats.totalCost,
       count: stats.items.length,
       avgCost: Math.round(stats.totalCost / stats.items.length),
@@ -95,6 +83,7 @@ export const useCopagoData = (): UseCopagoDataReturn => {
   const [loading, setLoading] = useState(false);
   const [parsedData, setParsedData] = useState<CopagoData[]>([]);
   const [serviceSummaries, setServiceSummaries] = useState<CopagoServiceSummary[]>([]);
+  const [seriesStats, setSeriesStats] = useState<CopagoSeriesStats[]>([]);
   const [unrecognized, setUnrecognized] = useState<ExpenseToEdit[]>([]);
   const [currentFilters, setCurrentFilters] = useState<AnalysisFilters | null>(null);
   const [totalCost, setTotalCost] = useState(0);
@@ -135,6 +124,7 @@ export const useCopagoData = (): UseCopagoDataReturn => {
 
       setParsedData(sortedParsed);
       setServiceSummaries(buildServiceSummaries(sortedParsed));
+      setSeriesStats(getSeriesStats(sortedParsed));
       setUnrecognized(failed);
       setTotalCost(sortedParsed.reduce((sum, item) => sum + item.cost, 0));
     } catch (error) {
@@ -157,6 +147,7 @@ export const useCopagoData = (): UseCopagoDataReturn => {
     loading,
     parsedData,
     serviceSummaries,
+    seriesStats,
     unrecognized,
     currentFilters,
     totalCost,

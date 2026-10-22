@@ -3,52 +3,103 @@
  * Ubicación: src/shared/types/utils/commentaryParser/copago-analysis.types.ts
  *
  * Formato estándar:
- *   Copago {Institución} {servicio} #{N}/{Total}
- *   Copago {Institución} {servicio}              ← consulta única sin sesión
- *   Copago {servicio} #{N}/{Total}               ← sin institución
+ *   [Copago] [Institución] {Acto} {Área} [#N[/Total]] [@Paciente] [- nota libre]
  *
  * Ejemplos:
- *   "Copago Colmedica Terapia Física #11/20"
- *   "Copago Colmedica consulta Neurología"
- *   "Copago Fisiatría #1/10"
+ *   "Colmedica Consulta Reumatología #1"
+ *   "Colmedica Control Reumatología #2 - resultado resonancia"
+ *   "Colmedica Terapia Física #11/20"
+ *   "Salud Total Medicamentos @Julio"
+ *   "Domicilio Laboratorio - Lopez Correa"
+ *
+ * Dos ejes independientes:
+ *   - ACTO: qué ocurrió (consulta, control, terapia, examen…)
+ *   - ÁREA: sobre qué (especialidad, examen concreto…)
  */
 
-export type CopagoServiceType =
-  | 'terapia_fisica'
-  | 'terapia_ocupacional'
-  | 'consulta'
-  | 'control'
-  | 'psicologia'
-  | 'psiquiatra'
-  | 'fisiatria'
-  | 'neurocirugia'
-  | 'medico_domicilio'
-  | 'otorrino'
-  | 'medicina_dolor'
-  | 'laboratorio'
-  | 'imagenologia' // (resonancia, gammagrafía, RX, TAC
-  | 'otro';
+export type CopagoAct =
+  | 'consulta' // primera vez / cita de especialidad
+  | 'control' // seguimiento de una especialidad
+  | 'terapia' // sesiones: física, ocupacional, hidroterapia, psicología
+  | 'urgencia'
+  | 'examen' // imágenes y otros exámenes (gammagrafía, ecografía…)
+  | 'laboratorio' // laboratorio en sede física
+  | 'medicamentos'
+  | 'procedimiento'
+  | 'domicilio'; // atención o toma de muestra a domicilio
+
+/**
+ * session → número de sesión de una terapia (ciclo con total, ej. #5/20)
+ * visit   → número de cita de una especialidad (la primera vez es #1)
+ */
+export type CopagoSequenceKind = 'session' | 'visit';
 
 export interface CopagoData {
   cost: number;
   date: string;
 
   institution?: string; // "Colmedica", "Salud Total" — undefined si no se menciona
-  service: string; // "terapia física", "consulta neurología"
-  serviceType: CopagoServiceType; // clasificación normalizada
 
-  // Sesión (solo si el comentario incluye #N/Total)
-  sessionNumber?: number; // 11
-  totalSessions?: number; // 20
-  hasSessions: boolean; // true si tiene #N/Total
+  /** Paciente. Si el comentario no lo dice, se asigna DEFAULT_PATIENT */
+  patient: string;
+  /** true si el comentario lo escribió (@Julio o nombre suelto) */
+  patientIsExplicit: boolean;
+
+  act: CopagoAct;
+  /** Texto del área tal como se escribió: "Neurología", "Gammagrafía ósea" */
+  area?: string;
+
+  /** Especialidad canónica (solo en consulta/control/terapia/urgencia con área) */
+  specialtyKey?: string;
+  specialtyLabel?: string;
+  /** false si la especialidad no está en el catálogo (se agrupa por su propio texto) */
+  isKnownSpecialty?: boolean;
+
+  /** Clave y etiqueta con las que se agrupa en el resumen (nunca hay grupo "Otro") */
+  groupKey: string;
+  groupLabel: string;
+
+  /** #N — número de sesión (terapia) o de cita (resto) */
+  sequenceNumber?: number;
+  /** /Total — solo para ciclos cerrados (terapias) */
+  totalSessions?: number;
+  hasSequence: boolean;
+  sequenceKind?: CopagoSequenceKind;
+
+  /** Texto libre tras " - " (ciudad, clínica, motivo…) */
+  note?: string;
 }
 
-export interface CopagoSessionStats {
-  service: string;
+/**
+ * Estadísticas de una serie numerada (paciente + especialidad) en un ciclo.
+ * Un ciclo nuevo empieza cuando aparece #1, cambia el total o el número retrocede.
+ */
+export interface CopagoSeriesStats {
+  patient: string;
+  specialtyKey: string;
+  specialtyLabel: string;
   institution?: string;
-  completedSessions: number;
-  totalSessions: number; // del último registro con total conocido
-  progressPercent: number; // completedSessions / totalSessions * 100
+  sequenceKind: CopagoSequenceKind;
+
+  /** Número de ciclo dentro de paciente+especialidad (1 = el más antiguo) */
+  episode: number;
+  totalEpisodes: number;
+
+  /** Cantidad de gastos registrados en el ciclo */
+  entries: number;
+  /** Mayor #N alcanzado (no depende de que estén todos registrados) */
+  lastNumber: number;
+  totalSessions?: number; // del último registro que lo traiga
+  progressPercent?: number; // lastNumber / totalSessions, máx 100
+  isClosed: boolean;
+  /** Números que faltan entre el menor y el mayor registrado */
+  missingNumbers: number[];
+
+  /** Conteo por acto dentro del ciclo: { consulta: 1, control: 2 } */
+  acts: Partial<Record<CopagoAct, number>>;
+
   totalCost: number;
-  avgCostPerSession: number;
+  avgCost: number;
+  firstDate: string;
+  lastDate: string;
 }

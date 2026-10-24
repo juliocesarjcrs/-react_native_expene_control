@@ -50,7 +50,6 @@ export { parseFamilyAidCommentary, getTotalByPerson } from './familyAidParser';
 export { parseNutritionCommentary, getAvgCostPerWeek } from './nutritionParser';
 export { parseSportsCommentary, getTotalByExpenseType } from './sportsParser';
 export { parseRentCommentary } from './rentParser';
-export { parseCopagoCommentary, getSeriesStats, getTotalByInstitution } from './copagoParser';
 export {
   ACT_LABELS,
   ACT_LABELS_PLURAL,
@@ -59,6 +58,15 @@ export {
   COPAGO_FORMAT_HINT_SHORT,
   getCopagoGroupIcon
 } from './copagoCatalog';
+
+export {
+  parseCopagoCommentary,
+  getSeriesStats,
+  getTotalByInstitution,
+  getMonthlySpending,
+  getPendingCycles,
+  getPatientOptions
+} from './copagoParser';
 
 // ─────────────────────────────────────────────
 // TIPOS
@@ -151,7 +159,7 @@ const SUBCATEGORY_PARSER_MAP: Record<number, ParserType> = {
   1344: 'sports'
 };
 
-// ─────────────────────────────────────────────
+// ──────────────────────commentaryTemplates.utils.ts───────────────────────
 // API PÚBLICA
 // ─────────────────────────────────────────────
 

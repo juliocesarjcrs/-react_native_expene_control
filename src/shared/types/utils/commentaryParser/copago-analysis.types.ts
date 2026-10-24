@@ -100,6 +100,42 @@ export interface CopagoSeriesStats {
 
   totalCost: number;
   avgCost: number;
+  /** Copago del último registro del ciclo (el precio más reciente) */
+  lastCost: number;
   firstDate: string;
   lastDate: string;
+}
+
+/** Gasto de un mes, desglosado por paciente */
+export interface CopagoMonthlySpending {
+  /** 'YYYY-MM' */
+  month: string;
+  /** 'Oct 2026' */
+  label: string;
+  total: number;
+  count: number;
+  byPatient: Record<string, number>;
+}
+
+/** Ciclo de terapia abierto con total conocido: cuánto falta por pagar */
+export interface CopagoPendingCycle {
+  patient: string;
+  specialtyKey: string;
+  specialtyLabel: string;
+  institution?: string;
+  lastNumber: number;
+  totalSessions: number;
+  remainingSessions: number;
+  /** Último copago pagado del ciclo — base de la estimación */
+  lastCost: number;
+  /** remainingSessions × lastCost */
+  estimatedCost: number;
+}
+
+export interface CopagoPendingSummary {
+  cycles: CopagoPendingCycle[];
+  totalRemainingSessions: number;
+  totalEstimatedCost: number;
+  /** Terapias abiertas sin /Total (ej. psicología): no se pueden proyectar */
+  openWithoutTotal: number;
 }

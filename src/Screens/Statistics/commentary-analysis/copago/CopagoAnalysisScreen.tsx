@@ -24,6 +24,9 @@ import CopagoHistoryItem from './components/CopagoHistoryItem';
 import EditCommentaryModal from '../components/EditCommentaryModal';
 import CopagoSeriesCard from './components/CopagoSeriesCard';
 import { COPAGO_FORMAT_HINT, COPAGO_FORMAT_HINT_SHORT } from '~/utils/commentaryParser';
+import CopagoMonthlyCard from './components/CopagoMonthlyCard';
+import CopagoPendingCard from './components/CopagoPendingCard';
+import CopagoPatientSelector from './components/CopagoPatientSelector';
 
 // Hooks
 import { useCopagoData } from './hooks/useCopagoData';
@@ -62,6 +65,11 @@ export default function CopagoAnalysisScreen({ navigation, route }: ScreenProps)
     parsedData,
     serviceSummaries,
     seriesStats,
+    monthlySpending,
+    pendingSummary,
+    patients,
+    selectedPatient,
+    setSelectedPatient,
     unrecognized,
     currentFilters,
     totalCost,
@@ -104,9 +112,15 @@ export default function CopagoAnalysisScreen({ navigation, route }: ScreenProps)
               {/* ── Datos reconocidos ── */}
               {parsedData.length > 0 && (
                 <>
+                  <CopagoPatientSelector
+                    patients={patients}
+                    selected={selectedPatient}
+                    onSelect={setSelectedPatient}
+                  />
                   {/* Resumen por tipo de servicio con drill-down */}
                   <CopagoSummaryCard summaries={serviceSummaries} totalCost={totalCost} />
-
+                  <CopagoMonthlyCard months={monthlySpending} />
+                  <CopagoPendingCard summary={pendingSummary} />
                   <CopagoSeriesCard series={seriesStats} />
 
                   {/* Lista cronológica */}

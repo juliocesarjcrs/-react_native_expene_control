@@ -1,9 +1,12 @@
 /**
  * Hook de datos para CopagoAnalysisScreen
  * Ubicación: src/Screens/Statistics/commentary-analysis/copago/hooks/useCopagoData.ts
+ *
+ * Se parsea UNA vez (allParsed). Todo lo que ve la pantalla se deriva de allParsed
+ * filtrado por el paciente elegido, así cambiar de paciente no vuelve a llamar al backend.
  */
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useMemo } from 'react';
 
 // Services
 import { findExpensesBySubcategories } from '~/services/expenses';
@@ -11,13 +14,21 @@ import { findExpensesBySubcategories } from '~/services/expenses';
 // Types
 import {
   CopagoData,
+  CopagoMonthlySpending,
+  CopagoPendingSummary,
   CopagoSeriesStats
 } from '~/shared/types/utils/commentaryParser/copago-analysis.types';
 import { AnalysisFilters } from '../../components/FilterSelector';
 import { ExpenseToEdit } from '~/shared/types/screens/Statistics/commentary-analysis/components/edit-commentary-modal.types';
 
 // Utils — siempre desde el índice (regla del README de commentaryParser)
-import { parseCopagoCommentary, getSeriesStats } from '~/utils/commentaryParser';
+import {
+  parseCopagoCommentary,
+  getSeriesStats,
+  getMonthlySpending,
+  getPendingCycles,
+  getPatientOptions
+} from '~/utils/commentaryParser';
 import { showError } from '~/utils/showError';
 
 // ─────────────────────────────────────────────
@@ -35,13 +46,29 @@ export interface CopagoServiceSummary {
   items: CopagoData[];
 }
 
+export interface CopagoPatientOption {
+  name: string;
+  count: number;
+}
+
 export interface UseCopagoDataReturn {
   loading: boolean;
+  /** Los registros sin formato NO se filtran por paciente: no se sabe de quién son */
   unrecognized: ExpenseToEdit[];
+  /** Registros reconocidos, ya filtrados por el paciente elegido */
   parsedData: CopagoData[];
   serviceSummaries: CopagoServiceSummary[];
   /** Citas/sesiones numeradas por paciente + especialidad, separadas en ciclos */
   seriesStats: CopagoSeriesStats[];
+  /** Gasto por mes y paciente (meses sin gasto incluidos con 0) */
+  monthlySpending: CopagoMonthlySpending[];
+  /** Lo que falta por pagar en terapias abiertas con total */
+  pendingSummary: CopagoPendingSummary;
+  /** Pacientes presentes en los datos (para el selector) */
+  patients: CopagoPatientOption[];
+  /** null = Todos */
+  selectedPatient: string | null;
+  setSelectedPatient: (patient: string | null) => void;
   currentFilters: AnalysisFilters | null;
   totalCost: number;
   loadData: (filters: AnalysisFilters) => Promise<void>;
@@ -81,12 +108,10 @@ const buildServiceSummaries = (data: CopagoData[]): CopagoServiceSummary[] => {
 
 export const useCopagoData = (): UseCopagoDataReturn => {
   const [loading, setLoading] = useState(false);
-  const [parsedData, setParsedData] = useState<CopagoData[]>([]);
-  const [serviceSummaries, setServiceSummaries] = useState<CopagoServiceSummary[]>([]);
-  const [seriesStats, setSeriesStats] = useState<CopagoSeriesStats[]>([]);
+  const [allParsed, setAllParsed] = useState<CopagoData[]>([]);
   const [unrecognized, setUnrecognized] = useState<ExpenseToEdit[]>([]);
   const [currentFilters, setCurrentFilters] = useState<AnalysisFilters | null>(null);
-  const [totalCost, setTotalCost] = useState(0);
+  const [requestedPatient, setSelectedPatient] = useState<string | null>(null);
 
   const fetchAndParse = useCallback(async (filters: AnalysisFilters) => {
     if (!filters.subcategoryId) return;
@@ -118,21 +143,38 @@ export const useCopagoData = (): UseCopagoDataReturn => {
         }
       }
 
-      const sortedParsed = [...parsed].sort(
-        (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
+      setAllParsed(
+        [...parsed].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
       );
-
-      setParsedData(sortedParsed);
-      setServiceSummaries(buildServiceSummaries(sortedParsed));
-      setSeriesStats(getSeriesStats(sortedParsed));
       setUnrecognized(failed);
-      setTotalCost(sortedParsed.reduce((sum, item) => sum + item.cost, 0));
     } catch (error) {
       showError(error);
     } finally {
       setLoading(false);
     }
   }, []);
+
+  // ── Derivados del paciente elegido ─────────────────────────────────────
+  const patients = useMemo(() => getPatientOptions(allParsed), [allParsed]);
+
+  // Si el paciente elegido ya no aparece (otro rango o subcategoría), vuelve a "Todos"
+  const selectedPatient = patients.some((p) => p.name === requestedPatient)
+    ? requestedPatient
+    : null;
+
+  const parsedData = useMemo(
+    () => (selectedPatient ? allParsed.filter((d) => d.patient === selectedPatient) : allParsed),
+    [allParsed, selectedPatient]
+  );
+
+  const serviceSummaries = useMemo(() => buildServiceSummaries(parsedData), [parsedData]);
+  const seriesStats = useMemo(() => getSeriesStats(parsedData), [parsedData]);
+  const pendingSummary = useMemo(() => getPendingCycles(seriesStats), [seriesStats]);
+  const monthlySpending = useMemo(() => getMonthlySpending(parsedData), [parsedData]);
+  const totalCost = useMemo(
+    () => parsedData.reduce((sum, item) => sum + item.cost, 0),
+    [parsedData]
+  );
 
   const loadData = useCallback(
     async (filters: AnalysisFilters) => fetchAndParse(filters),
@@ -148,6 +190,11 @@ export const useCopagoData = (): UseCopagoDataReturn => {
     parsedData,
     serviceSummaries,
     seriesStats,
+    monthlySpending,
+    pendingSummary,
+    patients,
+    selectedPatient,
+    setSelectedPatient,
     unrecognized,
     currentFilters,
     totalCost,

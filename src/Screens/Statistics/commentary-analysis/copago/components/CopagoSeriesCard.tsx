@@ -105,49 +105,49 @@ export default function CopagoSeriesCard({ series }: CopagoSeriesCardProps) {
             </View>
 
             <View style={styles.itemBody}>
-            {/* Progreso (terapia con total) o conteo (citas) */}
-            {isSession && s.totalSessions ? (
-              <>
-                <View style={[styles.barTrack, { backgroundColor: colors.BORDER }]}>
-                  <View
-                    style={[
-                      styles.barFill,
-                      {
-                        width: `${s.progressPercent ?? 0}%`,
-                        backgroundColor: s.isClosed ? colors.SUCCESS : colors.INFO
-                      }
-                    ]}
-                  />
-                </View>
+              {/* Progreso (terapia con total) o conteo (citas) */}
+              {isSession && s.totalSessions ? (
+                <>
+                  <View style={[styles.barTrack, { backgroundColor: colors.BORDER }]}>
+                    <View
+                      style={[
+                        styles.barFill,
+                        {
+                          width: `${s.progressPercent ?? 0}%`,
+                          backgroundColor: s.isClosed ? colors.SUCCESS : colors.INFO
+                        }
+                      ]}
+                    />
+                  </View>
+                  <Text style={[styles.itemDetail, { color: colors.TEXT_SECONDARY }]}>
+                    Sesión {s.lastNumber}/{s.totalSessions} · {s.progressPercent}%
+                    {s.isClosed ? ' · completada' : ''} · prom {NumberFormat(s.avgCost)}
+                  </Text>
+                </>
+              ) : (
                 <Text style={[styles.itemDetail, { color: colors.TEXT_SECONDARY }]}>
-                  Sesión {s.lastNumber}/{s.totalSessions} · {s.progressPercent}%
-                  {s.isClosed ? ' · completada' : ''} · prom {NumberFormat(s.avgCost)}
+                  {isSession ? `Sesión ${s.lastNumber}` : `Cita #${s.lastNumber}`} ·{' '}
+                  {describeActs(s.acts)} · prom {NumberFormat(s.avgCost)}
                 </Text>
-              </>
-            ) : (
+              )}
+
               <Text style={[styles.itemDetail, { color: colors.TEXT_SECONDARY }]}>
-                {isSession ? `Sesión ${s.lastNumber}` : `Cita #${s.lastNumber}`} ·{' '}
-                {describeActs(s.acts)} · prom {NumberFormat(s.avgCost)}
+                {DateFormat(s.firstDate, 'DD MMM YYYY')} → {DateFormat(s.lastDate, 'DD MMM YYYY')}
               </Text>
-            )}
 
-            <Text style={[styles.itemDetail, { color: colors.TEXT_SECONDARY }]}>
-              {DateFormat(s.firstDate, 'DD MMM YYYY')} → {DateFormat(s.lastDate, 'DD MMM YYYY')}
-            </Text>
-
-            {s.missingNumbers.length > 0 && (
-              <View style={styles.missingRow}>
-                <Icon
-                  type="material-community"
-                  name="alert-circle-outline"
-                  size={14}
-                  color={colors.WARNING}
-                />
-                <Text style={[styles.itemDetail, { color: colors.WARNING }]}>
-                  Sin registrar: {s.missingNumbers.map((n) => `#${n}`).join(', ')}
-                </Text>
-              </View>
-            )}
+              {s.missingNumbers.length > 0 && (
+                <View style={styles.missingRow}>
+                  <Icon
+                    type="material-community"
+                    name="alert-circle-outline"
+                    size={14}
+                    color={colors.WARNING}
+                  />
+                  <Text style={[styles.itemDetail, { color: colors.WARNING }]}>
+                    Sin registrar: {s.missingNumbers.map((n) => `#${n}`).join(', ')}
+                  </Text>
+                </View>
+              )}
             </View>
           </View>
         );

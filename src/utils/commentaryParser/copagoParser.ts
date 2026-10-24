@@ -29,6 +29,9 @@
 import {
   CopagoAct,
   CopagoData,
+  CopagoMonthlySpending,
+  CopagoPendingCycle,
+  CopagoPendingSummary,
   CopagoSeriesStats
 } from '~/shared/types/utils/commentaryParser/copago-analysis.types';
 import {
@@ -278,6 +281,7 @@ const buildSeriesStats = (
     acts,
     totalCost,
     avgCost: Math.round(totalCost / items.length),
+    lastCost: last.cost,
     firstDate: items[0].date,
     lastDate: last.date
   };
@@ -343,4 +347,125 @@ export const getTotalByInstitution = (
   return Array.from(map.entries())
     .map(([institution, stats]) => ({ institution, ...stats }))
     .sort((a, b) => b.total - a.total);
+};
+
+const MONTH_ABBR = [
+  'Ene',
+  'Feb',
+  'Mar',
+  'Abr',
+  'May',
+  'Jun',
+  'Jul',
+  'Ago',
+  'Sep',
+  'Oct',
+  'Nov',
+  'Dic'
+];
+
+/** 'YYYY-MM' desde '2026-09-28' o un ISO con hora. Lee el texto para no depender de la zona horaria. */
+const toMonthKey = (date: string): string => {
+  if (/^\d{4}-\d{2}/.test(date)) return date.slice(0, 7);
+  const d = new Date(date);
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+};
+
+const monthLabel = (key: string): string => {
+  const [year, month] = key.split('-');
+  return `${MONTH_ABBR[parseInt(month, 10) - 1]} ${year}`;
+};
+
+const nextMonthKey = (key: string): string => {
+  const [year, month] = key.split('-').map(Number);
+  return month === 12 ? `${year + 1}-01` : `${year}-${String(month + 1).padStart(2, '0')}`;
+};
+
+/**
+ * Gasto por mes y paciente, en orden cronológico.
+ * Rellena con ceros los meses sin gasto entre el primero y el último, para que
+ * un mes sin copagos se vea como un hueco y no desaparezca.
+ * Los meses de los extremos pueden estar incompletos si el rango no los cubre.
+ */
+export const getMonthlySpending = (data: CopagoData[]): CopagoMonthlySpending[] => {
+  if (data.length === 0) return [];
+
+  const byMonth = new Map<string, CopagoMonthlySpending>();
+  for (const item of data) {
+    const key = toMonthKey(item.date);
+    const entry = byMonth.get(key) ?? {
+      month: key,
+      label: monthLabel(key),
+      total: 0,
+      count: 0,
+      byPatient: {}
+    };
+    entry.total += item.cost;
+    entry.count += 1;
+    entry.byPatient[item.patient] = (entry.byPatient[item.patient] ?? 0) + item.cost;
+    byMonth.set(key, entry);
+  }
+
+  const keys = [...byMonth.keys()].sort();
+  const result: CopagoMonthlySpending[] = [];
+  for (let key = keys[0]; key <= keys[keys.length - 1]; key = nextMonthKey(key)) {
+    result.push(
+      byMonth.get(key) ?? { month: key, label: monthLabel(key), total: 0, count: 0, byPatient: {} }
+    );
+  }
+  return result;
+};
+
+/**
+ * Cuánto falta por pagar en las terapias abiertas.
+ *
+ * - Solo el ciclo MÁS RECIENTE de cada paciente + especialidad: un ciclo anterior
+ *   sin terminar, superado por un #1 nuevo, se considera abandonado.
+ * - Solo terapias (sesiones) con /Total: una consulta/control no tiene "fin",
+ *   y psicología abierta no se puede proyectar (se cuenta en openWithoutTotal).
+ * - Estimación = sesiones restantes × último copago pagado del ciclo.
+ */
+export const getPendingCycles = (series: CopagoSeriesStats[]): CopagoPendingSummary => {
+  const latest = series.filter(
+    (s) => s.episode === s.totalEpisodes && s.sequenceKind === 'session'
+  );
+
+  const cycles: CopagoPendingCycle[] = latest
+    .filter((s) => s.totalSessions !== undefined && !s.isClosed)
+    .map((s) => {
+      const totalSessions = s.totalSessions as number;
+      const remainingSessions = totalSessions - s.lastNumber;
+      return {
+        patient: s.patient,
+        specialtyKey: s.specialtyKey,
+        specialtyLabel: s.specialtyLabel,
+        institution: s.institution,
+        lastNumber: s.lastNumber,
+        totalSessions,
+        remainingSessions,
+        lastCost: s.lastCost,
+        estimatedCost: remainingSessions * s.lastCost
+      };
+    })
+    .sort((a, b) => b.estimatedCost - a.estimatedCost);
+
+  return {
+    cycles,
+    totalRemainingSessions: cycles.reduce((sum, c) => sum + c.remainingSessions, 0),
+    totalEstimatedCost: cycles.reduce((sum, c) => sum + c.estimatedCost, 0),
+    openWithoutTotal: latest.filter((s) => s.totalSessions === undefined).length
+  };
+};
+
+/**
+ * Pacientes presentes en los datos, con su cantidad de registros.
+ * Mayor cantidad primero. Alimenta el selector de paciente de la pantalla.
+ */
+export const getPatientOptions = (data: CopagoData[]): { name: string; count: number }[] => {
+  const counts = new Map<string, number>();
+  for (const item of data) counts.set(item.patient, (counts.get(item.patient) ?? 0) + 1);
+
+  return [...counts.entries()]
+    .map(([name, count]) => ({ name, count }))
+    .sort((a, b) => b.count - a.count || a.name.localeCompare(b.name));
 };

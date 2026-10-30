@@ -33,7 +33,7 @@ interface Props {
 export default function AssetMetricsSections({ metrics, hasIncomeLink, incomesFailed }: Props) {
   const colors = useThemeColors();
   const [expandedMonth, setExpandedMonth] = useState<string | null>(null);
-  const { cost, debt, equity, annual, yields, payback, window } = metrics;
+  const { cost, debt, equity, annual, yields, payback, window, vacancyOpex } = metrics;
   const yieldState = getYieldCardState(metrics, { hasIncomeLink, incomesFailed });
   const showReturns = yieldState.mode === 'full';
 
@@ -43,52 +43,70 @@ export default function AssetMetricsSections({ metrics, hasIncomeLink, incomesFa
 
   const gap = cost.purchaseGap;
   const lastMonths = [...metrics.monthly].slice(-12).reverse();
+  const showCost = cost.total > 0;
+  const showVacancy = vacancyOpex !== null && vacancyOpex >= 1;
 
   return (
     <>
-      {/* 1. Costo */}
-      <AssetCard title="Costo del bien" icon="cash-multiple" accentKey="PRIMARY">
-        <AssetRow label="Compra (promesa, abonos, saldo)" value={NumberFormat(cost.purchase)} />
-        <AssetRow label="Escrituración y 4x1000" value={NumberFormat(cost.acquisitionCosts)} />
-        {cost.improvements > 0 && (
-          <AssetRow label="Mejoras" value={NumberFormat(cost.improvements)} />
-        )}
-        {cost.unclassified > 0 && (
+      {/* 1. Costo (se oculta si no hay costo registrado) */}
+      {showCost && (
+        <AssetCard title="Costo del bien" icon="cash-multiple" accentKey="PRIMARY">
           <AssetRow
-            label="Sin formato (cuenta como costo)"
-            value={NumberFormat(cost.unclassified)}
-            hint="Comentarios viejos marcados como inversión"
+            label="Compra (promesa, abonos, saldo)"
+            value={NumberFormat(cost.purchase)}
+            hint={
+              cost.directLoan > 0
+                ? `Incluye ${NumberFormat(cost.directLoan)} que pagó un préstamo directo al vendedor`
+                : undefined
+            }
           />
-        )}
-        <AssetRow label="Costo total" value={NumberFormat(cost.total)} emphasis />
-        {cost.deedValue !== null && (
-          <AssetRow label="Valor de la escritura" value={NumberFormat(cost.deedValue)} />
-        )}
-        {gap !== null && gap !== 0 && (
-          <AssetRow
-            label={gap > 0 ? 'Falta registrar de la compra' : 'Pagado de más sobre la escritura'}
-            value={NumberFormat(Math.abs(gap))}
-            valueColorKey="WARNING"
-          />
-        )}
-      </AssetCard>
+          <AssetRow label="Escrituración y 4x1000" value={NumberFormat(cost.acquisitionCosts)} />
+          {cost.improvements > 0 && (
+            <AssetRow label="Mejoras" value={NumberFormat(cost.improvements)} />
+          )}
+          {cost.unclassified > 0 && (
+            <AssetRow
+              label="Sin formato (cuenta como costo)"
+              value={NumberFormat(cost.unclassified)}
+              hint="Comentarios viejos marcados como inversión"
+            />
+          )}
+          <AssetRow label="Costo total" value={NumberFormat(cost.total)} emphasis />
+          {cost.deedValue !== null && (
+            <AssetRow label="Valor de la escritura" value={NumberFormat(cost.deedValue)} />
+          )}
+          {gap !== null && gap !== 0 && (
+            <AssetRow
+              label={gap > 0 ? 'Falta registrar de la compra' : 'Pagado de más sobre la escritura'}
+              value={NumberFormat(Math.abs(gap))}
+              valueColorKey="WARNING"
+            />
+          )}
+        </AssetCard>
+      )}
 
       {/* 2. Deuda */}
       {debt.hasLoan && (
-        <AssetCard title="Préstamo y capital propio" icon="bank" accentKey="WARNING">
+        <AssetCard title="Préstamo y dinero puesto" icon="bank" accentKey="WARNING">
           <AssetRow
             label="Deuda actual"
             value={debt.balance === null ? 'Sin saldo registrado' : NumberFormat(debt.balance)}
-            hint={debt.asOfDate ? `Según el último saldo (${debt.asOfDate})` : undefined}
+            hint={
+              debt.estimated
+                ? 'Estimada: último saldo menos los abonos a capital posteriores'
+                : debt.asOfDate
+                  ? `Según el último saldo (${debt.asOfDate})`
+                  : undefined
+            }
             valueColorKey={debt.balance === null ? 'WARNING' : undefined}
           />
           <AssetRow label="Intereses pagados" value={NumberFormat(debt.interestPaid)} />
           <AssetRow label="Abonos a capital" value={NumberFormat(debt.principalPaid)} />
           <AssetRow
-            label="Tu capital en el bien"
+            label="Lo que has puesto tú"
             value={equity === null ? '—' : NumberFormat(equity)}
             emphasis
-            hint="Costo total menos deuda actual"
+            hint="Costo total menos lo que aún debes. Es tu dinero metido en el bien, no una ganancia ni una pérdida"
           />
         </AssetCard>
       )}
@@ -128,7 +146,10 @@ export default function AssetMetricsSections({ metrics, hasIncomeLink, incomesFa
                     label="Neta después de intereses"
                     value={formatPercent(yields.netAfterInterest)}
                   />
-                  <AssetRow label="Sobre tu capital" value={formatPercent(yields.onEquity)} />
+                  <AssetRow
+                    label="Sobre lo que has puesto tú"
+                    value={formatPercent(yields.onEquity)}
+                  />
                 </>
               )}
               <AssetRow
@@ -137,31 +158,48 @@ export default function AssetMetricsSections({ metrics, hasIncomeLink, incomesFa
                 emphasis
               />
               {debt.hasLoan && (
-                <AssetRow label="Recuperar tu capital" value={formatYears(payback.equityYears)} />
+                <AssetRow
+                  label="Recuperar lo que has puesto"
+                  value={formatYears(payback.equityYears)}
+                />
               )}
             </>
           )}
-          <Text style={[styles.note, { color: colors.TEXT_SECONDARY }]}>
-            {showReturns
-              ? ''
-              : 'Sin costo de compra registrado: no se calcula rentabilidad ni recuperación. '}
+          {!showReturns && (
+            <Text style={[styles.note, { color: colors.TEXT_SECONDARY }]}>
+              Sin costo de compra registrado: no se calcula rentabilidad ni recuperación.
+            </Text>
+          )}
+          <Text
+            style={[
+              styles.note,
+              { color: window.annualized ? colors.WARNING : colors.TEXT_SECONDARY }
+            ]}
+          >
             {window.provisional
               ? 'Cifras provisionales: solo hay el mes en curso con arriendo y todavía no ha terminado. Se proyecta a 12 meses.'
               : window.annualized
-                ? `Basado en ${window.months} ${window.months === 1 ? 'mes' : 'meses'} con arriendo, proyectado a 12.`
+                ? `Proyectado con ${window.months} ${window.months === 1 ? 'mes' : 'meses'} de datos: puede cambiar cuando haya más meses con arriendo.`
                 : 'Basado en los últimos 12 meses completos.'}
           </Text>
         </AssetCard>
       )}
 
       {/* 4. Gastos por tipo */}
-      {(buckets.length > 0 || annual.interest >= 1) && (
+      {(buckets.length > 0 || annual.interest >= 1 || showVacancy) && (
         <AssetCard title="Gastos por tipo (anual)" icon="receipt" accentKey="ERROR">
           {buckets.map((b) => (
             <AssetRow key={b} label={OPEX_LABELS[b]} value={NumberFormat(annual.opexByBucket[b])} />
           ))}
           {annual.interest >= 1 && (
             <AssetRow label="Intereses del préstamo" value={NumberFormat(annual.interest)} />
+          )}
+          {showVacancy && (
+            <AssetRow
+              label="Gastos antes del primer arriendo"
+              value={NumberFormat(vacancyOpex as number)}
+              hint="Ya pagados, de los meses sin arriendo. No entran en las cifras anuales ni en la rentabilidad"
+            />
           )}
         </AssetCard>
       )}

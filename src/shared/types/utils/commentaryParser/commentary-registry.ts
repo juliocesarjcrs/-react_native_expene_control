@@ -178,7 +178,7 @@ export const COMMENTARY_REGISTRY: CommentaryAnalysisEntry[] = [
     icon: 'home-analytics',
     iconColorKey: 'PRIMARY',
     route: 'assetAnalysis',
-    subcategoryDetectors: ['Apartamento', 'Lote', 'Casa', 'Finca'],
+    subcategoryDetectors: ['Apartamento', 'Lote', 'Casa', 'Finca', 'Local'],
     detectorCategoryName: 'Bancarios y de inversión',
     exampleCommentary: 'Administración: Mar 2026',
     hasScreen: true

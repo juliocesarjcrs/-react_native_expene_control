@@ -657,7 +657,7 @@ describe('póliza de seguro con fechas en ambas puntas (caso real)', () => {
     });
     expect(m.window).toMatchObject({ months: 1, provisional: true });
     expect(m.monthly.find((r) => r.month === '2026-10')?.opexTotal).toBeLessThan(571_026);
-    expect(m.annual.opexByBucket.insurance).toBeLessThan(571_026); // antes: 6.852.312
+    expect(m.annual.opexByBucket.insurance).toBeCloseTo(571_026, 2); // antes: 6.852.312
     expect(m.annual.opexByBucket.insurance).toBeGreaterThan(400_000);
   });
 });

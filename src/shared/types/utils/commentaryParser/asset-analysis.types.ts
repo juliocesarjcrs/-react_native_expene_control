@@ -110,6 +110,12 @@ export interface AssetData {
   /** [Tasa 14,5% EA] — tasa tal como se escribió (14.5) y su base ("EA") */
   rate?: number;
   rateType?: string;
+  /**
+   * [Préstamo directo $85.000.000] — parte del precio que un tercero pagó directo al
+   * vendedor (no pasó por tus cuentas). Solo vale en Promesa, Abono y Saldo: suma al
+   * costo de compra y es la deuda inicial.
+   */
+  directLoan?: number;
 
   /** Etiquetas [..] sin incluir las que se extraen a campos propios */
   tags: string[];

@@ -22,6 +22,8 @@ export type AssetWarningCode =
   | 'missingPeriod' //      concepto recurrente sin período con año
   | 'wrongDirection' //     concepto de ingreso en un gasto o viceversa
   | 'debtBalanceMissing' // hay préstamo pero ningún [Saldo $...]
+  | 'debtEstimated' //      deuda = último saldo menos abonos a capital posteriores
+  | 'directLoanIgnored' //  [Préstamo directo] fuera de Promesa, Abono o Saldo
   | 'annualized' //         ventana < 12 meses: cifras anualizadas
   | 'unassignedIncome' //   ingresos de la categoría sin [Bien: ...] (o sin formato)
   | 'badDate' //            fecha no reconocida: cuenta como costo pero no entra a los meses
@@ -66,13 +68,15 @@ export interface AssetMonthRow {
 
 export interface AssetMetrics {
   cost: {
-    /** Promesa + Abono + Saldo */
+    /** Promesa + Abono + Saldo (incluye `directLoan`) */
     purchase: number;
     /** Escrituración + 4x1000 de compra */
     acquisitionCosts: number;
     improvements: number;
     /** investment sin formato (p. ej. "Cuota # 18/23"): cuenta como costo */
     unclassified: number;
+    /** Parte de `purchase` pagada por un tercero con [Préstamo directo $...] */
+    directLoan: number;
     total: number;
     /** Último [Valor escritura $...] registrado */
     deedValue: number | null;
@@ -83,8 +87,10 @@ export interface AssetMetrics {
   };
   debt: {
     hasLoan: boolean;
-    /** null = hay préstamo pero no se registró [Saldo $...] */
+    /** null = hay préstamo pero no se registró [Saldo $...] ni [Préstamo directo] */
     balance: number | null;
+    /** true = se restaron abonos a capital posteriores al último saldo registrado */
+    estimated: boolean;
     asOfDate: string | null;
     interestPaid: number;
     principalPaid: number;
@@ -93,6 +99,11 @@ export interface AssetMetrics {
   equity: number | null;
   /** Depósitos en garantía recibidos (NO son ingreso) */
   depositsHeld: number;
+  /**
+   * Gastos operativos (sin intereses ni compra) de los meses anteriores al primer
+   * arriendo. null si todavía no hay arriendo.
+   */
+  vacancyOpex: number | null;
   monthly: AssetMonthRow[];
   window: {
     start: string | null;

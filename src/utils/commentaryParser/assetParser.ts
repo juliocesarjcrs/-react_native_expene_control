@@ -7,6 +7,7 @@
  * Ejemplos:
  *   Abono: antes de escrituras
  *   Escrituración: notariales 2,3% [Valor escritura $130.000.000]
+ *   Saldo: firma de escritura [Préstamo directo $85.000.000]
  *   4x1000: Nubank a Bancolombia $73.000.000
  *   Administración: Mar 2026          Predial: 2026
  *   Arriendo: 15 días Mar 2026 [Parcial]
@@ -185,7 +186,19 @@ export const parseAssetCommentary = (
     ? propertyTag.replace(/^bien\s*:\s*/i, '').trim() || undefined
     : undefined;
 
-  const extracted = [deedTag, debtTag, rateTag, propertyTag];
+  // [Préstamo directo $85.000.000] — un tercero pagó esa parte directo al vendedor.
+  // Si no trae un monto legible se deja entre las etiquetas sueltas (no se pierde en silencio).
+  const directLoanTag = tags.find((t) => /^pr[eé]stamo\s+directo/i.test(t));
+  const directLoanMatch = directLoanTag?.match(/\$\s*([\d.]+(?:,\d+)?)/);
+  const directLoan = directLoanMatch ? (parseCOP(directLoanMatch[1]) ?? undefined) : undefined;
+
+  const extracted = [
+    deedTag,
+    debtTag,
+    rateTag,
+    propertyTag,
+    directLoan ? directLoanTag : undefined
+  ];
   const otherTags = tags.filter((t) => t.length > 0 && !extracted.includes(t));
 
   const refMatch = body.match(/\$\s*([\d.]+(?:,\d+)?)/);
@@ -217,6 +230,7 @@ export const parseAssetCommentary = (
     debtBalance,
     rate,
     rateType,
+    directLoan,
     isPartial,
     partialDays,
     tags: otherTags

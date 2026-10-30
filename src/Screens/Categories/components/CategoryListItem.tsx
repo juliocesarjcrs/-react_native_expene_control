@@ -16,11 +16,12 @@ import MyIconButton from '~/components/buttons/MyIconButton';
 
 interface CategoryListItemProps {
   item: CategoryModel;
-  onDelete: (id: number, name: string) => void;
+  onDelete: (item: CategoryModel) => void;
+  disabled?: boolean;
   colors: ReturnType<typeof useThemeColors>;
 }
 
-export const CategoryListItem = ({ item, onDelete, colors }: CategoryListItemProps) => {
+export const CategoryListItem = ({ item, onDelete, disabled, colors }: CategoryListItemProps) => {
   const isIncome = item.type === 1;
   const typeLabel = isIncome ? 'Ingreso' : 'Gasto';
   const typeColor = isIncome ? colors.SUCCESS : colors.WARNING;
@@ -39,7 +40,6 @@ export const CategoryListItem = ({ item, onDelete, colors }: CategoryListItemPro
       <View style={[itemStyles.iconContainer, { backgroundColor: typeColor + '15' }]}>
         <Icon type="font-awesome" name={item.icon || 'home'} size={20} color={typeColor} />
       </View>
-
       {/* Información de la categoría */}
       <View style={itemStyles.infoContainer}>
         <Text style={[itemStyles.name, { color: colors.TEXT_PRIMARY }]} numberOfLines={1}>
@@ -67,9 +67,8 @@ export const CategoryListItem = ({ item, onDelete, colors }: CategoryListItemPro
           )}
         </View>
       </View>
-
       {/* Botón eliminar */}
-      <MyIconButton variant="delete" onPress={() => onDelete(item.id, item.name)} />
+      <MyIconButton variant="delete" disabled={disabled} onPress={() => onDelete(item)} />
     </View>
   );
 };

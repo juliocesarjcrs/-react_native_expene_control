@@ -65,7 +65,10 @@ export default function AssetAnalysisScreen(_props: ScreenProps) {
   // Avisos que no tienen su propia sección: los gastos sin formato se editan abajo
   // y "annualized" ya se explica dentro de la tarjeta de rentabilidad.
   const warnings = (metrics?.warnings ?? []).filter(
-    (w) => w.code !== 'annualized' && !(w.code === 'unparsed' && w.source === 'expense')
+    (w) =>
+      w.code !== 'annualized' &&
+      w.code !== 'debtEstimated' &&
+      !(w.code === 'unparsed' && w.source === 'expense')
   );
 
   return (

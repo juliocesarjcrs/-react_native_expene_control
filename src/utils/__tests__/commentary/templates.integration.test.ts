@@ -75,7 +75,7 @@ const CASES: [number, string, string, string][] = [
   [3003, 'Naturartes', BANK, 'none'],
   [3004, 'Emigrar', BANK, 'none'],
   [3005, 'Declaración renta', BANK, 'none'],
-  [3006, 'Administración- impuesto local Piedecuesta', BANK, 'none'],
+  [3006, 'Administración- impuesto local Piedecuesta', BANK, 'asset'],
   // Bienes
   [3007, 'Lote La Coqueta #15 Alcala', BANK, 'asset'],
   [3008, 'Torre 2 Apt 1102 Mirador Villa Verde', BANK, 'asset'],

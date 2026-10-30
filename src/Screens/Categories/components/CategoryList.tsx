@@ -1,14 +1,9 @@
 import React from 'react';
-import { Alert, FlatList, StyleSheet, Text, View, ListRenderItem } from 'react-native';
+import { FlatList, StyleSheet, Text, View, ListRenderItem } from 'react-native';
 import { Icon } from 'react-native-elements';
 
-// Services
-import { deleteCategory } from '~/services/categories';
 // Components
 import { CategoryListItem } from './CategoryListItem';
-
-// Utils
-import { showError } from '~/utils/showError';
 
 // Theme
 import { useThemeColors } from '~/customHooks/useThemeColors';
@@ -18,6 +13,7 @@ import { CategoryModel } from '~/shared/types';
 
 // Styles
 import { MEDIUM } from '~/styles/fonts';
+import { useDeleteCategory } from '~/customHooks/useDeleteCategory';
 
 interface CategoryListProps {
   data: CategoryModel[];
@@ -26,32 +22,15 @@ interface CategoryListProps {
 
 export default function CategoryList({ data, updateList }: CategoryListProps) {
   const colors = useThemeColors();
-
-  const confirmDelete = (id: number, name: string): void => {
-    Alert.alert('Eliminar categoría', `¿Estás seguro de que deseas eliminar "${name}"?`, [
-      {
-        text: 'Cancelar',
-        style: 'cancel'
-      },
-      {
-        text: 'Eliminar',
-        onPress: () => deleteItem(id),
-        style: 'destructive'
-      }
-    ]);
-  };
-
-  const deleteItem = async (idCategory: number): Promise<void> => {
-    try {
-      await deleteCategory(idCategory);
-      updateList();
-    } catch (error) {
-      showError(error);
-    }
-  };
+  const { requestDelete, busyId } = useDeleteCategory(updateList);
 
   const renderItem: ListRenderItem<CategoryModel> = ({ item }) => (
-    <CategoryListItem item={item} onDelete={confirmDelete} colors={colors} />
+    <CategoryListItem
+      item={item}
+      onDelete={requestDelete}
+      disabled={busyId !== null}
+      colors={colors}
+    />
   );
 
   if (data.length === 0) {

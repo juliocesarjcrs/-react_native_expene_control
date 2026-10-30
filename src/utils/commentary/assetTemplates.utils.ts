@@ -48,7 +48,8 @@ export const ASSET_NAME_KEYWORDS = [
   'finca',
   'bodega',
   'parqueadero',
-  'oficina'
+  'oficina',
+  'local'
 ];
 
 /**
@@ -144,6 +145,12 @@ const buildExpenseChips = (): TemplateChip[] => {
       icon: 'bank-transfer-in',
       template: `Abono capital: ${my} [Saldo $70.000.000]`,
       hint: 'Pago a la deuda — NO es costo del bien. Saldo = lo que queda debiendo'
+    },
+    {
+      label: 'Préstamo directo',
+      icon: 'account-cash',
+      template: 'Saldo: firma de escrituras [Préstamo directo $85.000.000]',
+      hint: 'Parte del precio que un tercero pagó directo al vendedor. Suma al costo y es la deuda inicial'
     },
     // ── Operación (operational) ──
     {
@@ -288,6 +295,17 @@ export const validateAssetCommentary = (text: string): CommentaryValidationResul
 
   if (ASSET_CONCEPTS[concept].recurring && !/\b20\d{2}\b/.test(head[2]))
     return { state: 'warning', message: 'Falta el período con año (ej: Mar 2026 o 2026)' };
+
+  const loanTag = head[2].match(/\[\s*pr[eé]stamo\s+directo([^\]]*)\]/i);
+  if (loanTag) {
+    if (concept !== 'promise' && concept !== 'downPayment' && concept !== 'balance')
+      return {
+        state: 'warning',
+        message: '[Préstamo directo] solo vale en Promesa, Abono o Saldo'
+      };
+    if (!/\$\s*\d/.test(loanTag[1]))
+      return { state: 'warning', message: 'Falta el monto: [Préstamo directo $85.000.000]' };
+  }
 
   if (concept === 'downPayment' && /capital/i.test(head[2]))
     return { state: 'warning', message: 'Para pagos a la deuda usa "Abono capital:"' };

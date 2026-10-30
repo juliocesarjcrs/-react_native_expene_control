@@ -5,7 +5,7 @@ import { RadioButton } from 'react-native-paper';
 import { StackNavigationProp } from '@react-navigation/stack';
 
 // Services
-import { CreateCategory, getCategories } from '~/services/categories';
+import { createCategory, getCategories } from '~/services/categories';
 
 // Components
 import { ScreenHeader } from '~/components/ScreenHeader';
@@ -103,7 +103,7 @@ export default function CreateCategoryScreen({ navigation }: CreateCategoryScree
         isOperational
       };
       setLoading(true);
-      const { data } = await CreateCategory(dataTransform);
+      const { data } = await createCategory(dataTransform);
       setLoading(false);
 
       const newCategories = [...categories, data];

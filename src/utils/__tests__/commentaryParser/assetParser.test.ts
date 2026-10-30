@@ -151,7 +151,7 @@ describe('getAssetTemplateConfig — detección', () => {
     const expected: [string, boolean][] = [
       ['Torre 2 Apt 1102 Mirador Villa Verde', true],
       ['Lote La Coqueta #15 Alcala', true],
-      ['Administración- impuesto local Piedecuesta', false], // pendiente de decisión
+      ['Administración- impuesto local Piedecuesta', true],
       ['Cuota manejo y 4× mil', false],
       ['Naturartes', false],
       ['Emigrar', false],
@@ -303,7 +303,7 @@ describe('catálogo de conceptos — invariantes', () => {
 });
 
 describe('chips de gasto — lista final', () => {
-  it('14 chips en este orden, sin Impuesto ni Servicios', () => {
+  it('15 chips en este orden, sin Impuesto ni Servicios', () => {
     const c = getAssetTemplateConfig(
       2001,
       'Lote La Coqueta #15 Alcala',
@@ -318,6 +318,7 @@ describe('chips de gasto — lista final', () => {
       'Mejora',
       'Intereses',
       'Abono capital',
+      'Préstamo directo',
       'Administración',
       'Predial',
       'Seguro',

@@ -9,10 +9,17 @@
  *  - El concepto del comentario manda sobre `nature`; `nature` solo se usa cuando el
  *    comentario no se entiende (comentarios viejos) o el concepto "hereda" (4x1000).
  *  - Abono capital NO suma al costo (la compra ya lo incluye) → reduce deuda.
+ *  - [Préstamo directo $X] en Promesa/Abono/Saldo: suma X al costo de compra y es la deuda
+ *    inicial (desde la fecha de ese registro).
+ *  - Deuda = último [Saldo] (o préstamo directo) menos los Abono capital sin [Saldo] que
+ *    sean posteriores. Un [Saldo] más reciente siempre manda.
  *  - Depósito en garantía NO es ingreso.
  *  - Ventana de rentabilidad: hasta 12 meses completos, empezando en el primer mes con
  *    arriendo; si son menos de 12 se anualiza (y se avisa). Si el primer arriendo es del
  *    mes en curso (aún no hay ningún mes completo) se usa ese mes como cifra provisional.
+ *  - Al anualizar, Seguro y Predial con período de 12 meses o más (póliza, predial anual)
+ *    cuentan por su valor completo, no por la parte del mes × 12/meses.
+ *  - Gastos antes del primer arriendo (vacancia): se muestran aparte y no entran a la ventana.
  */
 import { AssetData } from '~/shared/types/utils/commentaryParser/asset-analysis.types';
 import {
@@ -187,6 +194,21 @@ type MonthAcc = {
   items: AssetMonthItem[];
 };
 
+/** Saldo de deuda conocido en una fecha. */
+type DebtPoint = {
+  date: string;
+  balance: number;
+  /** true = viene de un Abono capital: ya es lo que queda DESPUÉS del abono */
+  afterPayment: boolean;
+};
+
+/** Seguro o predial con período de 12+ meses: al anualizar cuenta por su valor completo. */
+type AnnualSpec = {
+  bucket: OpexBucket;
+  cost: number;
+  parts: [number, number][];
+};
+
 /** "Servicios: Agua 17 Ago - 14 Sep 2026" — texto corto para el detalle del mes */
 const itemLabel = (rec: AssetRecord, parsed: AssetData | null): string => {
   const text = (
@@ -221,12 +243,15 @@ export const computeAssetMetrics = (input: ComputeAssetMetricsInput): AssetMetri
     purchase: 0,
     acquisitionCosts: 0,
     improvements: 0,
-    unclassified: 0
+    unclassified: 0,
+    directLoan: 0
   };
   let interestPaid = 0;
   let principalPaid = 0;
   let hasLoan = false;
-  const balances: { date: string; balance: number }[] = [];
+  const debtPoints: DebtPoint[] = [];
+  const principalWithoutBalance: { date: string; amount: number }[] = [];
+  const annualSpecs: AnnualSpec[] = [];
   let deed: { date: string; value: number } | null = null;
 
   for (const rec of expenses) {
@@ -245,18 +270,41 @@ export const computeAssetMetrics = (input: ComputeAssetMetricsInput): AssetMetri
       deed = { date, value: parsed.deedValue };
 
     if (parsed?.debtBalance !== undefined && (c.kind === 'interest' || c.kind === 'debtRepayment'))
-      balances.push({ date, balance: parsed.debtBalance });
+      debtPoints.push({
+        date,
+        balance: parsed.debtBalance,
+        afterPayment: c.kind === 'debtRepayment'
+      });
+
+    // [Préstamo directo] solo tiene sentido en la compra (Promesa, Abono, Saldo)
+    if (parsed?.directLoan !== undefined && !(c.kind === 'cost' && c.costKind === 'purchase')) {
+      warnings.push({
+        code: 'directLoanIgnored',
+        id: rec.id,
+        source: 'expense',
+        message: `[Préstamo directo] solo vale en Promesa, Abono o Saldo (se ignora): "${rec.commentary}"`
+      });
+    }
 
     switch (c.kind) {
       case 'cost':
-        if (c.costKind === 'purchase') cost.purchase += rec.cost;
-        else if (c.costKind === 'acquisitionCosts') cost.acquisitionCosts += rec.cost;
+        if (c.costKind === 'purchase') {
+          cost.purchase += rec.cost;
+          if (parsed?.directLoan !== undefined) {
+            cost.purchase += parsed.directLoan;
+            cost.directLoan += parsed.directLoan;
+            hasLoan = true;
+            debtPoints.push({ date, balance: parsed.directLoan, afterPayment: false });
+          }
+        } else if (c.costKind === 'acquisitionCosts') cost.acquisitionCosts += rec.cost;
         else if (c.costKind === 'improvement') cost.improvements += rec.cost;
         else cost.unclassified += rec.cost;
         break;
       case 'debtRepayment':
         hasLoan = true;
         principalPaid += rec.cost;
+        if (parsed?.debtBalance === undefined)
+          principalWithoutBalance.push({ date, amount: rec.cost });
         break;
       case 'interest':
         hasLoan = true;
@@ -273,8 +321,16 @@ export const computeAssetMetrics = (input: ComputeAssetMetricsInput): AssetMetri
           });
         }
         break;
-      case 'opex':
-        for (const [idx, amt] of spread(rec.cost, parsed, rec.date, basis)) {
+      case 'opex': {
+        const parts = spread(rec.cost, parsed, rec.date, basis);
+        if (
+          basis === 'accrual' &&
+          parsed?.period &&
+          parsed.period.months >= 12 &&
+          (c.bucket === 'taxes' || c.bucket === 'insurance')
+        )
+          annualSpecs.push({ bucket: c.bucket, cost: rec.cost, parts });
+        for (const [idx, amt] of parts) {
           acc(idx).opex[c.bucket] += amt;
           acc(idx).items.push({
             id: rec.id,
@@ -286,6 +342,7 @@ export const computeAssetMetrics = (input: ComputeAssetMetricsInput): AssetMetri
           });
         }
         break;
+      }
     }
   }
 
@@ -392,20 +449,39 @@ export const computeAssetMetrics = (input: ComputeAssetMetricsInput): AssetMetri
   }
 
   // ── Costo y deuda ───────────────────────────────────────────────────────
+  // `cost.purchase` ya incluye el préstamo directo
   const total = cost.purchase + cost.acquisitionCosts + cost.improvements + cost.unclassified;
   const paidTowardPrice = cost.purchase + cost.unclassified;
 
   let balance: number | null = null;
   let balanceDate: string | null = null;
-  if (balances.length > 0) {
-    const latest = balances.reduce((a, b) => (b.date > a ? b.date : a), balances[0].date);
-    balance = Math.min(...balances.filter((b) => b.date === latest).map((b) => b.balance));
+  let debtEstimated = false;
+  if (debtPoints.length > 0) {
+    const latest = debtPoints.reduce((a, b) => (b.date > a ? b.date : a), debtPoints[0].date);
+    const atLatest = debtPoints.filter((p) => p.date === latest);
+    // En empate de fecha manda el saldo más bajo (el de después de un abono)
+    const base = Math.min(...atLatest.map((p) => p.balance));
+    // Si el saldo del día viene de un Abono capital, ya descuenta los abonos de ese día;
+    // si viene de Intereses o del préstamo directo, los abonos del mismo día todavía se restan
+    const baseAfterPayments = atLatest.some((p) => p.afterPayment);
+    const subtract = principalWithoutBalance
+      .filter((p) => (baseAfterPayments ? p.date > latest : p.date >= latest))
+      .reduce((s, p) => s + p.amount, 0);
+    balance = Math.max(base - subtract, 0);
     balanceDate = latest;
+    debtEstimated = subtract > 0;
   }
   if (hasLoan && balance === null) {
     warnings.push({
       code: 'debtBalanceMissing',
       message: 'Hay pagos del préstamo pero ningún [Saldo $...]: no se puede calcular la deuda'
+    });
+  }
+  if (debtEstimated) {
+    warnings.push({
+      code: 'debtEstimated',
+      message:
+        'Deuda estimada: al último [Saldo $...] se le restaron los abonos a capital posteriores que no traen su propio [Saldo]'
     });
   }
   const debtKnown = !hasLoan || balance !== null;
@@ -449,16 +525,31 @@ export const computeAssetMetrics = (input: ComputeAssetMetricsInput): AssetMetri
   const annualized = windowMonths > 0 && windowMonths < 12;
   const factor = windowMonths > 0 ? 12 / windowMonths : 0;
 
+  const rowIdx = (r: AssetMonthRow): number =>
+    Number(r.month.slice(0, 4)) * 12 + Number(r.month.slice(5)) - 1;
+
   const inWindow = monthly.filter((r) => {
-    const idx = Number(r.month.slice(0, 4)) * 12 + Number(r.month.slice(5)) - 1;
+    const idx = rowIdx(r);
     return idx >= windowStart && idx <= windowEnd;
   });
   const sum = (f: (r: AssetMonthRow) => number) => inWindow.reduce((s, r) => s + f(r), 0) * factor;
 
   const opexByBucket = emptyBuckets();
   for (const b of OPEX_BUCKETS) opexByBucket[b] = sum((r) => r.opex[b]);
+
+  // Al anualizar, la póliza o el predial anual cuentan completos (no su parte del mes × 12/n)
+  if (annualized) {
+    for (const spec of annualSpecs) {
+      const inWin = spec.parts
+        .filter(([idx]) => idx >= windowStart && idx <= windowEnd)
+        .reduce((s, [, amt]) => s + amt, 0);
+      const coversEnd = spec.parts.some(([idx]) => idx === windowEnd);
+      opexByBucket[spec.bucket] += (coversEnd ? spec.cost : 0) - inWin * factor;
+    }
+  }
+
   const rent = sum((r) => r.rent);
-  const opex = sum((r) => r.opexTotal);
+  const opex = OPEX_BUCKETS.reduce((s, b) => s + opexByBucket[b], 0);
   const interest = sum((r) => r.interest);
   const net = rent - opex;
   const netAfterInterest = net - interest;
@@ -471,6 +562,12 @@ export const computeAssetMetrics = (input: ComputeAssetMetricsInput): AssetMetri
         : `Solo ${windowMonths} mes(es) con arriendo: las cifras anuales están proyectadas`
     });
   }
+
+  // ── Gastos antes del primer arriendo (vacancia) ─────────────────────────
+  const vacancyOpex =
+    firstRent === null
+      ? null
+      : monthly.filter((r) => rowIdx(r) < firstRent).reduce((s, r) => s + r.opexTotal, 0);
 
   // ── Rentabilidad y recuperación ─────────────────────────────────────────
   const hasRent = rent > 0 && total > 0;
@@ -499,12 +596,14 @@ export const computeAssetMetrics = (input: ComputeAssetMetricsInput): AssetMetri
     debt: {
       hasLoan,
       balance: hasLoan ? balance : 0,
+      estimated: debtEstimated,
       asOfDate: balanceDate,
       interestPaid,
       principalPaid
     },
     equity,
     depositsHeld,
+    vacancyOpex,
     monthly,
     window: {
       start: windowMonths > 0 ? monthLabel(windowStart) : null,

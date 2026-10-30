@@ -12,8 +12,7 @@ export type GetCategoriesParams = {
 export type GetCategoriesResponse = CategoryModel[];
 
 export type CreateCategoryPayload = Omit<CategoryModel, 'id' | 'userId' | 'createdAt' | 'budget'>;
-export type EditCategoryPayload = Partial<CategoryModel>;
-
+export type EditCategoryPayload = Partial<Omit<CategoryModel, 'id' | 'userId' | 'createdAt'>>;
 // GetAllSubcategoriesExpensesByMonth
 export type GetAllSubcategoriesExpensesByMonthResponse = {
   data: CategoryExpense[];
@@ -111,4 +110,10 @@ export type ExpenseAnalysisResponse = {
     byNature: Record<ExpenseNature, number>;
   };
   categories: ExpenseAnalysisCategory[];
+};
+
+export type CategoryUsage = {
+  subcategories: number;
+  expenses: number;
+  incomes: number;
 };

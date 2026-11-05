@@ -16,9 +16,12 @@ const TEMPLATE_KEY_PREFIX = 'template_config_';
 //   v1 — inicial (sin versión)
 //   v2 — copago estructurado, vacaciones, fix isMortgage/isCopago
 //   v3 — parser asset (bienes)
+//   v4 a v6 — (sin documentar)
+//   v7 — restaurantes (Salidas a comer, Comida lista, Almuerzo comprado)
+//        e Ingredientes desayunos y cenas con chips de producto
 // ============================================================
 
-export const CONFIG_VERSION = 6;
+export const CONFIG_VERSION = 7;
 
 // ============================================================
 // HELPERS

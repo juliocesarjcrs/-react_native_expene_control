@@ -19,7 +19,7 @@ import {
 } from '~/shared/types/utils/commentaryParser/commentary-registry';
 import { parseVacationCommentary } from '~/utils/commentaryParser/vacationParser';
 import { parseAssetCommentary } from '~/utils/commentaryParser/assetParser';
-
+import { parseRestaurantCommentary } from '~/utils/commentaryParser/restaurantParser';
 // ─────────────────────────────────────────────
 // CONSTANTES DE TEST
 // ─────────────────────────────────────────────
@@ -39,7 +39,8 @@ const VALID_ROUTES = new Set([
   'rentAnalysis',
   'copagoAnalysis', // ← fix: ruta de copago
   'vacationAnalysis',
-  'assetAnalysis'
+  'assetAnalysis',
+  'restaurantAnalysis'
 ] as const);
 
 /** ParserTypes válidos del union type (excluyendo 'none') */
@@ -54,7 +55,8 @@ const VALID_PARSER_TYPES = new Set<Exclude<ParserType, 'none'>>([
   'rent',
   'copago',
   'vacation',
-  'asset'
+  'asset',
+  'restaurant'
 ]);
 
 /** Fecha y costo ficticios para los parsers que los requieren */
@@ -92,6 +94,8 @@ const invokeParser = (entry: CommentaryAnalysisEntry): object | null => {
       return parseVacationCommentary(exampleCommentary, MOCK_COST, MOCK_DATE);
     case 'asset':
       return parseAssetCommentary(exampleCommentary, MOCK_COST, MOCK_DATE);
+    case 'restaurant':
+      return parseRestaurantCommentary(exampleCommentary, MOCK_COST, MOCK_DATE);
   }
 };
 

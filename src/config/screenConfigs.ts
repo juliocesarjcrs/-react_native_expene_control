@@ -204,6 +204,10 @@ export const screenConfigs = {
     subtitle: 'Total por servicio e historial de citas'
   },
   vacationAnalysis: { title: 'Vacaciones', subtitle: 'Alojamiento, tiquetes y gastos por destino' },
+  restaurantAnalysis: {
+    title: 'Restaurantes',
+    subtitle: 'Visitas, gasto y precio de platos por restaurante'
+  },
   expenseAnalysis: {
     title: 'Análisis de gastos',
     subtitle: 'Descubre en qué categorías se va tu dinero'

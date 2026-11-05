@@ -343,6 +343,11 @@ function StatisticsStackScreen() {
       <StatisticsStack.Screen name="copagoAnalysis" component={Routes.CopagoAnalysisScreen} />
       <StatisticsStack.Screen name="vacationAnalysis" component={Routes.VacationAnalysisScreen} />
       <StatisticsStack.Screen name="assetAnalysis" component={Routes.AssetAnalysisScreen} />
+      <StatisticsStack.Screen
+        name="restaurantAnalysis"
+        component={Routes.RestaurantAnalysisScreen}
+        options={{ title: 'Restaurantes' }}
+      />
       <StatisticsStack.Screen name="expenseAnalysis" component={Routes.ExpenseAnalysisScreen} />
     </StatisticsStack.Navigator>
   );

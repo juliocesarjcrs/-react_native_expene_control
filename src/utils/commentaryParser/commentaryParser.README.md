@@ -27,41 +27,19 @@ debe estar re-exportado en `index.ts`. Si falta, se agrega ahí; no se importa d
 
 ## API pública
 
-### `parseCommentary(subcategoryId, commentary, cost, date, category?, baseSalary?)`
-
-Parsea un comentario usando el parser correcto para la subcategoría.
-Retorna un `ParsedCommentary` con `type` y `data`, o `{ type: 'none', data: null }` si no matchea.
-
-```typescript
-const result = parseCommentary(1444, 'Colmedica Control Reumatología #2', 43900, '2026-04-10');
-// → { type: 'copago', data: { act: 'control', specialtyKey: 'reumatologia', sequenceNumber: 2, ... } }
-```
-
-### `getParserType(subcategoryId)`
-
-Devuelve el `ParserType` asociado a una subcategoría según `SUBCATEGORY_PARSER_MAP`.
-Útil para saber qué parser aplica antes de parsear.
-
-### `registerSubcategoryParser(subcategoryId, parserType)`
-
-Registra o actualiza la asociación subcategoría → parser en runtime.
-Usar cuando los IDs reales de BD difieren del mapa inicial.
-
----
-
 ## Agregar o cambiar un parser: dónde tocar
 
 Un parser vive en **seis** sitios. Si falta uno, algo falla en silencio (chips que no parsean,
 pantalla sin ruta, subcategoría sin parser):
 
-| #   | Archivo                                                      | Qué                                                                                         |
-| --- | ------------------------------------------------------------ | ------------------------------------------------------------------------------------------- |
-| 1   | `shared/types/utils/commentaryParser/{x}-analysis.types.ts`  | tipos del dato                                                                              |
-| 2   | `commentaryParser/{x}Parser.ts`                              | el parser y sus calculadoras                                                                |
-| 3   | `commentaryParser/index.ts`                                  | `ParserType`, `ParsedCommentary`, `case` del `switch`, re-exports, `SUBCATEGORY_PARSER_MAP` |
-| 4   | `shared/types/utils/commentaryParser/commentary-registry.ts` | entrada del registry (`exampleCommentary` DEBE parsear)                                     |
-| 5   | `utils/commentary/commentaryTemplates.utils.ts`              | detector de subcategoría, chips, validación                                                 |
-| 6   | `__tests__/commentaryParser/`                                | tests del parser y de los chips                                                             |
+| #   | Archivo                                                      | Qué                                                     |
+| --- | ------------------------------------------------------------ | ------------------------------------------------------- |
+| 1   | `shared/types/utils/commentaryParser/{x}-analysis.types.ts`  | tipos del dato                                          |
+| 2   | `commentaryParser/{x}Parser.ts`                              | el parser y sus calculadoras                            |
+| 3   | `commentaryParser/index.ts`                                  | `ParserType`, re-exports,                               |
+| 4   | `shared/types/utils/commentaryParser/commentary-registry.ts` | entrada del registry (`exampleCommentary` DEBE parsear) |
+| 5   | `utils/commentary/commentaryTemplates.utils.ts`              | detector de subcategoría, chips, validación             |
+| 6   | `__tests__/commentaryParser/`                                | tests del parser y de los chips                         |
 
 **Regla de chips:** un chip es texto real que el parser entiende, sin placeholders. Si un chip
 necesita placeholders (`Producto`, `Persona`), `templateChipSync.test.ts` los reemplaza con `hydrate()`.
@@ -372,21 +350,6 @@ También compatible con datos históricos sin dos puntos:
 ### `assetParser.ts` — Bienes e inversiones
 
 Pendiente de documentar aquí (existe en el código y en el registry, pero este README no lo describía).
-
----
-
-## SUBCATEGORY_PARSER_MAP
-
-El mapa de `subcategoryId → ParserType` en `index.ts` usa los IDs reales de la BD.
-**Estos IDs son específicos de un usuario** — actualizar con los IDs reales cuando cambien.
-Hoy el mapa no incluye `vacation` ni `asset`: esos dos parsers existen pero ninguna
-subcategoría los activa vía `parseCommentary()`.
-
-Para registrar un ID en runtime:
-
-```typescript
-registerSubcategoryParser(1444, 'copago');
-```
 
 ---
 

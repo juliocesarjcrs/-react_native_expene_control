@@ -20,6 +20,7 @@ import ExpenseList from './components/ExpenseList';
 import MyInput from '~/components/inputs/MyInput';
 import CommentaryInput from '~/components/CommentaryInput';
 import ExpenseNatureSelector from '~/components/inputs/ExpenseNatureSelector';
+import FoodRuleHelp from './components/FoodRuleHelp';
 
 // Types
 import type { ExpenseModel } from '~/shared/types';
@@ -283,6 +284,8 @@ export default function CreateExpenseScreen(): React.JSX.Element {
               leftIcon="text"
             />
           )}
+
+          <FoodRuleHelp />
 
           <SelectJoinCategory
             fetchExpensesSubcategory={fetchExpensesSubcategory}

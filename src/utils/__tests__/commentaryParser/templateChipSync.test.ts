@@ -32,7 +32,7 @@ import { ParserType } from '~/utils/commentaryParser';
 import { parseCopagoCommentary } from '~/utils/commentaryParser/copagoParser';
 import { parseAssetCommentary } from '~/utils/commentaryParser/assetParser';
 import { parseVacationCommentary } from '~/utils/commentaryParser/vacationParser';
-
+import { parseRestaurantCommentary } from '~/utils/commentaryParser/restaurantParser';
 // ─────────────────────────────────────────────
 // CONSTANTES DE TEST
 // ─────────────────────────────────────────────
@@ -50,9 +50,7 @@ const TEST_SUBCATEGORY_ID = 9999;
 // ─────────────────────────────────────────────
 // HELPER: invocar el parser correcto por parserType
 //
-// No usamos parseCommentary() del orquestador porque este requiere
-// un subcategoryId del SUBCATEGORY_PARSER_MAP (IDs reales de BD).
-// En tests queremos probar por parserType directamente.
+// Los tests invocan cada parser directamente según su parserType.
 // ─────────────────────────────────────────────
 
 const parseByType = (
@@ -82,6 +80,8 @@ const parseByType = (
       return parseVacationCommentary(commentary, MOCK_COST, MOCK_DATE);
     case 'asset':
       return parseAssetCommentary(commentary, MOCK_COST, MOCK_DATE);
+    case 'restaurant':
+      return parseRestaurantCommentary(commentary, MOCK_COST, MOCK_DATE);
   }
 };
 

@@ -78,7 +78,7 @@ export const COMMENTARY_REGISTRY: CommentaryAnalysisEntry[] = [
     icon: 'cart',
     iconColorKey: 'SUCCESS',
     route: 'productPrices',
-    subcategoryDetectors: ['Proteínas', 'Mercado', 'Licores'],
+    subcategoryDetectors: ['Proteínas', 'Mercado', 'Licores', 'Ingredientes desayunos y cenas'],
     exampleCommentary: 'Pechuga — 0,500 kg @ $14.000/kg [Carulla]',
     hasScreen: true
   },
@@ -181,6 +181,17 @@ export const COMMENTARY_REGISTRY: CommentaryAnalysisEntry[] = [
     subcategoryDetectors: ['Apartamento', 'Lote', 'Casa', 'Finca', 'Local'],
     detectorCategoryName: 'Bancarios y de inversión',
     exampleCommentary: 'Administración: Mar 2026',
+    hasScreen: true
+  },
+  {
+    parserType: 'restaurant',
+    displayName: 'Restaurantes',
+    subtitle: 'Visitas, gasto y precio de platos por restaurante',
+    icon: 'silverware-fork-knife',
+    iconColorKey: 'PRIMARY',
+    route: 'restaurantAnalysis',
+    subcategoryDetectors: ['Salidas a comer', 'Comida lista', 'Almuerzo comprado'],
+    exampleCommentary: 'Crepes & Waffles\nPollo al Curry — $32.000',
     hasScreen: true
   }
 ];

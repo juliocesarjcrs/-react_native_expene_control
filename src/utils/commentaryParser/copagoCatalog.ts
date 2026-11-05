@@ -36,7 +36,7 @@ export const capitalizeFirst = (text: string): string =>
   text.length === 0 ? text : text.charAt(0).toUpperCase() + text.slice(1);
 
 // ─────────────────────────────────────────────
-// PACIENTES  (específico del usuario — igual que SUBCATEGORY_PARSER_MAP)
+// PACIENTES  (específico del usuario)
 // ─────────────────────────────────────────────
 
 /** Paciente que se asume cuando el comentario no menciona a nadie */

@@ -49,6 +49,9 @@ export const getDefaultTemplateConfig = (
   const cat = categoryName.toLowerCase().trim();
   const assetConfig = getAssetTemplateConfig(subcategoryId, subcategoryName, categoryName);
   if (assetConfig) return assetConfig;
+  // Restaurantes primero: así no depende de cómo se llamen otras subcategorías
+  if (isRestaurant(name))
+    return buildRestaurantConfig(subcategoryId, subcategoryName, categoryName);
 
   if (isUtilityLight(name))
     return buildUtilityConfig(subcategoryId, subcategoryName, categoryName, 'Kw', 79);
@@ -59,6 +62,8 @@ export const getDefaultTemplateConfig = (
   if (isProteins(name, cat))
     return buildProductConfig(subcategoryId, subcategoryName, categoryName, 'proteins');
   if (isGroceries(name, cat))
+    return buildProductConfig(subcategoryId, subcategoryName, categoryName, 'groceries');
+  if (isIngredients(name))
     return buildProductConfig(subcategoryId, subcategoryName, categoryName, 'groceries');
   if (isLiquor(name))
     return buildProductConfig(subcategoryId, subcategoryName, categoryName, 'liquor');
@@ -108,6 +113,11 @@ const isGroceries = (n: string, cat: string) =>
   n.includes('verdura') ||
   n.includes('fruta') ||
   (cat.includes('alimentac') && n.includes('mercado'));
+
+const isRestaurant = (n: string) =>
+  n.includes('salidas a comer') || n.includes('comida lista') || n.includes('almuerzo comprado');
+
+const isIngredients = (n: string) => n.includes('ingredientes') || n.includes('desayunos y cenas');
 
 const isLiquor = (n: string) => n.includes('licor') || n.includes('cerveza') || n.includes('vino');
 
@@ -653,6 +663,40 @@ const buildVacationConfig = (
     enableValidation: false
   };
 };
+
+const buildRestaurantConfig = (
+  subcategoryId: number,
+  subcategoryName: string,
+  categoryName: string
+): SubcategoryTemplateConfig => ({
+  subcategoryId,
+  subcategoryName,
+  categoryName,
+  assistanceLevel: 'semi',
+  parserType: 'custom',
+  chips: [
+    {
+      label: 'Restaurante',
+      icon: 'silverware-fork-knife',
+      template: 'Nombre del restaurante',
+      hint: 'Primera línea: el nombre, siempre escrito igual'
+    },
+    {
+      label: 'Con plato',
+      icon: 'food',
+      template: 'Nombre del restaurante\nPlato — $0',
+      hint: 'Líneas siguientes (opcional): plato — $precio, solo platos grandes que quieras comparar'
+    },
+    {
+      label: 'Viáticos Silvia',
+      icon: 'briefcase-account',
+      template: 'Nombre del restaurante @Silvia viáticos',
+      hint: 'Almuerzo de una jornada de Silvia'
+    }
+  ],
+  smartPlaceholder: 'Ej: Crepes & Waffles\nPollo al Curry — $32.000',
+  enableValidation: false
+});
 
 const buildFreeConfig = (
   subcategoryId: number,

@@ -26,6 +26,7 @@ interface FilterSelectorProps {
   type: FilterType;
   onAnalyze: (filters: AnalysisFilters) => void;
   defaultDaysBack?: number; // Días hacia atrás por defecto (ej: 365 para 1 año)
+  defaultStartDate?: Date; // Si se indica, tiene prioridad sobre defaultDaysBack
 }
 
 export interface AnalysisFilters {
@@ -43,7 +44,8 @@ export interface AnalysisFilters {
 export default function FilterSelector({
   type,
   onAnalyze,
-  defaultDaysBack = 365
+  defaultDaysBack = 365,
+  defaultStartDate: initialStartDate
 }: FilterSelectorProps) {
   const colors = useThemeColors();
   const selectJoinCategoryRef = useRef<any>(null);
@@ -57,10 +59,10 @@ export default function FilterSelector({
 
   // Fechas por defecto: último año
   const today = new Date();
-  const defaultStartDate = new Date(today);
-  defaultStartDate.setDate(today.getDate() - defaultDaysBack);
+  const computedStartDate = new Date(today);
+  computedStartDate.setDate(today.getDate() - defaultDaysBack);
 
-  const [startDate, setStartDate] = useState<Date>(defaultStartDate);
+  const [startDate, setStartDate] = useState<Date>(initialStartDate ?? computedStartDate);
   const [endDate, setEndDate] = useState<Date>(today);
   const [showStartDate, setShowStartDate] = useState<boolean>(false);
   const [showEndDate, setShowEndDate] = useState<boolean>(false);

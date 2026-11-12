@@ -19,9 +19,11 @@ const TEMPLATE_KEY_PREFIX = 'template_config_';
 //   v4 a v6 — (sin documentar)
 //   v7 — restaurantes (Salidas a comer, Comida lista, Almuerzo comprado)
 //        e Ingredientes desayunos y cenas con chips de producto
+//   v8 — chip "Evento" en restaurantes
+
 // ============================================================
 
-export const CONFIG_VERSION = 7;
+export const CONFIG_VERSION = 8;
 
 // ============================================================
 // HELPERS

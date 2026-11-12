@@ -692,6 +692,12 @@ const buildRestaurantConfig = (
       icon: 'briefcase-account',
       template: 'Nombre del restaurante @Silvia viáticos',
       hint: 'Almuerzo de una jornada de Silvia'
+    },
+    {
+      label: 'Evento',
+      icon: 'calendar-star',
+      template: 'Nombre del restaurante #NombreEvento',
+      hint: 'Evento gastronómico (Burger Master, etc.): sus precios no se comparan con los normales'
     }
   ],
   smartPlaceholder: 'Ej: Crepes & Waffles\nPollo al Curry — $32.000',

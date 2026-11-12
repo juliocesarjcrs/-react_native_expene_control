@@ -2,6 +2,7 @@ import {
   parseRestaurantCommentary,
   getRestaurantStats,
   getDishHistory,
+  getEventStats,
   getSimilarRestaurants
 } from '~/utils/commentaryParser/restaurantParser';
 
@@ -209,5 +210,169 @@ describe('restaurantParser — estadísticas', () => {
     expect(getRestaurantStats([])).toEqual([]);
     expect(getDishHistory([])).toEqual([]);
     expect(getSimilarRestaurants([])).toEqual([]);
+  });
+});
+
+describe('restaurantParser — eventos (#NombreEvento)', () => {
+  test('el tag marca el evento y no es parte del nombre', () => {
+    const result = parse('Crepes & Waffles #BurgerMaster');
+    expect(result?.restaurant).toBe('Crepes & Waffles');
+    expect(result?.event).toEqual({ key: 'burgermaster', label: 'BurgerMaster' });
+  });
+
+  test('#BurgerMaster, #burger-master y #Burger_Master son el mismo evento', () => {
+    const keys = ['#BurgerMaster', '#burger-master', '#Burger_Master'].map(
+      (tag) => parse(`Gurmet ${tag}`)?.event?.key
+    );
+    expect(new Set(keys)).toEqual(new Set(['burgermaster']));
+    expect(parse('Gurmet #burger-master')?.event?.label).toBe('burger master');
+  });
+
+  test('las tildes no cuentan en la clave del evento', () => {
+    expect(parse('Gurmet #EjeCafeteroGourmét')?.event?.key).toBe('ejecafeterogourmet');
+  });
+
+  test('"#4" no es un evento y tampoco queda en el nombre', () => {
+    const result = parse('Gustosos #4');
+    expect(result?.event).toBeUndefined();
+    expect(result?.restaurant).toBe('Gustosos');
+  });
+
+  test('el tag puede ir con nota, viáticos y mención', () => {
+    const result = parse('Gurmet #PizzaMaster @Silvia viáticos - cumpleaños');
+    expect(result?.restaurant).toBe('Gurmet');
+    expect(result?.event?.key).toBe('pizzamaster');
+    expect(result?.isViaticos).toBe(true);
+    expect(result?.mentions).toEqual(['Silvia']);
+    expect(result?.note).toBe('cumpleaños');
+  });
+
+  test('el tag en otra línea también cuenta, y se quita de los platos', () => {
+    const result = parse('Gurmet\nLomo #BurgerMaster — $30.000');
+    expect(result?.event?.key).toBe('burgermaster');
+    expect(result?.dishes[0].name).toBe('Lomo');
+  });
+
+  test('solo el evento: cuenta como evento, sin restaurante', () => {
+    const result = parse('#BurgerMaster');
+    expect(result).not.toBeNull();
+    expect(result?.restaurant).toBe('');
+    expect(result?.restaurantKey).toBe('');
+    expect(result?.event?.key).toBe('burgermaster');
+  });
+
+  test('sin nombre y sin evento sigue siendo null', () => {
+    expect(parse('#4')).toBeNull();
+    expect(parse('#')).toBeNull();
+  });
+
+  describe('estadísticas', () => {
+    const a = parse('BurgerLand\nHamburguesa — $30.000', 45_000, '2026-11-06')!;
+    const b = parse('Burger Land', 50_000, '2026-11-20')!;
+    const ev = parse('BurgerLand #BurgerMaster\nHamburguesa — $20.000', 25_000, '2026-11-25')!;
+    const e = parse('BurgerLand\nHamburguesa — $33.000', 50_000, '2026-12-10')!;
+    const ev2 = parse('Gurmet #BurgerMaster', 22_000, '2026-11-26')!;
+    const onlyEvent = parse('#PizzaMaster', 18_000, '2026-11-28')!;
+
+    test('el promedio usa solo las visitas normales; el total incluye el evento', () => {
+      const burger = getRestaurantStats([a, b, ev]).find((s) => s.restaurantKey === 'burgerland')!;
+      expect(burger.visits).toBe(3);
+      expect(burger.totalCost).toBe(120_000);
+      expect(burger.regularVisits).toBe(2);
+      expect(burger.regularCost).toBe(95_000);
+      expect(burger.eventVisits).toBe(1);
+      expect(burger.eventCost).toBe(25_000);
+      expect(burger.avgCost).toBe(47_500);
+    });
+
+    test('un restaurante visitado solo en eventos tiene promedio 0', () => {
+      const gurmet = getRestaurantStats([ev2]).find((s) => s.restaurantKey === 'gurmet')!;
+      expect(gurmet.regularVisits).toBe(0);
+      expect(gurmet.avgCost).toBe(0);
+      expect(gurmet.eventVisits).toBe(1);
+    });
+
+    test('el historial de platos excluye los eventos', () => {
+      const history = getDishHistory([a, ev, e]);
+      expect(history).toHaveLength(1);
+      expect(history[0].count).toBe(2);
+      expect(history[0].firstPrice).toBe(30_000);
+      expect(history[0].lastPrice).toBe(33_000);
+      expect(history[0].minPrice).toBe(30_000);
+    });
+
+    test('con includeEvents el historial los incluye', () => {
+      const history = getDishHistory([a, ev, e], 2, true);
+      expect(history[0].count).toBe(3);
+      expect(history[0].minPrice).toBe(20_000);
+    });
+
+    test('un registro solo con evento no cuenta en ningún restaurante', () => {
+      expect(getRestaurantStats([onlyEvent])).toEqual([]);
+      expect(getDishHistory([onlyEvent], 1)).toEqual([]);
+    });
+
+    test('estadísticas por evento', () => {
+      const events = getEventStats([a, ev, ev2, onlyEvent]);
+      expect(events.map((x) => x.eventKey)).toEqual(['pizzamaster', 'burgermaster']);
+
+      const burgerMaster = events.find((x) => x.eventKey === 'burgermaster')!;
+      expect(burgerMaster.visits).toBe(2);
+      expect(burgerMaster.totalCost).toBe(47_000);
+      expect(burgerMaster.restaurants).toEqual(['BurgerLand', 'Gurmet']);
+      expect(burgerMaster.firstDate).toBe('2026-11-25');
+      expect(burgerMaster.lastDate).toBe('2026-11-26');
+
+      const pizzaMaster = events.find((x) => x.eventKey === 'pizzamaster')!;
+      expect(pizzaMaster.restaurants).toEqual([]);
+    });
+
+    test('sin eventos devuelve lista vacía', () => {
+      expect(getEventStats([a, b])).toEqual([]);
+    });
+  });
+});
+
+describe('restaurantParser — visitas sin nombre (la primera línea es un plato)', () => {
+  test('una primera línea con precio no es un restaurante', () => {
+    expect(parse('Torta chocolate $7.000\nCafé con leche $6.000')).toBeNull();
+  });
+
+  test('también con "mil"', () => {
+    expect(parse('Torta chocolate 7 mil')).toBeNull();
+  });
+
+  test('un $ sin número no cuenta como precio', () => {
+    expect(parse('Steak $$ House')?.restaurant).toBe('Steak $$ House');
+  });
+
+  test('con evento, cuenta como evento sin restaurante y conserva los platos', () => {
+    const result = parse('Torta chocolate $7.000 #Expofuturo\nCafé con leche $6.000');
+    expect(result).not.toBeNull();
+    expect(result?.restaurant).toBe('');
+    expect(result?.restaurantKey).toBe('');
+    expect(result?.event?.key).toBe('expofuturo');
+    expect(result?.dishes.map((d) => [d.name, d.price])).toEqual([
+      ['Torta chocolate', 7000],
+      ['Café con leche', 6000]
+    ]);
+  });
+
+  test('solo el evento en la primera línea y los platos debajo', () => {
+    const result = parse('#Expofuturo\nCarne a la llanera $60.000\n2 Limonadas $6.000');
+    expect(result?.restaurant).toBe('');
+    expect(result?.event?.key).toBe('expofuturo');
+    expect(result?.dishes).toHaveLength(2);
+  });
+
+  test('un restaurante con nombre normal y platos debajo no cambia', () => {
+    const result = parse('Expofuturo\nCarne a la llanera $60.000');
+    expect(result?.restaurant).toBe('Expofuturo');
+    expect(result?.dishes).toHaveLength(1);
+  });
+
+  test('la propina se ignora y no es un plato', () => {
+    const result = parse('Sublime Pasta Fresca\nLasagña mixta - $23.500\nPropina $6.000');
+    expect(result?.dishes.map((d) => d.name)).toEqual(['Lasagña mixta']);
   });
 });

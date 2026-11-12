@@ -16,7 +16,11 @@ import { InfoBox } from '../products/components/shared/InfoBox';
 import { useRestaurantData } from './hooks/useRestaurantData';
 
 // Types
-import { RestaurantStats } from '~/shared/types/utils/commentaryParser/restaurant-analysis.types';
+import {
+  RestaurantEventStats,
+  RestaurantStats
+} from '~/shared/types/utils/commentaryParser/restaurant-analysis.types';
+import { MonthlySummary } from '~/utils/commentaryParser/restaurantAnalysis';
 
 // Utils
 import { DateFormat, NumberFormat } from '~/utils/Helpers';
@@ -35,6 +39,8 @@ import { screenConfigs } from '~/config/screenConfigs';
  */
 const CUTOFF_DATE = new Date(2026, 10, 5);
 const DATE_FORMAT = 'DD MMM YYYY';
+/** Meses que se muestran antes de pedir "Ver todos" */
+const RECENT_MONTHS = 12;
 
 const normalizeSearch = (text: string): string =>
   text
@@ -57,6 +63,9 @@ const getDefaultStartDate = (): Date => {
   return today < CUTOFF_DATE ? today : new Date(CUTOFF_DATE);
 };
 
+const plural = (count: number, singular: string, pluralForm: string): string =>
+  count === 1 ? singular : pluralForm;
+
 export default function RestaurantAnalysisScreen() {
   const colors = useThemeColors();
   const screenConfig = screenConfigs.restaurantAnalysis;
@@ -65,6 +74,9 @@ export default function RestaurantAnalysisScreen() {
 
   const defaultStartDate = useMemo(() => getDefaultStartDate(), []);
   const [expandedKey, setExpandedKey] = useState<string | null>(null);
+  // El resumen por mes es secundario: arranca oculto y se despliega con un toque
+  const [showMonthly, setShowMonthly] = useState(false);
+  const [showAllMonths, setShowAllMonths] = useState(false);
 
   // Búsqueda
   const { control } = useForm({ defaultValues: { search: '' } });
@@ -76,7 +88,15 @@ export default function RestaurantAnalysisScreen() {
     [analysis.stats, normalizedSearch]
   );
 
-  const hasData = analysis.stats.length > 0;
+  // Más reciente primero
+  const monthsNewestFirst = useMemo(() => [...analysis.monthly].reverse(), [analysis.monthly]);
+  const visibleMonths = showAllMonths
+    ? monthsNewestFirst
+    : monthsNewestFirst.slice(0, RECENT_MONTHS);
+
+  const hasRecords = analysis.records.length > 0;
+  const hasRestaurants = analysis.stats.length > 0;
+  const hasEvents = analysis.events.length > 0;
   const startsBeforeCutoff = currentFilters !== null && currentFilters.startDate < CUTOFF_DATE;
 
   const toggleExpanded = (key: string) => setExpandedKey((prev) => (prev === key ? null : key));
@@ -88,6 +108,118 @@ export default function RestaurantAnalysisScreen() {
     </View>
   );
 
+  // ── Resumen mensual (colapsado por defecto) ────────────────────────────
+  const renderMonth = (month: MonthlySummary) => {
+    const change = month.changePercent;
+    const changeColor =
+      change === null || change === 0
+        ? colors.TEXT_SECONDARY
+        : change > 0
+          ? colors.ERROR
+          : colors.SUCCESS;
+    const daysChange = month.daysChange;
+
+    return (
+      <View
+        key={month.month}
+        style={[
+          styles.card,
+          { backgroundColor: colors.CARD_BACKGROUND, borderColor: colors.BORDER }
+        ]}
+      >
+        <View style={styles.cardHeader}>
+          <View style={styles.cardTitleBlock}>
+            <Text style={[styles.cardTitle, { color: colors.TEXT_PRIMARY }]}>
+              {month.label}
+              {month.isPartial ? ' (parcial)' : ''}
+            </Text>
+            <Text style={[styles.detailText, { color: colors.TEXT_SECONDARY }]}>
+              {month.days} {plural(month.days, 'día', 'días')} · {month.visits}{' '}
+              {plural(month.visits, 'registro', 'registros')}
+            </Text>
+            <Text style={[styles.detailText, { color: colors.TEXT_SECONDARY }]}>
+              {NumberFormat(month.total)}
+              {month.days > 0 ? ` · ${NumberFormat(month.avgPerDay)} por día` : ''}
+            </Text>
+          </View>
+
+          {change !== null && (
+            <View style={styles.changeBlock}>
+              <Text style={[styles.changeValue, { color: changeColor }]}>
+                {change > 0 ? '+' : ''}
+                {change}%
+              </Text>
+              {daysChange !== null && (
+                <Text style={[styles.detailText, { color: colors.TEXT_SECONDARY }]}>
+                  {daysChange > 0 ? '+' : ''}
+                  {daysChange} {plural(Math.abs(daysChange), 'día', 'días')}
+                </Text>
+              )}
+              <Text style={[styles.changeLabel, { color: colors.TEXT_SECONDARY }]}>
+                vs mes anterior
+              </Text>
+            </View>
+          )}
+        </View>
+      </View>
+    );
+  };
+
+  const renderMonthly = () => {
+    if (analysis.monthly.length === 0) return null;
+
+    return (
+      <>
+        <TouchableOpacity
+          style={[styles.collapseRow, { borderColor: colors.BORDER }]}
+          activeOpacity={0.7}
+          onPress={() => setShowMonthly((prev) => !prev)}
+          accessibilityRole="button"
+          accessibilityLabel="Mostrar u ocultar el resumen por mes"
+        >
+          <Icon
+            type="material-community"
+            name="calendar-month"
+            size={18}
+            color={colors.TEXT_SECONDARY}
+          />
+          <Text style={[styles.collapseText, { color: colors.TEXT_SECONDARY }]}>
+            Resumen por mes ({analysis.monthly.length})
+          </Text>
+          <Icon
+            type="material-community"
+            name={showMonthly ? 'chevron-up' : 'chevron-down'}
+            size={22}
+            color={colors.TEXT_SECONDARY}
+          />
+        </TouchableOpacity>
+
+        {showMonthly && (
+          <View style={styles.monthlyContent}>
+            <InfoBox
+              icon="information"
+              text="Cuenta todos los registros del rango, con o sin nombre de restaurante. Un día cuenta una vez aunque tenga varios registros. Los meses parciales no se comparan."
+              compact
+            />
+            {visibleMonths.map(renderMonth)}
+            {monthsNewestFirst.length > RECENT_MONTHS && (
+              <TouchableOpacity
+                style={styles.moreButton}
+                activeOpacity={0.7}
+                onPress={() => setShowAllMonths((prev) => !prev)}
+              >
+                <Text style={[styles.moreText, { color: colors.INFO }]}>
+                  {showAllMonths ? 'Ver menos' : `Ver todos (${monthsNewestFirst.length})`}
+                </Text>
+              </TouchableOpacity>
+            )}
+          </View>
+        )}
+      </>
+    );
+  };
+
+  // ── Restaurantes ───────────────────────────────────────────────────────
   const renderDishes = (stat: RestaurantStats) => {
     const dishes = analysis.dishHistory.filter((h) => h.restaurantKey === stat.restaurantKey);
 
@@ -141,11 +273,14 @@ export default function RestaurantAnalysisScreen() {
           <View style={styles.cardTitleBlock}>
             <Text style={[styles.cardTitle, { color: colors.TEXT_PRIMARY }]}>{stat.label}</Text>
             <Text style={[styles.detailText, { color: colors.TEXT_SECONDARY }]}>
-              {stat.visits} {stat.visits === 1 ? 'visita' : 'visitas'} ·{' '}
+              {stat.visits} {plural(stat.visits, 'visita', 'visitas')} ·{' '}
               {NumberFormat(stat.totalCost)}
             </Text>
             <Text style={[styles.detailText, { color: colors.TEXT_SECONDARY }]}>
-              Promedio {NumberFormat(stat.avgCost)} · última {formatDate(stat.lastDate)}
+              {stat.regularVisits > 0
+                ? `Promedio ${NumberFormat(stat.avgCost)}`
+                : 'Solo en eventos'}{' '}
+              · última {formatDate(stat.lastDate)}
             </Text>
           </View>
           <Icon
@@ -165,8 +300,15 @@ export default function RestaurantAnalysisScreen() {
             )}
             {stat.viaticosVisits > 0 && (
               <Text style={[styles.detailText, { color: colors.TEXT_SECONDARY }]}>
-                Viáticos: {stat.viaticosVisits} {stat.viaticosVisits === 1 ? 'visita' : 'visitas'} ·{' '}
+                Viáticos: {stat.viaticosVisits} {plural(stat.viaticosVisits, 'visita', 'visitas')} ·{' '}
                 {NumberFormat(stat.viaticosCost)}
+              </Text>
+            )}
+            {stat.eventVisits > 0 && (
+              <Text style={[styles.detailText, { color: colors.TEXT_SECONDARY }]}>
+                En eventos: {stat.eventVisits} {plural(stat.eventVisits, 'visita', 'visitas')} ·{' '}
+                {NumberFormat(stat.eventCost)}. No entran en el promedio ni en la comparación de
+                platos.
               </Text>
             )}
             <Text style={[styles.sectionLabel, { color: colors.TEXT_PRIMARY }]}>
@@ -179,13 +321,106 @@ export default function RestaurantAnalysisScreen() {
     );
   };
 
+  const renderRestaurants = () => (
+    <>
+      {/* Posibles duplicados (solo aviso) */}
+      {analysis.similar.length > 0 && (
+        <>
+          <SectionHeader
+            title="Posibles duplicados"
+            count={analysis.similar.length}
+            icon="alert-circle-outline"
+            iconColor={colors.WARNING}
+          />
+          <InfoBox
+            type="warning"
+            icon="alert"
+            text="Nombres casi iguales. Si son el mismo, edita el comentario para escribirlo igual."
+            compact
+          />
+          {analysis.similar.map((pair) => (
+            <Text
+              key={`${pair.keyA}-${pair.keyB}`}
+              style={[styles.similarText, { color: colors.TEXT_PRIMARY }]}
+            >
+              {pair.labelA} ({pair.visitsA}) ≈ {pair.labelB} ({pair.visitsB})
+            </Text>
+          ))}
+        </>
+      )}
+
+      <SectionHeader
+        title="Por restaurante"
+        count={filteredStats.length}
+        icon="silverware-fork-knife"
+        iconColor={colors.SUCCESS}
+      />
+      {filteredStats.length > 0 ? (
+        filteredStats.map(renderRestaurant)
+      ) : (
+        <EmptyState
+          icon="magnify"
+          title={`No se encontró "${searchQuery}"`}
+          message="Intenta con otro término de búsqueda."
+        />
+      )}
+    </>
+  );
+
+  // ── Eventos gastronómicos ──────────────────────────────────────────────
+  const renderEvent = (event: RestaurantEventStats) => (
+    <View
+      key={event.eventKey}
+      style={[styles.card, { backgroundColor: colors.CARD_BACKGROUND, borderColor: colors.BORDER }]}
+    >
+      <Text style={[styles.cardTitle, { color: colors.TEXT_PRIMARY }]}>{event.label}</Text>
+      <Text style={[styles.detailText, { color: colors.TEXT_SECONDARY }]}>
+        {event.visits} {plural(event.visits, 'visita', 'visitas')} · {NumberFormat(event.totalCost)}{' '}
+        · última {formatDate(event.lastDate)}
+      </Text>
+      <Text style={[styles.detailText, { color: colors.TEXT_SECONDARY }]}>
+        {event.restaurants.length > 0
+          ? `Restaurantes (${event.restaurants.length}): ${event.restaurants.join(', ')}`
+          : 'Sin restaurante anotado'}
+      </Text>
+    </View>
+  );
+
+  const renderEvents = () => (
+    <>
+      <SectionHeader
+        title="Eventos"
+        count={analysis.events.length}
+        icon="calendar-star"
+        iconColor={colors.INFO}
+      />
+      <InfoBox
+        icon="information"
+        text="Sus precios suelen ser más bajos: no entran en el promedio de cada restaurante ni en la comparación de platos."
+        compact
+      />
+      {analysis.events.map(renderEvent)}
+    </>
+  );
+
   const renderContent = () => {
     if (loading) return <MyLoading />;
+    if (!currentFilters) return null;
 
-    if (hasData) {
+    if (analysis.expenseCount === 0) {
       return (
-        <View style={styles.resultsContainer}>
-          {/* Resumen */}
+        <EmptyState
+          icon="silverware-fork-knife"
+          title="No se encontraron registros"
+          message="No hay datos en este rango de fechas."
+          hint='Primera línea: nombre del restaurante. Ej: "Crepes & Waffles"'
+        />
+      );
+    }
+
+    return (
+      <View style={styles.resultsContainer}>
+        {hasRecords && (
           <View
             style={[
               styles.summary,
@@ -196,89 +431,47 @@ export default function RestaurantAnalysisScreen() {
             {renderSummaryItem('Gasto', NumberFormat(analysis.totalCost))}
             {renderSummaryItem('Restaurantes', String(analysis.stats.length))}
           </View>
+        )}
 
-          {analysis.viaticosVisits > 0 && (
-            <InfoBox
-              icon="briefcase-account"
-              text={`Viáticos de Silvia: ${analysis.viaticosVisits} ${
-                analysis.viaticosVisits === 1 ? 'visita' : 'visitas'
-              } · ${NumberFormat(analysis.viaticosCost)}`}
-              compact
-            />
-          )}
-
-          {analysis.skipped > 0 && (
-            <InfoBox
-              icon="information"
-              text={`${analysis.skipped} ${
-                analysis.skipped === 1 ? 'registro omitido' : 'registros omitidos'
-              }: sin comentario o con formato de producto (tienda, kg o un).`}
-              compact
-            />
-          )}
-
-          {/* Posibles duplicados (solo aviso) */}
-          {analysis.similar.length > 0 && (
-            <>
-              <SectionHeader
-                title="Posibles duplicados"
-                count={analysis.similar.length}
-                icon="alert-circle-outline"
-                iconColor={colors.WARNING}
-              />
-              <InfoBox
-                type="warning"
-                icon="alert"
-                text="Nombres casi iguales. Si son el mismo, edita el comentario para escribirlo igual."
-                compact
-              />
-              {analysis.similar.map((pair) => (
-                <Text
-                  key={`${pair.keyA}-${pair.keyB}`}
-                  style={[styles.similarText, { color: colors.TEXT_PRIMARY }]}
-                >
-                  {pair.labelA} ({pair.visitsA}) ≈ {pair.labelB} ({pair.visitsB})
-                </Text>
-              ))}
-            </>
-          )}
-
-          {/* Restaurantes */}
-          <SectionHeader
-            title="Por restaurante"
-            count={filteredStats.length}
-            icon="silverware-fork-knife"
-            iconColor={colors.SUCCESS}
+        {analysis.viaticosVisits > 0 && (
+          <InfoBox
+            icon="briefcase-account"
+            text={`Viáticos de Silvia: ${analysis.viaticosVisits} ${plural(
+              analysis.viaticosVisits,
+              'visita',
+              'visitas'
+            )} · ${NumberFormat(analysis.viaticosCost)}`}
+            compact
           />
-          {filteredStats.length > 0 ? (
-            filteredStats.map(renderRestaurant)
-          ) : (
-            <EmptyState
-              icon="magnify"
-              title={`No se encontró "${searchQuery}"`}
-              message="Intenta con otro término de búsqueda."
-            />
-          )}
-        </View>
-      );
-    }
+        )}
 
-    if (currentFilters) {
-      return (
-        <EmptyState
-          icon="silverware-fork-knife"
-          title="No se encontraron registros"
-          message={
-            analysis.skipped > 0
-              ? `Hay ${analysis.skipped} registros, pero ninguno tiene el formato de restaurante.`
-              : 'No hay datos en este rango de fechas.'
-          }
-          hint='Primera línea: nombre del restaurante. Ej: "Crepes & Waffles"'
-        />
-      );
-    }
+        {analysis.skipped > 0 && (
+          <InfoBox
+            icon="information"
+            text={`${analysis.skipped} ${plural(
+              analysis.skipped,
+              'registro sin nombre de restaurante',
+              'registros sin nombre de restaurante'
+            )} (sin comentario, sin nombre en la primera línea o con formato de producto). No cuentan en "Por restaurante", pero sí en el resumen por mes.`}
+            compact
+          />
+        )}
 
-    return null;
+        {renderMonthly()}
+
+        {hasRestaurants && renderRestaurants()}
+        {hasEvents && renderEvents()}
+
+        {!hasRecords && (
+          <InfoBox
+            type="warning"
+            icon="alert"
+            text="Ninguno de los registros tiene nombre de restaurante en la primera línea."
+            compact
+          />
+        )}
+      </View>
+    );
   };
 
   return (
@@ -316,7 +509,7 @@ export default function RestaurantAnalysisScreen() {
             />
           )}
 
-          {hasData && (
+          {hasRestaurants && (
             <View style={styles.searchContainer}>
               <MyInput
                 name="search"
@@ -352,6 +545,18 @@ const styles = StyleSheet.create({
   summaryItem: { alignItems: 'center', flex: 1 },
   summaryValue: { fontSize: MEDIUM, fontWeight: '700' },
   summaryLabel: { fontSize: SMALL, marginTop: 2 },
+  collapseRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    borderWidth: 1,
+    borderRadius: 10,
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    marginBottom: 12
+  },
+  collapseText: { flex: 1, fontSize: SMALL + 1 },
+  monthlyContent: { marginBottom: 4 },
   card: {
     borderWidth: 1,
     borderRadius: 12,
@@ -362,6 +567,11 @@ const styles = StyleSheet.create({
   cardTitleBlock: { flex: 1 },
   cardTitle: { fontSize: MEDIUM, fontWeight: '600', marginBottom: 4 },
   cardBody: { marginTop: 12, paddingTop: 12, borderTopWidth: 1, gap: 4 },
+  changeBlock: { alignItems: 'flex-end', marginLeft: 12 },
+  changeValue: { fontSize: MEDIUM, fontWeight: '700' },
+  changeLabel: { fontSize: SMALL - 1, marginTop: 2 },
+  moreButton: { alignSelf: 'center', paddingVertical: 8, marginBottom: 8 },
+  moreText: { fontSize: SMALL + 1, fontWeight: '600', textDecorationLine: 'underline' },
   sectionLabel: { fontSize: SMALL + 1, fontWeight: '600', marginTop: 6 },
   detailText: { fontSize: SMALL, lineHeight: 19 },
   dishRow: { marginTop: 6 },

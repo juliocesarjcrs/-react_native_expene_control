@@ -5,17 +5,27 @@
  * Aplica a: Salidas a comer, Comida lista y Almuerzo comprado.
  *
  * Formato:
- *   Primera línea:  Nombre del restaurante [@Persona] [viáticos] [- nota]
+ *   Primera línea:  Nombre del restaurante [#Evento] [@Persona] [viáticos] [- nota]
  *   Siguientes (opcionales):  plato — $precio
  *
  * Ejemplos:
  *   "Crepes & Waffles"
- *   "Crepes & Waffles\Pollo al Curry — $32.000\nPropina"
+ *   "Crepes & Waffles\nPollo al Curry — $32.000\nPropina"
  *   "Gustosos @Silvia viáticos"
  *   "Gurmet - cumpleaños\nLomo — 52 mil"
+ *   "Crepes & Waffles #BurgerMaster\nHamburguesa — $20.000"
  *
  * Reglas:
  *   - Solo la primera línea es el nombre. "Burger Land" y "BurgerLand" comparten clave.
+ *   - #NombreEvento marca un evento gastronómico (Burger Master, Pizza Master...). Sus
+ *     precios son más bajos que los normales, así que no entran en el historial de precios
+ *     de platos ni en el promedio del restaurante. El tag no es parte del nombre.
+ *     "#4" (solo números) no es un evento.
+ *   - Si solo se escribe el evento ("#BurgerMaster"), el registro cuenta en Eventos pero no
+ *     en ningún restaurante (restaurant y restaurantKey quedan vacíos).
+ *   - Si la primera línea trae un precio ("Torta chocolate $7.000"), es un plato y no un
+ *     nombre: el registro no es un restaurante (se omite) y, si tiene #Evento, cuenta solo en
+ *     Eventos. Así, una visita en la que no se supo el nombre no crea un restaurante falso.
  *   - Un plato es una línea con precio ("— $32.000", "— 32.000", "— 52 mil", "$32.000").
  *     Las líneas sin precio (propina, domicilio, notas) se ignoran, y las que
  *     empiezan por propina/domicilio/servicio/iva/descuento/total no cuentan como plato.
@@ -31,6 +41,8 @@ import {
   RestaurantDish,
   RestaurantDishEntry,
   RestaurantDishHistory,
+  RestaurantEvent,
+  RestaurantEventStats,
   RestaurantSimilarPair,
   RestaurantStats
 } from '~/shared/types/utils/commentaryParser/restaurant-analysis.types';
@@ -62,6 +74,12 @@ const toRestaurantKey = (name: string): string => {
 const toDishKey = (name: string): string =>
   collapseSpaces(normalizeText(name).replace(/[^a-z0-9 ]/g, ' '));
 
+/** "BurgerMaster" y "burger-master" → "burgermaster" */
+const toEventKey = (tag: string): string => normalizeText(tag).replace(/[^a-z0-9]/g, '');
+
+/** "burger-master" → "burger master"; "BurgerMaster" no cambia */
+const toEventLabel = (tag: string): string => collapseSpaces(tag.replace(/[-_]+/g, ' '));
+
 // ─────────────────────────────────────────────
 // PATRONES
 // ─────────────────────────────────────────────
@@ -69,9 +87,15 @@ const toDishKey = (name: string): string =>
 const PATTERNS = {
   /** "@Silvia" (global: solo se usa con replace / matchAll) */
   mention: /@([A-Za-zÀ-ÿ]+)/g,
+  /** "#BurgerMaster", "#burger-master", "#4" (global: solo con replace / matchAll) */
+  tag: /#([A-Za-zÀ-ÿ0-9][A-Za-zÀ-ÿ0-9_-]*)/g,
   /** "viáticos" / "viaticos" / "viático" (global: solo con replace) */
   viaticosStrip: /vi[aá]ticos?/gi,
   viaticosTest: /vi[aá]ticos?/i,
+  /** Un tag es evento solo si tiene alguna letra (descarta "#4") */
+  hasLetter: /[A-Za-zÀ-ÿ]/,
+  /** Primera línea con precio ("Torta $7.000", "Torta 7 mil"): es un plato, no un nombre */
+  dishLikeHeader: /\$\s*\d|\d\s*mil\b/i,
   /** Guion con espacios: separa la nota de la primera línea */
   noteSeparator: /\s[-–—]\s/,
   /** "[Carulla]": etiqueta de tienda del formato de producto */
@@ -118,7 +142,7 @@ const parsePrice = (raw: string, suffix?: string): number | null => {
 
 /**
  * Parsea el comentario de una salida a comer / comida lista / almuerzo comprado.
- * Retorna null si está vacío, si tiene formato de producto, o si no hay nombre usable.
+ * Retorna null si está vacío, si tiene formato de producto, o si no hay nombre ni evento usable.
  */
 export const parseRestaurantCommentary = (
   commentary: string | null | undefined,
@@ -136,6 +160,7 @@ export const parseRestaurantCommentary = (
 
     const fullText = lines.join('\n');
     const header = lines[0];
+    const headerIsDish = PATTERNS.dishLikeHeader.test(header);
 
     // Formato de producto del OCR: no es un restaurante
     if (
@@ -146,31 +171,47 @@ export const parseRestaurantCommentary = (
       return null;
     }
 
-    // ── Menciones y viáticos (en cualquier línea) ──────────────────────
+    // ── Menciones, viáticos y evento (en cualquier línea) ──────────────
     const mentions = [
       ...new Set([...fullText.matchAll(PATTERNS.mention)].map((m) => capitalizeName(m[1])))
     ];
     const isViaticos = PATTERNS.viaticosTest.test(fullText);
 
-    // ── Nombre: primera línea sin menciones, viáticos ni nota ──────────
+    const eventTag = [...fullText.matchAll(PATTERNS.tag)]
+      .map((m) => m[1])
+      .find((tag) => PATTERNS.hasLetter.test(tag));
+    const event: RestaurantEvent | undefined = eventTag
+      ? { key: toEventKey(eventTag), label: toEventLabel(eventTag) }
+      : undefined;
+
+    // ── Nombre: primera línea sin tags, menciones, viáticos ni nota ────
     const [bodyRaw, ...noteParts] = header.split(PATTERNS.noteSeparator);
     const note = noteParts.join(' - ').trim() || undefined;
 
-    const restaurant = collapseSpaces(
-      bodyRaw.replace(PATTERNS.mention, ' ').replace(PATTERNS.viaticosStrip, ' ')
+    let restaurant = collapseSpaces(
+      bodyRaw
+        .replace(PATTERNS.tag, ' ')
+        .replace(PATTERNS.mention, ' ')
+        .replace(PATTERNS.viaticosStrip, ' ')
     ).replace(/^[\s.,;:]+|[\s.,;:]+$/g, '');
 
-    if (restaurant.length < 2 || /^\d+$/.test(restaurant)) return null;
+    const validName = !headerIsDish && restaurant.length >= 2 && !/^\d+$/.test(restaurant);
+    if (!validName) {
+      // Sin nombre usable: solo sirve si hay evento (cuenta en Eventos, no en restaurantes)
+      if (!event) return null;
+      restaurant = '';
+    }
 
-    const restaurantKey = toRestaurantKey(restaurant);
-    if (!restaurantKey) return null;
+    const restaurantKey = restaurant ? toRestaurantKey(restaurant) : '';
+    if (restaurant && !restaurantKey) return null;
 
     // ── Platos: líneas siguientes con precio ────────────────────────────
     const dishes: RestaurantDish[] = [];
-    for (const raw of lines.slice(1)) {
+    for (const raw of headerIsDish ? lines : lines.slice(1)) {
       const line = collapseSpaces(
         raw
           .replace(PATTERNS.bullet, '')
+          .replace(PATTERNS.tag, ' ')
           .replace(PATTERNS.mention, ' ')
           .replace(PATTERNS.viaticosStrip, ' ')
       );
@@ -188,7 +229,7 @@ export const parseRestaurantCommentary = (
       dishes.push({ name, key, price });
     }
 
-    return { cost, date, restaurant, restaurantKey, dishes, mentions, isViaticos, note };
+    return { cost, date, restaurant, restaurantKey, dishes, mentions, isViaticos, event, note };
   } catch {
     return null;
   }
@@ -198,23 +239,28 @@ export const parseRestaurantCommentary = (
 // CALCULADORAS
 // ─────────────────────────────────────────────
 
-/** Grafía más frecuente; en empate, la del registro más reciente. */
-const pickLabel = (items: RestaurantData[]): string => {
+/** Texto más frecuente; en empate, el del registro más reciente. */
+const pickMostFrequent = (values: { text: string; time: number }[]): string => {
   const counts = new Map<string, { count: number; latest: number }>();
-  for (const item of items) {
-    const entry = counts.get(item.restaurant) ?? { count: 0, latest: 0 };
+  for (const { text, time } of values) {
+    const entry = counts.get(text) ?? { count: 0, latest: 0 };
     entry.count += 1;
-    entry.latest = Math.max(entry.latest, toTime(item.date));
-    counts.set(item.restaurant, entry);
+    entry.latest = Math.max(entry.latest, time);
+    counts.set(text, entry);
   }
   return [...counts.entries()].sort(
     (a, b) => b[1].count - a[1].count || b[1].latest - a[1].latest
   )[0][0];
 };
 
+const pickLabel = (items: RestaurantData[]): string =>
+  pickMostFrequent(items.map((i) => ({ text: i.restaurant, time: toTime(i.date) })));
+
+/** Agrupa por restaurante. Los registros sin nombre (solo evento) no pertenecen a ninguno. */
 const groupByRestaurant = (data: RestaurantData[]): Map<string, RestaurantData[]> => {
   const groups = new Map<string, RestaurantData[]>();
   for (const item of data) {
+    if (!item.restaurantKey) continue;
     const list = groups.get(item.restaurantKey);
     if (list) list.push(item);
     else groups.set(item.restaurantKey, [item]);
@@ -222,28 +268,39 @@ const groupByRestaurant = (data: RestaurantData[]): Map<string, RestaurantData[]
   return groups;
 };
 
-/** Visitas y gasto por restaurante, de mayor a menor gasto. */
+const sumCost = (items: RestaurantData[]): number => items.reduce((sum, i) => sum + i.cost, 0);
+
+/**
+ * Visitas y gasto por restaurante, de mayor a menor gasto.
+ * `visits` y `totalCost` incluyen los eventos; `avgCost` solo las visitas normales.
+ */
 export const getRestaurantStats = (data: RestaurantData[]): RestaurantStats[] => {
   const result: RestaurantStats[] = [];
 
   groupByRestaurant(data).forEach((items, restaurantKey) => {
     const sorted = [...items].sort((a, b) => toTime(a.date) - toTime(b.date));
-    const totalCost = sorted.reduce((sum, i) => sum + i.cost, 0);
+    const regular = sorted.filter((i) => !i.event);
+    const events = sorted.filter((i) => i.event);
     const viaticos = sorted.filter((i) => i.isViaticos);
     const last = sorted[sorted.length - 1];
+    const regularCost = sumCost(regular);
 
     result.push({
       restaurantKey,
       label: pickLabel(items),
       variants: [...new Set(items.map((i) => i.restaurant))],
       visits: sorted.length,
-      totalCost,
-      avgCost: Math.round(totalCost / sorted.length),
+      totalCost: sumCost(sorted),
+      avgCost: regular.length > 0 ? Math.round(regularCost / regular.length) : 0,
+      regularVisits: regular.length,
+      regularCost,
+      eventVisits: events.length,
+      eventCost: sumCost(events),
       firstDate: sorted[0].date,
       lastDate: last.date,
       lastCost: last.cost,
       viaticosVisits: viaticos.length,
-      viaticosCost: viaticos.reduce((sum, i) => sum + i.cost, 0)
+      viaticosCost: sumCost(viaticos)
     });
   });
 
@@ -253,8 +310,14 @@ export const getRestaurantStats = (data: RestaurantData[]): RestaurantStats[] =>
 /**
  * Evolución del precio de un mismo plato en un mismo restaurante.
  * Solo devuelve platos con `minCount` registros o más (por defecto 2).
+ * Los registros de eventos se excluyen: sus precios no son comparables con los normales
+ * (pasa `includeEvents = true` para incluirlos).
  */
-export const getDishHistory = (data: RestaurantData[], minCount = 2): RestaurantDishHistory[] => {
+export const getDishHistory = (
+  data: RestaurantData[],
+  minCount = 2,
+  includeEvents = false
+): RestaurantDishHistory[] => {
   const labels = new Map<string, string>();
   const groups = new Map<
     string,
@@ -269,6 +332,9 @@ export const getDishHistory = (data: RestaurantData[], minCount = 2): Restaurant
   groupByRestaurant(data).forEach((items, key) => labels.set(key, pickLabel(items)));
 
   for (const item of data) {
+    if (!item.restaurantKey) continue;
+    if (item.event && !includeEvents) continue;
+
     for (const dish of item.dishes) {
       const groupKey = `${item.restaurantKey}::${dish.key}`;
       const group = groups.get(groupKey) ?? {
@@ -313,6 +379,44 @@ export const getDishHistory = (data: RestaurantData[], minCount = 2): Restaurant
   return result.sort(
     (a, b) => b.count - a.count || a.restaurantLabel.localeCompare(b.restaurantLabel)
   );
+};
+
+/** Visitas y gasto por evento gastronómico, del más reciente al más antiguo. */
+export const getEventStats = (data: RestaurantData[]): RestaurantEventStats[] => {
+  const groups = new Map<string, RestaurantData[]>();
+  for (const item of data) {
+    if (!item.event) continue;
+    const list = groups.get(item.event.key);
+    if (list) list.push(item);
+    else groups.set(item.event.key, [item]);
+  }
+
+  const result: RestaurantEventStats[] = [];
+  groups.forEach((items, eventKey) => {
+    const sorted = [...items].sort((a, b) => toTime(a.date) - toTime(b.date));
+
+    // Restaurantes distintos, con la primera grafía escrita de cada uno
+    const restaurants = new Map<string, string>();
+    for (const item of sorted) {
+      if (item.restaurantKey && !restaurants.has(item.restaurantKey)) {
+        restaurants.set(item.restaurantKey, item.restaurant);
+      }
+    }
+
+    result.push({
+      eventKey,
+      label: pickMostFrequent(
+        items.map((i) => ({ text: (i.event as RestaurantEvent).label, time: toTime(i.date) }))
+      ),
+      visits: sorted.length,
+      totalCost: sumCost(sorted),
+      restaurants: [...restaurants.values()],
+      firstDate: sorted[0].date,
+      lastDate: sorted[sorted.length - 1].date
+    });
+  });
+
+  return result.sort((a, b) => toTime(b.lastDate) - toTime(a.lastDate));
 };
 
 // ── Posibles duplicados (solo informativo) ───────────────────────────────

@@ -53,15 +53,35 @@ export default function MyDonutChart({ data, total }: MyDonutChartProps) {
   // Evita NaN si el total es 0
   const safeTotal = total > 0 ? total : 1;
 
-  const sorted = [...data].sort((a, b) => b.population - a.population);
+  const merged = Object.values(
+    data.reduce<Record<string, CategoryData>>((acc, item) => {
+      if (acc[item.name]) {
+        acc[item.name] = {
+          ...acc[item.name],
+          population: acc[item.name].population + item.population
+        };
+      } else {
+        acc[item.name] = { ...item };
+      }
+      return acc;
+    }, {})
+  );
+
+  const sorted = merged.sort((a, b) => b.population - a.population);
   const top = sorted.slice(0, TOP_COUNT);
   const rest = sorted.slice(TOP_COUNT);
   const othersTotal = rest.reduce((acc, x) => acc + x.population, 0);
 
+  const othersIndex = top.findIndex((x) => x.name === 'Otros');
+
   const donutData =
-    rest.length > 0
-      ? [...top, { name: 'Otros', population: othersTotal, color: colors.GRAY }]
-      : top;
+    rest.length === 0
+      ? top
+      : othersIndex >= 0
+        ? top.map((x, i) =>
+            i === othersIndex ? { ...x, population: x.population + othersTotal } : x
+          )
+        : [...top, { name: 'Otros', population: othersTotal, color: colors.GRAY }];
 
   // Segmentos del donut: cada uno empieza donde termina el anterior
   const percentages = donutData.map((item) => (item.population / safeTotal) * 100);
@@ -83,9 +103,9 @@ export default function MyDonutChart({ data, total }: MyDonutChartProps) {
         activeOpacity={0.8}
       >
         <Svg width={260} height={260} viewBox="0 0 260 260">
-          {segments.map((segment) => (
+          {segments.map((segment, index) => (
             <Circle
-              key={segment.name}
+              key={`${segment.name}-${index}`}
               cx={CENTER}
               cy={CENTER}
               r={RADIUS}
@@ -197,7 +217,7 @@ export default function MyDonutChart({ data, total }: MyDonutChartProps) {
 
             return (
               <TouchableOpacity
-                key={cat.name}
+                key={`${cat.name}-${idx}`}
                 style={[
                   styles.rankRow,
                   {

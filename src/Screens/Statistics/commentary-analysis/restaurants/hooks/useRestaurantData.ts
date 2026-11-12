@@ -2,8 +2,10 @@ import { useState, useMemo, useCallback } from 'react';
 import { findExpensesBySubcategories } from '~/services/expenses';
 import {
   buildRestaurantAnalysis,
+  DateRangeKeys,
   RestaurantAnalysis,
-  RestaurantExpenseInput
+  RestaurantExpenseInput,
+  toDateKey
 } from '~/utils/commentaryParser/restaurantAnalysis';
 import { AnalysisFilters } from '../../components/FilterSelector';
 import { showError } from '~/utils/showError';
@@ -16,13 +18,19 @@ interface UseRestaurantDataReturn {
   refreshData: () => Promise<void>;
 }
 
+/** Gastos y rango se guardan juntos para que el resumen mensual nunca use un rango viejo. */
+interface LoadedData {
+  expenses: RestaurantExpenseInput[];
+  range: DateRangeKeys;
+}
+
 /**
  * Hook de la pantalla de restaurantes: trae los gastos de UNA subcategoría en un
  * rango de fechas y delega todo el análisis en buildRestaurantAnalysis (con tests).
  */
 export const useRestaurantData = (): UseRestaurantDataReturn => {
   const [loading, setLoading] = useState(false);
-  const [expenses, setExpenses] = useState<RestaurantExpenseInput[]>([]);
+  const [loaded, setLoaded] = useState<LoadedData | null>(null);
   const [currentFilters, setCurrentFilters] = useState<AnalysisFilters | null>(null);
 
   const loadData = useCallback(async (filters: AnalysisFilters) => {
@@ -37,13 +45,14 @@ export const useRestaurantData = (): UseRestaurantDataReturn => {
         endDate: filters.endDate
       });
 
-      setExpenses(
-        data.expenses.map((expense) => ({
+      setLoaded({
+        expenses: data.expenses.map((expense) => ({
           commentary: expense.commentary,
           cost: expense.cost,
           date: expense.date
-        }))
-      );
+        })),
+        range: { start: toDateKey(filters.startDate), end: toDateKey(filters.endDate) }
+      });
     } catch (error) {
       showError(error);
     } finally {
@@ -57,7 +66,10 @@ export const useRestaurantData = (): UseRestaurantDataReturn => {
     }
   }, [currentFilters, loadData]);
 
-  const analysis = useMemo(() => buildRestaurantAnalysis(expenses), [expenses]);
+  const analysis = useMemo(
+    () => buildRestaurantAnalysis(loaded?.expenses ?? [], loaded?.range),
+    [loaded]
+  );
 
   return { loading, analysis, currentFilters, loadData, refreshData };
 };

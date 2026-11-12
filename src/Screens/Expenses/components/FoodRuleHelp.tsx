@@ -42,7 +42,7 @@ const RULE_STEPS: RuleStep[] = [
   {
     question: '¿Ya viene hecho?',
     answer:
-      'Bebida embotellada: Gaseosas. Galleta, wafer, ponqué, papas o chocolate: Chucherías. Helado, torta o cholado: Postres y helados comprados. Comida servida, panadería o café: Comida lista. Licor o cerveza para llevar a casa: Licores.'
+      'Bebida embotellada: Gaseosas. Galleta, wafer, ponqué, papas o chocolate: Chucherías. Helado, torta o cholado: Postres. Comida servida, panadería o café: Comida lista. Licor o cerveza para llevar a casa: Licores.'
   },
   {
     question: '¿La compra mezcla dos tipos?',
@@ -53,7 +53,9 @@ const RULE_STEPS: RuleStep[] = [
 const CONVENTIONS: string[] = [
   'Salidas a comer, Comida lista y Almuerzo comprado: primera línea con el nombre del restaurante, siempre escrito igual.',
   'Líneas siguientes (opcionales): plato — $precio, solo para platos grandes que quieras comparar.',
-  'Almuerzo de una jornada de Silvia: agrega @Silvia viáticos. Un solo registro con el monto de la cuenta.'
+  'Almuerzo de una jornada de Silvia: agrega @Silvia viáticos. Un solo registro con el monto de la cuenta.',
+  'Evento gastronómico (Burger Master, Pizza Master...): anota el restaurante en la primera línea y agrega #NombreEvento. Sus precios no se comparan con los normales.',
+  'Si no recuerdas el nombre: escribe solo los platos con precio (así no se crea un restaurante falso). En una feria con puestos sin nombre: solo #NombreEvento en la primera línea y los platos debajo.'
 ];
 
 export default function FoodRuleHelp(): React.JSX.Element {

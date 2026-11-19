@@ -1,4 +1,4 @@
-import React, { useCallback } from 'react';
+import React, { useCallback, useState } from 'react';
 import { View } from 'react-native';
 import { Control, FieldValues, Path, PathValue, UseFormSetValue } from 'react-hook-form';
 import { useThemeColors } from '~/customHooks/useThemeColors';
@@ -65,6 +65,13 @@ export default function CommentaryInput<T extends CommentaryForm>({
 }: CommentaryInputProps<T>) {
   const colors = useThemeColors();
 
+  // Ayuda del último chip tocado. Se guarda junto a la subcategoría para que se descarte
+  // sola si se cambia de subcategoría (sin efectos ni limpieza manual).
+  const [chipHint, setChipHint] = useState<{
+    subcategoryId: number | null;
+    hint?: string;
+  } | null>(null);
+
   const {
     templateConfig,
     filteredSuggestions,
@@ -88,6 +95,19 @@ export default function CommentaryInput<T extends CommentaryForm>({
     },
     [setValue, hideSuggestions]
   );
+  const handleChipSelect = useCallback(
+    (template: string, hint?: string) => {
+      handleSelect(template);
+      setChipHint({ subcategoryId, hint });
+    },
+    [handleSelect, subcategoryId]
+  );
+
+  // La ayuda se muestra solo mientras el campo tenga texto
+  const activeHint =
+    currentValue.trim() !== '' && chipHint?.subcategoryId === subcategoryId
+      ? chipHint.hint
+      : undefined;
 
   // Color del borde según validación (MyInput maneja el resto: focus, error)
   const borderColors = { valid: colors.SUCCESS, warning: colors.WARNING };
@@ -105,8 +125,9 @@ export default function CommentaryInput<T extends CommentaryForm>({
   return (
     <View>
       {/* Chips de plantilla rápida — solo si la subcategoría los tiene */}
-      {chips.length > 0 && <TemplateChips chips={chips} onSelect={handleSelect} />}
-
+      {chips.length > 0 && (
+        <TemplateChips chips={chips} onSelect={handleChipSelect} activeHint={activeHint} />
+      )}
       <MyInput
         name={'commentary' as Path<T>}
         type="textarea"

@@ -3,6 +3,7 @@ import { Keyboard, View } from 'react-native';
 import { useForm, useWatch } from 'react-hook-form';
 import { StackNavigationProp } from '@react-navigation/stack';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { INCOME_CATEGORY_OFFSET } from '~/constants/commentary';
 
 // Services
 import { CreateIncome } from '../../services/incomes';
@@ -26,7 +27,7 @@ import { DateFormat } from '../../utils/Helpers';
 import { showError } from '~/utils/showError';
 import { ShowToast } from '~/utils/toastUtils';
 import { saveCommentaryToHistory } from '~/utils/commentary/commentaryHistory.utils';
-import { saveTemplateConfig } from '~/utils/commentary/templateStorage.utils';
+import { registerDefaultTemplateConfig } from '~/utils/commentary/templateStorage.utils';
 import { getDefaultTemplateConfig } from '~/utils/commentary/commentaryTemplates.utils';
 import { useFeatureFlag } from '~/contexts/FeatureFlagsContext';
 
@@ -48,13 +49,6 @@ type CreateIncomeScreenNavigationProp = StackNavigationProp<IncomeStackParamList
 interface CreateIncomeScreenProps {
   navigation: CreateIncomeScreenNavigationProp;
 }
-
-/**
- * Offset para evitar colisión de IDs entre categorías de ingresos
- * y subcategorías de gastos en AsyncStorage.
- * categoryId 554 → commentaryId 100554
- */
-const INCOME_CATEGORY_OFFSET = 100_000;
 
 export default function CreateIncomeScreen({ navigation }: CreateIncomeScreenProps) {
   const config = screenConfigs.createIncome;
@@ -121,7 +115,7 @@ export default function CreateIncomeScreen({ navigation }: CreateIncomeScreenPro
             categoryName,
             'Ingresos' // categoryName para ingresos actúa como categoría padre
           );
-          saveTemplateConfig({ ...defaultConfig, isCustomized: false });
+          registerDefaultTemplateConfig(defaultConfig).catch(() => undefined);
         }
       }
 

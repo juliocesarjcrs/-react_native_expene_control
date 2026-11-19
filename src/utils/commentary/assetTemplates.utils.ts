@@ -20,17 +20,14 @@ import {
   resolveAssetConcept
 } from '~/utils/commentaryParser/assetConcepts';
 import { normalizeMonthAbbr } from './commentaryDate.utils';
+import { INCOME_CATEGORY_OFFSET } from '~/constants/commentary';
 
 // ============================================================
 // DETECCIÓN
 // ============================================================
 
-/**
- * Debe coincidir con INCOME_CATEGORY_OFFSET (CreateIncomeScreen).
- * Los ids de ingreso son categoryId + 100000.
- * TODO: importar la constante real en lugar de duplicarla.
- */
-const INCOME_ID_THRESHOLD = 100000;
+/** Los ids de ingreso son categoryId + INCOME_CATEGORY_OFFSET; los de gasto son menores. */
+const INCOME_ID_THRESHOLD = INCOME_CATEGORY_OFFSET;
 
 /**
  * Un gasto es de un bien solo si el NOMBRE de la subcategoría trae una palabra de

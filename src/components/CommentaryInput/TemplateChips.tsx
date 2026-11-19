@@ -7,7 +7,7 @@ import { SMALL } from '~/styles/fonts';
 
 interface TemplateChipsProps {
   chips: TemplateChip[];
-  onSelect: (template: string) => void;
+  onSelect: (template: string, hint?: string) => void;
   activeHint?: string;
 }
 
@@ -33,7 +33,7 @@ export default function TemplateChips({ chips, onSelect, activeHint }: TemplateC
                 borderColor: colors.PRIMARY + '40'
               }
             ]}
-            onPress={() => onSelect(chip.template)}
+            onPress={() => onSelect(chip.template, chip.hint)}
             activeOpacity={0.7}
           >
             <Icon

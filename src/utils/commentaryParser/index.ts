@@ -46,6 +46,12 @@ export {
 } from './copagoParser';
 
 export {
+  parseVacationCommentary,
+  getDestinationSummaries,
+  getLodgingComparisons
+} from './vacationParser';
+
+export {
   parseRestaurantCommentary,
   getRestaurantStats,
   getDishHistory,

@@ -6,12 +6,13 @@
  *   {N} días arriendo {descripcion}
  *   {N} días mes {Mes} {Año}
  *   Nuevo valor {descripcion}
- *   Arriendo {Mes} {descripcion}
+ *   Arriendo {Mes} [{Año}] [{descripcion}]
  *
  * Ejemplos reales:
  *   "9 días arriendo Torre 2. Apt 505"
  *   "22 días mes Febrero 2026"
  *   "Nuevo valor apt 1004 Mirador Villa Verde"
+ *   "Arriendo Mar 2026"
  */
 
 import { RentData } from '~/shared/types/utils/commentaryParser/rent-analysis.types';
@@ -37,6 +38,7 @@ const MONTHS_ES: Record<string, string> = {
   feb: 'Febrero',
   mar: 'Marzo',
   abr: 'Abril',
+  may: 'Mayo',
   jun: 'Junio',
   jul: 'Julio',
   ago: 'Agosto',
@@ -63,7 +65,10 @@ const PATTERNS = {
   newValue: /^nuevo\s+valor\s+(.+)$/i,
 
   // "Arriendo Febrero Torre 2"
-  monthlyWithMonth: /^arriendo\s+(\w+)(?:\s+(.+))?$/i
+  monthlyWithMonth: /^arriendo\s+(\w+)(?:\s+(.+))?$/i,
+
+  // Año al inicio de lo que sigue al mes: "2026" o "2026 Torre 2"
+  leadingYear: /^(\d{4})(?:\s+(.*))?$/
 };
 
 // ─────────────────────────────────────────────
@@ -121,17 +126,33 @@ export const parseRentCommentary = (
       };
     }
 
-    // ── 4. "Arriendo {Mes} {propiedad}" ──────────────────────────────────
+    // ── 4. "Arriendo {Mes} [{Año}] [{propiedad}]" ────────────────────────
     const monthlyMatch = normalized.match(PATTERNS.monthlyWithMonth);
     if (monthlyMatch) {
       const potentialMonth = normalizeMonth(monthlyMatch[1]);
       const isMonth = Object.values(MONTHS_ES).includes(potentialMonth);
+
+      if (!isMonth) {
+        // La palabra no es un mes: el texto completo queda como propiedad
+        return { cost, date, paymentType: 'completo', month: undefined, property: normalized };
+      }
+
+      // El año va justo después del mes ("Arriendo Mar 2026 Torre 2"); lo demás es la propiedad
+      let year: number | undefined;
+      let property = monthlyMatch[2]?.trim();
+      const yearMatch = property?.match(PATTERNS.leadingYear);
+      if (yearMatch) {
+        year = parseInt(yearMatch[1]);
+        property = yearMatch[2]?.trim();
+      }
+
       return {
         cost,
         date,
         paymentType: 'completo',
-        month: isMonth ? potentialMonth : undefined,
-        property: isMonth ? monthlyMatch[2]?.trim() : normalized
+        month: potentialMonth,
+        year,
+        property: property || undefined
       };
     }
 

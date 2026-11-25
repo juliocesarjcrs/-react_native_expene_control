@@ -23,7 +23,7 @@ import {
   parseVacationCommentary,
   getDestinationSummaries,
   getLodgingComparisons
-} from '~/utils/commentaryParser/vacationParser';
+} from '~/utils/commentaryParser';
 import { showError } from '~/utils/showError';
 
 // ─────────────────────────────────────────────

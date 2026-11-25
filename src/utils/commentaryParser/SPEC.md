@@ -1,6 +1,6 @@
 # utils/commentaryParser
 
-Última verificación: 18 Nov 2026 · Estado: vigente (reemplaza a `commentaryParser.README.md`)
+Última verificación: 18 Nov 2026 · Estado: cerrado con lo verificado (reemplaza a `commentaryParser.README.md`); lo que falta está en la sección 8
 Marcas: **[Verificado]** = contrastado con el código del parser · **[Sin verificar]** = tomado del README anterior,
 no se vio el código · **[Inferido]**.
 
@@ -38,8 +38,12 @@ Re-exporta los parsers y sus calculadoras, y define `ParserType`:
 **Ya no existe** un orquestador (`parseCommentary`, `getParserType`, `SUBCATEGORY_PARSER_MAP`,
 `registerSubcategoryParser`, `ParsedCommentary`): nadie los usaba (eliminados en Nov 2026). Qué parser aplica
 lo decide la pantalla que lo llama, y los chips se eligen por nombre de subcategoría.
-No re-exporta `parseAssetCommentary`, `parseVacationCommentary` ni `assetConcepts`: las pantallas respectivas
-los importan según se necesite **[Sin verificar]**.
+Re-exporta de `utilityParser` solo `parseUtilityCommentary` y `calculateConsumptionPerPerson` (lo que usa la pantalla), y
+de `vacationParser`, `parseVacationCommentary`, `getDestinationSummaries` y `getLodgingComparisons` (lo que usa
+`useVacationData`). Las otras calculadoras de utility no se re-exportan porque ninguna pantalla las usa. No re-exporta
+`assetParser` ni `assetConcepts`: los bienes los importa `assetAnalytics.ts` desde `./assetParser`, dentro de la misma
+carpeta. Hasta el 18 Nov 2026, `UtilityAnalysisScreen.tsx` y `useVacationData.ts` importaban directo del archivo del
+parser; ahora importan del índice.
 
 ---
 
@@ -121,31 +125,127 @@ Prima gest: 1.555.000
 - Calculadoras (todas re-exportadas): `calculateTotalRetention`, `calculateTotalRetentionWithPrimas`,
   `calculateIncapacidadStats` (días Prim y EPS, descuento total, meses con incapacidad, promedio de días EPS al mes).
 
-### 4.4 `transportParser.ts` **[Sin verificar]**
+### 4.4 `transportParser.ts`: Taxi, Bus, Uber, Transporte **[Verificado]**
 
-`Villa Verde a Centro` · `Ida y vuelta Aeropuerto a Villa Verde` · `2 pasajes Pereira a El Cedral` ·
-`Recarga 4 pasajes Megabus`. Extrae `origin`, `destination`, `isRoundTrip`, `passengerCount`.
-Calculadora: `getMostFrequentRoutes`. Sin pantalla.
+```
+{Origen} a {Destino}                         Villa Verde a Centro
+{Origen} - {Destino}                         Victoria - Villa Verde
+Ida y vuelta {Origen} a {Destino}            (también con "-")
+{N} pasajes {Origen} a {Destino}             (también con "-")
+Recarga {N} pasajes {descripción}            Recarga 4 pasajes Megabus
+```
 
-### 4.5 `familyAidParser.ts` **[Sin verificar]**
+Prueba en este orden: recarga, ida y vuelta, varios pasajes, simple con `a`, simple con `-`. Cualquier otro texto
+(`Taxi`) → `null`. Extrae `origin`, `destination`, `isRoundTrip` y `passengerCount` (1 si no se indica). En una
+recarga, `origin` es `'Recarga'` y `destination` la descripción.
 
-`Ayuda bimensual a Papá Jairo Mar-Abr 2026 #9` · `Saldo de Ayuda bimensual a Papá Jairo Ene-Feb 2026 #8` ·
-`Abono Ayuda mensual a Papá Jairo Mar 2026 #2`. Periodicidad: mensual, bimensual, trimestral; corrige meses mal
-escritos (`Enr` → `Ene`). Calculadora: `getTotalByPerson`. Sin pantalla.
+**Observaciones (verificadas ejecutando el parser):**
 
-### 4.6 `nutritionParser.ts` **[Sin verificar]**
+- **"Ida y vuelta" y "N pasajes" parten el texto en la primera letra "a" del nombre**, no en la palabra `a`:
+  `Ida y vuelta Pereira a El Cedral` → origen `Pereir`, destino `a El Cedral`;
+  `2 pasajes Pereira - El Cedral` → origen `Pereir`, destino `- El Cedral`;
+  `Ida y vuelta Aeropuerto Matecaña a Villa Verde` → origen `Aeropuerto M`, destino `tecaña a Villa Verde`.
+  Solo sale bien si el origen no tiene ninguna `a` (como el marcador `Origen`). Afecta a los chips "Ida y vuelta" y
+  "2 pasajes" en cuanto se reemplaza el marcador por un nombre real. Ningún test lo detecta (los chips de transporte
+  son `semi`, no se parsean en `templateChipSync`).
+- **No reconoce "al":** `Villa Verde al Centro` → `null`, aunque el comentario del propio parser lo cita como
+  ejemplo real. Solo funciona `a` con espacios.
+- Calculadora `getMostFrequentRoutes` (re-exportada): agrupa por `origen → destino` escritos exactamente igual (sin
+  normalizar) y ordena por número de viajes. Sin pantalla.
 
-`Semana 6 Natural Body Center` (lo que sigue a `-` es nota). Calculadora: `getAvgCostPerWeek`. Sin pantalla.
+### 4.5 `familyAidParser.ts`: Ayuda familiar **[Verificado]**
 
-### 4.7 `sportsParser.ts` **[Sin verificar]**
+```
+Ayuda {periodicidad} a {Persona} {Mes}-{Mes} [{Año}] #{N}
+Ayuda {periodicidad} a {Persona} {Mes} [{Año}] #{N}
+Saldo [de] Ayuda ...        Abono Ayuda ...
+```
 
-`Mensualidad Mar (futsal)` · `Cancha Canaan futbol 8` · `Arbitraje Futsal Amistoso`. Detecta el tipo
-(`mensualidad`, `cancha`, `arbitraje`, `equipamiento`, `otro`). Calculadora: `getTotalByExpenseType`. Sin pantalla.
+- Prefijo `Saldo [de]` → `paymentType: 'saldo'`; `Abono` → `'abono'`; sin prefijo → `'completo'`.
+- Base: `Ayuda {palabra} a {resto}`. La periodicidad es `mensual`, `bimensual` o `trimestral`; cualquier otra palabra
+  → `'otro'`. Sin ese patrón (`Activar cuenta Banco Agrario`) → `null`.
+- `#N` es el número de secuencia. El período es un rango `Mmm-Mmm [año]` (en cualquier parte) o un mes suelto; la
+  persona es lo que queda antes del período y del `#N`. Sin persona → `null`.
+- Extrae `person`, `periodicity`, `paymentType`, `sequenceNumber`, `months` y `year`.
+- Calculadora `getTotalByPerson` (re-exportada): suma por persona escrita exactamente igual. Sin pantalla.
 
-### 4.8 `rentParser.ts` **[Sin verificar]**
+**Funciona bien** con los formatos de los chips: rangos (`Mar-Abr 2026`, `Ene-Feb 2026`) y mes abreviado + año + `#N`
+(`Papá Jairo Mar 2026 #2`).
 
-`22 días mes Febrero 2026` · `Arriendo Mar 2026` · `Nuevo valor apt 1004 Mirador Villa Verde`. Tipo de pago:
-`completo`, `parcial`, `nuevo_valor`. Sin pantalla.
+**Observaciones (verificadas ejecutando el parser):**
+
+- Solo reconoce **meses de tres letras** (y corrige `Enr` → `Ene`). Con el mes completo falla:
+  `Ayuda mensual a Mamá Marzo 2026 #1` → persona `Mamá Marzo 2026`, sin meses.
+- La persona se corta en la **primera aparición de la abreviatura del mes** dentro del texto, aunque esté dentro de
+  un nombre: `Ayuda mensual a Marta Mar 2026 #1` → persona `Marta Mar 2026`. Con `Omar Mar 2026` quedaría `O`
+  **[Inferido del código; no ejecutado]**.
+- `Enr` se corrige a `Ene` en los meses, pero la persona queda sucia: `Papá Jairo Enr 2026 #3` → persona
+  `Papá Jairo Enr 2026`.
+- Un año **antes** del mes (`Papá Jairo 2026 Mar #4`) no se lee: año vacío y persona `Papá Jairo 2026`.
+
+### 4.6 `nutritionParser.ts`: Nutrición **[Verificado]**
+
+```
+Semana {N} {NombreCentro}
+Semana {N} {NombreCentro} - {notas}
+Semana 6 Natural Body Center
+```
+
+- Un solo patrón: `Semana N Centro`, con notas opcionales después de un guion. Cualquier otro texto (`Flora liv`) → `null`.
+- Los saltos de línea se aplanan a espacios. Extrae `weekNumber`, `center` y `notes`.
+- **Observación:** el guion que separa las notas puede ir **sin espacios**, así que un centro con guion
+  (`Semana 6 Natural-Body Center`) se parte: el centro queda "Natural" y las notas "Body Center".
+- Calculadora: `getAvgCostPerWeek(data, center?)` (re-exportada). Promedia **por registro**, no por semana distinta:
+  dos registros de la misma semana cuentan dos veces. El filtro por centro es "contiene", sin distinguir mayúsculas.
+- Sin pantalla.
+
+### 4.7 `sportsParser.ts`: Deportes **[Verificado]**
+
+```
+Mensualidad {Mes} ({deporte})      Mensualidad Mar (futsal)
+Arbitraje {descripción}            Arbitraje Futsal Amistoso
+Cancha {lugar} {deporte}           Cancha Canaan futbol 8
+{ítem} {deporte}                   Uniforme ProSport Futsal
+```
+
+Prueba en este orden (los saltos de línea se aplanan a espacios):
+
+1. **Mensualidad:** `^mensualidad {palabra}` y, opcional, el deporte entre paréntesis o el resto del texto. `month` es la
+   primera palabra; `sport` es lo que escribiste (no se valida contra la lista).
+2. **Arbitraje:** `^arbitraje {descripción}`. El deporte sale de la lista de palabras conocidas.
+3. **Cancha:** `^cancha {lugar} [resto]`. `location` es **solo la primera palabra** (`Canaan`); el deporte es la palabra
+   conocida que aparezca en el resto, o el resto completo si no hay ninguna (`futbol 8` → `futbol`).
+4. **Equipamiento:** empieza por `uniforme`, `zapatilla(s)`, `guayo(s)`, `camiseta`, `pantaloneta`, `rodillera`,
+   `guante(s)` o `raqueta`, **seguido de un espacio y más texto**. La palabra sola (`Uniforme`) no cuenta.
+5. **Otro:** cualquier texto que contenga una palabra de deporte. Si no hay ninguna → `null`.
+
+Palabras de deporte conocidas: futsal, futbol, fútbol, tenis, ciclismo, natación (con y sin tilde), baloncesto,
+voleibol, atletismo, yoga, crossfit. Calculadora: `getTotalByExpenseType` (suma por tipo; re-exportada). Sin pantalla.
+
+### 4.8 `rentParser.ts`: Arriendo **[Verificado]**
+
+```
+{N} días mes {Mes} [{Año}]         22 días mes Febrero 2026
+{N} días [arriendo] {propiedad}    9 días arriendo Torre 2. Apt 505
+Nuevo valor {propiedad}            Nuevo valor apt 1004 Mirador Villa Verde
+Arriendo {Mes} [{Año}] [{propiedad}]   Arriendo Mar 2026
+```
+
+Prueba en este orden:
+
+1. `N días mes Mes [Año]` → pago **parcial** con mes y año opcional. El mes se normaliza a su nombre completo
+   (`Feb` → `Febrero`, `May` → `Mayo`); uno desconocido se deja como se escribió. El patrón exige que el texto termine ahí.
+2. `N días [arriendo] resto` → pago **parcial** sin mes; el resto es `property` (queda vacío si no hay).
+3. `Nuevo valor resto` → `paymentType: 'nuevo_valor'`, `isNewValue: true`, resto como `property`.
+4. `Arriendo palabra [resto]` → pago **completo**. Si la palabra es un mes, queda en `month`; si lo que sigue empieza por
+   un año de 4 dígitos pegado al mes, queda en `year`; el resto es `property`. Si la palabra no es un mes, `month` queda
+   vacío y `property` es el texto completo.
+
+Cualquier otro texto → `null`. Sin calculadoras; sin pantalla.
+
+Cambios del 18 Nov 2026: antes, `Arriendo Mar 2026` dejaba `property: '2026'` sin año, y `May` no se reconocía como mes.
+Sigue pendiente de entender (no es un error): una línea como `22 días mes Febrero 2026 extra` no cae en el patrón 1
+(exige terminar) sino en el 2, y todo `mes Febrero 2026 extra` queda como `property`.
 
 ### 4.9 `copagoParser.ts` y `copagoCatalog.ts`: "Cuota moderadora" **[Verificado el parser]**
 
@@ -285,18 +385,42 @@ Archivos en `src/utils/__tests__/commentaryParser/`. Existen además `integratio
 
 ## 7. Decisiones y descartes
 
-| Fecha    | Decisión                                          | Por qué                                                     |
-| -------- | ------------------------------------------------- | ----------------------------------------------------------- |
-| Nov 2026 | Se elimina el orquestador y su mapa de ids        | Nadie lo usaba y eran datos del usuario quemados            |
-| Nov 2026 | El parser de restaurantes no tiene fecha de corte | Los comentarios viejos corregidos a mano deben poder contar |
-| Nov 2026 | Eventos aparte con `#NombreEvento`                | Sus precios no son comparables                              |
-| Nov 2026 | No se unen automáticamente los nombres parecidos  | Solo se avisan; se corrigen editando el comentario          |
+| Fecha       | Decisión                                                                                           | Por qué                                                                    |
+| ----------- | -------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------- |
+| Nov 2026    | Se elimina el orquestador y su mapa de ids                                                         | Nadie lo usaba y eran datos del usuario quemados                           |
+| Nov 2026    | El parser de restaurantes no tiene fecha de corte                                                  | Los comentarios viejos corregidos a mano deben poder contar                |
+| Nov 2026    | Eventos aparte con `#NombreEvento`                                                                 | Sus precios no son comparables                                             |
+| Nov 2026    | No se unen automáticamente los nombres parecidos                                                   | Solo se avisan; se corrigen editando el comentario                         |
+| Nov 2026    | Las pantallas importan los parsers por el índice (opción A)                                        | Cumplir la regla 1 sin relajarla; solo se agregó lo que las pantallas usan |
+| Nov 2026    | Arriendo: se extrae el año del pago completo y se acepta `May`                                     | Los chips "Mes completo" generaban un formato cuyo año se perdía           |
+| 18 Nov 2026 | Transporte: NO se arregla la partición de "Ida y vuelta" / "N pasajes" ni se acepta "al" por ahora | Ninguna pantalla lo usa; se ajusta cuando se vincule a una pantalla        |
+| 18 Nov 2026 | Ayuda familiar: solo documentada, sin arreglo                                                      | Los formatos de los chips funcionan; sin pantalla                          |
+| 18 Nov 2026 | Utilidades: `unit` se queda como lo produce el parser (`'KW'`)                                     | La pantalla solo lo muestra; no se compara en ninguna parte vista          |
 
-## 8. Pendientes
+## 8. Pendientes y notas para quien retome
 
-- Verificar los parsers marcados **[Sin verificar]** (transport, familyAid, nutrition, sports, rent) y el catálogo
-  de copagos, cuando se pasen sus archivos.
-- Re-exportar en `index.ts` lo que falta según la regla de imports (calculadoras de utility y todo `vacationParser`),
-  después de confirmar quién lo importa directo: `grep -rn "utilityParser\|vacationParser\|assetParser" src --include=*.ts --include=*.tsx | grep -v __tests__`.
-- Decidir si `unit` de utility debe quedar `'Kw'` (como dice el tipo) o `'KW'` (como lo produce el parser).
+**Sin verificar** (no se vio el código):
+
+- `copagoCatalog.ts` (instituciones, especialidades, pacientes) y `copagoTemplates.utils.ts`.
+- `assetAnalytics.ts` (vive en esta carpeta e importa `parseAssetCommentary`).
+- Los tests citados en la sección 6 como "según el README anterior" (`integrationFlow`, `copagoTemplates`).
+
+**Defectos conocidos que se dejan a propósito** (decisión del 18 Nov 2026: se ajustan cuando el parser se vincule a una
+pantalla; los detalles y ejemplos están en la sección indicada):
+
+- **Transporte (4.4):** "Ida y vuelta" y "N pasajes" parten el texto en la primera letra "a" del nombre, y "al" no se
+  reconoce. Los chips "Ida y vuelta" y "2 pasajes" producen datos incorrectos con nombres reales. Arreglo previsto:
+  separar solo en la palabra `a`/`al` con espacios o en un guion, con tests para esos casos y para los chips.
+- **Ayuda familiar (4.5):** solo meses de tres letras; la persona se corta mal si su nombre contiene la abreviatura del
+  mes; un año antes del mes no se lee. Arreglo previsto: buscar el mes por palabra completa, aceptar nombres completos
+  y leer el año en cualquier orden.
+- **Utilidades (4.1):** `unit` sale como `'KW'` aunque el tipo diga `'Kw'`; la pantalla solo lo muestra, así que se ve
+  "KW". Se deja así.
+- **Nutrición (4.6):** el guion de las notas puede ir sin espacios y parte un centro con guion; el promedio es por
+  registro, no por semana distinta.
+- **Deportes (4.7):** una palabra de equipamiento sola (`Uniforme`) no cuenta; en `Cancha`, el lugar es solo la primera
+  palabra.
 - Si aparecen duplicados de eventos escritos de formas distintas, evaluar un aviso (hoy solo hay para restaurantes).
+
+**Antes de construir una pantalla nueva sobre un parser:** revisar su sección 4.x, corregir lo que la afecte y agregar
+tests; los chips `semi` no se prueban contra el parser en `templateChipSync`.

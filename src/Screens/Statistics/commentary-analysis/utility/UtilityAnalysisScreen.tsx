@@ -20,11 +20,7 @@ import { Icon } from 'react-native-elements';
 // Utils
 import { showError } from '~/utils/showError';
 import { NumberFormat, DateFormat } from '~/utils/Helpers';
-import {
-  calculateConsumptionPerPerson,
-  parseUtilityCommentary
-} from '~/utils/commentaryParser/utilityParser';
-
+import { calculateConsumptionPerPerson, parseUtilityCommentary } from '~/utils/commentaryParser';
 // Theme
 import { useThemeColors } from '~/customHooks/useThemeColors';
 
